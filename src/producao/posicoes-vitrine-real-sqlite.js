@@ -7,7 +7,13 @@ const {DatabaseSync}=require('node:sqlite');
 // A API e as novas atribuicoes usam o mesmo TOTAL (400).
 const TOTAL=400;
 const ID=/^[A-Za-z0-9_-]{1,80}$/;
-const TABELAS_POSICOES_VITRINE=Object.freeze(['loja_real_vitrine_posicoes']);
+const TABELAS_POSICOES_VITRINE=Object.freeze([
+ 'loja_real_vitrine_posicoes','loja_real_vitrine_layout_vazios'
+]);
+const CORES_VAZIAS=Object.freeze(['ROXO','DOURADO','VERDE','CINZA',
+ 'CINZA','VERDE','DOURADO','ROXO']);
+const coresPadrao=()=>Array.from({length:TOTAL},(_,i)=>
+ CORES_VAZIAS[i%CORES_VAZIAS.length]);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 class PosicoesVitrineRealSQLite{
  constructor({banco,agora=()=>Date.now(),auditoria=null}={}){
@@ -22,8 +28,24 @@ class PosicoesVitrineRealSQLite{
    'posicao INTEGER PRIMARY KEY CHECK(posicao BETWEEN 1 AND 400),',
    'produto_id TEXT NOT NULL UNIQUE,',
    'revisao INTEGER NOT NULL CHECK(revisao>=1),',
+   'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));',
+   'CREATE TABLE IF NOT EXISTS loja_real_vitrine_layout_vazios(',
+   'id INTEGER PRIMARY KEY CHECK(id=1),',
+   'cores_json TEXT NOT NULL,',
+   'posicoes_explicitas INTEGER NOT NULL DEFAULT 0 CHECK(posicoes_explicitas IN (0,1)),',
+   'revisao INTEGER NOT NULL CHECK(revisao>=1),',
    'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));'
   ].join(' '));
+  const cols=banco.prepare('PRAGMA table_info(loja_real_vitrine_layout_vazios)')
+   .all().map(x=>x.name);
+  if(!cols.includes('posicoes_explicitas'))
+   banco.exec('ALTER TABLE loja_real_vitrine_layout_vazios '+
+    'ADD COLUMN posicoes_explicitas INTEGER NOT NULL DEFAULT 0 '+
+    'CHECK(posicoes_explicitas IN (0,1))');
+  banco.prepare([
+   'INSERT OR IGNORE INTO loja_real_vitrine_layout_vazios',
+   '(id,cores_json,revisao,atualizado_em) VALUES(1,?,1,?)'
+  ].join(' ')).run(JSON.stringify(coresPadrao()),Math.max(1,Date.now()));
  }
  listar(){
   const lista=this.banco.prepare([
@@ -106,8 +128,43 @@ class PosicoesVitrineRealSQLite{
    if(origem<0)falha('VITRINE_REAL_PRODUTO_NAO_POSICIONADO');
    if(lista[origem].revisao!==revisaoEsperada)
     falha('VITRINE_REAL_REVISAO_CONCORRENTE');
-   if(novaPosicao>lista.length)
-    falha('VITRINE_REAL_MOVIMENTO_INVALIDO');
+   if(novaPosicao>lista.length||
+      this.consultarLayoutVazio().posicoesExplicitas){
+    // Posicionamento manual no quadrinho real. Vaga livre recebe somente
+    // este produto; se ocupada, trocar sem alterar os demais.
+    const atual=lista[origem],ocupante=lista.find(x=>x.posicao===novaPosicao);
+    if(atual.posicao===novaPosicao){
+     this.banco.exec('COMMIT');
+     return {produtoId,posicao:novaPosicao,ordem:lista.length,
+      revisao:atual.revisao,jaOrdenado:true};
+    }
+    this.banco.prepare('DELETE FROM loja_real_vitrine_posicoes').run();
+    const gravar=this.banco.prepare([
+     'INSERT INTO loja_real_vitrine_posicoes',
+     '(posicao,produto_id,revisao,atualizado_em) VALUES(?,?,?,?)'
+    ].join(' '));
+    for(const item of lista){
+     const alvo=item.produtoId===produtoId?novaPosicao:
+      ocupante&&item.produtoId===ocupante.produtoId?
+       atual.posicao:item.posicao;
+     const mudou=alvo!==item.posicao;
+     gravar.run(alvo,item.produtoId,item.revisao+(mudou?1:0),
+      mudou?agora:item.atualizadoEm);
+    }
+    this.banco.prepare([
+     'UPDATE loja_real_vitrine_layout_vazios',
+     'SET posicoes_explicitas=1 WHERE id=1'
+    ].join(' ')).run();
+    if(this.auditoria)this.auditoria.registrar({
+     acao:'VITRINE_ORDEM_ALTERADA',ator:'ADMIN_COMERCIAL',
+     entidade:'PRODUTO_'+produtoId,
+     antes:{posicao:atual.posicao},
+     depois:{posicao:novaPosicao},revisaoNova:atual.revisao+1
+    });
+    this.banco.exec('COMMIT');
+    return {produtoId,posicao:novaPosicao,ordem:lista.length,
+     revisao:atual.revisao+1,jaOrdenado:false,manual:true};
+   }
    const anterior=origem+1;
    if(anterior===novaPosicao){
     this.banco.exec('COMMIT');
@@ -138,6 +195,121 @@ class PosicoesVitrineRealSQLite{
     revisao:movido.revisao+1,jaOrdenado:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+
+
+ // Admissão de produto SEMPRE sequencial, independente do espaço tocado.
+ // É atômica e não substitui a movimentação voluntária de produtos existentes.
+ atribuirProximo({produtoId,produtoExiste}={}){
+  if(!ID.test(produtoId)||typeof produtoExiste!=='function')
+   falha('VITRINE_REAL_ATRIBUICAO_INVALIDA');
+  if(produtoExiste(produtoId)!==true)
+   falha('VITRINE_REAL_PRODUTO_NAO_ENCONTRADO');
+  const ts=this.agora();
+  if(!Number.isSafeInteger(ts)||ts<1)
+   falha('VITRINE_REAL_RELOGIO_INVALIDO');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const existente=this.banco.prepare([
+    'SELECT posicao,revisao FROM loja_real_vitrine_posicoes',
+    'WHERE produto_id=?'
+   ].join(' ')).get(produtoId);
+   if(existente){
+    this.banco.exec('COMMIT');
+    return {produtoId,posicao:existente.posicao,
+     revisao:existente.revisao,jaVinculado:true,automatico:true};
+   }
+   const usados=new Set(this.listar().map(x=>x.posicao));
+   let livre=null;
+   for(let i=1;i<=TOTAL;i++){
+    if(!usados.has(i)){livre=i;break;}
+   }
+   if(livre===null)falha('VITRINE_REAL_SEM_ESPACO');
+   const resultado=this.banco.prepare([
+    'INSERT INTO loja_real_vitrine_posicoes',
+    '(posicao,produto_id,revisao,atualizado_em) VALUES(?,?,1,?)'
+   ].join(' ')).run(livre,produtoId,ts);
+   if(resultado.changes!==1)falha('VITRINE_REAL_ATRIBUICAO_FALHOU');
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'VITRINE_PRODUTO_VINCULADO',ator:'ADMIN_COMERCIAL',
+    entidade:'PRODUTO_'+produtoId,
+    antes:{posicao:null},depois:{posicao:livre},
+    revisaoAnterior:0,revisaoNova:1
+   });
+   this.banco.exec('COMMIT');
+   return {produtoId,posicao:livre,revisao:1,
+    jaVinculado:false,automatico:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ // São apenas molduras vazias. As classificações dos produtos permanecem
+ // vinculadas ao produto; cores vazias não mudam qualificação nem financeiro.
+ consultarLayoutVazio(){
+  const row=this.banco.prepare([
+   'SELECT cores_json AS cores,posicoes_explicitas AS posicoesExplicitas,',
+   'revisao,atualizado_em AS atualizadoEm',
+   'FROM loja_real_vitrine_layout_vazios WHERE id=1'
+  ].join(' ')).get();
+  if(!row||!Number.isSafeInteger(row.revisao)||row.revisao<1||
+     !Number.isSafeInteger(row.atualizadoEm)||row.atualizadoEm<1)
+   falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
+  let cores;
+  try{cores=JSON.parse(row.cores);}catch{
+   falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
+  }
+  const esperadas=coresPadrao();
+  if(!Array.isArray(cores)||cores.length!==TOTAL||
+     cores.some(c=>!CORES_VAZIAS.includes(c))||
+     CORES_VAZIAS.some(c=>cores.filter(x=>x===c).length!==
+      esperadas.filter(x=>x===c).length))
+   falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
+  if(row.posicoesExplicitas!==0&&row.posicoesExplicitas!==1)
+   falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
+  return {cores,posicoesExplicitas:row.posicoesExplicitas===1,
+   revisao:row.revisao,atualizadoEm:row.atualizadoEm};
+ }
+ trocarEspacosVazios({origem,destino,revisaoEsperada}={}){
+  if(!Number.isSafeInteger(origem)||origem<1||origem>TOTAL||
+     !Number.isSafeInteger(destino)||destino<1||destino>TOTAL||
+     origem===destino||!Number.isSafeInteger(revisaoEsperada)||
+     revisaoEsperada<1)
+   falha('VITRINE_ESPACOS_TROCA_INVALIDA');
+  const ts=this.agora();
+  if(!Number.isSafeInteger(ts)||ts<1)
+   falha('VITRINE_REAL_RELOGIO_INVALIDO');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=this.consultarLayoutVazio();
+   if(atual.revisao!==revisaoEsperada)
+    falha('VITRINE_ESPACOS_REVISAO_CONCORRENTE');
+   const usados=this.banco.prepare([
+    'SELECT COUNT(*) AS total FROM loja_real_vitrine_posicoes',
+    'WHERE posicao IN (?,?)'
+   ].join(' ')).get(origem,destino);
+   if(usados.total)falha('VITRINE_ESPACOS_PRODUTO_OCUPA_SLOT');
+   const corOrigem=atual.cores[origem-1],corDestino=atual.cores[destino-1];
+   if(corOrigem===corDestino)falha('VITRINE_ESPACOS_MESMA_COR');
+   [atual.cores[origem-1],atual.cores[destino-1]]=[
+    corDestino,corOrigem
+   ];
+   const gravado=this.banco.prepare([
+    'UPDATE loja_real_vitrine_layout_vazios',
+    'SET cores_json=?,revisao=revisao+1,atualizado_em=?',
+    'WHERE id=1 AND revisao=?'
+   ].join(' ')).run(JSON.stringify(atual.cores),ts,revisaoEsperada);
+   if(gravado.changes!==1)falha('VITRINE_ESPACOS_REVISAO_CONCORRENTE');
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'VITRINE_ESPACOS_VAZIOS_TROCADOS',
+    ator:'ADMIN_COMERCIAL',
+    entidade:'VITRINE_ESPACOS',
+    antes:{origem,destino,corOrigem,corDestino},
+    depois:{origem,destino,corOrigem:corDestino,corDestino:corOrigem},
+    revisaoAnterior:revisaoEsperada,revisaoNova:revisaoEsperada+1
+   });
+   this.banco.exec('COMMIT');
+   return {origem,destino,corOrigem:corDestino,corDestino:corOrigem,
+    revisao:revisaoEsperada+1,confirmado:true,
+    checkoutReal:false,financeiroReal:false};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  projetar(produtos){
   if(!Array.isArray(produtos)||produtos.length>TOTAL||
      produtos.some(p=>typeof p?.produtoId!=='string'||
@@ -147,6 +319,26 @@ class PosicoesVitrineRealSQLite{
   const porProduto=new Map(produtos.map(p=>[p.produtoId,p]));
   if(porProduto.size!==produtos.length)
    falha('VITRINE_REAL_PRODUTO_DUPLICADO');
+  // Quando o operador fixa um quadrinho vazio, respeitar sua posição
+  // literal. Antes disso, preservar a compactação histórica da vitrine.
+  if(this.consultarLayoutVazio().posicoesExplicitas){
+   const ocupadas=new Set(registrados.map(x=>x.posicao));
+   const posicionados=registrados.filter(x=>porProduto.has(x.produtoId))
+    .map(x=>Object.freeze({
+     ...porProduto.get(x.produtoId),posicaoVitrine:x.posicao
+    }));
+   const vinculados=new Set(registrados.map(x=>x.produtoId));
+   const novos=produtos.filter(x=>!vinculados.has(x.produtoId))
+    .sort((a,b)=>(a.criadoEm||0)-(b.criadoEm||0)||
+     a.produtoId.localeCompare(b.produtoId));
+   let indice=1;
+   return [...posicionados,...novos.map(produto=>{
+    while(ocupadas.has(indice))indice++;
+    if(indice>TOTAL)falha('VITRINE_REAL_SEM_ESPACO');
+    const posicaoVitrine=indice++;
+    return Object.freeze({...produto,posicaoVitrine});
+   })].sort((a,b)=>a.posicaoVitrine-b.posicaoVitrine);
+  }
   // Respeitar a ordem definida pelo operador, mas nunca mostrar lacunas.
   // Produtos novos entram depois dos anteriores, pela data de cadastro.
   const posicionados=registrados

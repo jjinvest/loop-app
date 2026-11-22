@@ -68,6 +68,7 @@ const TABELAS_ADMIN=Object.freeze([
 // Tabelas de anúncios, regiões e avaliações da loja REAL.
 const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_anuncios_operador',
+ 'loja_real_rascunhos_cadastro',
  'loja_real_canais_fornecedor',
  'loja_real_entrega_local_produto',
  'loja_real_avaliacoes_verificadas'
@@ -254,6 +255,30 @@ function validarIdentidade(arquivo){
       new Set(pos.map(x=>x.produto_id)).size!==pos.length)
     falha('BACKUP_POSICOES_VITRINE_INCONSISTENTES');
   }
+  // Conferir também o mapa real das molduras vazias antes de restaurar.
+  if(lista.includes('loja_real_vitrine_layout_vazios')){
+   const l=b.prepare([
+    'SELECT id,cores_json,revisao,atualizado_em',
+    'FROM loja_real_vitrine_layout_vazios'
+   ].join(' ')).all();
+   const padrao=['ROXO','DOURADO','VERDE','CINZA',
+    'CINZA','VERDE','DOURADO','ROXO'];
+   let cores;
+   try{cores=JSON.parse(l[0]?.cores_json);}catch{
+    falha('BACKUP_LAYOUT_VITRINE_INCONSISTENTE');
+   }
+   if(l.length!==1||l[0].id!==1||
+      !Number.isSafeInteger(l[0].revisao)||l[0].revisao<1||
+      !Number.isSafeInteger(l[0].atualizado_em)||
+      l[0].atualizado_em<1||
+      !Array.isArray(cores)||cores.length!==400||
+      cores.some(c=>!padrao.includes(c))||
+      padrao.some(c=>cores.filter(x=>x===c).length===
+       0||cores.filter(x=>x===c).length!==
+       Array.from({length:400},(_,i)=>padrao[i%8])
+        .filter(x=>x===c).length))
+    falha('BACKUP_LAYOUT_VITRINE_INCONSISTENTE');
+  }
   // Reserva e autorizacoes do relogio devem sobreviver INTEGRAS ao backup.
   const temCaixaCatraca=TABELAS_CATRACA_CAIXA.some(x=>lista.includes(x));
   if(temCaixaCatraca){
@@ -385,6 +410,15 @@ function validarIdentidade(arquivo){
    ver('loja_real_anuncios_operador',[
     'produto_id','origem','categoria','marca','preco_centavos',
     'promocao_centavos','quantidade','revisao']);
+  if(lista.includes('loja_real_rascunhos_cadastro')){
+   ver('loja_real_rascunhos_cadastro',[
+    'id','campos_json','revisao','atualizado_em']);
+   const invalidos=b.prepare([
+    'SELECT id FROM loja_real_rascunhos_cadastro',
+    'WHERE revisao<1 OR atualizado_em<1 OR length(campos_json)>18000 LIMIT 1'
+   ].join(' ')).get();
+   if(invalidos)falha('BACKUP_RASCUNHO_INCONSISTENTE');
+  }
   if(lista.includes('loja_real_canais_fornecedor'))
    ver('loja_real_canais_fornecedor',[
     'produto_id','canal','fornecedor_nome','fornecedor_sku',

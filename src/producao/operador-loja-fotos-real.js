@@ -27,11 +27,13 @@
   const id='akitemmGerenciarOfertasReal';
   const csvId='akitemmImportarFornecedorCsvReal';
   const suporteId='akitemmAcessarAtendimentosReal';
+  const draftsId='akitemmRascunhosProdutosReal';
   const atual=document.getElementById(id);
   const importar=document.getElementById(csvId);
   const suporteBotao=document.getElementById(suporteId);
+  const draftsBotao=document.getElementById(draftsId);
   const dica=document.getElementById('akitemmInstrucaoArrastar');
-  if(!operador){atual?.remove();importar?.remove();suporteBotao?.remove();dica?.remove();return;}
+  if(!operador){atual?.remove();importar?.remove();suporteBotao?.remove();draftsBotao?.remove();dica?.remove();return;}
   const filtro=document.getElementById('akitemmFiltroOfertas');
   if(!filtro)return;
   if(!atual){
@@ -63,11 +65,19 @@
    });
    (document.getElementById(csvId)||filtro).insertAdjacentElement('afterend',btn);
   }
+  if(!draftsBotao){
+   const btn=document.createElement('button');
+   btn.type='button';btn.id=draftsId;btn.className='akitemm-chip';
+   btn.textContent='Produtos não publicados';
+   btn.setAttribute('aria-label','Ver e retomar produtos não publicados');
+   btn.addEventListener('click',()=>void abrirRascunhosNaoPublicados());
+   (document.getElementById(suporteId)||filtro).insertAdjacentElement('afterend',btn);
+  }
   if(!document.getElementById('akitemmInstrucaoArrastar')){
    const instrucao=document.createElement('p');
    instrucao.id='akitemmInstrucaoArrastar';
    instrucao.className='akitemm-instrucao-arrastar';
-   instrucao.textContent='Organizar produtos: no computador, arraste um cartão. No celular, segure a alça ⠿ ou mantenha o dedo sobre o produto e arraste. Para posição exata, toque na alça e use o campo “Ordem na vitrine”.';
+   instrucao.textContent='Organizar a vitrine: a alça ⠿ aparece em cada quadrinho, mesmo vazio. Segure e arraste uma moldura vazia sobre outra para trocar suas cores. Produtos já cadastrados podem ser arrastados para qualquer posição livre ou trocados entre si. Produto novo entra automaticamente no primeiro espaço livre: com 10 produtos, o próximo é o 11º, independentemente do quadrinho tocado.';
    (document.getElementById(csvId)||document.getElementById(id)||filtro)
     .insertAdjacentElement('afterend',instrucao);
   }
@@ -380,7 +390,7 @@
   });
   return {mostrar,limpar};
  }
- const escolhaCor=form=>select('Cor do produto',[
+ const escolhaCor=form=>select('Classificação comercial LOOP (não é cor física)',[
   ['CINZA','Cinza'],['VERDE','Verde'],['DOURADO','Dourado'],
   ['ROXO','Roxo']
  ]);
@@ -430,6 +440,9 @@
    maxLength:70,placeholder:'Ex.: Calçados, roupas, acessórios'
   });
   const marca=campoTexto(form,'Marca (opcional)',{maxLength:70});
+  const corDescricao=campoTexto(form,'Cor física do produto (escreva livremente)',{
+   maxLength:120,placeholder:'Ex.: azul, preto, colorido, azul e branco, estampado'
+  });
   const faixa=document.createElement('fieldset');
   faixa.className='akitemm-editor-precos';
   const legenda=document.createElement('legend');
@@ -474,6 +487,7 @@
     sincronizarOrigem();
     categoria.value=d.categoria||'';
     marca.value=d.marca||'';
+    corDescricao.value=d.corDescricao||'';
     normal.value=deReais(d.precoCentavos??null);
     promo.value=deReais(d.promocaoCentavos??null);
     estoque.value=d.quantidade===null?'':String(d.quantidade);
@@ -498,6 +512,7 @@
      throw Error('SKU_DO_FORNECEDOR_INVALIDO');
     return {origem:modo==='PROPRIO'?'PROPRIO':'API',
      categoria:categoria.value.trim(),marca:marca.value.trim(),
+     corDescricao:corDescricao.value.trim(),
      precoCentavos,promocaoCentavos,quantidade,
      canal:{canal:modo,fornecedorNome:fornecedorNome.value.trim(),
       fornecedorSku:fornecedorSku.value.trim(),
@@ -505,6 +520,24 @@
       revisaoEsperada:revisaoCanal}};
    },
    canalGravado(revisao){revisaoCanal=revisao;},
+   rascunho(){
+    return {origem:origem.s.value,fornecedorNome:fornecedorNome.value,
+     fornecedorSku:fornecedorSku.value,fornecedorContato:fornecedorContato.value,
+     categoria:categoria.value,marca:marca.value,
+     corDescricao:corDescricao.value,precoNormal:normal.value,
+     precoPromocional:promo.value,quantidade:estoque.value};
+   },
+   restaurarRascunho(d){
+    if(!d)return;
+    for(const [campo,valor] of [
+     [origem.s,d.origem],[fornecedorNome,d.fornecedorNome],
+     [fornecedorSku,d.fornecedorSku],[fornecedorContato,d.fornecedorContato],
+     [categoria,d.categoria],[marca,d.marca],[corDescricao,d.corDescricao],
+     [normal,d.precoNormal],[promo,d.precoPromocional],
+     [estoque,d.quantidade]])
+     if(typeof valor==='string')campo.value=valor;
+    sincronizarOrigem();
+   },
    validarCampos(){
     const erros=[],adicionar=(entrada,mensagem)=>erros.push({entrada,mensagem});
     const precoValido=v=>!v.trim()||/^(?:0|[1-9][0-9]{0,6})(?:[,.][0-9]{1,2})?$/.test(v.trim());
@@ -524,6 +557,8 @@
       !Number.isSafeInteger(Number(estoque.value))||
       Number(estoque.value)<0||Number(estoque.value)>1000000))
      adicionar(estoque,'Informe uma quantidade inteira de 0 a 1.000.000.');
+    if(corDescricao.value.trim().length>120)
+     adicionar(corDescricao,'Descreva a cor em até 120 caracteres.');
     if(origem.s.value==='FORNECEDOR_MANUAL'){
      if(fornecedorNome.value.trim().length<2)
       adicionar(fornecedorNome,'Informe o nome do fornecedor.');
@@ -624,6 +659,19 @@
      cidades.value=d.municipios.join(', ');
      taxa.value=(d.taxaCentavos/100).toFixed(2).replace('.',',');
     }
+   },
+   rascunho(){
+    return {entregaModo:modo.s.value,entregaUf:uf.s.value,
+     entregaMunicipios:cidades.value,entregaTaxa:taxa.value};
+   },
+   restaurarRascunho(d){
+    if(!d)return;
+    if(['NACIONAL','VOLTA_REDONDA','MUNICIPIOS'].includes(d.entregaModo))
+     modo.s.value=d.entregaModo;
+    sincronizar();
+    if(typeof d.entregaUf==='string'&&d.entregaUf)uf.s.value=d.entregaUf;
+    if(typeof d.entregaMunicipios==='string')cidades.value=d.entregaMunicipios;
+    if(typeof d.entregaTaxa==='string')taxa.value=d.entregaTaxa;
    },
    obter(){
     if(modo.s.value==='NACIONAL')return {
@@ -767,32 +815,92 @@
  async function vincularQuadradinho(indice,id){
   if(!Number.isSafeInteger(indice)||indice<1||indice>400||!ID.test(id))
    throw Error('QUADRINHO_INVALIDO');
-  const [sessao,slots]=await Promise.all([
-   fetchJson('/api/admin/comercial/sessao'),
-   fetchJson('/api/admin/catalogo-midia/slots')
-  ]);
-  if(!Array.isArray(slots.slots)||slots.total!==400)
-   throw Error('QUADRINHOS_INDISPONIVEIS');
-  const ocupados=new Set(slots.slots.map(x=>x.posicao));
-  const destino=Array.from({length:400},(_,i)=>i+1)
-   .find(n=>!ocupados.has(n));
-  if(!destino)throw Error('VITRINE_SEM_ESPACO');
-  const atual=slots.slots.find(x=>x.posicao===destino);
-  const resposta=await fetchJson(
-   '/api/admin/catalogo-midia/slots/'+destino,{
-    method:'POST',headers:{'Content-Type':'application/json',
-     'X-Loop-Admin-Csrf':sessao.csrfToken},
-    body:JSON.stringify({produtoId:id,revisaoEsperada:atual?.revisao||0})
-   });
-  if(resposta.produtoId!==id||resposta.posicao!==destino)
-   throw Error('QUADRINHO_NAO_CONFIRMADO');
+  const sessao=await fetchJson('/api/admin/comercial/sessao');
+  if(typeof sessao.csrfToken!=='string')
+   throw Error('OPERADOR_SESSAO_INVALIDA');
+  // O número tocado ABRE o cadastro, mas NUNCA determina a posição.
+  // A escolha é atômica e sequencial no serviço real, sem buracos.
+  const resposta=await fetchJson('/api/admin/catalogo-midia/vincular-proximo',{
+   method:'POST',headers:{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':sessao.csrfToken},
+   body:JSON.stringify({produtoId:id})
+  });
+  if(resposta.produtoId!==id||resposta.automatico!==true||
+     !Number.isSafeInteger(resposta.posicao)||resposta.posicao<1||
+     resposta.posicao>400)throw Error('QUADRINHO_NAO_CONFIRMADO');
   return resposta;
  }
- async function escolherProduto(indice){
+ // Aqui aparecem tanto cadastros reais RASCUNHO como formulários
+ // interrompidos antes da criação. Nenhum item desta lista é publicado.
+ async function abrirRascunhosNaoPublicados(){
+  if(!operador)return;
+  const {corpo,estado}=modal('Produtos não publicados · AKITEMM');
+  corpo.append(linha('Retome um cadastro sem começar de novo. '+
+   'Formulários interrompidos guardam os campos digitados; fotos não enviadas '+
+   'precisam ser selecionadas novamente.'));
+  try{
+   const [salvos,catalogo]=await Promise.all([
+    fetchJson('/api/admin/catalogo-midia/rascunhos-formulario'),
+    fetchJson('/api/admin/catalogo-midia/produtos')
+   ]);
+   if(!Array.isArray(salvos.rascunhos)||!Array.isArray(catalogo.produtos))
+    throw Error('LISTA_RASCUNHOS_INVALIDA');
+   const produtos=catalogo.produtos.filter(x=>x.estado==='RASCUNHO'&&
+    ID.test(x.produtoId));
+   const formulario=salvos.rascunhos;
+   const total=produtos.length+formulario.length;
+   estado.textContent=total?
+    total+' cadastro(s) não publicado(s) localizado(s).':
+    'Não existem produtos pendentes neste momento.';
+   for(const item of formulario){
+    const card=document.createElement('section');
+    card.className='akitemm-card-rascunho';
+    const titulo=linha(item.campos.titulo.trim()||'Produto sem nome','strong');
+    const data=linha('Formulário não finalizado · salvo em '+
+     new Date(item.atualizadoEm).toLocaleString('pt-BR'));
+    const continuar=document.createElement('button');
+    continuar.type='button';continuar.textContent='Continuar cadastro';
+    continuar.addEventListener('click',()=>void escolherProduto(1,item));
+    const excluir=document.createElement('button');
+    excluir.type='button';excluir.textContent='Descartar este rascunho';
+    excluir.addEventListener('click',async()=>{
+     if(!window.confirm('Descartar os dados deste formulário não publicado?'))
+      return;
+     excluir.disabled=true;
+     try{
+      const sessao=await fetchJson('/api/admin/comercial/sessao');
+      const r=await fetchJson(
+       '/api/admin/catalogo-midia/rascunhos-formulario/'+item.id+'/excluir',{
+        method:'POST',headers:{'Content-Type':'application/json',
+         'X-Loop-Admin-Csrf':sessao.csrfToken},body:'{}'
+       });
+      if(r.excluido!==true)throw Error('EXCLUSAO_NAO_CONFIRMADA');
+      card.remove();
+      estado.textContent='Rascunho descartado. Produto publicado não foi afetado.';
+     }catch(e){estado.textContent='Não foi possível descartar: '+e.message;}
+     finally{excluir.disabled=false;}
+    });
+    card.append(titulo,data,continuar,excluir);corpo.append(card);
+   }
+   for(const item of produtos){
+    const card=document.createElement('section');
+    card.className='akitemm-card-rascunho';
+    const titulo=document.createElement('strong');
+    titulo.textContent=item.nome||item.produtoId;
+    const d=linha('Produto cadastrado, mas ainda não publicado · '+item.produtoId);
+    const continuar=document.createElement('button');
+    continuar.type='button';continuar.textContent='Editar e publicar';
+    continuar.addEventListener('click',()=>void abrirProduto(item.produtoId));
+    card.append(titulo,d,continuar);corpo.append(card);
+   }
+  }catch(e){estado.textContent='Não foi possível carregar rascunhos: '+e.message;}
+ }
+ async function escolherProduto(indice,rascunhoInicial=null){
   if(!Number.isSafeInteger(indice)||indice<1||indice>400)return;
   const {corpo,estado}=modal('Cadastrar produto · AKITEMM');
   corpo.append(linha('Cadastro na AKITEMM. Cada campo com erro será marcado e terá um atalho para correção. '+
-   'Distribuidor e SKU só são necessários ao escolher fornecedor externo.'));
+   'Distribuidor e SKU só são necessários ao escolher fornecedor externo. ' +
+   'Ao publicar, o produto entra na primeira posição livre, independentemente do quadrinho tocado.'));
   const form=document.createElement('form');form.autocomplete='off';
   const guia=criarGuiaPendencias(form,estado);
   const nome=campoTexto(form,'Nome do produto',{placeholder:'Ex.: Camiseta preta'});
@@ -814,6 +922,91 @@
   const criar=document.createElement('button');
   criar.type='submit';criar.textContent='Salvar produto e colocar na vitrine';
   form.append(criar);corpo.append(form);
+  // Salvar rascunho mesmo com campos incompletos. Nunca publica.
+  let rascunhoId=rascunhoInicial?.id||null;
+  let revisaoRascunho=rascunhoInicial?.revisao||0;
+  let salvarEmCurso=Promise.resolve(),temporizadorRascunho=null;
+  let formularioFinalizado=false,formularioAlterado=false;
+  const avisoRascunho=linha('Os campos digitados são salvos como rascunho. '+
+   'A foto ainda não enviada precisa ser selecionada novamente.');
+  avisoRascunho.className='akitemm-estado-rascunho';
+  avisoRascunho.setAttribute('role','status');
+  form.append(avisoRascunho);
+  const capturarRascunho=()=>({
+   titulo:nome.value,descricao:desc.value,codigo:codigo.value,
+   classificacao:cor.s.value,...anuncio.rascunho(),
+   ...entrega.rascunho()
+  });
+  const salvarRascunho=()=>{
+   if(formularioFinalizado)return Promise.resolve();
+   clearTimeout(temporizadorRascunho);
+   const campos=capturarRascunho();
+   const tarefa=async()=>{
+    const sessao=await fetchJson('/api/admin/comercial/sessao');
+    if(typeof sessao.csrfToken!=='string')
+     throw Error('OPERADOR_SESSAO_INVALIDA');
+    const salvo=await fetchJson(
+     '/api/admin/catalogo-midia/rascunhos-formulario',{
+      method:'POST',headers:{'Content-Type':'application/json',
+       'X-Loop-Admin-Csrf':sessao.csrfToken},
+      body:JSON.stringify({id:rascunhoId,
+       revisaoEsperada:revisaoRascunho,campos})
+     });
+    if(!salvo.id||!Number.isSafeInteger(salvo.revisao))
+     throw Error('RASCUNHO_NAO_CONFIRMADO');
+    rascunhoId=salvo.id;revisaoRascunho=salvo.revisao;
+    avisoRascunho.textContent='Rascunho guardado na AKITEMM. '+
+     'Você pode retomá-lo em Produtos não publicados.';
+   };
+   salvarEmCurso=salvarEmCurso.catch(()=>{}).then(tarefa);
+   return salvarEmCurso;
+  };
+  const falhaRascunho=e=>{
+   avisoRascunho.textContent='Rascunho não salvo: '+e.message+
+    '. Use “Salvar rascunho” para tentar novamente.';
+  };
+  const agendarRascunho=()=>{
+   if(formularioFinalizado)return;
+   formularioAlterado=true;
+   clearTimeout(temporizadorRascunho);
+   avisoRascunho.textContent='Alterações ainda não salvas...';
+   temporizadorRascunho=setTimeout(()=>{
+    void salvarRascunho().catch(falhaRascunho);
+   },750);
+  };
+  form.addEventListener('input',agendarRascunho);
+  form.addEventListener('change',agendarRascunho);
+  // Fechar pelo X também tenta gravar a última alteração, sem publicar.
+  dialogo.addEventListener('close',()=>{
+   if(!formularioFinalizado&&formularioAlterado){
+    clearTimeout(temporizadorRascunho);
+    void salvarRascunho().catch(falhaRascunho);
+   }
+  },{once:true});
+  const salvarParcial=document.createElement('button');
+  salvarParcial.type='button';salvarParcial.className='akitemm-editor-secundario';
+  salvarParcial.textContent='Salvar rascunho e continuar depois';
+  salvarParcial.addEventListener('click',async()=>{
+   salvarParcial.disabled=true;
+   try{
+    await salvarRascunho();
+    formularioFinalizado=true;
+    dialogo.close();void abrirRascunhosNaoPublicados();
+   }catch(e){falhaRascunho(e);}
+   finally{salvarParcial.disabled=false;}
+  });
+  form.append(salvarParcial);
+  if(rascunhoInicial?.campos){
+   const dados=rascunhoInicial.campos;
+   nome.value=dados.titulo||'';desc.value=dados.descricao||'';
+   codigo.value=dados.codigo||'';
+   anuncio.restaurarRascunho(dados);
+   entrega.restaurarRascunho(dados);
+   if(['CINZA','VERDE','DOURADO','ROXO'].includes(dados.classificacao))
+    cor.s.value=dados.classificacao;
+   avisoRascunho.textContent='Rascunho recuperado. Confira os campos e '+
+    'selecione a foto novamente antes de publicar.';
+  }
   const vinculo=document.createElement('details');
   const resumoExistente=document.createElement('summary');
   resumoExistente.textContent='Usar um produto que já cadastrei';
@@ -826,6 +1019,14 @@
    if(!Array.isArray(r.produtos)||r.checkoutReal!==false||
       !Array.isArray(slots.slots)||slots.total!==400)
     throw Error('CATALOGO_ADMIN_INCONSISTENTE');
+   const ocupadas=new Set(slots.slots.map(x=>x.posicao));
+   const primeiraLivre=Array.from({length:400},(_,i)=>i+1)
+    .find(n=>!ocupadas.has(n));
+   if(!primeiraLivre)throw Error('VITRINE_SEM_ESPACO');
+   const numero=linha('Próximo produto: posição '+primeiraLivre+
+    '. A posição é automática, mesmo que você tenha clicado no quadrinho '+indice+'.');
+   numero.className='akitemm-indicador-proxima-posicao';
+   corpo.insertBefore(numero,form);
    const vinculados=new Set(slots.slots.map(x=>x.produtoId));
    const existentes=r.produtos.filter(p=>ID.test(p.produtoId)&&
     (p.estado==='RASCUNHO'||!vinculados.has(p.produtoId)));
@@ -839,8 +1040,7 @@
     abrir.addEventListener('click',async()=>{
      abrir.disabled=true;
      try{
-      if(!vinculados.has(seletor.s.value))
-       await vincularQuadradinho(indice,seletor.s.value);
+      // Consultar um rascunho não o transforma em produto publicado.
       dialogo.close();void abrirProduto(seletor.s.value);
      }catch(e){estado.textContent='Não foi possível abrir: '+e.message;}
      finally{abrir.disabled=false;}
@@ -854,6 +1054,9 @@
   form.addEventListener('submit',async ev=>{
    ev.preventDefault();
    if(aberto)return;
+   aberto=true;
+   // Mostrar cada campo errado imediatamente, sem esperar uma requisição.
+   // O salvamento do rascunho não bloqueia a correção visual.
    const titulo=nome.value.trim();
    const informado=codigo.value.trim(),id=informado||slugManual();
    const erros=[];
@@ -862,8 +1065,15 @@
    if(!ID_NOVO.test(id))
     erros.push({entrada:codigo,mensagem:'Código: use letras minúsculas, números ou hífen (3 a 80 caracteres).'});
    erros.push(...anuncio.validarCampos());
-   if(!guia.mostrar(erros))return;
-   aberto=true;criar.disabled=true;estado.textContent='Salvando no catálogo real...';
+   if(!guia.mostrar(erros)){
+    aberto=false;
+    void salvarRascunho().catch(falhaRascunho);
+    return;
+   }
+   // Para cadastro válido, confirmar o rascunho primeiro, depois criar.
+   try{await salvarRascunho();}
+   catch(e){falhaRascunho(e);aberto=false;return;}
+   criar.disabled=true;estado.textContent='Salvando no catálogo real...';
    let criado=false;
    try{
     const imagem=await foto.obter();
@@ -883,14 +1093,29 @@
     await salvarEntrega(id,csrf,entrega,0);
     if(imagem){
      await salvarFoto(id,csrf,imagem,1);
-     await vincularQuadradinho(indice,id);
+     const posicaoSalva=await vincularQuadradinho(indice,id);
      await publicarFoto(id,csrf);
      atualizarLoja();
-     estado.textContent='Produto e foto salvos. O item agora aparece nos primeiros espaços da vitrine.';
+     estado.textContent='Produto e foto salvos na posição '+posicaoSalva.posicao+
+      '. A entrada segue a ordem sequencial dos produtos.';
      criar.textContent='Produto salvo';
     }else{
      estado.textContent='Produto salvo sem foto, como rascunho. Selecione uma imagem para publicar.';
      criar.textContent='Produto salvo';
+    }
+    // Produto agora existe no cadastro real (PUBLICADO ou RASCUNHO).
+    // Retirar apenas o formulário temporário, para não duplicar entradas.
+    formularioFinalizado=true;
+    clearTimeout(temporizadorRascunho);
+    if(rascunhoId){
+     try{
+      await fetchJson('/api/admin/catalogo-midia/rascunhos-formulario/'+
+       rascunhoId+'/excluir',{
+       method:'POST',headers:{'Content-Type':'application/json',
+        'X-Loop-Admin-Csrf':csrf},body:'{}'
+      });
+     }catch(e){avisoRascunho.textContent=
+      'Produto salvo, mas o rascunho anterior ainda precisa ser descartado: '+e.message;}
     }
     criar.disabled=true;
     const editar=document.createElement('button');
@@ -931,7 +1156,7 @@
   form.append(galeriaFotos.label);
   const salvarDados=document.createElement('button');
   salvarDados.type='submit';
-  salvarDados.textContent='Salvar dados, preço, promoção e cor';
+  salvarDados.textContent='Salvar dados, preços e cor física';
   form.append(salvarDados);
   const salvarImagem=document.createElement('button');
   salvarImagem.type='button';salvarImagem.textContent='Salvar foto e publicar na vitrine';
@@ -939,7 +1164,7 @@
   const salvarClassificacao=document.createElement('button');
   salvarClassificacao.type='button';
   salvarClassificacao.className='akitemm-editor-secundario';
-  salvarClassificacao.textContent='Salvar cor do produto';
+  salvarClassificacao.textContent='Salvar classificação comercial';
   form.append(salvarClassificacao);
   const ordemBox=document.createElement('section');
   const ordemLabel=campoTexto(ordemBox,
@@ -950,7 +1175,7 @@
   const mover=document.createElement('button');mover.type='button';
   mover.className='akitemm-editor-secundario';
   mover.textContent='Mover produto para esta posição';
-  const detalheOrdem=linha('A vitrine continua sem lacunas. Todas as cores ficam misturadas.');
+  const detalheOrdem=linha('A cor física é texto livre. A classificação comercial segue as regras do LOOP.');
   ordemBox.append(mover,detalheOrdem);form.append(ordemBox);
   corpo.append(form);
   let revisaoAtual=null,revisaoAnuncio=0,revisaoEntrega=0,csrf=null,slotsAtuais=[],estaPublicado=false;
@@ -1032,11 +1257,11 @@
      const entregaSalva=await salvarEntrega(id,csrf,entrega,revisaoEntrega);
      revisaoEntrega=entregaSalva.revisao;
      await salvarCor(id,csrf,cor.s.value);
-    },'Nome, preço, promoção, estoque e cor salvos.');
+    },'Nome, cor física, preço, promoção e estoque salvos.');
    });
    salvarClassificacao.addEventListener('click',()=>{
     void botoesAtualizar(async()=>{await salvarCor(id,csrf,cor.s.value);},
-     'Cor atualizada; filtros da loja respeitam a nova classificação.');
+     'Classificação comercial salva; os filtros seguem as regras do LOOP.');
    });
    salvarImagem.addEventListener('click',()=>{
     void botoesAtualizar(async()=>{
@@ -1094,7 +1319,7 @@
   anuncioArrasto.textContent=mensagem;
  };
  const posicaoCard=c=>{
-  const p=Number(c?.dataset?.akitemmOrdem);
+  const p=Number(c?.dataset?.akitemmOrdem||c?.dataset?.akitemmSlot);
   return Number.isSafeInteger(p)&&p>=1&&p<=400?p:null;
  };
  function prepararAlcas(){
@@ -1108,21 +1333,28 @@
    return;
   }
   for(const c of lista.querySelectorAll(
-   '.produto-loja-loop[data-produto-id][data-akitemm-ordem]')){
+   '.produto-loja-loop[data-produto-id][data-akitemm-ordem],'+
+   '.akitemm-slot-vazio[data-akitemm-slot]')){
    if(c.classList.contains('akitemm-ordenavel'))continue;
    c.classList.add('akitemm-ordenavel');
-   // Impedir que o navegador arraste a foto em vez de reordenar o produto.
+   const vazio=c.classList.contains('akitemm-slot-vazio');
+   // A alça aparece mesmo no quadrinho vazio, sem produto cadastrado.
    for(const imagem of c.querySelectorAll('img'))imagem.draggable=false;
    const alca=document.createElement('button');
    alca.type='button';alca.className='akitemm-alca-arrastar';
    alca.textContent='⠿';
-   alca.title='Arraste pela alça ou segure o cartão para reordenar';
-   alca.setAttribute('aria-label','Segure e arraste produto da posição '+
-    posicaoCard(c)+'; toque para editar a posição numericamente');
+   alca.title=vazio?'Arraste para trocar com outro espaço vazio':
+    'Arraste produto para reorganizar a vitrine';
+   alca.setAttribute('aria-label',vazio?
+    'Arrastar espaço vazio da posição '+posicaoCard(c)+
+    '; toque para abrir o cadastro de produto':
+    'Segure e arraste produto da posição '+posicaoCard(c)+
+    '; toque para editar a posição numericamente');
    alca.addEventListener('click',ev=>{
     ev.preventDefault();ev.stopPropagation();
     if(Date.now()<suprimirCliqueAte)return;
-    void abrirProduto(c.dataset.produtoId);
+    if(vazio)void escolherProduto(posicaoCard(c));
+    else void abrirProduto(c.dataset.produtoId);
    });
    c.append(alca);
   }
@@ -1157,12 +1389,17 @@
   if(!arrasto?.ativo)return;
   const abaixo=document.elementFromPoint(arrasto.x,arrasto.y);
   const card=abaixo?.closest?.(
-   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem]');
-  if(!card||card===arrasto.origem){
+   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem],'+
+   '#catalogoLojaLoop .akitemm-slot-vazio[data-akitemm-slot]');
+  // Produto pode ser solto em produto OU espaço vazio. Moldura vazia
+  // continua movendo-se apenas sobre outra moldura vazia.
+  if(!card||card===arrasto.origem||
+     (arrasto.origem.dataset.akitemmSlot&&!card.dataset.akitemmSlot)){
    destacarDestino(null,'');return;
   }
   const rect=card.getBoundingClientRect();
-  destacarDestino(card,arrasto.x<rect.left+rect.width/2?'antes':'depois');
+  destacarDestino(card,card.dataset.akitemmSlot?'trocar':
+   arrasto.x<rect.left+rect.width/2?'antes':'depois');
  }
  function flutuarArrasto(){
   if(!arrasto?.ativo)return;
@@ -1174,7 +1411,9 @@
  function iniciarArrasto(){
   if(!arrasto||arrasto.ativo||!operador)return;
   const d=arrasto;d.ativo=true;
-  const nome=d.origem.querySelector('h3')?.textContent||'Produto';
+  const nome=d.origem.dataset.akitemmSlot?
+   'Espaço vazio '+posicaoCard(d.origem):
+   d.origem.querySelector('h3')?.textContent||'Produto';
   const fantasma=document.createElement('div');
   fantasma.className='akitemm-arrasto-fantasma';
   fantasma.textContent=nome;
@@ -1185,7 +1424,9 @@
   }
   document.body.append(fantasma);d.fantasma=fantasma;
   d.origem.classList.add('akitemm-arrastando');
-  avisarArrasto('Arraste e solte sobre outro produto para mudar a posição.');
+  avisarArrasto(d.origem.dataset.akitemmSlot?
+   'Arraste até outro espaço vazio para trocar as molduras.':
+   'Arraste o produto até outro produto ou quadrinho vazio para escolher onde ele aparece.');
   flutuarArrasto();
   const rolar=()=>{
    if(!arrasto?.ativo)return;
@@ -1214,11 +1455,47 @@
   if(!teveArrasto)return;
   suprimirCliqueAte=Date.now()+700;
   if(!alvo||!numeroOrigem||!numeroAlvo||numeroAlvo===numeroOrigem){
-   avisarArrasto('Nenhuma alteração. Solte sobre outro produto.');return;
+   avisarArrasto('Nenhuma alteração. Solte sobre outro quadrinho compatível.');return;
   }
-  const destino=numeroOrigem<numeroAlvo?
-   numeroAlvo-(lado==='antes'?1:0):
-   numeroAlvo+(lado==='antes'?0:1);
+  if(d.origem.dataset.akitemmSlot){
+   if(!alvo.dataset.akitemmSlot){
+    avisarArrasto('Para trocar molduras vazias, solte sobre outra moldura vazia.');
+    return;
+   }
+   avisarArrasto('Salvando a nova posição das molduras vazias...');
+   void (async()=>{
+    try{
+     const [sessao,slots]=await Promise.all([
+      fetchJson('/api/admin/comercial/sessao'),
+      fetchJson('/api/admin/catalogo-midia/slots')
+     ]);
+     if(!operador||!slots.layoutVazio||
+        !Number.isSafeInteger(slots.layoutVazio.revisao)||
+        typeof sessao.csrfToken!=='string')
+      throw Error('OPERADOR_SESSAO_INVALIDA');
+     const resposta=await fetchJson(
+      '/api/admin/catalogo-midia/trocar-espacos-vazios',{
+       method:'POST',headers:{'Content-Type':'application/json',
+        'X-Loop-Admin-Csrf':sessao.csrfToken},
+       body:JSON.stringify({origem:numeroOrigem,destino:numeroAlvo,
+        revisaoEsperada:slots.layoutVazio.revisao})
+      });
+     if(resposta.confirmado!==true||resposta.origem!==numeroOrigem||
+        resposta.destino!==numeroAlvo)
+      throw Error('TROCA_VAZIOS_NAO_CONFIRMADA');
+     avisarArrasto('Molduras vazias trocadas entre as posições '+
+      numeroOrigem+' e '+numeroAlvo+'. Produtos seguem a ordem de cadastro.');
+     atualizarLoja();
+    }catch(e){
+     avisarArrasto('Molduras não alteradas: '+e.message);
+    }
+   })();
+   return;
+  }
+  const destino=alvo.dataset.akitemmSlot?numeroAlvo:
+   numeroOrigem<numeroAlvo?
+    numeroAlvo-(lado==='antes'?1:0):
+    numeroAlvo+(lado==='antes'?0:1);
   if(destino===numeroOrigem){
    avisarArrasto('O produto já está nessa posição.');return;
   }
@@ -1235,8 +1512,8 @@
     const registro=slots.slots.find(r=>r.produtoId===origem);
     // Nunca ordenar por um item inexistente nem por um cadastro temporario.
     if(!registro)throw Error('PRODUTO_SEM_POSICAO_SALVA');
-    if(destino<1||destino>slots.slots.length)
-     throw Error('DESTINO_AINDA_NAO_SALVO');
+    if(destino<1||destino>400)
+     throw Error('DESTINO_FORA_DA_VITRINE');
     const resposta=await fetchJson('/api/admin/catalogo-midia/reordenar-vitrine',{
      method:'POST',headers:{'Content-Type':'application/json',
       'X-Loop-Admin-Csrf':sessao.csrfToken},
@@ -1245,8 +1522,8 @@
     });
     if(resposta.produtoId!==origem||resposta.posicao!==destino)
      throw Error('ORDENACAO_NAO_CONFIRMADA');
-    avisarArrasto('Produto movido para '+destino+
-     'º. Os demais foram reorganizados.');
+    avisarArrasto('Produto movido para o quadrinho '+destino+
+     '. Organização manual salva.');
     atualizarLoja();
    }catch(e){
     avisarArrasto('A ordem não foi alterada: '+e.message+
@@ -1261,7 +1538,8 @@
  document.addEventListener('pointerdown',ev=>{
   if(!operador||arrasto||dialogo?.open||ev.button!==0)return;
   const carta=ev.target.closest?.(
-   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem]');
+   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem],'+
+   '#catalogoLojaLoop .akitemm-slot-vazio[data-akitemm-slot]');
   if(!carta||!posicaoCard(carta))return;
   const alca=ev.target.closest('.akitemm-alca-arrastar');
   // Toque longo no cartão também inicia a ordem; deslizar continua rolando.

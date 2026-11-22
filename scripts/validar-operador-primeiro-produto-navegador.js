@@ -141,6 +141,122 @@ async function principal(){
   assert.equal(vazio.checkoutReal,false);
   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
   assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
+  // No operador, os 20 quadrinhos vazios possuem alça visível e funcional.
+  await page.locator(
+   '#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar'
+  ).waitFor({state:'visible'});
+  assert.equal(await page.locator(
+   '#catalogoLojaLoop .akitemm-slot-vazio .akitemm-alca-arrastar'
+  ).count(),20);
+  // Ofertas mantém os espaços vazios; não cria promoções fictícias.
+  await page.locator('#akitemmFiltroOfertas').click();
+  await page.locator('#catalogoLojaLoop .akitemm-slot-vazio .akitemm-alca-arrastar')
+   .first().waitFor({state:'visible'});
+  assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
+  await page.locator('#akitemmFiltroTodos').click();
+  await page.locator('#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar')
+   .waitFor({state:'visible'});
+  const vazioOriginal=await page.evaluate(async()=>{
+   const r=await fetch('/api/admin/catalogo-midia/slots');
+   return (await r.json()).layoutVazio;
+  });
+  // O conteúdo fica abaixo do cabeçalho: é obrigatório rolar até os
+  // cartões antes de enviar um toque físico. waitFor(visible) não rola.
+  await page.locator(
+   '#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar'
+  ).scrollIntoViewIfNeeded();
+  const sessaoTouch=await ctx.newCDPSession(page);
+  const puxar=await page.locator(
+   '#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar'
+  ).boundingBox();
+  const soltar=await page.locator(
+   '#catalogoLojaLoop [data-akitemm-slot="2"]'
+  ).boundingBox();
+  assert.ok(puxar&&soltar);
+  const x1=puxar.x+puxar.width/2,y1=puxar.y+puxar.height/2;
+  // No móvel, o centro do segundo cartão horizontal pode ficar FORA da
+  // viewport. Soltar sobre a faixa visível evita um gesto impossível.
+  const viewport=page.viewportSize();
+  const x2=Math.min(soltar.x+Math.min(12,soltar.width/5),
+   viewport.width-12);
+  const y2=soltar.y+Math.min(soltar.height/2,85);
+  assert.ok(x2>soltar.x&&x2<soltar.x+soltar.width,
+   'A área de soltura deve estar visível dentro do segundo cartão');
+  assert.ok(y1>0&&y1<viewport.height&&y2>0&&y2<viewport.height,
+   'Cartões devem estar efetivamente dentro da altura da tela');
+  console.log('GESTO_VAZIO='+JSON.stringify({
+   larguraViewport:viewport.width,puxar,soltar,x1,y1,x2,y2
+  }));
+  await sessaoTouch.send('Input.dispatchTouchEvent',{
+   type:'touchStart',touchPoints:[{x:x1,y:y1}]
+  });
+  await new Promise(resolve=>setTimeout(resolve,260));
+  for(let i=1;i<=5;i++)await sessaoTouch.send('Input.dispatchTouchEvent',{
+   type:'touchMove',touchPoints:[{
+    x:x1+(x2-x1)*i/5,y:y1+(y2-y1)*i/5
+   }]
+  });
+  await sessaoTouch.send('Input.dispatchTouchEvent',{
+   type:'touchEnd',touchPoints:[]
+  });
+  await page.getByText('Molduras vazias trocadas entre as posições',{
+   exact:false
+  }).waitFor({timeout:12000}).catch(async err=>{
+   const dados=await page.evaluate(()=>({
+    aviso:document.querySelector('.akitemm-arrasto-aviso')?.textContent,
+    slots:[...document.querySelectorAll('.akitemm-slot-vazio')].slice(0,3)
+     .map(n=>({slot:n.dataset.akitemmSlot,classes:n.className})),
+    erros:document.getElementById('akitemmResultadoProdutos')?.textContent
+   }));
+   throw Error('ARRASTE_VAZIOS_NAO_CONFIRMADO '+JSON.stringify(dados)+
+    ' '+err.message);
+  });
+  await page.waitForFunction(cores=>document.querySelector(
+   '#catalogoLojaLoop [data-akitemm-slot="1"]'
+  )?.classList.contains('akitemm-slot-'+cores[1].toLowerCase()),
+  vazioOriginal.cores);
+  const depoisVazios=await page.evaluate(async()=>{
+   const r=await fetch('/api/admin/catalogo-midia/slots');
+   return (await r.json()).layoutVazio;
+  });
+  assert.equal(depoisVazios.revisao,vazioOriginal.revisao+1);
+  assert.equal(depoisVazios.cores[0],vazioOriginal.cores[1]);
+  assert.equal(depoisVazios.cores[1],vazioOriginal.cores[0]);
+  assert.deepEqual(depoisVazios.cores.slice().sort(),
+   vazioOriginal.cores.slice().sort());
+  await page.waitForTimeout(750);
+  // Produto ainda não criado: salvar formulário incompleto no SQLite.
+  await page.locator('#catalogoLojaLoop [data-akitemm-slot="1"]').click();
+  const d0=page.locator('#akitemmOperadorFotosReal');
+  await d0.getByRole('heading',{name:'Cadastrar produto · AKITEMM'}).waitFor();
+  await d0.getByRole('textbox',{name:'Nome do produto'}).fill('Rascunho não publicado');
+  await d0.getByLabel('Cor física do produto (escreva livremente)')
+   .fill('Colorido, verde e azul');
+  await d0.getByLabel('Preço normal (R$)').fill('350');
+  await d0.getByRole('button',{
+   name:'Salvar rascunho e continuar depois'
+  }).click();
+  await d0.getByRole('heading',{
+   name:'Produtos não publicados · AKITEMM'
+  }).waitFor();
+  await d0.getByText('Rascunho não publicado').waitFor();
+  assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
+  await d0.locator('.akitemm-modal-fechar').click();
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.getByRole('button',{name:'Produtos não publicados'}).click();
+  await d0.getByText('Rascunho não publicado').waitFor();
+  await d0.getByRole('button',{name:'Continuar cadastro'}).click();
+  assert.equal(await d0.getByRole('textbox',{name:'Nome do produto'}).inputValue(),
+   'Rascunho não publicado');
+  assert.equal(await d0.getByLabel('Cor física do produto (escreva livremente)')
+   .inputValue(),'Colorido, verde e azul');
+  assert.equal(await d0.getByLabel('Preço normal (R$)').inputValue(),'350');
+  await d0.locator('.akitemm-modal-fechar').click();
+  await page.getByRole('button',{name:'Produtos não publicados'}).click();
+  page.once('dialog',d=>void d.accept());
+  await d0.getByRole('button',{name:'Descartar este rascunho'}).click();
+  await d0.getByText('Rascunho descartado.').waitFor();
+  await d0.locator('.akitemm-modal-fechar').click();
   // Cadastro manual direto no quadradinho, com foto e cor no mesmo painel.
   const m=page.locator('#akitemmOperadorFotosReal');
   const criarProduto=async({slot,codigo,nome,cor})=>{
@@ -168,17 +284,27 @@ async function principal(){
    assert.equal(await m.getByLabel('Preço promocional (R$) — opcional')
     .evaluate(x=>document.activeElement===x),true);
    await m.getByLabel('Preço promocional (R$) — opcional').fill('249,90');
+   await m.getByLabel('Cor física do produto (escreva livremente)')
+    .fill('Colorido, azul, preto e branco');
    await m.getByLabel('Quantidade disponível (opcional)').fill('12');
    const codigoArea=m.locator('details').filter({hasText:'Código do produto'});
    await codigoArea.locator('summary').click();
    await codigoArea.locator('input').fill(codigo);
-   await m.getByLabel('Cor do produto').selectOption(cor);
+   await m.getByLabel('Classificação comercial LOOP (não é cor física)').selectOption(cor);
    await m.locator('input[type=file]').setInputFiles({
     name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
    });
    await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
-   await m.getByText('Produto e foto salvos.',{exact:false}).waitFor({
+   await m.getByText('Produto e foto salvos na posição ',{exact:false}).waitFor({
     timeout:15000
+   }).catch(async e=>{
+    const diag=await m.evaluate(d=>({
+     status:d.querySelector('.akitemm-editor-status')?.textContent,
+     pendencias:d.querySelector('.akitemm-erros-cadastro')?.textContent,
+     titulo:d.querySelector('h2')?.textContent
+    }));
+    throw Error('CADASTRO_PRODUTO_NAO_CONFIRMADO '+JSON.stringify(diag)+
+     ' '+e.message);
    });
    await m.locator('.akitemm-modal-fechar').click();
    await page.locator('#catalogoLojaLoop [data-produto-id="'+codigo+'"]')
@@ -193,7 +319,8 @@ async function principal(){
   assert.equal(produto.ativo,true);
   assert.equal(midia.fotos.listar('primeiro-produto').fotos.length,1);
   assert.equal(midia.fotos.listar('primeiro-produto').fotos[0].posicao,1);
-  await criarProduto({slot:2,codigo:'segundo-produto',
+  // Mesmo tocando no quadrinho 18, o segundo produto vai para a posição 2.
+  await criarProduto({slot:18,codigo:'segundo-produto',
    nome:'Segundo produto de ensaio',cor:'DOURADO'});
   const mapa=await page.evaluate(async()=>{
    const res=await fetch('/api/admin/catalogo-midia/slots',{
@@ -254,7 +381,7 @@ async function principal(){
    alcas:document.querySelectorAll('.akitemm-alca-arrastar').length
   }));
   console.log('ARRASTE_TOUCH_DIAGNOSTICO='+JSON.stringify(descricaoArrasto));
-  await page.getByText('Produto movido para 1º.',{exact:false}).waitFor({
+  await page.getByText('Produto movido para o quadrinho 1.',{exact:false}).waitFor({
    timeout:12000
   });
   await page.waitForTimeout(750);
@@ -287,6 +414,38 @@ async function principal(){
   });
   assert.deepEqual(gravado.map(x=>x.produtoId),
    ['segundo-produto','primeiro-produto']);
+  // Correção manual: colocar o produto no quadrinho 18 vazio,
+  // manter a ordem publicada e confirmar no banco real.
+  const movimentoLivre=await page.evaluate(async()=>{
+   const s=await fetch('/api/admin/comercial/sessao',{credentials:'same-origin'});
+   const sessao=await s.json();
+   const atual=await fetch('/api/admin/catalogo-midia/slots',{
+    credentials:'same-origin'
+   });
+   const slots=(await atual.json()).slots;
+   const produto=slots.find(x=>x.produtoId==='primeiro-produto');
+   const res=await fetch('/api/admin/catalogo-midia/reordenar-vitrine',{
+    method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'application/json',
+     'X-Loop-Admin-Csrf':sessao.csrfToken},
+    body:JSON.stringify({produtoId:'primeiro-produto',
+     novaPosicao:18,revisaoEsperada:produto.revisao})
+   });
+   return {status:res.status,corpo:await res.json()};
+  });
+  assert.equal(movimentoLivre.status,200);
+  assert.equal(movimentoLivre.corpo.posicao,18);
+  assert.equal(movimentoLivre.corpo.manual,true);
+  await page.evaluate(()=>window.dispatchEvent(new Event('akitemm:catalogo-atualizar')));
+  await page.waitForFunction(()=>document.querySelector(
+   '#catalogoLojaLoop [data-produto-id="primeiro-produto"]'
+  )?.dataset.akitemmOrdem==='18');
+  const registrado=await page.evaluate(async()=>{
+   const r=await fetch('/api/loja/catalogo',{cache:'no-store'});
+   const dados=await r.json();
+   return dados.produtos.map(p=>[p.produtoId,p.posicaoVitrine]);
+  });
+  assert.deepEqual(registrado,[['segundo-produto',1],['primeiro-produto',18]]);
   // Sem identidade de cliente, o operador não pode comprar.
   assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
   const publicado=await page.evaluate(async()=>{

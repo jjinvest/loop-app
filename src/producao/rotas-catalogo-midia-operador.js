@@ -48,8 +48,53 @@ function montarRotasCatalogoMidiaOperador({
   app.get('/api/admin/catalogo-midia/slots',
    autorizarOperador,(_req,res)=>{
     try{return res.json({total:400,slots:posicoesVitrine.listar(),
+     layoutVazio:posicoesVitrine.consultarLayoutVazio(),
      checkoutReal:false});}
     catch{return res.status(503).json({erro:'SLOTS_REAIS_INDISPONIVEIS'});}
+   });
+  // Mover molduras vazias: troca somente a cor visual dos espaços.
+  // Não movimenta cadastros, produtos, fila, pedidos nem pagamentos.
+  app.post('/api/admin/catalogo-midia/trocar-espacos-vazios',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).sort().join(',')!=='destino,origem,revisaoEsperada')
+     return res.status(400).json({erro:'VITRINE_ESPACOS_TROCA_INVALIDA'});
+    try{return res.json(posicoesVitrine.trocarEspacosVazios(b));}
+    catch(e){
+     const cod=e.codigo||'VITRINE_ESPACOS_TROCA_INDISPONIVEL';
+     return res.status(cod.includes('CONCORRENTE')||cod.includes('OCUPA')?409:
+      cod.endsWith('_INVALIDA')||cod.endsWith('_MESMA_COR')?400:503)
+      .json({erro:cod});
+    }
+   });
+  // Novo produto entra obrigatoriamente na primeira posição não ocupada.
+  // Não receber número solicitado pelo navegador evita buracos e disputas.
+  app.post('/api/admin/catalogo-midia/vincular-proximo',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).join(',')!=='produtoId'||!ID.test(b.produtoId))
+     return res.status(400).json({erro:'VITRINE_PROXIMO_CAMPOS_INVALIDOS'});
+    try{
+     const local=ID_MIDIA.test(b.produtoId)?
+      catalogoMidia.repo.buscar(b.produtoId):null;
+     const central=catalogoPrincipal?.
+      buscarProdutoAdministrativo({produtoId:b.produtoId});
+     if(local&&central)
+      return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
+     const resultado=posicoesVitrine.atribuirProximo({
+      produtoId:b.produtoId,produtoExiste:()=>!!(local||central)
+     });
+     return res.status(resultado.jaVinculado?200:201).json({
+      ...resultado,checkoutReal:false
+     });
+    }catch(e){
+     const cod=e?.codigo||'VITRINE_PROXIMO_INDISPONIVEL';
+     return res.status(cod.includes('SEM_ESPACO')?409:
+      cod.includes('NAO_ENCONTRADO')?404:
+      cod.includes('INVALIDA')?400:503).json({erro:cod});
+    }
    });
   app.post('/api/admin/catalogo-midia/slots/:posicao',
    autorizarOperador,validarCsrf,(req,res)=>{
@@ -127,7 +172,9 @@ function montarRotasCatalogoMidiaOperador({
     const b=req.body;
     if(!req.is('application/json')||!b||Array.isArray(b)||
        Object.keys(b).sort().join(',')!==
-       'categoria,marca,origem,precoCentavos,promocaoCentavos,quantidade,revisaoEsperada')
+       'categoria,marca,origem,precoCentavos,promocaoCentavos,quantidade,revisaoEsperada'&&
+       Object.keys(b).sort().join(',')!==
+       'categoria,corDescricao,marca,origem,precoCentavos,promocaoCentavos,quantidade,revisaoEsperada')
      return res.status(400).json({erro:'ANUNCIO_CAMPOS_INVALIDOS'});
     try{
      const atualizado=anunciosManuais.atualizar({
@@ -142,6 +189,38 @@ function montarRotasCatalogoMidiaOperador({
       codigo.includes('INVALIDO')||codigo.includes('INVALIDOS')?400:503)
       .json({erro:codigo});
     }
+   });
+ }
+ // Rascunhos do formulário não são publicados e ficam só no operador.
+ // As chaves são validadas pelo serviço e o SQLite guarda o conteúdo real.
+ if(anunciosManuais?.rascunhos){
+  const drafts=anunciosManuais.rascunhos;
+  app.get('/api/admin/catalogo-midia/rascunhos-formulario',
+   autorizarOperador,(_req,res)=>{
+    try{return res.set('Cache-Control','private, no-store')
+     .json({rascunhos:drafts.listar(),checkoutReal:false});}
+    catch{return res.status(503).json({erro:'RASCUNHO_LISTA_INDISPONIVEL'});}
+   });
+  app.post('/api/admin/catalogo-midia/rascunhos-formulario',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).sort().join(',')!=='campos,id,revisaoEsperada')
+     return res.status(400).json({erro:'RASCUNHO_REQUISICAO_INVALIDA'});
+    try{return res.json(drafts.salvar(b));}
+    catch(e){
+     const cod=e.codigo||'RASCUNHO_SALVAMENTO_INDISPONIVEL';
+     return res.status(cod.includes('CONCORRENTE')?409:
+      cod.includes('LIMITE')?429:
+      cod.includes('INVALID')?400:503).json({erro:cod});
+    }
+   });
+  app.post('/api/admin/catalogo-midia/rascunhos-formulario/:id/excluir',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    try{return res.json(drafts.excluir(req.params.id));}
+    catch(e){return res.status(400).json({
+     erro:e.codigo||'RASCUNHO_EXCLUSAO_INVALIDA'
+    });}
    });
  }
  // Canal não é credencial externa: apenas os modos com função implementada
