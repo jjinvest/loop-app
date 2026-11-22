@@ -761,7 +761,7 @@
   if(caixas.length===3){
    caixas[0].querySelector('small').textContent='POSIÇÕES NAS FILAS';
    caixas[0].querySelector('span').textContent='Ver posições e filas';
-   caixas[1].querySelector('small').textContent='GIROS / HORA';
+   caixas[1].querySelector('small').textContent='CICLOS / 24H';
    caixas[2].querySelector('small').textContent='EVENTOS NO CICLO';
   }
   void carregarTabuleiroOperador();
@@ -793,7 +793,7 @@
   const indicadoresCliente=document.querySelectorAll('.loop03-indicadores .loop03-indicador');
   if(indicadoresCliente.length===3){
    indicadoresCliente[0].querySelector('small').textContent='MINHAS POSIÇÕES';
-   indicadoresCliente[1].querySelector('small').textContent='GIROS / HORA';
+   indicadoresCliente[1].querySelector('small').textContent='CICLOS / 24H';
    indicadoresCliente[2].querySelector('small').textContent='POSIÇÃO SELECIONADA';
   }
   $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
@@ -1400,10 +1400,7 @@
     ' / '+String(d.limitePosicoesAtivas);
    atualizarTopoPosicaoReal();
    if(popupPosicoesRealAberto)preencherPopupReal();
-   // A mesma hora civil e o mesmo livro de giros apresentados ao operador.
-   const girosHora=d.agenda.girosReaisHora;
-   $('loop03Giros24Integrado').textContent=
-    Number.isSafeInteger(girosHora)&&girosHora>=0?String(girosHora):'—';
+   // O visor central usa somente o mesmo resumo de 24h nos dois perfis.
    visorCatraca.registrarAgenda(d.agenda);
   }catch{
    // Uma leitura indisponível não altera cartões, posições ou contas.
@@ -1437,8 +1434,10 @@
       agenda?.origem!=='CATRACA_REAL_MESMO_SQLITE'||
       agenda.somenteLeitura!==true||
       agenda.luzesDoRelogioCompartilhado!==true||
-      !Number.isSafeInteger(agenda.girosReaisHora)||
-      agenda.girosReaisHora<0||
+      !Number.isSafeInteger(agenda.luzesRelogio24h)||
+      agenda.luzesRelogio24h<0||
+      !Number.isSafeInteger(agenda.ciclosRelogio24h)||
+      agenda.ciclosRelogio24h<0||
       agenda.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
       agenda.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
       agenda.girosReaisHoje!==controle.girosHoje||
@@ -1446,7 +1445,6 @@
       controle.girosTotais!==d.catraca.giros||
       controle.filaA!==d.filaA||controle.filaB!==d.filaB)return;
    $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
-   $('loop03Giros24Integrado').textContent=String(agenda.girosReaisHora);
    $('loop03NumeroIntegrado').textContent=
     d.tabuleiro.eventosNoCiclo+' / 6';
    visorCatraca.registrarAgenda(agenda);
@@ -2195,7 +2193,9 @@
       controle.agenda.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
       controle.agenda.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
       controle.agenda.girosReaisHoje!==controle.girosHoje||
-      controle.agenda.girosReais24h!==controle.giros24h)
+      controle.agenda.girosReais24h!==controle.giros24h||
+      controle.agenda.ciclosRelogio24h!==controle.ciclosRelogio24h||
+      controle.agenda.luzesRelogio24h!==controle.luzesRelogio24h)
     throw Error('AGENDA_COMPARTILHADA_DIVERGENTE');
    visorCatraca.registrarAgenda(controle.agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
@@ -2204,9 +2204,6 @@
    // relogio: evitar que leituras HTTP concorrentes substituam a legenda
    // a cada segundo, causando a oscilacao de uma para duas frases.
    $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
-   const girosHora=controle.agenda?.girosReaisHora;
-   $('loop03Giros24Integrado').textContent=
-    Number.isSafeInteger(girosHora)&&girosHora>=0?String(girosHora):'—';
    $('loop03NumeroIntegrado').textContent=d.tabuleiro.eventosNoCiclo+' / 6';
    // Atualizar os 3 quadros APÓS a leitura financeira para não voltar a zero.
    visorCatraca.registrarAgenda(controle.agenda);
@@ -2269,7 +2266,9 @@
      d.agenda.luzesDoRelogioCompartilhado!==true||
      d.agenda.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
      d.agenda.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
-     d.agenda.girosReais24h!==d.catraca?.giros24h))
+     d.agenda.girosReais24h!==d.catraca?.giros24h||
+     !Number.isSafeInteger(d.agenda.ciclosRelogio24h)||
+     !Number.isSafeInteger(d.agenda.luzesRelogio24h)))
     throw Error('AGENDA_CLIENTE_DIVERGENTE');
    visorCatraca.registrarAgenda(d.agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
@@ -2277,11 +2276,7 @@
     ' de 6 eventos neste ciclo';
    $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
     ' / '+String(d.limitePosicoesAtivas);
-   // Os cartões usam o livro de giros por HORA; a projeção das
-   // luzes da mesma HORA é desenhada pelo visor, sem inventar eventos.
-   const girosHora=d.agenda?.girosReaisHora;
-   $('loop03Giros24Integrado').textContent=
-    Number.isSafeInteger(girosHora)&&girosHora>=0?String(girosHora):'—';
+   // O visor central usa a mesma contagem visual de 24 horas.
    const seletor=$('seletorPosicaoMotor');
    const seletorRotulo=$('rotuloSeletorPosicaoMotor');
    if(seletor){
