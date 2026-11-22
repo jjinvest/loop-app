@@ -344,3 +344,90 @@ dialog.akitemm-operador-editor .akitemm-card-rascunho
   padding-inline:min(8px,2vw);
  }
 }
+
+
+/* Banners oficiais AKITEMM: quatro apresentações na moldura aprovada.
+   Responsivo no celular; imagens respeitam a moldura, sem transbordar. */
+.akitemm-loja .akitemm-banner{
+ width:100%;min-width:0;max-width:100%;box-sizing:border-box;
+ overflow:hidden;isolation:isolate;
+}
+.akitemm-loja .akitemm-banner-conteudo{
+ box-sizing:border-box;min-width:0;width:100%;max-width:100%;
+ min-height:clamp(205px,47vw,330px);
+ overflow:hidden;
+}
+.akitemm-loja .akitemm-banner-conteudo.akitemm-banner-com-foto{
+ position:relative;display:block;padding:0;
+ background:#10161c;
+}
+.akitemm-loja .akitemm-banner-imagem{
+ display:block;position:absolute;inset:0;
+ width:100%;height:100%;max-width:100%;max-height:100%;
+ object-position:center center;
+}
+.akitemm-loja .akitemm-banner-rodizio{
+ z-index:3;display:flex;gap:8px;align-items:center;
+ left:12px;right:12px;bottom:9px;
+ justify-content:center;
+}
+.akitemm-loja .akitemm-banner-rodizio button[hidden]{display:none!important}
+.akitemm-loja #akitemmBannerPontos{
+ display:flex;gap:6px;align-items:center;
+}
+.akitemm-loja #akitemmBannerPontos .akitemm-banner-ponto{
+ display:inline-flex;align-items:center;justify-content:center;
+ box-sizing:border-box;min-width:30px;min-height:30px;
+ padding:4px 7px;font-size:13px;font-weight:700;
+ color:#efdfc2;background:#16202a;border:1px solid #9f8052;
+ border-radius:999px;
+}
+.akitemm-loja #akitemmBannerPontos
+ .akitemm-banner-ponto[aria-current="true"]{
+ color:#161b24;background:#f1c16d;border-color:#ffe3a9;
+}
+.akitemm-loja .akitemm-banner-rodizio #akitemmBannerAnterior,
+.akitemm-loja .akitemm-banner-rodizio #akitemmBannerProximo{
+ min-width:34px;min-height:34px;font-size:20px;line-height:1;
+}
+.akitemm-loja .akitemm-banner-editavel .akitemm-banner-conteudo{
+ cursor:pointer;
+}
+.akitemm-loja .akitemm-banner-botao-editar{
+ position:absolute;z-index:4;right:12px;top:12px;
+ box-sizing:border-box;max-width:calc(100% - 24px);
+ padding:8px 13px;border:1px solid #d6b276;
+ border-radius:18px;background:#14212de8;color:#ffe4af;
+ font:inherit;font-size:13px;font-weight:700;
+ box-shadow:0 2px 12px #0008;
+}
+.akitemm-loja .akitemm-banner-botao-editar[hidden]{display:none!important}
+.akitemm-loja .akitemm-banner-rodizio,
+.akitemm-loja .akitemm-banner-botao-editar{touch-action:manipulation}
+.akitemm-operador-editor .akitemm-banner-preview{
+ display:block;width:100%;max-height:245px;aspect-ratio:16/9;
+ object-fit:contain;object-position:center;
+ border:1px solid #b9945c;border-radius:12px;
+ background:#121d27;
+}
+.akitemm-operador-editor .akitemm-banner-preview[hidden]{display:none!important}
+.akitemm-operador-editor .akitemm-banner-edicao-botoes{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+}
+.akitemm-operador-editor .akitemm-banner-edicao-botoes button{
+ min-width:0;max-width:100%;box-sizing:border-box;
+ white-space:normal;overflow-wrap:anywhere;
+}
+@media(max-width:480px){
+ .akitemm-loja .akitemm-banner-conteudo{
+  min-height:clamp(205px,57vw,250px);
+  padding:20px 16px 55px;
+ }
+ .akitemm-loja .akitemm-banner-conteudo.akitemm-banner-com-foto{padding:0}
+ .akitemm-loja .akitemm-banner-botao-editar{
+  top:9px;right:9px;font-size:12px;padding:7px 10px;
+ }
+ .akitemm-loja .akitemm-banner-texto{
+  min-width:0;max-width:100%;overflow-wrap:anywhere;
+ }
+}
