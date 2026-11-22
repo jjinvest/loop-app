@@ -183,9 +183,8 @@
     lixeira.style.display=editavel?'grid':'none';
    }
    const img=moldura.querySelector('[data-banner-imagem]');
-   // Quatro artes originais aprovadas continuam no carrossel do cliente.
-   // Slots adicionais só entram quando suas fotos estiverem completas.
-   const mostrar=editavel||slot.publicado||slot.slot<=4;
+   // Operador edita todos os espaços; cliente só vê banners publicados.
+   const mostrar=editavel||slot.publicado;
    moldura.hidden=!mostrar;
    moldura.style.display=mostrar?'block':'none';
    moldura.querySelector('.banner-mosaico')?.remove();
@@ -212,8 +211,7 @@
     }
     moldura.append(grade);
    }else if(!slot.temImagem||(!editavel&&!slot.publicado)){
-    // Sem composição completa, a arte original (slots 1..4) é o fallback.
-    // Não mostrar fotos parciais de mosaicos ao cliente.
+    // Cliente nunca recebe espaços vazios ou mosaicos incompletos.
     img.hidden=true;img.removeAttribute('src');
    }else{
     img.setAttribute('data-enquadramento',slot.modo||'INTEIRA');
