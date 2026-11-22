@@ -7,7 +7,13 @@ const {DatabaseSync}=require('node:sqlite');
 // A API e as novas atribuicoes usam o mesmo TOTAL (400).
 const TOTAL=400;
 const ID=/^[A-Za-z0-9_-]{1,80}$/;
-const TABELAS_POSICOES_VITRINE=Object.freeze(['loja_real_vitrine_posicoes']);
+const TABELAS_POSICOES_VITRINE=Object.freeze([
+ 'loja_real_vitrine_posicoes','loja_real_vitrine_layout_vazios'
+]);
+const CORES_VAZIAS=Object.freeze(['ROXO','DOURADO','VERDE','CINZA',
+ 'CINZA','VERDE','DOURADO','ROXO']);
+const coresPadrao=()=>Array.from({length:TOTAL},(_,i)=>
+ CORES_VAZIAS[i%CORES_VAZIAS.length]);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 class PosicoesVitrineRealSQLite{
  constructor({banco,agora=()=>Date.now(),auditoria=null}={}){
@@ -22,8 +28,17 @@ class PosicoesVitrineRealSQLite{
    'posicao INTEGER PRIMARY KEY CHECK(posicao BETWEEN 1 AND 400),',
    'produto_id TEXT NOT NULL UNIQUE,',
    'revisao INTEGER NOT NULL CHECK(revisao>=1),',
+   'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));',
+   'CREATE TABLE IF NOT EXISTS loja_real_vitrine_layout_vazios(',
+   'id INTEGER PRIMARY KEY CHECK(id=1),',
+   'cores_json TEXT NOT NULL,',
+   'revisao INTEGER NOT NULL CHECK(revisao>=1),',
    'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));'
   ].join(' '));
+  banco.prepare([
+   'INSERT OR IGNORE INTO loja_real_vitrine_layout_vazios',
+   '(id,cores_json,revisao,atualizado_em) VALUES(1,?,1,?)'
+  ].join(' ')).run(JSON.stringify(coresPadrao()),Math.max(1,Date.now()));
  }
  listar(){
   const lista=this.banco.prepare([
@@ -136,6 +151,73 @@ class PosicoesVitrineRealSQLite{
    this.banco.exec('COMMIT');
    return {produtoId,posicao:novaPosicao,ordem:lista.length,
     revisao:movido.revisao+1,jaOrdenado:false};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+
+ // São apenas molduras vazias. As classificações dos produtos permanecem
+ // vinculadas ao produto; cores vazias não mudam qualificação nem financeiro.
+ consultarLayoutVazio(){
+  const row=this.banco.prepare([
+   'SELECT cores_json AS cores,revisao,atualizado_em AS atualizadoEm',
+   'FROM loja_real_vitrine_layout_vazios WHERE id=1'
+  ].join(' ')).get();
+  if(!row||!Number.isSafeInteger(row.revisao)||row.revisao<1||
+     !Number.isSafeInteger(row.atualizadoEm)||row.atualizadoEm<1)
+   falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
+  let cores;
+  try{cores=JSON.parse(row.cores);}catch{
+   falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
+  }
+  const esperadas=coresPadrao();
+  if(!Array.isArray(cores)||cores.length!==TOTAL||
+     cores.some(c=>!CORES_VAZIAS.includes(c))||
+     CORES_VAZIAS.some(c=>cores.filter(x=>x===c).length!==
+      esperadas.filter(x=>x===c).length))
+   falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
+  return {cores,revisao:row.revisao,atualizadoEm:row.atualizadoEm};
+ }
+ trocarEspacosVazios({origem,destino,revisaoEsperada}={}){
+  if(!Number.isSafeInteger(origem)||origem<1||origem>TOTAL||
+     !Number.isSafeInteger(destino)||destino<1||destino>TOTAL||
+     origem===destino||!Number.isSafeInteger(revisaoEsperada)||
+     revisaoEsperada<1)
+   falha('VITRINE_ESPACOS_TROCA_INVALIDA');
+  const ts=this.agora();
+  if(!Number.isSafeInteger(ts)||ts<1)
+   falha('VITRINE_REAL_RELOGIO_INVALIDO');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=this.consultarLayoutVazio();
+   if(atual.revisao!==revisaoEsperada)
+    falha('VITRINE_ESPACOS_REVISAO_CONCORRENTE');
+   const usados=this.banco.prepare([
+    'SELECT COUNT(*) AS total FROM loja_real_vitrine_posicoes',
+    'WHERE posicao IN (?,?)'
+   ].join(' ')).get(origem,destino);
+   if(usados.total)falha('VITRINE_ESPACOS_PRODUTO_OCUPA_SLOT');
+   const corOrigem=atual.cores[origem-1],corDestino=atual.cores[destino-1];
+   if(corOrigem===corDestino)falha('VITRINE_ESPACOS_MESMA_COR');
+   [atual.cores[origem-1],atual.cores[destino-1]]=[
+    corDestino,corOrigem
+   ];
+   const gravado=this.banco.prepare([
+    'UPDATE loja_real_vitrine_layout_vazios',
+    'SET cores_json=?,revisao=revisao+1,atualizado_em=?',
+    'WHERE id=1 AND revisao=?'
+   ].join(' ')).run(JSON.stringify(atual.cores),ts,revisaoEsperada);
+   if(gravado.changes!==1)falha('VITRINE_ESPACOS_REVISAO_CONCORRENTE');
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'VITRINE_ESPACOS_VAZIOS_TROCADOS',
+    ator:'ADMIN_COMERCIAL',
+    entidade:'VITRINE_ESPACOS',
+    antes:{origem,destino,corOrigem,corDestino},
+    depois:{origem,destino,corOrigem:corDestino,corDestino:corOrigem},
+    revisaoAnterior:revisaoEsperada,revisaoNova:revisaoEsperada+1
+   });
+   this.banco.exec('COMMIT');
+   return {origem,destino,corOrigem:corDestino,corDestino:corOrigem,
+    revisao:revisaoEsperada+1,confirmado:true,
+    checkoutReal:false,financeiroReal:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  projetar(produtos){
