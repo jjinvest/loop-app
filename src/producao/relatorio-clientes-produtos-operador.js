@@ -16,32 +16,32 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
  const linhaVenda=['FROM loja_real_custos_pedido s',
   'JOIN loja_real_pedidos p ON p.pedido_id=s.pedido_id',
   'WHERE '+aprovados].join(' ');
- const totalClientes=banco.prepare(
+ const totalClientes=()=>banco.prepare(
   'SELECT COUNT(*) AS total FROM loop_real_contas');
- const sumario=banco.prepare([
+ const sumario=()=>banco.prepare([
   'SELECT COUNT(DISTINCT p.pedido_id) AS pedidos,',
   'COALESCE(SUM(s.quantidade),0) AS unidades,',
   'COUNT(DISTINCT p.titular_id) AS compradores',
   linhaVenda
  ].join(' '));
- const pedidosAprovados=banco.prepare(
+ const pedidosAprovados=()=>banco.prepare(
   "SELECT COUNT(*) AS n FROM loja_real_pedidos WHERE status='APROVADO_PARA_EXPEDICAO'");
- const pedidosSemItens=banco.prepare([
+ const pedidosSemItens=()=>banco.prepare([
   'SELECT COUNT(*) AS n FROM loja_real_pedidos p',
   "WHERE p.status='APROVADO_PARA_EXPEDICAO'",
   'AND (p.pagamento_id IS NULL OR NOT EXISTS',
   '(SELECT 1 FROM loja_real_custos_pedido c WHERE c.pedido_id=p.pedido_id))'
  ].join(' '));
  function consistencia(){
-  if(pedidosSemItens.get().n!==0)falhar('RELATORIO_COMERCIAL_PEDIDO_INCOMPLETO');
+  if(pedidosSemItens().get().n!==0)falhar('RELATORIO_COMERCIAL_PEDIDO_INCOMPLETO');
  }
  function indicadores(){
   verificar();consistencia();
-  const clientes=totalClientes.get().total;
-  const s=sumario.get();
-  if(![clientes,s.pedidos,s.unidades,s.compradores,pedidosAprovados.get().n]
+  const clientes=totalClientes().get().total;
+  const s=sumario().get();
+  if(![clientes,s.pedidos,s.unidades,s.compradores,pedidosAprovados().get().n]
    .every(x=>Number.isSafeInteger(x)&&x>=0)||
-   s.pedidos!==pedidosAprovados.get().n)
+   s.pedidos!==pedidosAprovados().get().n)
    falhar('RELATORIO_COMERCIAL_CONTAGEM_INCONSISTENTE');
   return {fonte:'SQLITE_COMERCIAL_REAL',totalClientes:clientes,
    totalProdutosVendidos:s.unidades,totalPedidosAprovados:s.pedidos,
@@ -49,14 +49,14 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
    criterio:'UNIDADES_DE_PEDIDOS_COM_PAGAMENTO_APROVADO',
    contabilizaPosicoesComoProduto:false,somenteLeitura:true};
  }
- const identidade=banco.prepare('SELECT id FROM loop_real_contas WHERE nick=? COLLATE NOCASE');
- const linhasTotal=banco.prepare([
+ const identidade=()=>banco.prepare('SELECT id FROM loop_real_contas WHERE nick=? COLLATE NOCASE');
+ const linhasTotal=()=>banco.prepare([
   'SELECT COUNT(*) AS totalLinhas,COALESCE(SUM(s.quantidade),0) AS unidades',
   'FROM loja_real_pedidos p',
   'JOIN loja_real_custos_pedido s ON s.pedido_id=p.pedido_id',
   'WHERE p.titular_id=? AND '+aprovados
  ].join(' '));
- const linhasLista=banco.prepare([
+ const linhasLista=()=>banco.prepare([
   'SELECT p.pedido_id AS pedidoId,p.criado_em AS criadoEm,',
   's.produto_id AS produtoId,s.sku AS sku,s.fornecedor_id AS fornecedorId,',
   's.quantidade AS quantidade,s.preco_unit_centavos AS precoUnitCentavos,',
@@ -74,10 +74,10 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
    !Number.isSafeInteger(limite)||limite<1||limite>30)
    falhar('RELATORIO_COMERCIAL_PARAMETRO_INVALIDO');
   verificar();consistencia();
-  const conta=identidade.get(nick);
+  const conta=identidade().get(nick);
   if(!conta)falhar('CADASTRO_NAO_LOCALIZADO');
-  const t=linhasTotal.get(conta.id);
-  const itens=linhasLista.all(conta.id,limite,offset);
+  const t=linhasTotal().get(conta.id);
+  const itens=linhasLista().all(conta.id,limite,offset);
   if(![t.totalLinhas,t.unidades].every(x=>Number.isSafeInteger(x)&&x>=0)||
    !Array.isArray(itens)||itens.length>limite||
    itens.some(x=>!Number.isSafeInteger(x.quantidade)||x.quantidade<1))
