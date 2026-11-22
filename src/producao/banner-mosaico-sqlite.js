@@ -24,7 +24,9 @@ class BannerMosaicoSQLite{
   banco.exec([
    'CREATE TABLE IF NOT EXISTS '+p+'_layout(',
    'slot INTEGER PRIMARY KEY CHECK(slot>=1),',
-   'colunas INTEGER NOT NULL CHECK(colunas IN (1,2,3)));',
+   'colunas INTEGER NOT NULL CHECK(colunas IN (1,2,3)),',
+   "modo TEXT NOT NULL DEFAULT 'PREENCHER' ",
+   "CHECK(modo IN ('INTEIRA','PREENCHER')));",
    'CREATE TABLE IF NOT EXISTS '+p+'_foto(',
    'slot INTEGER NOT NULL CHECK(slot>=1),',
    'posicao INTEGER NOT NULL CHECK(posicao IN (2,3)),',
@@ -49,17 +51,18 @@ class BannerMosaicoSQLite{
  listar(slots){
   const p=this.cfg.prefixo;
   const layouts=new Map(this.banco.prepare(
-   'SELECT slot,colunas FROM '+p+'_layout'
+   'SELECT slot,colunas,modo FROM '+p+'_layout'
   ).all().map(x=>[x.slot,x.colunas]));
   const imagens=new Set(this.banco.prepare(
    'SELECT slot,posicao FROM '+p+'_foto'
   ).all().map(x=>x.slot+':'+x.posicao));
   return slots.map(s=>{
-   const colunas=layouts.get(s.slot)||1;
+   const op=layouts.get(s.slot),colunas=op?.colunas||1;
+   const modo=op?.modo||(colunas===1?'INTEIRA':'PREENCHER');
    const fotos=[{posicao:1,temImagem:s.temImagem},2,3].map((x,i)=>
     i===0?x:{posicao:i+1,temImagem:imagens.has(s.slot+':'+(i+1))});
    const publicado=fotos.slice(0,colunas).every(x=>x.temImagem);
-   return {...s,colunas,fotos,publicado};
+   return {...s,colunas,modo,fotos,publicado};
   });
  }
  _mutar(slot,revisaoEsperada,executar){
@@ -79,13 +82,15 @@ class BannerMosaicoSQLite{
    this.banco.exec('COMMIT');
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
- configurar({slot,colunas,revisaoEsperada}={}){
+ configurar({slot,colunas,modo='PREENCHER',revisaoEsperada}={}){
   const cols=this._colunas(colunas),p=this.cfg.prefixo;
+  if(!['INTEIRA','PREENCHER'].includes(modo))
+   falhar('BANNER_MOSAICO_MODO_INVALIDO');
   this._mutar(slot,revisaoEsperada,()=>{
    this.banco.prepare(
-    'INSERT INTO '+p+'_layout(slot,colunas) VALUES(?,?) '+
-    'ON CONFLICT(slot) DO UPDATE SET colunas=excluded.colunas'
-   ).run(slot,cols);
+    'INSERT INTO '+p+'_layout(slot,colunas,modo) VALUES(?,?,?) '+
+    'ON CONFLICT(slot) DO UPDATE SET colunas=excluded.colunas,modo=excluded.modo'
+   ).run(slot,cols,modo);
   });
  }
  salvarFoto({slot,posicao,mime,bytes,revisaoEsperada}={}){
