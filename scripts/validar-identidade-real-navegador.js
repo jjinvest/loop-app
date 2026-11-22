@@ -384,9 +384,9 @@ async function main(){
     const d=await r.json();return d.slots?.[0]?.revisao;
    });
    assert.ok(Number.isSafeInteger(revisaoBannerAntes));
-   const botaoBanner=operadorPage.locator('#loop03BannerMaisReal');
-   await botaoBanner.waitFor({state:'visible',timeout:12000});
-   await botaoBanner.click();
+   const bannerEditavel=operadorPage.locator('#loop03PistaBanners .loop03-banner-item[data-banner-slot="1"]');
+   await bannerEditavel.waitFor({state:'visible',timeout:12000});
+   await bannerEditavel.click();
    await operadorPage.locator('#loop03BannerFormularioReal')
     .waitFor({state:'visible'});
    await operadorPage.locator('#loop03BannerArquivoReal').setInputFiles({
@@ -396,7 +396,7 @@ async function main(){
     .waitFor({state:'visible'});
    await operadorPage.locator('#loop03BannerSalvarReal').click();
    await operadorPage.locator('#loop03BannerEditorStatus')
-    .filter({hasText:'Foto salva no LOOP.'}).waitFor({state:'visible'});
+    .filter({hasText:'Banner salvo e publicado'}).waitFor({state:'visible'});
    const bannerSalvo=await operadorPage.evaluate(async()=>{
     const r=await fetch('/api/loop/banners/1/imagem',{
      credentials:'same-origin',cache:'no-store'
@@ -426,7 +426,7 @@ async function main(){
    await cortar.waitFor({state:'hidden'});
    await operadorPage.locator('#loop03BannerSalvarReal').click();
    await operadorPage.locator('#loop03BannerEditorStatus')
-    .filter({hasText:'Foto salva no LOOP.'}).waitFor({state:'visible'});
+    .filter({hasText:'Banner salvo e publicado'}).waitFor({state:'visible'});
    await operadorPage.locator('#loop03BannerFormularioReal .banner-real-fechar').click();
    await operadorPage.reload();
    await operadorPage.locator('[data-banner-imagem="1"]')
