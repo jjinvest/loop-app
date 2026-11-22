@@ -177,10 +177,10 @@ function montarGatewayAdminComercial(app,{
    proteger,validarCsrf,(req,res)=>{
     if(slot(req)===null)return res.status(404).end();
     if(!req.is('application/json')||!req.body||
-       Object.keys(req.body).sort().join(',')!=='colunas,revisaoEsperada')
+       Object.keys(req.body).sort().join(',')!=='colunas,modo,revisaoEsperada')
      return res.status(400).json({erro:'BANNER_MOSAICO_CAMPOS_INVALIDOS'});
     try{return res.json(banners.configurarMosaico({
-     slot:slot(req),colunas:req.body.colunas,
+     slot:slot(req),colunas:req.body.colunas,modo:req.body.modo,
      revisaoEsperada:req.body.revisaoEsperada
     }));}catch(e){return responderErro(res,e);}
    });
