@@ -969,29 +969,24 @@ async function main(){
     'Minha Equipe preserva os dez botoes das posicoes');
    for(let n=1;n<=10;n++){
     assert.equal(await botoes.nth(n-1).innerText(),String(n));
-    assert.equal(await botoes.nth(n-1).isDisabled(),false,
-     'a escolha do destino deve funcionar antes da ativacao');
+    assert.equal(await botoes.nth(n-1).isDisabled(),true,
+     'cadastro sem confirmação e qualificação não pode ser vinculado');
    }
-   await botoes.nth(6).click();
-   await page.locator('#mensagem').filter({
-    hasText:/Destino da indicação registrado/
-   }).waitFor({state:'visible'});
-   // A conta foi persistida e o cartão reconstruído com o menu recolhido.
-   await indicado.locator('.loop03-rede-pessoa-menu').click();
-   await indicado.locator('.loop03-rede-posicao-selecionada')
-    .waitFor({state:'visible'});
-   const escolhida=indicado.locator('.loop03-rede-posicao-selecionada');
-   assert.equal(await escolhida.innerText(),'7');
-   assert.equal(await escolhida.getAttribute('aria-pressed'),'true');
-   assert.equal(await indicado.locator('.loop03-rede-posicao:disabled').count(),10,
-    'escolha fica bloqueada apos gravar');
-   assert.match(await indicado.innerText(),/Destino fixado na posição 7/);
+   assert.match(await indicado.innerText(),/indicação ainda não é válida/i);
    const check=await page.evaluate(()=>fetch('/api/contas/minha-rede',{
     credentials:'same-origin',cache:'no-store'
    }).then(r=>r.json()));
-   const escolhido=check.indicados.find(p=>p.nick===novoNick.toLowerCase());
-   assert.equal(escolhido?.posicaoDestinoReservada,7,
-    'destino deve estar salvo no servidor real');
+   const pendente=check.indicados.find(p=>p.nick===novoNick.toLowerCase());
+   assert.equal(pendente?.indicacaoValida,false);
+   assert.equal(pendente?.posicaoDestinoReservada,null);
+   assert.equal(check.resumo.cadastrosConfirmados,0);
+   assert.equal(check.resumo.indicacoesVinculadas,0);
+   assert.equal(check.resumo.aDistribuir,0);
+   assert.ok(await page.locator('#equipeResumo').evaluate(el=>{
+    const css=getComputedStyle(el);
+    return css.display==='block'&&css.width==='100%'&&
+     el.getBoundingClientRect().width>200;
+   }),'total de cadastros deve ocupar toda a largura do resumo');
    await indicado.locator('.loop03-rede-pessoa-menu').click();
    await detalhes.waitFor({state:'hidden'});
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
