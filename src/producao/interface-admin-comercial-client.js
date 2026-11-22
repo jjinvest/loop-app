@@ -231,9 +231,90 @@
    throw e;
   }finally{travar(false);}
  }
+
+ // Valida o cadastro na propria tela, apontando o campo que falta.
+ function criarGuiaCadastro(id){
+  const form=$(id);form.noValidate=true;
+  const resumo=document.createElement('div');
+  resumo.hidden=true;resumo.setAttribute('role','alert');
+  resumo.setAttribute('aria-live','assertive');
+  resumo.style.cssText='border:1px solid #c78a68;border-radius:12px;padding:12px;'+
+   'margin:10px 0 16px;color:#ffe0bd;background:rgba(95,31,25,.28)';
+  form.prepend(resumo);
+  let marcados=[];
+  const limpar=()=>{
+   for(const campo of marcados){
+    campo.removeAttribute('aria-invalid');
+    campo.style.removeProperty('outline');
+   }
+   form.querySelectorAll('.akitemm-erro-campo-operador').forEach(x=>x.remove());
+   marcados=[];resumo.replaceChildren();resumo.hidden=true;
+  };
+  const apontar=(focar=true)=>{
+   const erros=[],adicionar=(nome,mensagem)=>erros.push({campo:$(nome),mensagem});
+   const valor=nome=>$(nome).value.trim();
+   const codigo=/^[A-Za-z0-9_-]{1,80}$/;
+   if(id==='formNovoProduto'){
+    if(!codigo.test(valor('novoProdutoId')))
+     adicionar('novoProdutoId','Informe um código com 1 a 80 letras, números, traços ou sublinhados.');
+    if(valor('novoProdutoTitulo').length<2||valor('novoProdutoTitulo').length>150)
+     adicionar('novoProdutoTitulo','Informe o nome do produto com 2 a 150 caracteres.');
+    if(valor('novoProdutoDescricao').length>2000)
+     adicionar('novoProdutoDescricao','Descrição: máximo de 2.000 caracteres.');
+   }else{
+    if(!valor('ofertaProdutoId'))
+     adicionar('ofertaProdutoId','Selecione um produto. Cadastre-o primeiro se a lista estiver vazia.');
+    if(!codigo.test(valor('ofertaDistribuidorId')))
+     adicionar('ofertaDistribuidorId','Informe o código válido do distribuidor.');
+    if(!codigo.test(valor('ofertaSku')))
+     adicionar('ofertaSku','Informe o SKU válido do distribuidor.');
+    try{validarDinheiro(valor('ofertaPreco'));}
+    catch{adicionar('ofertaPreco','Informe o preço de venda válido (ex.: 149,90).');}
+    const p=Number(valor('ofertaPrioridade'));
+    if(!valor('ofertaPrioridade')||!Number.isSafeInteger(p)||p<1||p>9999)
+     adicionar('ofertaPrioridade','Informe prioridade inteira de 1 a 9.999.');
+   }
+   limpar();
+   if(!erros.length)return true;
+   const titulo=document.createElement('strong');
+   titulo.textContent='Corrija '+erros.length+' campo(s) para salvar:';
+   const lista=document.createElement('ol');resumo.append(titulo,lista);
+   for(const {campo,mensagem} of erros){
+    campo.setAttribute('aria-invalid','true');
+    campo.style.outline='2px solid #ff8c74';
+    const detalhe=document.createElement('small');
+    detalhe.className='akitemm-erro-campo-operador';
+    detalhe.style.cssText='display:block;color:#ffbc9e;margin:5px 0 12px;font-weight:700';
+    detalhe.textContent=mensagem;campo.insertAdjacentElement('afterend',detalhe);
+    const item=document.createElement('li'),atalho=document.createElement('button');
+    atalho.type='button';atalho.textContent='Corrigir: '+mensagem;
+    atalho.style.cssText='white-space:normal;text-align:left;padding:6px';
+    atalho.addEventListener('click',()=>{
+     campo.scrollIntoView({block:'center',behavior:'smooth'});
+     try{campo.focus({preventScroll:true});}catch{campo.focus();}
+    });
+    item.append(atalho);lista.append(item);marcados.push(campo);
+   }
+   resumo.hidden=false;
+   $('resultadoCadastroAdmin').textContent='Corrija os campos marcados em vermelho antes de salvar.';
+   if(focar){
+    erros[0].campo.scrollIntoView({block:'center',behavior:'smooth'});
+    try{erros[0].campo.focus({preventScroll:true});}
+    catch{erros[0].campo.focus();}
+   }
+   return false;
+  };
+  form.addEventListener('input',()=>{if(!resumo.hidden)apontar(false);});
+  form.addEventListener('change',()=>{if(!resumo.hidden)apontar(false);});
+  return {validar:()=>apontar(true),limpar};
+ }
+ const guiaProdutoNovo=criarGuiaCadastro('formNovoProduto');
+ const guiaOfertaNova=criarGuiaCadastro('formNovaOferta');
+
  $('formNovoProduto').addEventListener('submit',e=>{
   e.preventDefault();
   const form=e.currentTarget;
+  if(!guiaProdutoNovo.validar())return;
   const botao=$('salvarNovoProduto');
   botao.disabled=true;
   void (async()=>{
@@ -257,6 +338,7 @@
  $('formNovaOferta').addEventListener('submit',e=>{
   e.preventDefault();
   const form=e.currentTarget;
+  if(!guiaOfertaNova.validar())return;
   const botao=$('salvarNovaOferta');
   botao.disabled=true;
   void (async()=>{
