@@ -225,7 +225,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   if(code==='CADASTRO_EXISTENTE')return res.status(409).json({erro:code});
   if(code==='DOCUMENTOS_ALTERADOS_RELER'||
      code==='CREDENCIAL_ALTERADA_CONCORRENTEMENTE'||
-     code==='DESTINO_INDICACAO_JA_ESCOLHIDO')
+     code==='DESTINO_INDICACAO_JA_ESCOLHIDO'||
+     code==='INDICACAO_AGUARDA_CONFIRMACAO'||
+     code==='INDICACAO_AGUARDA_QUALIFICACAO')
    return res.status(409).json({erro:code});
   if(code==='POSICAO_INDICACAO_INVALIDA')
    return res.status(400).json({erro:code});
