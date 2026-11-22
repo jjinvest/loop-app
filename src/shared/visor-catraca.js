@@ -118,7 +118,7 @@
    const ciclosReais=agendaVisorCatraca?.ciclosReaisConcluidos;
    if(resumo&&compartilhado&&Number.isSafeInteger(giroReal)&&
       Number.isSafeInteger(ciclosReais)&&
-      (operadorAberto||selecionada?.textContent==='—')){
+      (operadorAberto||!/^#\d+$/.test(selecionada?.textContent||''))){
     resumo.textContent=valido?
      'Relógio visual: '+estado.passadas+'/'+estado.total+
       ' luzes previstas · Ciclos reais: '+ciclosReais+
