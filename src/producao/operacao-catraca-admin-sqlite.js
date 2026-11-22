@@ -176,6 +176,7 @@ class OperacaoCatracaAdminSQLite{
    limiteNaoAtingido:permitido,
    metaNaoAtingida:metaAplicavel&&meta.centrosDia>girosDia,
    eventosNoCiclo:motor.tabuleiro.eventosNoCiclo,
+   ciclosConcluidos:motor.tabuleiro.ciclosConcluidos,
    girosTotais:motor.catraca.giros,
    filaA:motor.filaA,filaB:motor.filaB,
    pausada:p.modo==='PAUSADA',
