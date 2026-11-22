@@ -428,6 +428,22 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    contas.aceitarDocumentos({titularId:req.conta.titularId,...b})
   );}catch(e){return falha(res,e);}
  });
+ // Aceite de cadastro do próprio titular: CPF já recebido e termos lidos.
+ // Não é KYC financeiro nem ativa posição, indicação, pedido ou pagamento.
+ app.post('/api/contas/confirmar-cadastro',protegido,mutation,csrf,
+ (req,res)=>{
+  const b=req.body;
+  if(!b||Array.isArray(b)||
+     Object.keys(b).sort().join(',')!==
+      'aceiteExplicito,cpf,hashTermos,versaoTermos')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'confirmar',req.conta.titularId+':CADASTRO'))return;
+  try{
+   return res.set('Cache-Control','private, no-store').json(
+    contas.confirmarCadastro({titularId:req.conta.titularId,...b})
+   );
+  }catch(e){return falha(res,e);}
+ });
  // Direito de acesso: o titular consulta somente os seus próprios dados
  // e a versão dos documentos aceitos. Sem IDs escolhidos pelo navegador.
  app.get('/api/contas/meus-dados',protegido,(req,res)=>{
