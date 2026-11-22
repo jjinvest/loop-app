@@ -290,6 +290,52 @@ async function main(){
    await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
    assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
+   // Teste REAL dos banners com foto JPEG de galeria Android contendo
+   // bytes extras após o marcador JPEG: a prévia aparece, mas o arquivo
+   // original é rejeitado pelo validador binário. A normalização deve
+   // gerar JPEG canônico, salvar, permitir GET e sobreviver a um reload.
+   const jpegAndroid=Buffer.concat([
+    Buffer.from(
+     '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAjABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD56trTpxWnbWnTirdtadOK07a06cV01sURluM2KltadOKK37a06cUV5k8Vqfb4fGe4Vra06cVp21p04q3bWnTitO2tOnFcFbFH47luM2KttadOKK3ra06cUV5k8Vqfb4fGe4Z9sq8cCtO2VeOKKKisz8sy17GpbKvHFFFFeZN6n2+Hb5D/2Q==',
+     'base64'),
+    Buffer.from('ANDROID-TRAILING-METADATA')
+   ]);
+   const botaoBanner=operadorPage.locator('#loop03BannerMaisReal');
+   await botaoBanner.waitFor({state:'visible',timeout:12000});
+   await botaoBanner.click();
+   await operadorPage.locator('#loop03BannerFormularioReal')
+    .waitFor({state:'visible'});
+   await operadorPage.locator('#loop03BannerArquivoReal').setInputFiles({
+    name:'1001177708.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
+   });
+   await operadorPage.locator('#loop03BannerPreviaReal')
+    .waitFor({state:'visible'});
+   await operadorPage.locator('#loop03BannerSalvarReal').click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Foto salva no LOOP.'}).waitFor({state:'visible'});
+   const bannerSalvo=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/loop/banners/1/imagem',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    const a=new Uint8Array(await r.arrayBuffer());
+    return {status:r.status,mime:r.headers.get('content-type'),
+     tamanho:a.length,inicio:[...a.slice(0,3)],fim:[...a.slice(-2)]};
+   });
+   assert.equal(bannerSalvo.status,200);
+   assert.equal(bannerSalvo.mime,'image/jpeg');
+   assert.deepEqual(bannerSalvo.inicio,[255,216,255]);
+   assert.deepEqual(bannerSalvo.fim,[255,217]);
+   await operadorPage.locator('#loop03BannerFormularioReal .banner-real-fechar').click();
+   await operadorPage.reload();
+   await operadorPage.locator('[data-banner-imagem="1"]')
+    .waitFor({state:'visible',timeout:12000});
+   const bannerPersistido=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/loop/banners',{credentials:'same-origin'});
+    const d=await r.json();return {status:r.status,slot:d.slots?.[0]};
+   });
+   assert.equal(bannerPersistido.status,200);
+   assert.equal(bannerPersistido.slot.temImagem,true);
+   assert.equal(bannerPersistido.slot.revisao,1);
    // Foto do operador somente em modo operador autenticado.
    await operadorPage.goto(base+'/loja?visao=operador',{
     waitUntil:'domcontentloaded'
