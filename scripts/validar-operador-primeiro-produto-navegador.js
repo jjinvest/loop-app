@@ -160,6 +160,11 @@ async function principal(){
    const r=await fetch('/api/admin/catalogo-midia/slots');
    return (await r.json()).layoutVazio;
   });
+  // O conteúdo fica abaixo do cabeçalho: é obrigatório rolar até os
+  // cartões antes de enviar um toque físico. waitFor(visible) não rola.
+  await page.locator(
+   '#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar'
+  ).scrollIntoViewIfNeeded();
   const sessaoTouch=await ctx.newCDPSession(page);
   const puxar=await page.locator(
    '#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar'
@@ -177,6 +182,8 @@ async function principal(){
   const y2=soltar.y+Math.min(soltar.height/2,85);
   assert.ok(x2>soltar.x&&x2<soltar.x+soltar.width,
    'A área de soltura deve estar visível dentro do segundo cartão');
+  assert.ok(y1>0&&y1<viewport.height&&y2>0&&y2<viewport.height,
+   'Cartões devem estar efetivamente dentro da altura da tela');
   console.log('GESTO_VAZIO='+JSON.stringify({
    larguraViewport:viewport.width,puxar,soltar,x1,y1,x2,y2
   }));
