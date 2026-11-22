@@ -124,9 +124,17 @@
   leitor.readAsDataURL(f);
  });
  async function gravar(remover){
-  if(gravando||!operador||!dialogo.open)return;
+  if(gravando||!dialogo.open)return;
+  if(!operador){
+   status.textContent='Acesso do operador não confirmado. Entre novamente como operador.';
+   return;
+  }
   const slot=dados?.slots?.[slotEditor-1],foto=arquivo.files?.[0];
-  if(!slot)return;
+  if(!slot){
+   status.textContent='Banners indisponíveis para salvar. Atualize a página e tente novamente.';
+   void carregar();
+   return;
+  }
   if(!remover&&(!foto||
      !['image/jpeg','image/png','image/webp'].includes(foto.type)||
      foto.size<40||foto.size>4*1024*1024)){
