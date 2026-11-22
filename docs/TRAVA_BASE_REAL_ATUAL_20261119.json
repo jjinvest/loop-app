@@ -1456,7 +1456,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "4efb490229eae5c43f9885bdcce60720f8de752d"
+      "sha": "a161fb5b65dd94d595e47f513b7975a019bb8dc3"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -2616,7 +2616,7 @@
     },
     {
       "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
-      "sha": "05a81a9a05e2be0f81f8f593aba611413ffbdb06"
+      "sha": "606f144d79a319a5361130e00d7cef45313695d5"
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
@@ -4076,6 +4076,18 @@
       "antes": "24a1b78071bfcde4f811e4cbe940558414aaf5f4",
       "depois": "102298e4983b47bf18ea30992d489cb7f860da45",
       "objetivo": "Contrato geral do sistema 22/11/2026: foto é sempre escolhida pelo usuário/perfil autenticado, cliente individual ou operador; modo de visualização não troca identidade. Única integração LOOP/AKITEMM, sem mascarar nem duplicar fotos."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "4efb490229eae5c43f9885bdcce60720f8de752d",
+      "depois": "a161fb5b65dd94d595e47f513b7975a019bb8dc3",
+      "objetivo": "Revalidação única da sessão real antes de ler avatar quando usuário retorna ao LOOP/AKITEMM: evita corrida Android que mostra foto errada em troca de acesso; aplica regra global a todos."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "05a81a9a05e2be0f81f8f593aba611413ffbdb06",
+      "depois": "606f144d79a319a5361130e00d7cef45313695d5",
+      "objetivo": "Revalidação única da sessão real antes de ler avatar quando usuário retorna ao LOOP/AKITEMM: evita corrida Android que mostra foto errada em troca de acesso; aplica regra global a todos."
     }
   ]
 }

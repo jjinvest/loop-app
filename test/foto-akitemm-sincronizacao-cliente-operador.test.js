@@ -17,6 +17,10 @@ test('foto da AKITEMM lê a mesma origem autenticada de cliente ou operador',()=
  assert.match(s,/credentials:'same-origin',cache:'no-store'/);
  assert.match(s,/r.headers.get\('content-type'\)/);
  assert.match(s,/fotoTitular.src=url/);
+ assert.match(s,/async function revalidarFotoDaSessao\(\)/);
+ assert.match(s,/await atualizarAtalhoOperadorReal\(\);\s*await sincronizarFotoLoja\(\);/);
+ assert.match(s,/pageshow',\(\)=>\{void revalidarFotoDaSessao\(\);\}/);
+ assert.doesNotMatch(s,/addEventListener\('pageshow',\(\)=>void atualizarAtalhoOperadorReal\(\)\)/);
  const contas=ler('src/producao/servidor-identidade-loop.js');
  const admin=ler('src/producao/gateway-admin-comercial.js');
  const loop=ler('src/producao/interface-aprovada-contas.js');

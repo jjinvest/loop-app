@@ -65,10 +65,16 @@
  }
  // Quando uma foto é trocada em outra aba do LOOP, refletir na loja
  // assim que o cliente voltar. Sem armazenamento de fotografias no navegador.
- window.addEventListener('pageshow',()=>{void sincronizarFotoLoja();});
- window.addEventListener('focus',()=>{void sincronizarFotoLoja();});
+ async function revalidarFotoDaSessao(){
+  // Ao retornar de outra aba ou login, primeiro revalidar o papel REAL.
+  // Nunca reaproveitar foto do perfil anterior em mudança de sessão.
+  await atualizarAtalhoOperadorReal();
+  await sincronizarFotoLoja();
+ }
+ window.addEventListener('pageshow',()=>{void revalidarFotoDaSessao();});
+ window.addEventListener('focus',()=>{void revalidarFotoDaSessao();});
  document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden)void sincronizarFotoLoja();
+  if(!document.hidden)void revalidarFotoDaSessao();
  });
  let carrinhoOcupado=false;
  const quantidadesCarrinho=new Map();
@@ -425,9 +431,9 @@
    exibir(d?.operador===true);
   }catch{exibir(false);}
  }
+ // A revalidação de sessão/foto acima já cobre pageshow e focus,
+ // sem uma segunda consulta concorrente ao papel de usuário.
  void atualizarAtalhoOperadorReal();
- addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
- addEventListener('focus',()=>void atualizarAtalhoOperadorReal());
 
  // Carrinho interno real: item e quantidade ficam no SQLite do titular.
  // Nao simula dinheiro, preço, frete, pagamento, ordem ou posicao LOOP.
