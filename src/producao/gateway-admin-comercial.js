@@ -14,6 +14,8 @@ const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
 const {montarRotasCatalogoMidiaOperador}=
  require('./rotas-catalogo-midia-operador');
+const {BannersLojaAkitemmRealSQLite}=
+ require('./banners-loja-akitemm-real-sqlite');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
@@ -131,6 +133,76 @@ function montarGatewayAdminComercial(app,{
    return res.status(403).json({erro:'CSRF_ADMIN_INVALIDO'});
   next();
  };
+
+ // Quatro banners da AKITEMM no SQLite REAL. O público lê apenas fotos
+ // publicadas; gravação, ordenação e enquadramento exigem operador+CSRF.
+ if(motorLoop?.banco){
+  const banners=new BannersLojaAkitemmRealSQLite({banco:motorLoop.banco});
+  const slot=req=>/^[1-4]$/.test(req.params.slot||'')?
+   Number(req.params.slot):null;
+  const responderErro=(res,e)=>{
+   const codigo=e?.codigo||'BANNER_LOJA_INDISPONIVEL';
+   return res.status(codigo.includes('CONFLITO')?409:
+    codigo.includes('SEM_IMAGEM')?404:
+    codigo.includes('INVALID')?400:503).json({erro:codigo});
+  };
+  app.get('/api/loja/banners',(_req,res)=>{
+   try{return res.set('Cache-Control','no-store').json(banners.listar());}
+   catch{return res.status(503).json({erro:'BANNER_LOJA_INDISPONIVEL'});}
+  });
+  app.get('/api/loja/banners/:slot/imagem',(req,res)=>{
+   if(slot(req)===null)return res.status(404).end();
+   try{
+    const f=banners.imagem(slot(req));
+    return res.set('Cache-Control','no-store')
+     .set('X-Content-Type-Options','nosniff').type(f.mime).send(f.bytes);
+   }catch{return res.status(404).end();}
+  });
+  const corpoBanner=express.raw({
+   type:['image/jpeg','image/png','image/webp'],limit:'4mb',inflate:false
+  });
+  app.put('/api/admin/akitemm/banners/:slot/imagem',
+   proteger,validarCsrf,corpoBanner,(req,res)=>{
+    if(slot(req)===null)return res.status(404).json({erro:'BANNER_LOJA_SLOT_INVALIDO'});
+    if(!['image/jpeg','image/png','image/webp'].includes(req.get('content-type')))
+     return res.status(415).json({erro:'BANNER_LOJA_TIPO_INVALIDO'});
+    try{return res.set('Cache-Control','no-store').json(banners.salvar({
+     slot:slot(req),mime:req.get('content-type'),bytes:req.body,
+     revisaoEsperada:Number(req.get('x-banner-revisao-esperada')),
+     enquadramento:req.get('x-banner-enquadramento')||'PREENCHER'
+    }));}
+    catch(e){return responderErro(res,e);}
+   });
+  app.delete('/api/admin/akitemm/banners/:slot/imagem',
+   proteger,validarCsrf,(req,res)=>{
+    if(slot(req)===null)return res.status(404).json({erro:'BANNER_LOJA_SLOT_INVALIDO'});
+    try{return res.set('Cache-Control','no-store').json(banners.remover({
+     slot:slot(req),
+     revisaoEsperada:Number(req.get('x-banner-revisao-esperada'))
+    }));}
+    catch(e){return responderErro(res,e);}
+   });
+  app.post('/api/admin/akitemm/banners/:slot/enquadramento',
+   proteger,validarCsrf,(req,res)=>{
+    if(slot(req)===null||!req.is('application/json')||!req.body||
+       Array.isArray(req.body)||Object.keys(req.body).sort().join(',')!==
+       'enquadramento,revisaoEsperada')
+     return res.status(400).json({erro:'BANNER_LOJA_CAMPOS_INVALIDOS'});
+    try{return res.set('Cache-Control','no-store').json(banners.enquadrar({
+     slot:slot(req),...req.body
+    }));}
+    catch(e){return responderErro(res,e);}
+   });
+  app.post('/api/admin/akitemm/banners/trocar',
+   proteger,validarCsrf,(req,res)=>{
+    if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+       Object.keys(req.body).sort().join(',')!==
+       'destino,origem,revisaoDestino,revisaoOrigem')
+     return res.status(400).json({erro:'BANNER_LOJA_CAMPOS_INVALIDOS'});
+    try{return res.set('Cache-Control','no-store').json(banners.trocar(req.body));}
+    catch(e){return responderErro(res,e);}
+   });
+ }
 
  // Caixa de entrada do atendimento AKITEMM, independente de marketplaces.
  if(atendimento){
