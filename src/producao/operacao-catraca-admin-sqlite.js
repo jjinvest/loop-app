@@ -195,7 +195,9 @@ class OperacaoCatracaAdminSQLite{
    inicio=mudanca.em;
    if(mudanca.detalhes!==null)atual=JSON.parse(mudanca.detalhes);
   }
-  return {luzesRelogio24h:luzes,ciclosRelogio24h:ciclos};
+  // Um ciclo visual necessita de seis luzes efetivamente contabilizadas
+  // nessa janela, inclusive com pausas e mudanças de programação.
+  return {luzesRelogio24h:luzes,ciclosRelogio24h:Math.floor(luzes/6)};
  }
  _log(acao,detalhes,ts){
   this.db.prepare([
