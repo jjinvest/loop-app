@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "bcdfff01cc4617fdbcbb25426f8a8c68e8c951d0"
+      "sha": "f447fd93d2f948e6808d3f9a8d93fb0a621a2b55"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1184,7 +1184,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "96d78c9e699fd936f655bf910ed48a6388e9061a"
+      "sha": "19ff777f77fecb14cca101aa0755bb435be6182a"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
@@ -1932,7 +1932,7 @@
     },
     {
       "path": "test/akitemm-marca-identidade-dourado-real.test.js",
-      "sha": "86363e35f23d5c451cba07564e41a046386ff675"
+      "sha": "622b945060db80f23e02f74ce4baa7b867ad3d66"
     },
     {
       "path": "test/akitemm-midia-validacao.test.js",
@@ -5144,6 +5144,34 @@
       "antes": null,
       "depois": null,
       "objetivo": "Corrigir inventário da trava de base: seu escopo inclui apenas src/scripts/public/test/.github/workflows e arquivos de raiz obrigatórios. O contrato visual em docs é checado por proteção visual separada e não pode inflar a contagem de arquivos da trava."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/laboratorio/loja-cliente-demo.css",
+      "antes": "96d78c9e699fd936f655bf910ed48a6388e9061a",
+      "depois": "19ff777f77fecb14cca101aa0755bb435be6182a",
+      "objetivo": "Ajuste pontual aprovado para o cabeçalho unificado real da AKITEMM: a versão 3.0 é um span prateado, não em; mantendo LOOP dourado, visual e demais componentes protegidos."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "bcdfff01cc4617fdbcbb25426f8a8c68e8c951d0",
+      "depois": "f447fd93d2f948e6808d3f9a8d93fb0a621a2b55",
+      "objetivo": "Ajuste pontual aprovado para o cabeçalho unificado real da AKITEMM: a versão 3.0 é um span prateado, não em; mantendo LOOP dourado, visual e demais componentes protegidos."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/akitemm-marca-identidade-dourado-real.test.js",
+      "antes": "86363e35f23d5c451cba07564e41a046386ff675",
+      "depois": "622b945060db80f23e02f74ce4baa7b867ad3d66",
+      "objetivo": "Ajuste pontual aprovado para o cabeçalho unificado real da AKITEMM: a versão 3.0 é um span prateado, não em; mantendo LOOP dourado, visual e demais componentes protegidos."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "docs/CONTRATO_VISUAL_LOOP_APROVADO.json",
+      "antes": null,
+      "depois": "54ae972e04423e93d02762ff5f8208370d693d47",
+      "objetivo": "Atualização do contrato visual específico, verificada pela proteção de telas, fora do inventário de execução."
     }
   ]
 }
