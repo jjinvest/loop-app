@@ -21,6 +21,7 @@ function cenario(){
   origem:'CATRACA_REAL_MESMO_SQLITE',somenteLeitura:true,
   luzesDoRelogioCompartilhado:true,girosReaisHora:2,
   girosReaisHoje:2,girosReais24h:2,eventosReaisNoCiclo:3,
+  luzesRelogio24h:8,ciclosRelogio24h:1,
   ciclosReaisConcluidos:0
  };
  const motor={
@@ -30,7 +31,8 @@ function cenario(){
  };
  const controle={
   financeiroReal:false,agenda,girosHoje:2,giros24h:2,
-  girosTotais:2,filaA:1,filaB:1
+  girosTotais:2,filaA:1,filaB:1,
+  luzesRelogio24h:8,ciclosRelogio24h:1
  };
  const cliente={
   ...motor,somenteLeitura:true,financeiroReal:false,
@@ -67,11 +69,11 @@ function cenario(){
 test('cliente e operador mostram o mesmo numero de giros por hora, sem inventar luz',async()=>{
  const x=cenario();
  await x.contexto.atualizarCliente();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
  assert.equal(x.elementos.loop03TotalIntegrado.textContent,'0 / 10');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
  assert.equal(x.elementos.loop03TotalIntegrado.textContent,'2');
  assert.equal(x.elementos.loop03NumeroIntegrado.textContent,'3 / 6');
  assert.deepEqual(x.chamadas,[
@@ -89,10 +91,10 @@ test('atualizacao do mesmo livro chega aos dois perfis sem recriar tela',async()
  x.motor.catraca.giros=4;x.controle.girosTotais=4;
  x.controle.girosHoje=4;x.controle.giros24h=4;
  await x.contexto.atualizarCliente();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'4');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'4');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
  assert.equal(x.elementos.loop03NumeroIntegrado.textContent,'3 / 6');
  assert.equal(x.visores.every(v=>v[0]==='eventos'||v[1]===x.agenda),true);
 });
