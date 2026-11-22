@@ -275,3 +275,23 @@ dialog.akitemm-operador-editor .akitemm-campo-erro{
  border:1px solid #c5a86e;background:#1a2932;color:#ffebbe;
  font-size:14px;line-height:1.45;
 }
+
+
+/* Rascunhos REAIS do operador. Nunca expostos ao cliente. */
+dialog.akitemm-operador-editor .akitemm-card-rascunho{
+ display:grid;gap:9px;padding:12px;margin:10px 0;
+ border:1px solid #ae956a;border-radius:14px;background:#1b2b35;
+ color:#efe5cc;overflow-wrap:anywhere
+}
+dialog.akitemm-operador-editor .akitemm-card-rascunho button{
+ min-height:43px;border-radius:12px;
+ background:#253746;color:#f8deb5;border:1px solid #c39b5a;
+ text-align:center;padding:9px 12px
+}
+dialog.akitemm-operador-editor .akitemm-estado-rascunho{
+ display:block;padding:9px 12px;margin:9px 0;
+ border:1px solid #bfa775;border-radius:12px;
+ background:#192832;color:#f5dfaf;line-height:1.45
+}
+dialog.akitemm-operador-editor .akitemm-editor-corpo
+ button.akitemm-editor-secundario{border-radius:12px}
