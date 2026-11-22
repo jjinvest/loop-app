@@ -258,6 +258,38 @@ async function main(){
    assert.equal(await operadorPage.locator('#loop03NickIntegrado').innerText(),
     'OPERADOR');
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
+   // As fotos do usuário exigem o MESMO quadro central no operador:
+   // GIROS/HORA acima, linha divisória, LUZES/HORA abaixo.
+   // As pontas continuam com os rótulos exclusivamente administrativos.
+   const placarOperador=await operadorPage.locator(
+    '.loop03-indicadores').evaluate(painel=>{
+    const caixas=[...painel.querySelectorAll(':scope > .loop03-indicador')];
+    const meio=caixas[1],partes=[...meio.querySelectorAll('.loop03-placar-metade')];
+    const primeira=partes[0],segunda=partes[1];
+    const a=primeira?.getBoundingClientRect(),b=segunda?.getBoundingClientRect();
+    const divisoria=segunda?getComputedStyle(segunda).borderTopWidth:null;
+    return {total:caixas.length,
+     pontas:[caixas[0]?.querySelector('small')?.textContent,
+      caixas[2]?.querySelector('small')?.textContent],
+     topo:primeira?.querySelector('small')?.textContent,
+     baixo:segunda?.querySelector('small')?.textContent,
+     topoId:primeira?.querySelector('strong')?.id,
+     baixoId:segunda?.querySelector('strong')?.id,
+     visivel:segunda?getComputedStyle(segunda).display!=='none':false,
+     direcao:meio?getComputedStyle(meio).flexDirection:null,
+     abaixo:Boolean(a&&b&&b.top>a.top+5),divisoria};
+   });
+   assert.equal(placarOperador.total,3);
+   assert.deepEqual(placarOperador.pontas,
+    ['POSIÇÕES NAS FILAS','EVENTOS NO CICLO']);
+   assert.equal(placarOperador.topo,'GIROS / HORA');
+   assert.equal(placarOperador.baixo,'LUZES / HORA');
+   assert.equal(placarOperador.topoId,'loop03Giros24Integrado');
+   assert.equal(placarOperador.baixoId,'loop03LuzesHoraIntegrado');
+   assert.equal(placarOperador.visivel,true);
+   assert.equal(placarOperador.direcao,'column');
+   assert.equal(placarOperador.abaixo,true);
+   assert.notEqual(placarOperador.divisoria,'0px');
    assert.equal(await operadorPage.locator('#loop03AlterarFotoTopo').isEnabled(),true);
    // Foto no Android deve abrir o seletor de arquivos pelo TOQUE real
    // no circulo, nao apenas setInputFiles sobre input escondido.
