@@ -586,12 +586,15 @@ class IdentidadeClienteLoopReal{
   const rows=this.banco.prepare([
    'SELECT v.indicado_id AS indicadoId,c.nick,v.registrado_em AS registradoEm,',
    'd.numero_posicao AS posicaoDestinoReservada,',
-   'x.titular_id AS confirmacaoTitularId',
+   'x.titular_id AS confirmacaoTitularId,',
+   'q.indicado_id AS qualificacaoRealIndicadoId',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_contas c ON c.id=v.indicado_id',
    'LEFT JOIN loop_real_destinos_indicacao d',
    'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
    'LEFT JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
+   'LEFT JOIN loop_real_indicacoes_validas_financeiro q',
+   'ON q.indicado_id=v.indicado_id AND q.indicador_id=v.indicador_id',
    'WHERE v.indicador_id=?',
    ...(ponto?[
     'AND (v.registrado_em>? OR',
@@ -608,22 +611,29 @@ class IdentidadeClienteLoopReal{
   ).get(titularId).n;
   const contagem=this.banco.prepare([
    'SELECT COUNT(*) AS confirmados,',
-   'COALESCE(SUM(CASE WHEN d.indicado_id IS NULL THEN 1 ELSE 0 END),0)',
-   'AS aDistribuir',
+   'COALESCE(SUM(CASE WHEN q.indicado_id IS NOT NULL',
+   'AND d.indicado_id IS NULL THEN 1 ELSE 0 END),0) AS aDistribuir',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
+   'LEFT JOIN loop_real_indicacoes_validas_financeiro q',
+   'ON q.indicado_id=v.indicado_id AND q.indicador_id=v.indicador_id',
    'LEFT JOIN loop_real_destinos_indicacao d',
    'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
    'WHERE v.indicador_id=?'
   ].join(' ')).get(titularId);
   const vinculadas=this.banco.prepare([
-   'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao',
-   'WHERE indicador_id=?'
+   'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao d',
+   'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=d.indicado_id',
+   'JOIN loop_real_indicacoes_validas_financeiro q',
+   'ON q.indicado_id=d.indicado_id AND q.indicador_id=d.indicador_id',
+   'WHERE d.indicador_id=?'
   ].join(' ')).get(titularId).n;
   return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
    numeroCadastro:base+i+1,filaCadastro:'B',
    cadastroConfirmado:x.confirmacaoTitularId!==null,
+   indicacaoValida:x.confirmacaoTitularId!==null&&
+    x.qualificacaoRealIndicadoId!==null,
    posicaoDestinoReservada:x.posicaoDestinoReservada,
    telefone:this.telefoneIndicadoVinculado({
     indicadorId:titularId,indicadoId:x.indicadoId
