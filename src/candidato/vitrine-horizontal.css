@@ -267,3 +267,11 @@ dialog.akitemm-operador-editor .akitemm-campo-erro{
  outline-offset:1px;
  box-shadow:0 0 20px #eecf7255
 }
+
+
+/* Confirmação explícita da posição de chegada, sem rascunhos visuais. */
+.akitemm-loja .akitemm-indicador-proxima-posicao{
+ margin:8px 0 12px;padding:10px 12px;border-radius:12px;
+ border:1px solid #c5a86e;background:#1a2932;color:#ffebbe;
+ font-size:14px;line-height:1.45;
+}
