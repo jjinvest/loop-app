@@ -720,7 +720,8 @@
  }
  function mostrarResumoComercialOperador(destino,d){
   if(!Number.isSafeInteger(d?.totalClientes)||d.totalClientes<0||
-     !Number.isSafeInteger(d?.totalProdutosVendidos)||d.totalProdutosVendidos<0||
+     !(d.totalProdutosVendidos===null||
+       Number.isSafeInteger(d.totalProdutosVendidos)&&d.totalProdutosVendidos>=0)||
      d.fonte!=='SQLITE_COMERCIAL_REAL')
    throw Error('INDICADORES_COMERCIAIS_INVALIDOS');
   const cartao=(nome,valor)=>{
@@ -729,7 +730,8 @@
    const titulo=document.createElement('h3');titulo.textContent=nome;
    const numero=document.createElement('strong');
    numero.className='loop03-comercial-numero';
-   numero.textContent=Number(valor).toLocaleString('pt-BR');
+   numero.textContent=valor===null?'—':
+    Number(valor).toLocaleString('pt-BR');
    quadro.append(titulo,numero);
    return quadro;
   };
