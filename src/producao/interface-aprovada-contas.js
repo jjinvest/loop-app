@@ -96,6 +96,7 @@
  let posicaoSelecionada='';
  let nickResumoReal='';
  let posicoesResumoReal=[],popupPosicoesRealAberto=false;
+ let posicaoResumoEscolhidaManualmente=false;
  let sequenciaLeituraFilas=0;
  let filaSelecionada=null;
  const carregarPaginaFila={A:null,B:null};
@@ -646,7 +647,7 @@
   const indicadores=document.querySelector('.loop03-indicadores');
   if(indicadores)indicadores.hidden=false;
   // Abre somente a aba operacional existente; nao concede identidade de cliente.
-  posicoesResumoReal=[];posicaoSelecionada='';
+  posicoesResumoReal=[];posicaoSelecionada='';posicaoResumoEscolhidaManualmente=false;
   $('posicoesPainel').replaceChildren();
   prepararAbasMotor();
   for(const tab of document.querySelectorAll('#loop03SidebarIntegrado [role=tab]')){
@@ -701,7 +702,7 @@
    indicadoresCliente[2].querySelector('small').textContent='POSIÇÃO SELECIONADA';
   }
   $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
-  posicoesResumoReal=[];posicaoSelecionada='';
+  posicoesResumoReal=[];posicaoSelecionada='';posicaoResumoEscolhidaManualmente=false;
   atualizarSituacaoRodapeReal();
   $('perfilCliente').textContent='Nick: '+nickVisivel(s.nick)+
    (s.emailVerificado?' · E-mail confirmado':' · Confirme seu e-mail');
@@ -1155,6 +1156,7 @@
    botao.setAttribute('aria-pressed',String(String(p.numero)===posicaoSelecionada));
    botao.addEventListener('click',()=>{
     posicaoSelecionada=String(p.numero);
+    posicaoResumoEscolhidaManualmente=true;
     fecharPopupReal();
     atualizarTopoPosicaoReal();
     void carregarMotor();
@@ -1314,6 +1316,7 @@
   const seletor=$('seletorPosicaoMotor');
   if(seletor)seletor.addEventListener('change',()=>{
    posicaoSelecionada=seletor.value;
+   posicaoResumoEscolhidaManualmente=!!seletor.value;
    void carregarMotor();
   });
  }
@@ -2092,8 +2095,11 @@
      Number.isSafeInteger(p.numero)).sort((a,b)=>a.numero-b.numero);
     if(popupPosicoesRealAberto)preencherPopupReal();
     const opcoes=d.minhasPosicoes.map(p=>String(p.numero));
-    if(!opcoes.includes(posicaoSelecionada))posicaoSelecionada=
-     posicoesResumoReal.length?String(posicoesResumoReal[0].numero):'';
+    if(!opcoes.includes(posicaoSelecionada)){
+     posicaoResumoEscolhidaManualmente=false;
+     posicaoSelecionada=posicoesResumoReal.length?
+      String(posicoesResumoReal[0].numero):'';
+    }
     atualizarSituacaoRodapeReal(posicoesResumoReal);
     seletor.replaceChildren();
     const geral=document.createElement('option');
@@ -2128,8 +2134,9 @@
    // Só mostrar um cartão quando o titular selecionar sua posição;
    // na visão geral renderizar todos os espaços disponíveis até o limite.
    const slots=somentePosicoesPeloQuadrado?ordenadas:
-    posicaoSelecionada?ordenadas.filter(p=>String(p.numero)===posicaoSelecionada):
-    Array.from({length:capacidade},(_,i)=>ordenadas[i]||null);
+    posicaoResumoEscolhidaManualmente&&posicaoSelecionada?
+     ordenadas.filter(p=>String(p.numero)===posicaoSelecionada):
+     Array.from({length:capacidade},(_,i)=>ordenadas[i]||null);
    const criarLinhaDetalhe=(pai,rotulo,valor)=>{
     const linha=document.createElement('div');
     linha.className='loop03-posicao-detalhe-linha';
@@ -2157,8 +2164,9 @@
     const cabecalho=document.createElement('div');
     cabecalho.className='loop03-posicao-cabecalho';
     const rotulo=document.createElement('strong');
-    const vaga=somentePosicoesPeloQuadrado||posicaoSelecionada?
-     ordenadas.findIndex(p=>p.numero===pos.numero)+1:i+1;
+    const vaga=somentePosicoesPeloQuadrado||
+     (posicaoResumoEscolhidaManualmente&&posicaoSelecionada)?
+      ordenadas.findIndex(p=>p.numero===pos.numero)+1:i+1;
     rotulo.textContent='Posição '+vaga;
     const luz=document.createElement('span');
     luz.className='loop03-posicao-luz '+(!pos?'loop03-posicao-luz-inativa':

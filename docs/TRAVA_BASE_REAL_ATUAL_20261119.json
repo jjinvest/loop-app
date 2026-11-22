@@ -1452,7 +1452,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "f191ac898c1d2c0357d07adf7d0bb29b3c70d209"
+      "sha": "eeed403e0e4fde728373c8d92c3a844ff08beedb"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2384,7 +2384,7 @@
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
-      "sha": "6de5013e398bf4f142c7fe2879529bf1f2e8a66a"
+      "sha": "ce28a2519b3d428fea1c207e515c17f53f668a33"
     },
     {
       "path": "test/controle-caixa-catraca-loop-sqlite.test.js",
@@ -3892,6 +3892,18 @@
       "antes": null,
       "depois": "af0c1e582c5b7ec6ea7517b4f09b9f7752fd3427",
       "objetivo": "Solicitação do proprietário em 22/11/2026: 3 cartões do escritório de TODOS os clientes com placar ao vivo por hora (giros SQLite e luzes relógio), seleção de primeira posição, alinhamento, sem alterar o motor ou a visão do operador."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "f191ac898c1d2c0357d07adf7d0bb29b3c70d209",
+      "depois": "eeed403e0e4fde728373c8d92c3a844ff08beedb",
+      "objetivo": "Autorização do titular de 22/11/2026: primeira posição no placar sem esconder dez cartões, preservando seleção manual e ajustando contrato visual antigo à nova regra."
+    },
+    {
+      "path": "test/contrato-visual-escritorio-aprovado.test.js",
+      "antes": "6de5013e398bf4f142c7fe2879529bf1f2e8a66a",
+      "depois": "ce28a2519b3d428fea1c207e515c17f53f668a33",
+      "objetivo": "Autorização do titular de 22/11/2026: primeira posição no placar sem esconder dez cartões, preservando seleção manual e ajustando contrato visual antigo à nova regra."
     }
   ]
 }

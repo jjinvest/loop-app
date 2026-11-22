@@ -99,14 +99,18 @@ test('cadastro: Nome, Nick, E-mail, Telefone, Senha e Confirmar senha',()=>{
   anterior=i;
  }
 });
-test('resumo da posicao: titular, fila e indicacoes no terceiro quadro',()=>{
+test('resumo cliente: terceira caixa mostra posição e fila, sem métricas de catraca',()=>{
  const ui=ler('src/candidato/checkout-candidato-ui.js');
  const real=ler('src/producao/interface-aprovada-contas.js');
  assert.match(ui,/nickAtualResumo=perfil\.nick/);
  assert.match(ui,/'@'\+nickAtualResumo/);
  assert.match(ui,/pos\.indicacoesVinculadas\|\|0/);
  assert.match(real,/nickResumoReal=s\.nick/);
- assert.match(real,/selecionadaResumo\.indicacoesVinculadas\|\|0/);
+ assert.match(real,/function atualizarTopoPosicaoReal\(\)/);
+ assert.match(real,/nickVisivel\(nickResumoReal\)/);
+ assert.match(real,/Fila aguardando definição/);
+ assert.match(real,/posicaoResumoEscolhidaManualmente/);
+ assert.doesNotMatch(real,/selecionadaResumo\.indicacoesVinculadas\|\|0/);
 });
 
 test('menu unico preserva nove destinos, com icones vetoriais dourados/verde/roxo',()=>{
