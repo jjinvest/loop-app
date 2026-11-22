@@ -115,7 +115,9 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.doesNotMatch(script,/Indicação qualificada em ensaio/);
  assert.doesNotMatch(script,/Motor interno indisponível/);
  assert.match(script,/Aguardando ativação no LOOP/);
- assert.match(script,/a indicação só será ativada após comprovação/);
+ assert.match(script,/esta indicação ainda não é válida/);
+ assert.match(script,/Aguardando compra qualificada e conciliação/);
+ assert.match(script,/escolha.disabled=!indicacaoValida/);
  assert.doesNotMatch(script,/Bonificações somente após confirmação comercial/);
  assert.match(script,/\/api\/contas/);
  assert.doesNotMatch(script,/pedido de ensaio /);
