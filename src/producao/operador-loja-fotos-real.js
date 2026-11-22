@@ -9,8 +9,9 @@
  let operador=false,operadorAutenticado=false,dialogo=null,aberto=false;
  // A visualização de cliente não encerra nem amplia a sessão administrativa.
  // Serve apenas para ocultar as ferramentas e mostrar a vitrine como público.
- const visaoClienteSolicitada=new URLSearchParams(location.search)
-  .get('visao')==='cliente';
+ const visaoSolicitada=new URLSearchParams(location.search).get('visao');
+ const visaoClienteSolicitada=visaoSolicitada==='cliente';
+ const visaoOperadorSolicitada=visaoSolicitada==='operador';
  const fetchJson=async(rota,opcoes={})=>{
   const res=await fetch(rota,{
    credentials:'same-origin',cache:'no-store',...opcoes
@@ -24,8 +25,19 @@
    const r=await fetchJson('/api/operador/estado');
    operadorAutenticado=r.operador===true;
   }catch{operadorAutenticado=false;}
-  operador=operadorAutenticado&&!visaoClienteSolicitada;
+  // Uma credencial antiga de operador nao revela edicao ao cliente.
+  operador=false;
+  if(operadorAutenticado&&!visaoClienteSolicitada){
+   if(visaoOperadorSolicitada)operador=true;
+   else try{
+    const cliente=await fetch('/api/contas/me',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    operador=cliente.status===401;
+   }catch{operador=false;}
+  }
   document.getElementById('akitemmAlternarVisao')?.remove();
+  if(!operador&&dialogo?.open)dialogo.close();
   sincronizarEditorOfertas();
   prepararAlcas();
  }

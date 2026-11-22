@@ -290,23 +290,46 @@ async function main(){
    await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
    assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
-   // A foto do operador deve aparecer na AKITEMM sem novo upload,
-   // inclusive quando ele alterna apenas a visualização para cliente.
-   for(const visao of ['operador','cliente']){
-    await operadorPage.goto(base+'/loja?visao='+visao,{
-     waitUntil:'domcontentloaded'
+   // Foto do operador somente em modo operador autenticado.
+   await operadorPage.goto(base+'/loja?visao=operador',{
+    waitUntil:'domcontentloaded'
+   });
+   assert.equal(await operadorPage.locator('#akitemmAlternarVisao').count(),0);
+   await operadorPage.locator('#akitemmFotoTitular')
+    .waitFor({state:'visible',timeout:12000});
+   assert.equal(await operadorPage.locator('#akitemmFotoTitular')
+    .evaluate(img=>new URL(img.src).pathname),
+    '/api/admin/operador/foto-perfil');
+   // Os dois cookies coexistem: cliente logado continua cliente.
+   const loginCliente=await operadorPage.evaluate(async({nick,senha})=>{
+    const r=await fetch('/api/contas/entrar',{
+     method:'POST',credentials:'same-origin',
+     headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({nick,senha})
     });
-    assert.equal(await operadorPage.locator('#akitemmAlternarVisao').count(),0,
-     'o botão de visão é único no LOOP, não na AKITEMM');
-    await operadorPage.locator('#akitemmFotoTitular')
-     .waitFor({state:'visible',timeout:12000});
-    const imagem=await operadorPage.locator('#akitemmFotoTitular')
-     .evaluate(img=>({ok:img.complete&&img.naturalWidth>0,
-      src:new URL(img.src).pathname}));
-    assert.equal(imagem.ok,true,'a foto do próprio operador deve aparecer');
-    assert.equal(imagem.src,'/api/admin/operador/foto-perfil',
-     'a visão da loja não converte operador em cliente');
+    return r.status;
+   },{nick,senha:'SenhaDoEnsaio2026!'});
+   assert.equal(loginCliente,200,'cliente precisa manter sua propria sessao');
+   for(const rota of ['/loja?visao=cliente','/loja']){
+    await operadorPage.goto(base+rota,{waitUntil:'domcontentloaded'});
+    await operadorPage.waitForFunction(nick=>
+     document.getElementById('akitemmNomeTitular')?.textContent
+      ?.toLowerCase()===nick.toLowerCase(),nick);
+    assert.equal(await operadorPage.locator('#akitemmFotoTitular').isHidden(),true,
+     'foto de operador nao pode aparecer para cliente autenticado');
+    assert.equal(await operadorPage.locator('.akitemm-acesso-operador').isHidden(),true);
+    assert.equal(await operadorPage.locator('#akitemmGerenciarOfertasReal').count(),0);
+    assert.equal(await operadorPage.locator('#akitemmBannerMaisReal').isHidden(),true);
    }
+   // A visão operador requer escolha explícita e a sessão autorizada.
+   await operadorPage.goto(base+'/loja?visao=operador',{
+    waitUntil:'domcontentloaded'
+   });
+   await operadorPage.locator('#akitemmFotoTitular')
+    .waitFor({state:'visible',timeout:12000});
+   assert.equal(await operadorPage.locator('#akitemmFotoTitular')
+    .evaluate(img=>new URL(img.src).pathname),
+    '/api/admin/operador/foto-perfil');
    await operadorPage.goto(base+'/escritorio?visao=operador',{
     waitUntil:'domcontentloaded'
    });
@@ -395,7 +418,8 @@ async function main(){
    assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
    await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])')
     .waitFor({state:'attached'});
-   await operadorPage.goto(base+'/loja');
+   // Acessar loja no papel operador explicitamente, mesmo com conta cliente ativa.
+   await operadorPage.goto(base+'/loja?visao=operador');
    await operadorPage.locator('#akitemmNomeTitular').filter({
     hasText:'OPERADOR'
    }).waitFor();
@@ -977,7 +1001,7 @@ async function main(){
    assert.equal(await page.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
    assert.equal(await page.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
    assert.equal(await page.locator('#abaConta').isDisabled(),false);
-   await page.goto(base+'/loja');
+   await page.goto(base+'/loja?visao=operador');
    await page.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
    assert.equal(await page.locator('#copiarDivulgarLojaLoop').isDisabled(),true,
     'operador nunca recebe link privado de titular anterior');
@@ -1314,7 +1338,7 @@ async function main(){
    assert.equal(await pagina.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
    assert.equal(await pagina.locator('#abaFinanceiro').isDisabled(),false);
    assert.equal(await pagina.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
-   await pagina.goto(base+'/loja');
+   await pagina.goto(base+'/loja?visao=operador');
    await pagina.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
    assert.equal(await pagina.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
    await pagina.goto(base+'/administrador');

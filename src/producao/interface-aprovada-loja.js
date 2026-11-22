@@ -9,12 +9,20 @@
  const ref=new URLSearchParams(location.search).get('ref');
  const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
   ref.toLowerCase():null;
- const destinoCadastro=()=>'/escritorio?origem=loja&cadastro=1'+
+ const destinoCadastro=()=>'/escritorio?origem=loja&cadastro=1&visao=cliente'+
   (indicadorNick?'&ref='+encodeURIComponent(indicadorNick):'');
  const solicitarCadastro=()=>location.assign(destinoCadastro());
- let visitante=true,operadorAtivo=false,clienteNick=null,csrfLoja=null;
- const visaoClienteLoja=new URLSearchParams(location.search)
-  .get('visao')==='cliente';
+ let visitante=true,operadorAtivo=false,operadorAutenticadoLoja=false;
+ let clienteNick=null,csrfLoja=null;
+ const visaoLoja=new URLSearchParams(location.search).get('visao');
+ const visaoClienteLoja=visaoLoja==='cliente';
+ const visaoOperadorLoja=visaoLoja==='operador';
+ // Sessao cliente prevalece sobre cookie administrativo antigo.
+ // O parametro da URL nao concede acesso: exige login de operador valido.
+ function deveAtivarOperadorLoja(adminAutenticado,clienteAutenticado){
+  return adminAutenticado===true&&!visaoClienteLoja&&
+   (visaoOperadorLoja||clienteAutenticado===false);
+ }
  // Foto individual por identidade REAL autenticada, sem exceção por nick:
  // cada cliente vê a sua; o operador vê a sua, nos dois sistemas.
  // Um modo visual não troca a credencial nem assume a identidade de cliente.
@@ -117,7 +125,8 @@
    if($('akitemmDadosConta').hidden)return;
    alvo.textContent='Nome: '+dados.nome+'\nNick: @'+
     nickVisivel(dados.nick)+'\nE-mail: '+dados.email;
-   $('akitemmEditarConta').href='/minha-conta';
+   $('akitemmEditarConta').href=operadorAutenticadoLoja?
+    '/escritorio?visao=cliente':'/minha-conta';
   }catch{
    if(!$('akitemmDadosConta').hidden)
     alvo.textContent='Dados indisponíveis. Acesse seu escritório para consultar a conta.';
@@ -414,24 +423,40 @@
  // e apenas quando a sessão de operador é comprovada.
  async function atualizarAtalhoOperadorReal(){
   const linkRodape=document.querySelector('.akitemm-acesso-operador');
-  if(!linkRodape)return;
-  const exibir=permitido=>{
-   operadorAtivo=permitido;
-   // Voltar ao LOOP conserva a visão atual, como no botão equivalente.
+  const exibir=(adminAutenticado,clienteAutenticado=null)=>{
+   operadorAutenticadoLoja=adminAutenticado===true;
+   operadorAtivo=deveAtivarOperadorLoja(
+    operadorAutenticadoLoja,clienteAutenticado);
+   // O retorno acompanha a sessao atual, nao um cookie antigo.
    const voltarLoop=document.querySelector('.akitemm-voltar');
-   if(voltarLoop)voltarLoop.href=permitido?
-    '/escritorio?visao='+(visaoClienteLoja?'cliente':'operador'):
-    '/minha-conta';
-   linkRodape.hidden=!permitido||visaoClienteLoja;
-   linkRodape.style.display=permitido&&!visaoClienteLoja?
-    'inline-flex':'none';
+   if(voltarLoop)voltarLoop.href=operadorAtivo?
+    '/escritorio?visao=operador':operadorAutenticadoLoja?
+    '/escritorio?visao=cliente':'/minha-conta';
+   if(linkRodape){
+    linkRodape.hidden=!operadorAtivo;
+    linkRodape.style.display=operadorAtivo?'inline-flex':'none';
+   }
   };
   try{
    const r=await fetch('/api/operador/estado',{
     credentials:'same-origin',cache:'no-store'
    });
    const d=r.ok?await r.json():null;
-   exibir(d?.operador===true);
+   if(d?.operador!==true){exibir(false);return;}
+   if(visaoClienteLoja||visaoOperadorLoja){
+    exibir(true);return;
+   }
+   // Acesso sem visao: primeiro consultar a identidade de cliente.
+   // Falha na consulta nunca vira autorizacao administrativa.
+   let clienteAutenticado=null;
+   try{
+    const cliente=await fetch('/api/contas/me',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    if(cliente.ok)clienteAutenticado=true;
+    else if(cliente.status===401)clienteAutenticado=false;
+   }catch{}
+   exibir(true,clienteAutenticado);
   }catch{exibir(false);}
  }
  // A revalidação de sessão/foto acima já cobre pageshow e focus,

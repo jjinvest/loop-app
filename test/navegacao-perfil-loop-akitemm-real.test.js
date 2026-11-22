@@ -43,7 +43,10 @@ test('loja nao transforma visao cliente em acesso administrativo',()=>{
  assert.match(js,
   /akitemmEditarConta'\)\.href=visaoClienteLoja\?/);
  assert.match(js,/\/escritorio\?visao=cliente/);
- assert.match(js,/linkRodape\.hidden=!permitido\|\|visaoClienteLoja/);
+ assert.match(js,/linkRodape\.hidden=!operadorAtivo/);
  const fotos=fs.readFileSync('src/producao/operador-loja-fotos-real.js','utf8');
- assert.match(fotos,/operador=operadorAutenticado&&!visaoClienteSolicitada/);
+ assert.match(fotos,/if\(operadorAutenticado&&!visaoClienteSolicitada\)/);
+ assert.match(fotos,/operador=cliente\.status===401/);
+ const banners=fs.readFileSync('src/producao/banners-loja-akitemm-client.js','utf8');
+ assert.match(banners,/operador=cliente\.status===401/);
 });
