@@ -368,6 +368,7 @@ async function principal(){
   assert.equal(movimentoLivre.status,200);
   assert.equal(movimentoLivre.corpo.posicao,18);
   assert.equal(movimentoLivre.corpo.manual,true);
+  await page.evaluate(()=>window.dispatchEvent(new Event('akitemm:catalogo-atualizar')));
   await page.waitForFunction(()=>document.querySelector(
    '#catalogoLojaLoop [data-produto-id="primeiro-produto"]'
   )?.dataset.akitemmOrdem==='18');
