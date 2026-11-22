@@ -1055,9 +1055,8 @@
    ev.preventDefault();
    if(aberto)return;
    aberto=true;
-   // Bloqueia cliques duplos enquanto grava até o rascunho incompleto.
-   try{await salvarRascunho();}
-   catch(e){falhaRascunho(e);aberto=false;return;}
+   // Mostrar cada campo errado imediatamente, sem esperar uma requisição.
+   // O salvamento do rascunho não bloqueia a correção visual.
    const titulo=nome.value.trim();
    const informado=codigo.value.trim(),id=informado||slugManual();
    const erros=[];
@@ -1066,7 +1065,14 @@
    if(!ID_NOVO.test(id))
     erros.push({entrada:codigo,mensagem:'Código: use letras minúsculas, números ou hífen (3 a 80 caracteres).'});
    erros.push(...anuncio.validarCampos());
-   if(!guia.mostrar(erros)){aberto=false;return;}
+   if(!guia.mostrar(erros)){
+    aberto=false;
+    void salvarRascunho().catch(falhaRascunho);
+    return;
+   }
+   // Para cadastro válido, confirmar o rascunho primeiro, depois criar.
+   try{await salvarRascunho();}
+   catch(e){falhaRascunho(e);aberto=false;return;}
    criar.disabled=true;estado.textContent='Salvando no catálogo real...';
    let criado=false;
    try{
