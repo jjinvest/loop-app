@@ -986,8 +986,13 @@ async function main(){
     const css=getComputedStyle(el);
     const largura=el.getBoundingClientRect().width;
     const pai=el.parentElement.getBoundingClientRect().width;
+    const estiloPai=getComputedStyle(el.parentElement);
+    const espaco=Number.parseFloat(estiloPai.paddingLeft||'0')+
+     Number.parseFloat(estiloPai.paddingRight||'0')+
+     Number.parseFloat(estiloPai.borderLeftWidth||'0')+
+     Number.parseFloat(estiloPai.borderRightWidth||'0');
     return css.display==='block'&&largura>200&&
-     Math.abs(largura-pai)<=35;
+     Math.abs(largura-(pai-espaco))<=6;
    }),'total de cadastros deve ocupar toda a largura do resumo');
    await indicado.locator('.loop03-rede-pessoa-menu').click();
    await detalhes.waitFor({state:'hidden'});
