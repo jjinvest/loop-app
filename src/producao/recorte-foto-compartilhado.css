@@ -4,7 +4,7 @@
  box-sizing:border-box;max-width:100%;min-height:42px;margin:7px 0;
  padding:8px 15px;border:1px solid #aa8a53;border-radius:20px;
  background:linear-gradient(145deg,#26313d,#111a29);
- color:#f4d89c;font:700 .9rem/1.3 inherit;cursor:pointer;
+ color:#f4d89c;font-size:.9rem;font-weight:700;line-height:1.3;cursor:pointer;
 }
 .loop-recorte-botao:focus-visible{outline:3px solid #e0ba6a;outline-offset:2px}
 .loop-recorte-dialogo{
