@@ -2,6 +2,7 @@
 // Dados comerciais informados pelo operador para anuncio, separados do preco
 // confirmado pelo PSP ou fornecedor. Nao habilita compra, frete ou posicoes.
 const ID=/^[A-Za-z0-9_-]{1,80}$/;
+const {CanaisFornecedorAkitemmSQLite}=require('./canais-fornecedor-akitemm-sqlite');
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 const limite=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const texto=(s,max)=>typeof s==='string'&&s.length<=max&&
@@ -25,6 +26,8 @@ class AnunciosManuaisAkitemmSQLite{
    'CHECK(promocao_centavos IS NULL OR',
    '(preco_centavos IS NOT NULL AND promocao_centavos<preco_centavos)));'
   ].join(' '));
+  // Canal separado: preserva o CHECK legado PROPRIO/API e seus registros.
+  this.canais=new CanaisFornecedorAkitemmSQLite({banco,auditoria,agora});
  }
  consultar(produtoId){
   if(!ID.test(produtoId))falha('ANUNCIO_PRODUTO_INVALIDO');
