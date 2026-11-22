@@ -32,9 +32,16 @@ class PosicoesVitrineRealSQLite{
    'CREATE TABLE IF NOT EXISTS loja_real_vitrine_layout_vazios(',
    'id INTEGER PRIMARY KEY CHECK(id=1),',
    'cores_json TEXT NOT NULL,',
+   'posicoes_explicitas INTEGER NOT NULL DEFAULT 0 CHECK(posicoes_explicitas IN (0,1)),',
    'revisao INTEGER NOT NULL CHECK(revisao>=1),',
    'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));'
   ].join(' '));
+  const cols=banco.prepare('PRAGMA table_info(loja_real_vitrine_layout_vazios)')
+   .all().map(x=>x.name);
+  if(!cols.includes('posicoes_explicitas'))
+   banco.exec('ALTER TABLE loja_real_vitrine_layout_vazios '+
+    'ADD COLUMN posicoes_explicitas INTEGER NOT NULL DEFAULT 0 '+
+    'CHECK(posicoes_explicitas IN (0,1))');
   banco.prepare([
    'INSERT OR IGNORE INTO loja_real_vitrine_layout_vazios',
    '(id,cores_json,revisao,atualizado_em) VALUES(1,?,1,?)'
@@ -121,8 +128,43 @@ class PosicoesVitrineRealSQLite{
    if(origem<0)falha('VITRINE_REAL_PRODUTO_NAO_POSICIONADO');
    if(lista[origem].revisao!==revisaoEsperada)
     falha('VITRINE_REAL_REVISAO_CONCORRENTE');
-   if(novaPosicao>lista.length)
-    falha('VITRINE_REAL_MOVIMENTO_INVALIDO');
+   if(novaPosicao>lista.length||
+      this.consultarLayoutVazio().posicoesExplicitas){
+    // Posicionamento manual no quadrinho real. Vaga livre recebe somente
+    // este produto; se ocupada, trocar sem alterar os demais.
+    const atual=lista[origem],ocupante=lista.find(x=>x.posicao===novaPosicao);
+    if(atual.posicao===novaPosicao){
+     this.banco.exec('COMMIT');
+     return {produtoId,posicao:novaPosicao,ordem:lista.length,
+      revisao:atual.revisao,jaOrdenado:true};
+    }
+    this.banco.prepare('DELETE FROM loja_real_vitrine_posicoes').run();
+    const gravar=this.banco.prepare([
+     'INSERT INTO loja_real_vitrine_posicoes',
+     '(posicao,produto_id,revisao,atualizado_em) VALUES(?,?,?,?)'
+    ].join(' '));
+    for(const item of lista){
+     const alvo=item.produtoId===produtoId?novaPosicao:
+      ocupante&&item.produtoId===ocupante.produtoId?
+       atual.posicao:item.posicao;
+     const mudou=alvo!==item.posicao;
+     gravar.run(alvo,item.produtoId,item.revisao+(mudou?1:0),
+      mudou?agora:item.atualizadoEm);
+    }
+    this.banco.prepare([
+     'UPDATE loja_real_vitrine_layout_vazios',
+     'SET posicoes_explicitas=1 WHERE id=1'
+    ].join(' ')).run();
+    if(this.auditoria)this.auditoria.registrar({
+     acao:'VITRINE_ORDEM_ALTERADA',ator:'ADMIN_COMERCIAL',
+     entidade:'PRODUTO_'+produtoId,
+     antes:{posicao:atual.posicao},
+     depois:{posicao:novaPosicao},revisaoNova:atual.revisao+1
+    });
+    this.banco.exec('COMMIT');
+    return {produtoId,posicao:novaPosicao,ordem:lista.length,
+     revisao:atual.revisao+1,jaOrdenado:false,manual:true};
+   }
    const anterior=origem+1;
    if(anterior===novaPosicao){
     this.banco.exec('COMMIT');
@@ -202,7 +244,8 @@ class PosicoesVitrineRealSQLite{
  // vinculadas ao produto; cores vazias não mudam qualificação nem financeiro.
  consultarLayoutVazio(){
   const row=this.banco.prepare([
-   'SELECT cores_json AS cores,revisao,atualizado_em AS atualizadoEm',
+   'SELECT cores_json AS cores,posicoes_explicitas AS posicoesExplicitas,',
+   'revisao,atualizado_em AS atualizadoEm',
    'FROM loja_real_vitrine_layout_vazios WHERE id=1'
   ].join(' ')).get();
   if(!row||!Number.isSafeInteger(row.revisao)||row.revisao<1||
@@ -218,7 +261,10 @@ class PosicoesVitrineRealSQLite{
      CORES_VAZIAS.some(c=>cores.filter(x=>x===c).length!==
       esperadas.filter(x=>x===c).length))
    falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
-  return {cores,revisao:row.revisao,atualizadoEm:row.atualizadoEm};
+  if(row.posicoesExplicitas!==0&&row.posicoesExplicitas!==1)
+   falha('VITRINE_ESPACOS_LAYOUT_INCONSISTENTE');
+  return {cores,posicoesExplicitas:row.posicoesExplicitas===1,
+   revisao:row.revisao,atualizadoEm:row.atualizadoEm};
  }
  trocarEspacosVazios({origem,destino,revisaoEsperada}={}){
   if(!Number.isSafeInteger(origem)||origem<1||origem>TOTAL||
@@ -273,6 +319,26 @@ class PosicoesVitrineRealSQLite{
   const porProduto=new Map(produtos.map(p=>[p.produtoId,p]));
   if(porProduto.size!==produtos.length)
    falha('VITRINE_REAL_PRODUTO_DUPLICADO');
+  // Quando o operador fixa um quadrinho vazio, respeitar sua posição
+  // literal. Antes disso, preservar a compactação histórica da vitrine.
+  if(this.consultarLayoutVazio().posicoesExplicitas){
+   const ocupadas=new Set(registrados.map(x=>x.posicao));
+   const posicionados=registrados.filter(x=>porProduto.has(x.produtoId))
+    .map(x=>Object.freeze({
+     ...porProduto.get(x.produtoId),posicaoVitrine:x.posicao
+    }));
+   const vinculados=new Set(registrados.map(x=>x.produtoId));
+   const novos=produtos.filter(x=>!vinculados.has(x.produtoId))
+    .sort((a,b)=>(a.criadoEm||0)-(b.criadoEm||0)||
+     a.produtoId.localeCompare(b.produtoId));
+   let indice=1;
+   return [...posicionados,...novos.map(produto=>{
+    while(ocupadas.has(indice))indice++;
+    if(indice>TOTAL)falha('VITRINE_REAL_SEM_ESPACO');
+    const posicaoVitrine=indice++;
+    return Object.freeze({...produto,posicaoVitrine});
+   })].sort((a,b)=>a.posicaoVitrine-b.posicaoVitrine);
+  }
   // Respeitar a ordem definida pelo operador, mas nunca mostrar lacunas.
   // Produtos novos entram depois dos anteriores, pela data de cadastro.
   const posicionados=registrados
