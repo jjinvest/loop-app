@@ -16,7 +16,9 @@ test('varredura: quadro extra nao reaparece; sino, foto e abas originais ficam',
   'loop03ImagemFotoRodape','abaTabuleiro','abaPosicoes',
   'loopAcessoAdminMenu','cadastroIndicador'])
   assert.match(html,new RegExp('id="'+id+'"'));
- assert.match(html,/id="loopAcessoAdminMenu"[^>]*hidden/);
+ assert.match(html,/id="loopOperadorAtalhos"[^>]*hidden/);
+ assert.match(html,/id="loopAcessoAdminMenu" href="\/administrador"/);
+ assert.ok(html.indexOf('id="loopAcessoAdminMenu"')>html.indexOf('class="primario loop03-loja-prata"'));
  assert.doesNotMatch(html,/id="acessoAdminLogin"/,
   'operador usa a caixa unica de nick e senha, sem segundo login');
  assert.match(html,/id="cadastroIndicador"[^>]*readonly/);
@@ -48,7 +50,7 @@ test('varredura: VILELA no convite e atalho do admin exige operador real',()=>{
  const js=fonte('src/producao/interface-aprovada-contas.js');
  assert.doesNotMatch(js,/Convite de @|Você foi indicado por @/);
  assert.match(js,/campoIndicador\.value=indicadorNick\?nickVisivel\(indicadorNick\)/);
- assert.match(js,/const liberado=d\?\.operador===true/);
+ assert.match(js,/const ativo=d\?\.operador===true/);
  assert.ok(js.includes("$('loopAcessoAdminMenu')"));
  const api=fonte('src/producao/gateway-admin-comercial.js');
  assert.match(api,/app\.post\('\/api\/operador\/entrar'/);
