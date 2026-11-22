@@ -1,11 +1,12 @@
 'use strict';
-// Quatro banners manuais do Escritório Virtual. Persistência no MESMO
+// Banners dinâmicos do Escritório Virtual. Persistência no MESMO
 // SQLite da conta e da loja, sem acesso a Pix, posições nem motor.
 const {dimensoesImagem}=require('./novidades-loja-candidato-sqlite');
 const LIMITE_IMAGEM=4*1024*1024;
+const MAX_SLOTS=10000; // proteção técnica; não limita a quatro a operação
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function slotValido(slot){
- if(!Number.isSafeInteger(slot)||slot<1||slot>4)falha('BANNER_SLOT_INVALIDO');
+ if(!Number.isSafeInteger(slot)||slot<1||slot>MAX_SLOTS)falha('BANNER_SLOT_INVALIDO');
  return slot;
 }
 function validarFoto(mime,bytes){
@@ -47,12 +48,42 @@ class BannersEscritorioCandidatoSQLite{
   const preparar=banco.prepare(
    'INSERT OR IGNORE INTO loop_banner_escritorio_manual(slot) VALUES(?)');
   for(let slot=1;slot<=4;slot++)preparar.run(slot);
+  // Tabela aditiva: preserva os quatro banners originais pixel a pixel.
+  banco.exec([
+   'CREATE TABLE IF NOT EXISTS loop_banner_escritorio_extensao(',
+   'slot INTEGER PRIMARY KEY CHECK(slot>=5),',
+   'mime TEXT,imagem BLOB,',
+   'revisao INTEGER NOT NULL DEFAULT 0,',
+   'atualizado_em INTEGER NOT NULL DEFAULT 0,',
+   "enquadramento TEXT NOT NULL DEFAULT 'INTEIRA' ",
+   "CHECK(enquadramento IN ('INTEIRA','PREENCHER')),",
+   'CHECK((mime IS NULL AND imagem IS NULL) OR',
+   '(mime IS NOT NULL AND imagem IS NOT NULL)));'
+  ].join(' '));
+ }
+ _tabela(slot){
+  return slot<=4?'loop_banner_escritorio_manual':
+   'loop_banner_escritorio_extensao';
+ }
+ adicionar(){
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const maior=this.banco.prepare(
+    'SELECT MAX(slot) AS maior FROM loop_banner_escritorio_extensao'
+   ).get().maior||4;
+   const slot=slotValido(maior+1);
+   this.banco.prepare(
+    'INSERT INTO loop_banner_escritorio_extensao(slot) VALUES(?)'
+   ).run(slot);
+   this.banco.exec('COMMIT');
+   return {...this.listar(),novoSlot:slot};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  listar(){
-  return {quantidadeMaxima:4,slots:this.banco.prepare(
-   'SELECT slot,mime,imagem IS NOT NULL AS temImagem,revisao,atualizado_em,enquadramento '+
-   'FROM loop_banner_escritorio_manual ORDER BY slot'
-  ).all().map(r=>({
+  return {quantidadeMaxima:MAX_SLOTS,slots:[
+   ...this.banco.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,revisao,atualizado_em,enquadramento FROM loop_banner_escritorio_manual ORDER BY slot').all(),
+   ...this.banco.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,revisao,atualizado_em,enquadramento FROM loop_banner_escritorio_extensao ORDER BY slot').all()
+  ].map(r=>({
    slot:r.slot,temImagem:!!r.temImagem,revisao:r.revisao,
    mime:r.temImagem?r.mime:null,enquadramento:r.enquadramento,
    atualizadoEm:r.atualizado_em||null
@@ -60,7 +91,7 @@ class BannersEscritorioCandidatoSQLite{
  }
  imagem(slot){
   const r=this.banco.prepare('SELECT mime,imagem,revisao FROM '+
-   'loop_banner_escritorio_manual WHERE slot=?').get(slotValido(slot));
+   this._tabela(slotValido(slot))+' WHERE slot=?').get(slot);
   if(!r?.imagem)falha('BANNER_SEM_IMAGEM');
   return {mime:r.mime,bytes:Buffer.from(r.imagem),revisao:r.revisao};
  }
@@ -72,7 +103,7 @@ class BannersEscritorioCandidatoSQLite{
   if(!Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<0)
    falha('BANNER_REVISAO_INVALIDA');
   const r=this.banco.prepare(
-   'UPDATE loop_banner_escritorio_manual SET imagem=?,mime=?,enquadramento=?,revisao=revisao+1,'+
+   'UPDATE '+this._tabela(slot)+' SET imagem=?,mime=?,enquadramento=?,revisao=revisao+1,'+
    'atualizado_em=? WHERE slot=? AND revisao=?'
   ).run(bytes,mime,enquadramento,this.agora(),slot,revisaoEsperada);
   if(r.changes!==1)falha('BANNER_CONFLITO_REVISAO');
@@ -83,7 +114,7 @@ class BannersEscritorioCandidatoSQLite{
   if(!Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<0)
    falha('BANNER_REVISAO_INVALIDA');
   const r=this.banco.prepare(
-   'UPDATE loop_banner_escritorio_manual SET imagem=NULL,mime=NULL,enquadramento=\'INTEIRA\','+
+   'UPDATE '+this._tabela(slot)+' SET imagem=NULL,mime=NULL,enquadramento=\'INTEIRA\','+
    'revisao=revisao+1,atualizado_em=? WHERE slot=? AND revisao=?'
   ).run(this.agora(),slot,revisaoEsperada);
   if(r.changes!==1)falha('BANNER_CONFLITO_REVISAO');
