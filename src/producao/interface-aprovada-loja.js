@@ -28,7 +28,8 @@
   const clienteComFoto=!visitante&&typeof clienteNick==='string'&&
    (!operadorAtivo||visaoClienteLoja);
   const caminho=clienteComFoto?'/api/contas/foto-perfil':
-   operadorAtivo?'/api/admin/operador/foto-perfil':null;
+   operadorAtivo&&!visaoClienteLoja?
+    '/api/admin/operador/foto-perfil':null;
   const limpar=()=>{
    fotoTitular.hidden=true;
    fotoTitular.removeAttribute('src');
