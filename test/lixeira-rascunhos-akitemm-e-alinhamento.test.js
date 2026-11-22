@@ -128,3 +128,61 @@ test('lixeira na tela usa confirmação e API real, sem quebrar visualização d
  assert.match(css,/#akitemmAbasProdutos/);
  assert.match(css,/max-width:calc\(100vw - 12px\)/);
 });
+
+
+test('lixeira do operador permite descartar rascunho vinculado que nunca foi publicado',t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('PRAGMA foreign_keys=ON');
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco:db,chaveAuditoria:randomBytes(32)
+ });
+ const c=new CatalogoMultiDistribuidoresSQLite({
+  banco:db,distribuidorHomologado:()=>false,auditoria
+ });
+ db.exec('CREATE TABLE loja_real_vitrine_posicoes('+
+  'posicao INTEGER PRIMARY KEY,produto_id TEXT UNIQUE,'+
+  'revisao INTEGER NOT NULL,atualizado_em INTEGER NOT NULL)');
+ c.criarProduto({produtoId:'manual-tenis-draft',titulo:'Tênis ainda não publicado'});
+ db.prepare('INSERT INTO loja_real_vitrine_posicoes VALUES(?,?,?,?)')
+  .run(2,'manual-tenis-draft',1,Date.now());
+ const r=c.buscarProdutoAdministrativo({produtoId:'manual-tenis-draft'});
+ assert.equal(r.ativo,false);
+ assert.throws(()=>c.arquivarRascunho({
+  produtoId:'manual-tenis-draft',revisaoEsperada:r.revisao
+ }),/PRODUTO_JA_VINCULADO_NAO_EXCLUIR/);
+ const ok=c.arquivarRascunho({
+  produtoId:'manual-tenis-draft',revisaoEsperada:r.revisao,
+  desvincularVitrine:true
+ });
+ assert.equal(ok.excluido,true);
+ assert.equal(c.buscarProdutoAdministrativo({produtoId:'manual-tenis-draft'}),null);
+ assert.equal(db.prepare('SELECT COUNT(*) n FROM loja_real_vitrine_posicoes').get().n,0);
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM loja_real_auditoria_admin WHERE acao='VITRINE_RASCUNHO_DESVINCULADO'").get().n,1);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+test('mesmo com permissão de lixeira, nunca remove histórico publicado ou pedidos',t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('PRAGMA foreign_keys=ON');
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco:db,chaveAuditoria:randomBytes(32)
+ });
+ const c=new CatalogoMultiDistribuidoresSQLite({
+  banco:db,distribuidorHomologado:()=>false,auditoria
+ });
+ db.exec('CREATE TABLE loja_real_vitrine_posicoes('+
+  'posicao INTEGER PRIMARY KEY,produto_id TEXT UNIQUE,'+
+  'revisao INTEGER NOT NULL,atualizado_em INTEGER NOT NULL)');
+ c.criarProduto({produtoId:'historico-tenis',titulo:'Tênis com publicação anterior'});
+ db.prepare('INSERT INTO loja_real_vitrine_posicoes VALUES(?,?,?,?)')
+  .run(1,'historico-tenis',1,Date.now());
+ c.ativarProduto({produtoId:'historico-tenis',ativo:true});
+ c.ativarProduto({produtoId:'historico-tenis',ativo:false});
+ const r=c.buscarProdutoAdministrativo({produtoId:'historico-tenis'});
+ assert.throws(()=>c.arquivarRascunho({
+  produtoId:'historico-tenis',revisaoEsperada:r.revisao,
+  desvincularVitrine:true
+ }),/PRODUTO_COM_HISTORICO_PUBLICACAO/);
+ assert.equal(db.prepare('SELECT COUNT(*) n FROM loja_real_vitrine_posicoes').get().n,1);
+ assert.equal(c.buscarProdutoAdministrativo({produtoId:'historico-tenis'}).ativo,false);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
