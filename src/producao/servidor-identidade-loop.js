@@ -25,6 +25,7 @@ const {AvaliacoesProdutoAkitemmSQLite}=
  require('./avaliacoes-produto-akitemm-sqlite');
 const {FotoPerfilRealSQLite}=require('./foto-perfil-real-sqlite');
 const {CarrinhoInternoRealSQLite}=require('./carrinho-interno-real-sqlite');
+const {AtendimentoAkitemmSQLite}=require('./atendimento-akitemm-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,captchaCadastroObrigatorio=false,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
@@ -104,6 +105,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Mesmo banco real de contas; arquivo integra o backup externo da identidade.
  const fotosPerfil=new FotoPerfilRealSQLite({banco:contas.banco});
  const carrinhoInterno=new CarrinhoInternoRealSQLite({banco:contas.banco});
+ const atendimento=new AtendimentoAkitemmSQLite({
+  banco:contas.banco,chaveCifra:contas.keyCipher,
+  auditoria:adminComercial?.auditoria||null
+ });
  if(typeof captchaCadastroObrigatorio!=='boolean')
   throw Error('CAPTCHA_CONFIGURACAO_INVALIDA');
  const captcha=captchaCadastroObrigatorio?new CaptchaCadastroSQLite({
@@ -187,7 +192,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)
   montarGatewayAdminComercial(app,{...adminComercial,origemHttps,
-   posicoesVitrine,anunciosManuais,entregaLocal,motorLoop,contas});
+   posicoesVitrine,anunciosManuais,entregaLocal,motorLoop,contas,atendimento});
  const mutation=(req,res,next)=>{
   if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
   if(!req.is('application/json'))
@@ -380,6 +385,30 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   motorLoopInterno:motorLoop!==null,
   tesourariaEnsaioAtiva:tesourariaEnsaio!==null
  }));
+ // Atendimento da própria AKITEMM: cliente só vê os seus protocolos.
+ app.get('/api/loja/atendimentos',protegido,(req,res)=>{
+  try{return res.json({atendimentos:atendimento.meus({
+   titularId:req.conta.titularId
+  })});}
+  catch{return res.status(503).json({erro:'ATENDIMENTO_CONSULTA_INDISPONIVEL'});}
+ });
+ app.post('/api/loja/atendimentos',protegido,mutation,csrf,(req,res)=>{
+  const b=req.body;
+  if(!b||Array.isArray(b)||
+     Object.keys(b).sort().join(',')!=='mensagem,tipo')
+   return res.status(400).json({erro:'ATENDIMENTO_CAMPOS_INVALIDOS'});
+  if(!limite(res,'atendimento',req.conta.titularId))return;
+  try{
+   return res.status(201).json(atendimento.abrir({
+    titularId:req.conta.titularId,tipo:b.tipo,mensagem:b.mensagem
+   }));
+  }catch(err){
+   const cod=err.codigo||'ATENDIMENTO_INDISPONIVEL';
+   const status=cod==='ATENDIMENTO_LIMITE_ABERTOS'?429:
+    cod.includes('INVALIDO')||cod.includes('INVALIDA')?400:503;
+   return res.status(status).json({erro:cod});
+  }
+ });
  // Conta migrada: confirma a política vigente sem refazer cadastro.
  app.post('/api/contas/aceitar-documentos',protegido,mutation,csrf,(req,res)=>{
   const b=req.body;
