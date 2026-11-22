@@ -984,8 +984,10 @@ async function main(){
    assert.equal(check.resumo.aDistribuir,0);
    assert.ok(await page.locator('#equipeResumo').evaluate(el=>{
     const css=getComputedStyle(el);
-    return css.display==='block'&&css.width==='100%'&&
-     el.getBoundingClientRect().width>200;
+    const largura=el.getBoundingClientRect().width;
+    const pai=el.parentElement.getBoundingClientRect().width;
+    return css.display==='block'&&largura>200&&
+     Math.abs(largura-pai)<=35;
    }),'total de cadastros deve ocupar toda a largura do resumo');
    await indicado.locator('.loop03-rede-pessoa-menu').click();
    await detalhes.waitFor({state:'hidden'});
