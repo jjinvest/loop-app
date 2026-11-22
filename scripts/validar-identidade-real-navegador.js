@@ -559,6 +559,55 @@ async function main(){
    assert.equal(await operadorPage.locator('#akitemmFotoTitular')
     .evaluate(img=>new URL(img.src).pathname),
     '/api/admin/operador/foto-perfil');
+   // Duas imagens distintas no mesmo banner da AKITEMM, sem unir fotos.
+   await operadorPage.waitForFunction(()=>
+    document.querySelector('.akitemm-banner')
+     ?.classList.contains('akitemm-banner-operador-clicavel'));
+   await operadorPage.locator('.akitemm-banner').click({position:{x:90,y:90}});
+   await operadorPage.locator('#akitemmBannerFormularioReal').waitFor({state:'visible'});
+   await operadorPage.locator('#akitemmBannerColunasReal').selectOption('2');
+   await operadorPage.locator('#akitemmBannerArquivo2').waitFor({state:'visible'});
+   await operadorPage.locator('#akitemmBannerArquivoOperador').setInputFiles({
+    name:'loja-quadro-1.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
+   });
+   await operadorPage.locator('#akitemmBannerArquivo2').setInputFiles({
+    name:'loja-quadro-2.jpg',mimeType:'image/jpeg',
+    buffer:Buffer.from(segundaFotoBase64,'base64')
+   });
+   await operadorPage.locator('#akitemmBannerControlesOperador [data-acao="foto"]').click();
+   await operadorPage.locator('#akitemmBannerStatus')
+    .filter({hasText:'Banner salvo e publicado'}).waitFor({state:'visible'});
+   let lojaBanner=await operadorPage.evaluate(async()=>{
+    const d=await fetch('/api/loja/banners').then(r=>r.json());
+    return d.slots.find(x=>x.slot===1);
+   });
+   assert.equal(lojaBanner.colunas,2);
+   assert.equal(lojaBanner.publicado,true);
+   assert.deepEqual(lojaBanner.fotos.slice(0,2).map(x=>x.temImagem),[true,true]);
+   operadorPage.once('dialog',d=>d.accept());
+   await operadorPage.getByRole('button',{
+    name:'Excluir foto 2 deste banner',exact:true
+   }).click();
+   await operadorPage.locator('#akitemmBannerStatus')
+    .filter({hasText:'Foto 2 excluída.'}).waitFor({state:'visible'});
+   lojaBanner=await operadorPage.evaluate(async()=>{
+    const d=await fetch('/api/loja/banners').then(r=>r.json());
+    return d.slots.find(x=>x.slot===1);
+   });
+   assert.equal(lojaBanner.publicado,true);
+   assert.deepEqual(lojaBanner.fotos.slice(0,2).map(x=>x.temImagem),
+    [true,false]);
+   operadorPage.once('dialog',d=>d.accept());
+   await operadorPage.getByRole('button',{
+    name:'Excluir foto 1 deste banner',exact:true
+   }).click();
+   await operadorPage.locator('#akitemmBannerStatus')
+    .filter({hasText:'Foto 1 excluída.'}).waitFor({state:'visible'});
+   await operadorPage.locator('#akitemmBannerColunasReal').selectOption('1');
+   await operadorPage.locator('#akitemmBannerControlesOperador [data-acao="foto"]').click();
+   await operadorPage.locator('#akitemmBannerStatus')
+    .filter({hasText:'Formato salvo.'}).waitFor({state:'visible'});
+   await operadorPage.locator('#akitemmBannerFormularioReal .banner-real-fechar').click();
    await operadorPage.goto(base+'/escritorio?visao=operador',{
     waitUntil:'domcontentloaded'
    });
