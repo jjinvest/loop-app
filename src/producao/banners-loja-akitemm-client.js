@@ -157,7 +157,7 @@
   fotosEditor.pintar();
  });
  let leitorFoto=0;
- function abrirFormulario(){
+ function abrirFormulario(pos=0){
   if(!operador||bloqueio||!slots)return;
   const atual=current();if(!atual)return;
   if(atual.adicionar){void criarBanner();return;}
@@ -169,6 +169,7 @@
   mostrarCampos();fotosEditor.pintar();
   estado.textContent='';
   if(!dialogo.open){parar();dialogo.showModal();}
+   if(pos)fotosEditor.abrir(pos);
  }
  mais.addEventListener('click',e=>{e.preventDefault();abrirFormulario();});
  function visiveis(){
@@ -212,6 +213,7 @@
    for(let pos=1;pos<=quadros;pos++){
     const sub=slot.fotos?.[pos-1],quadro=document.createElement('div');
     quadro.className='banner-mosaico-celula';
+     quadro.dataset.fotoPosicao=String(pos);
     if(sub?.temImagem){
      const im=document.createElement('img');
      im.alt='Foto '+pos+' do banner '+slot.slot;
@@ -513,8 +515,8 @@
   const f=escolher.files?.[0];
   if(!f){previa.hidden=true;return;}
   if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
-     f.size<40||f.size>4*1024*1024){
-   estado.textContent='Escolha JPG, PNG ou WebP com até 4 MB.';
+     f.size<40||f.size>16*1024*1024){
+   estado.textContent='Escolha JPG, PNG ou WebP com até 16 MB.';
    escolher.value='';previa.hidden=true;return;
   }
   estado.textContent='Imagem pronta para salvar.';
@@ -543,7 +545,8 @@
  area.addEventListener('click',e=>{
   if(!operador||bloqueio||Date.now()<bloquearCliqueAte||
      e.target.closest('button,input,a'))return;
-  abrirFormulario();
+  const cel=e.target.closest('.banner-mosaico-celula');
+  abrirFormulario(Number(cel?.dataset.fotoPosicao)||(e.target===foto?1:0));
  });
  esquerda.addEventListener('click',()=>selecionar(indice-1));
  direita.addEventListener('click',()=>selecionar(indice+1));
@@ -610,7 +613,6 @@
    reader.onload=()=>{
     if(pendentes.get(pos)!==f)return;
     miniaturas.set(pos,String(reader.result||''));pintar();
-    void abrirRecorte(pos);
    };
    reader.onerror=()=>{status.textContent='Não foi possível ler a foto.';};
    reader.readAsDataURL(f);
@@ -720,6 +722,11 @@
  }
  return {
   pintar,
+  abrir:pos=>{
+   if(pendentes.has(pos)||slot()?.fotos?.[pos-1]?.temImagem)
+    void abrirRecorte(pos);
+   else inputs[pos-1]?.click();
+  },
   novas:n=>[...pendentes.keys()].some(x=>x<=n),
   arquivo:pos=>pendentes.get(pos)||null,
   limpar:()=>{pendentes.clear();miniaturas.clear();inputs.forEach(x=>x.value='');pintar();}
