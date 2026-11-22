@@ -236,9 +236,10 @@ class CatalogoMultiDistribuidoresSQLite{
  }
  // A lixeira retira somente um produto nunca publicado da vitrine admin.
  // O registro permanece no SQLite para não romper fotos, auditoria ou backups.
- arquivarRascunho({produtoId,revisaoEsperada}={}){
+ arquivarRascunho({produtoId,revisaoEsperada,desvincularVitrine=false}={}){
   if(!id(produtoId)||!Number.isSafeInteger(revisaoEsperada)||
-     revisaoEsperada<1)erro('RASCUNHO_EXCLUSAO_INVALIDA');
+     revisaoEsperada<1||typeof desvincularVitrine!=='boolean')
+   erro('RASCUNHO_EXCLUSAO_INVALIDA');
   this.db.exec('BEGIN IMMEDIATE');
   try{
    if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
@@ -257,14 +258,33 @@ class CatalogoMultiDistribuidoresSQLite{
     "WHERE entidade=? AND acao='PRODUTO_STATUS_ALTERADO' LIMIT 1"
    ].join(' ')).get('PRODUTO_'+produtoId))
     erro('PRODUTO_COM_HISTORICO_PUBLICACAO');
-   const tabelas=['loja_real_vitrine_posicoes','loja_real_custos_pedido'];
-   for(const tabela of tabelas){
-    const existe=this.db.prepare([
-     "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
-    ].join(' ')).get(tabela);
-    if(existe&&this.db.prepare(
-     'SELECT 1 FROM '+tabela+' WHERE produto_id=? LIMIT 1'
-    ).get(produtoId))erro('PRODUTO_JA_VINCULADO_NAO_EXCLUIR');
+   const existeTabela=nome=>!!this.db.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+   ).get(nome);
+   // Histórico de pedidos nunca é descartado, mesmo em produto inativo.
+   if(existeTabela('loja_real_custos_pedido')&&this.db.prepare(
+    'SELECT 1 FROM loja_real_custos_pedido WHERE produto_id=? LIMIT 1'
+   ).get(produtoId))erro('PRODUTO_COM_PEDIDOS_NAO_EXCLUIR');
+   const vinculo=existeTabela('loja_real_vitrine_posicoes')?
+    this.db.prepare(
+     'SELECT posicao,revisao FROM loja_real_vitrine_posicoes WHERE produto_id=?'
+    ).get(produtoId):null;
+   if(vinculo&&(!desvincularVitrine||!this.auditoria))
+    erro('PRODUTO_JA_VINCULADO_NAO_EXCLUIR');
+   // Desvincular SOMENTE rascunho nunca publicado e sem pedidos, na MESMA
+   // transação de arquivamento; não deixa quadrinho ocupado por produto excluído.
+   if(vinculo){
+    const retirado=this.db.prepare(
+     'DELETE FROM loja_real_vitrine_posicoes WHERE produto_id=? AND revisao=?'
+    ).run(produtoId,vinculo.revisao);
+    if(retirado.changes!==1)erro('RASCUNHO_CONFLITO_REVISAO');
+    this.auditoria.registrar({
+     acao:'VITRINE_RASCUNHO_DESVINCULADO',ator:'ADMIN_COMERCIAL',
+     entidade:'PRODUTO_'+produtoId,
+     antes:{posicao:vinculo.posicao,produtoId},
+     depois:{posicao:null,produtoId},
+     revisaoAnterior:vinculo.revisao
+    });
    }
    const data=Math.max(this.agora(),anterior.atualizado_em+1);
    const result=this.db.prepare([
