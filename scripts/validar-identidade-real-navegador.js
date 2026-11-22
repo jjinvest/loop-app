@@ -293,6 +293,8 @@ async function main(){
    assert.equal(quadros.contidos,true,
     'cartões não podem fugir das molduras no celular');
    await operadorPage.locator('#adminAtualizarPosicoes').click();
+   await operadorPage.locator('#adminResumoPosicoes .loop03-resumo-quadro')
+    .first().waitFor({state:'visible'});
    assert.equal(await operadorPage.locator(
     '#adminResumoPosicoes .loop03-resumo-quadro').count(),2);
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
