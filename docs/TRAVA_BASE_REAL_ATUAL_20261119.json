@@ -2180,7 +2180,7 @@
     },
     {
       "path": "test/banners-dinamicos-composicao-real.test.js",
-      "sha": "622bdde520809e0c014748b890448ef2c01b3fff"
+      "sha": "494b2510f988ca40fe7c4a6a84e81c571701e958"
     },
     {
       "path": "test/banners-escritorio-excluir-espacos-extras.test.js",
