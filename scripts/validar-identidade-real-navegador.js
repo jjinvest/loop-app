@@ -254,6 +254,11 @@ async function main(){
    assert.equal(await olho.getAttribute('aria-label'),'Mostrar senha');
    await operadorPage.locator('#formLogin button[type=submit]').click();
    await operadorPage.locator('#loopOperadorAtalhos').waitFor({state:'visible'});
+   const atalhosVisao=operadorPage.locator(
+    '#loopOperadorAtalhos [data-visao-do-escritorio]');
+   assert.equal(await atalhosVisao.count(),2,'Operador deve ver as duas visões');
+   for(let i=0;i<2;i++)assert.equal(await atalhosVisao.nth(i).isVisible(),true);
+   assert.equal(await atalhosVisao.first().getAttribute('aria-current'),'page');
    assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
    assert.equal(await operadorPage.locator('#loop03NickIntegrado').innerText(),
     'OPERADOR');
@@ -1273,6 +1278,16 @@ async function main(){
    assert.equal(await page.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
    assert.equal(await page.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
    assert.equal(await page.locator('#abaConta').isDisabled(),false);
+   // Mesmo operador com sessão de cliente pode alternar de visão em PC/celular.
+   await page.goto(base+'/escritorio?visao=cliente');
+   await page.locator('#loopVoltarOperador').waitFor({state:'visible'});
+   const atalhosCliente=page.locator(
+    '#loopVoltarOperador [data-visao-do-escritorio]');
+   assert.equal(await atalhosCliente.count(),2);
+   assert.equal(await atalhosCliente.nth(0).isVisible(),true);
+   assert.equal(await atalhosCliente.nth(1).getAttribute('aria-current'),'page');
+   await atalhosCliente.nth(0).click();
+   await page.locator('#loopOperadorAtalhos').waitFor({state:'visible'});
    await page.goto(base+'/loja?visao=operador');
    await page.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
    assert.equal(await page.locator('#copiarDivulgarLojaLoop').isDisabled(),true,
