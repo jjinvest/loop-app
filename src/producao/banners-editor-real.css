@@ -236,3 +236,28 @@ body.loop03-modo-operador #conteudoResumo .loop03-banner-item:not(.loop03-banner
   width:42px;height:42px;right:10px;top:10px;
  }
 }
+
+
+/* Cada imagem conserva seu próprio quadro e sua lixeira (só no operador). */
+.banner-real-formulario .banner-foto-lixeira{
+ width:max-content;max-width:100%;min-height:38px;display:inline-flex;
+ align-items:center;justify-content:center;
+ margin:3px 0 9px;padding:7px 13px;border:1px solid #c89593;
+ border-radius:10px;background:#461a2b;color:#ffe6df;
+ font-size:.86rem;font-weight:700;cursor:pointer;
+}
+.banner-real-formulario .banner-foto-lixeira[hidden]{
+ display:none!important;
+}
+#conteudoResumo .banner-mosaico-celula>.banner-foto-lixeira-quadro,
+.akitemm-loja .akitemm-banner .banner-mosaico-celula>.banner-foto-lixeira-quadro{
+ position:absolute;right:7px;top:7px;z-index:6;
+ width:40px;height:40px;display:grid;place-items:center;
+ border:1px solid #e6c2ab;border-radius:50%;
+ background:#492136ee;color:#fff;font-size:1.15rem;
+ box-shadow:0 2px 9px #0009;cursor:pointer;
+}
+#conteudoResumo .banner-mosaico-celula>.banner-foto-lixeira-quadro:focus-visible,
+.akitemm-loja .akitemm-banner .banner-mosaico-celula>.banner-foto-lixeira-quadro:focus-visible{
+ outline:2px solid #f4c975;outline-offset:2px;
+}
