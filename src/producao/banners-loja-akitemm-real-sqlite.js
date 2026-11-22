@@ -171,6 +171,7 @@ class BannersLojaAkitemmRealSQLite{
    const y=putDestino.run(a.mime,a.imagem,a.enquadramento,agora,
     destino,revisaoDestino);
    if(x.changes!==1||y.changes!==1)erro('BANNER_LOJA_CONFLITO_REVISAO');
+   this.mosaico.trocarEmTransacao(origem,destino);
    this.db.exec('COMMIT');
    return this.listar();
   }catch(e){this.db.exec('ROLLBACK');throw e;}
