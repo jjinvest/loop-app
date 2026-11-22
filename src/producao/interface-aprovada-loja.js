@@ -636,6 +636,8 @@
  const expandidas=new Set();
  const CORES=['ROXO','DOURADO','VERDE','CINZA',
   'CINZA','VERDE','DOURADO','ROXO'];
+ let coresEspacos=Array.from({length:400},(_,i)=>CORES[i%8]);
+ const corEspaco=n=>coresEspacos[n-1];
  const filtrar=()=>{
   const normal=x=>String(x||'').normalize('NFD')
    .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
@@ -670,7 +672,7 @@
    const produto=produtosPorSlot.get(n);
    if(produto)return idsFiltrados.has(produto.produtoId);
    if(termo)return false;
-   return !cor||CORES[(n-1)%CORES.length]===cor;
+   return !cor||corEspaco(n)===cor;
   });
   const totalAbas=filtrada?Math.max(1,Math.ceil(slotsVisiveis.length/40)):10;
   if(abaVitrine>=totalAbas)abaVitrine=0;
@@ -715,7 +717,7 @@
    const p=produtosPorSlot.get(slot);
    const alvo=faixas[Math.floor((indice-inicio)/10)];
    if(!p){
-    const corSlot=CORES[(slot-1)%CORES.length];
+    const corSlot=corEspaco(slot);
     const card=document.createElement('article');
     card.className='produto-loja-loop akitemm-slot-vazio akitemm-slot-'+
      corSlot.toLowerCase();
@@ -1014,6 +1016,11 @@
    if(dados.origem!=='CATALOGO_ADMINISTRATIVO_PUBLICADO'||
       dados.checkoutReal!==false||dados.estoqueConfirmado!==false||
       dados.precosNaoHomologados!==true||
+      !dados.layoutVazio||!Array.isArray(dados.layoutVazio.cores)||
+      dados.layoutVazio.cores.length!==400||
+      !Number.isSafeInteger(dados.layoutVazio.revisao)||
+      dados.layoutVazio.revisao<1||
+      dados.layoutVazio.cores.some(c=>!CORES.includes(c))||
       !Array.isArray(dados.produtos)||dados.produtos.length>400||
       dados.produtos.some(p=>
        typeof p.produtoId!=='string'||typeof p.titulo!=='string'||
@@ -1034,6 +1041,7 @@
           p.precoOriginalAnunciadoCentavos<=p.precoAnunciadoCentavos))||
        !['CINZA','VERDE','DOURADO','ROXO'].includes(p.cor)))
     throw Error('CATALOGO_FORA_DO_CONTRATO');
+   coresEspacos=dados.layoutVazio.cores.slice();
    produtosPublicados=dados.produtos;
    const ativo=produtosPublicados.length>0;
    // Filtros e categorias sao navegação de leitura: funcionam mesmo com
