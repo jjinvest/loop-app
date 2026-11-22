@@ -14,7 +14,8 @@ const controle={
  agoraServidorMs:agora,proximaLuzPrevistaEmMs:agora+72000,
  metaCentrosDia:100,metaDataAlvo:'2026-11-21',
  intervaloLuzSegundos:78,horarioPermitido:true,
- eventosNoCiclo:0,ciclosConcluidos:0,girosHoje:0,girosHora:0,giros24h:0
+ eventosNoCiclo:0,ciclosConcluidos:0,girosHoje:0,girosHora:0,giros24h:0,
+ luzesRelogio24h:0,ciclosRelogio24h:0
 };
 function criarVisor(visao,agenda,instante=agora){
  const e={
@@ -124,17 +125,18 @@ test('21/11 17h até 22/11 00h20: 338 luzes do relógio, 56 ciclos e 2/6; sem pa
  const instante=Date.parse('2026-11-22T00:20:00-03:00');
  const agenda=projetarAgendaTabuleiroCompartilhada({
   ...controle,agoraServidorMs:instante,girosHoje:0,giros24h:0,
-  eventosNoCiclo:0,ciclosConcluidos:0
+  eventosNoCiclo:0,ciclosConcluidos:0,
+  luzesRelogio24h:338,ciclosRelogio24h:56
  });
  const operador=criarVisor('operador',agenda,instante);
  const cliente=criarVisor('cliente',agenda,instante);
- assert.equal(operador.loop03Giros24Integrado.textContent,'0');
- assert.equal(operador.loop03LuzesHoraIntegrado.textContent,'15');
+ assert.equal(operador.loop03Giros24Integrado.textContent,'56');
+ assert.equal(operador.loop03LuzesHoraIntegrado.textContent,'338');
  assert.equal(operador.loop03NumeroIntegrado.textContent,'2 / 6');
  assert.match(operador.loop03StatusPosicao.textContent,
   /Relógio: 338\/600 luzes · 56 ciclos completos · Sem pagamento real/);
- assert.equal(cliente.loop03Giros24Integrado.textContent,'0');
- assert.equal(cliente.loop03LuzesHoraIntegrado.textContent,'15');
+ assert.equal(cliente.loop03Giros24Integrado.textContent,'56');
+ assert.equal(cliente.loop03LuzesHoraIntegrado.textContent,'338');
  assert.equal(cliente.loop03NumeroIntegrado.textContent,'—');
  assert.equal(cliente.loop03StatusPosicao.textContent,'');
  assert.equal(agenda.girosReaisHoje,0);
@@ -146,8 +148,8 @@ test('ao fechar o turno da noite a contagem visual fica em 600 e não zera',()=>
   ...controle,agoraServidorMs:instante
  });
  const painel=criarVisor('operador',agenda,instante);
- assert.equal(painel.loop03Giros24Integrado.textContent,'0');
- assert.equal(painel.loop03LuzesHoraIntegrado.textContent,'0');
+ assert.equal(painel.loop03Giros24Integrado.textContent,'100');
+ assert.equal(painel.loop03LuzesHoraIntegrado.textContent,'600');
  assert.equal(painel.loop03NumeroIntegrado.textContent,'6 / 6');
  assert.match(painel.loop03StatusPosicao.textContent,/100 ciclos completos/);
  assert.equal(painel.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
