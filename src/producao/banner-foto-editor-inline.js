@@ -5,6 +5,7 @@ function fotosNoProprioQuadro(op){
  antes.before(grade);
  const tiles=inputs.map((input,index)=>{
   const pos=index+1;
+  input.dataset.recorteNativo='sim';
   input.parentElement.classList.add('banner-editor-arquivo-oculto');
   const cel=document.createElement('div');cel.className='banner-editor-celula';
   cel.tabIndex=0;cel.setAttribute('role','button');
