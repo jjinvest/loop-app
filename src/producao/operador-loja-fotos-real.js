@@ -1509,8 +1509,14 @@
    destacarDestino(null,'');return;
   }
   const rect=card.getBoundingClientRect();
+  // Na lista vertical do celular, acima/abaixo define a posição;
+  // no PC, preservar a regra horizontal esquerda/direita.
+  const faixa=card.closest('.ak-faixa-horizontal');
+  const vertical=faixa&&getComputedStyle(faixa).flexDirection==='column';
+  const antes=vertical?arrasto.y<rect.top+rect.height/2:
+   arrasto.x<rect.left+rect.width/2;
   destacarDestino(card,card.dataset.akitemmSlot?'trocar':
-   arrasto.x<rect.left+rect.width/2?'antes':'depois');
+   antes?'antes':'depois');
  }
  function flutuarArrasto(){
   if(!arrasto?.ativo)return;
