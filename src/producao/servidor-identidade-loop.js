@@ -756,7 +756,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     posicoesVitrine.projetar(produtos):produtos;
    const publicados=anunciosManuais?
     anunciosManuais.projetar(posicoes):posicoes;
+   const layoutVazio=posicoesVitrine?
+    posicoesVitrine.consultarLayoutVazio():null;
    return res.json({produtos:publicados,total:publicados.length,
+    layoutVazio,
     origem:'CATALOGO_ADMINISTRATIVO_PUBLICADO',checkoutReal:false,
     estoqueConfirmado:false,precosNaoHomologados:true});
   }catch{
