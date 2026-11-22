@@ -9,7 +9,8 @@
  const esquerda=area.querySelector('#akitemmBannerAnterior');
  const direita=area.querySelector('#akitemmBannerProximo');
  if(!conteudo||!pontos||!esquerda||!direita)return;
- const visaoCliente=new URLSearchParams(location.search).get('visao')==='cliente';
+ const visao=new URLSearchParams(location.search).get('visao');
+ const visaoCliente=visao==='cliente',visaoOperador=visao==='operador';
  let operador=false,slots=null,indice=0,intervalo=null,bloquearCliqueAte=0;
  let xInicio=null,bloqueio=false;
  const requisitar=async(url,opcoes={})=>{
@@ -166,9 +167,19 @@
   }
  }
  async function atualizarAcesso(){
+  operador=false;
   try{
    const r=await requisitar('/api/operador/estado');
-   operador=r.operador===true&&!visaoCliente;
+   if(r.operador===true&&!visaoCliente){
+    if(visaoOperador)operador=true;
+    else{
+     // Sem escolha explicita: nunca mostrar edicao na conta cliente.
+     const cliente=await fetch('/api/contas/me',{
+      credentials:'same-origin',cache:'no-store'
+     });
+     operador=cliente.status===401;
+    }
+   }
   }catch{operador=false;}
   renderizar();await carregar();
  }
