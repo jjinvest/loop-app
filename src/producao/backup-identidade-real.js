@@ -68,6 +68,7 @@ const TABELAS_ADMIN=Object.freeze([
 // Tabelas de anúncios, regiões e avaliações da loja REAL.
 const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_anuncios_operador',
+ 'loja_real_rascunhos_cadastro',
  'loja_real_canais_fornecedor',
  'loja_real_entrega_local_produto',
  'loja_real_avaliacoes_verificadas'
@@ -409,6 +410,15 @@ function validarIdentidade(arquivo){
    ver('loja_real_anuncios_operador',[
     'produto_id','origem','categoria','marca','preco_centavos',
     'promocao_centavos','quantidade','revisao']);
+  if(lista.includes('loja_real_rascunhos_cadastro')){
+   ver('loja_real_rascunhos_cadastro',[
+    'id','campos_json','revisao','atualizado_em']);
+   const invalidos=b.prepare([
+    'SELECT id FROM loja_real_rascunhos_cadastro',
+    'WHERE revisao<1 OR atualizado_em<1 OR length(campos_json)>18000 LIMIT 1'
+   ].join(' ')).get();
+   if(invalidos)falha('BACKUP_RASCUNHO_INCONSISTENTE');
+  }
   if(lista.includes('loja_real_canais_fornecedor'))
    ver('loja_real_canais_fornecedor',[
     'produto_id','canal','fornecedor_nome','fornecedor_sku',
