@@ -154,3 +154,52 @@ body.loop03-modo-operador #conteudoResumo .loop03-banner-item:not(.loop03-banner
  .akitemm-loja .akitemm-banner .akitemm-banner-espaco-livre{padding:14px}
  .akitemm-loja .akitemm-banner .akitemm-banner-adicionar{min-height:100px}
 }
+
+
+/* Grades internas independentes: 1 panorâmica, 2 ou 3 fotografias. */
+.banner-real-formulario .banner-real-arquivo select{
+ width:100%;max-width:100%;min-height:45px;padding:10px 12px;
+ color:#f7e5bf;background:#263442;border:1px solid #8e7855;
+ border-radius:12px;font:650 .92rem system-ui,sans-serif;
+}
+.banner-real-formulario .banner-foto-extra[hidden]{display:none!important}
+#conteudoResumo .loop03-banner-item .banner-mosaico,
+.akitemm-loja .akitemm-banner .banner-mosaico{
+ position:absolute;inset:0;box-sizing:border-box;z-index:5;
+ display:grid;grid-template-columns:repeat(var(--banner-quadros),minmax(0,1fr));
+ align-items:stretch;gap:clamp(3px,.65vw,9px);
+ padding:clamp(4px,1vw,11px);width:100%;height:100%;
+ border-radius:inherit;background:#090e1a;overflow:hidden;
+}
+#conteudoResumo .loop03-banner-item .banner-mosaico[hidden],
+.akitemm-loja .akitemm-banner .banner-mosaico[hidden]{display:none!important}
+#conteudoResumo .banner-mosaico-celula,
+.akitemm-loja .akitemm-banner .banner-mosaico-celula{
+ min-width:0;min-height:0;display:flex;align-items:center;
+ justify-content:center;overflow:hidden;position:relative;
+ border:1px solid #b99055;border-radius:clamp(5px,.7vw,11px);
+ background:linear-gradient(140deg,#1c2442,#231c30);
+ color:#f3d9a9;text-align:center;font-weight:750;
+ font-size:clamp(.72rem,1.5vw,1.05rem);padding:0;
+}
+#conteudoResumo .banner-mosaico-celula img,
+.akitemm-loja .akitemm-banner .banner-mosaico-celula img{
+ display:block;width:100%;height:100%;min-width:0;min-height:0;
+ object-fit:cover;object-position:center;
+}
+#conteudoResumo .banner-mosaico[data-modo="INTEIRA"] img,
+.akitemm-loja .akitemm-banner .banner-mosaico[data-modo="INTEIRA"] img{
+ object-fit:contain;background:#090e1a;
+}
+#conteudoResumo .loop03-banner-item:has(.banner-mosaico) .loop03-banner-anuncio-conteudo{
+ visibility:hidden;
+}
+.akitemm-loja .akitemm-banner .banner-mosaico{z-index:3;border-radius:12px}
+.akitemm-loja .akitemm-banner .akitemm-banner-rodizio{z-index:7}
+@media(max-width:480px){
+ #conteudoResumo .banner-mosaico-celula,
+ .akitemm-loja .akitemm-banner .banner-mosaico-celula{
+  font-size:.66rem;
+ }
+ .akitemm-loja .akitemm-banner .banner-mosaico{padding:5px;gap:4px}
+}
