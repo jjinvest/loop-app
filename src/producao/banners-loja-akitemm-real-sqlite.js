@@ -2,6 +2,7 @@
 // Banners dinâmicos exclusivos da AKITEMM, salvos no SQLite real e no backup
 // da identidade. Não compartilham imagens com os banners do LOOP.
 const {dimensoesImagem}=require('../domain/novidades-loja-candidato-sqlite');
+const {BannerMosaicoSQLite}=require('../producao/banner-mosaico-sqlite');
 const MIME=new Set(['image/jpeg','image/png','image/webp']);
 const MAX=4*1024*1024;
 const MAX_SLOTS=10000;
@@ -59,6 +60,7 @@ class BannersLojaAkitemmRealSQLite{
    'CHECK((mime IS NULL AND imagem IS NULL) OR',
    '(mime IS NOT NULL AND imagem IS NOT NULL)));'
   ].join(' '));
+  this.mosaico=new BannerMosaicoSQLite({banco,area:'akitemm',validarImagem:arquivoValido,agora});
  }
  _tabela(slot){
   return slot<=4?'loja_real_banners_akitemm':
@@ -79,14 +81,14 @@ class BannersLojaAkitemmRealSQLite{
   }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
  listar(){
-  return {quantidadeMaxima:MAX_SLOTS,slots:[
+  return {quantidadeMaxima:MAX_SLOTS,slots:this.mosaico.listar([
    ...this.db.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,enquadramento,revisao,atualizado_em FROM loja_real_banners_akitemm ORDER BY slot').all(),
    ...this.db.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,enquadramento,revisao,atualizado_em FROM loja_real_banners_akitemm_extensao ORDER BY slot').all()
   ].map(r=>({
    slot:r.slot,temImagem:!!r.temImagem,
    enquadramento:r.enquadramento,revisao:r.revisao,
    atualizadoEm:r.atualizado_em||null
-  }))};
+  })))};
  }
  imagem(slot){
   slotValido(slot);
@@ -132,7 +134,11 @@ class BannersLojaAkitemmRealSQLite{
   if(result.changes!==1)erro('BANNER_LOJA_CONFLITO_REVISAO');
   return this.listar();
  }
- trocar({origem,destino,revisaoOrigem,revisaoDestino}={}){
+ configurarMosaico(d){this.mosaico.configurar(d);return this.listar();}
+ salvarFotoMosaico(d){this.mosaico.salvarFoto(d);return this.listar();}
+ removerFotoMosaico(d){this.mosaico.removerFoto(d);return this.listar();}
+ imagemMosaico(d){return this.mosaico.imagem(d);}
+  trocar({origem,destino,revisaoOrigem,revisaoDestino}={}){
   slotValido(origem);slotValido(destino);
   if(Math.abs(origem-destino)!==1)erro('BANNER_LOJA_ORDEM_INVALIDA');
   revisaoValida(revisaoOrigem);revisaoValida(revisaoDestino);
