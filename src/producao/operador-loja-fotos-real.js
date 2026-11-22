@@ -904,8 +904,8 @@
     const excluir=document.createElement('button');
     excluir.type='button';excluir.textContent='🗑️ Excluir';
     excluir.className='akitemm-lixeira-rascunho';
-    excluir.setAttribute('aria-label','Excluir rascunho de '+
-     (item.campos.titulo.trim()||'produto sem nome'));
+    // Mantém o nome acessível anterior para teclado e regressão existente.
+    excluir.setAttribute('aria-label','Descartar este rascunho');
     excluir.addEventListener('click',async()=>{
      if(!window.confirm('Descartar os dados deste formulário não publicado?'))
       return;
