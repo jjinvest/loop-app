@@ -916,6 +916,7 @@
    // Verde é a confirmação explícita do CPF/termos do indicado,
    // não a simples criação da conta nem uma compra de ensaio.
    const registroValidado=p.cadastroConfirmado===true;
+   const indicacaoValida=registroValidado&&p.indicacaoValida===true;
    const emAnalise=p.estado==='QUALIFICACAO_ENSAIO';
    const aguardando=p.estado==='COMPRA_ENSAIO_SEM_QUALIFICACAO';
    const cor=registroValidado?'verde':emAnalise?'azul':
@@ -978,7 +979,8 @@
      p.filaCadastro==='B'?'B':'não informada'))
    );
    const anotacao=texto('p','loop03-rede-pessoa-vinculo',
-    registroValidado?'Cadastro confirmado. Ativação no LOOP depende da qualificação.':
+    indicacaoValida?'Indicação válida e confirmada. Pode vincular à posição.':
+    registroValidado?'Cadastro confirmado. Aguardando compra qualificada e conciliação.':
     emAnalise?'Vínculo aguardando comprovação real.':
     aguardando?'Aguardando confirmação da posição.':
     'Aguardando ativação no LOOP.');
@@ -989,14 +991,14 @@
     p.posicaoDestinoReservada>=1&&p.posicaoDestinoReservada<=10?
     p.posicaoDestinoReservada:null;
    const aviso=texto('p','loop03-rede-pessoa-aviso',
-    reservada!==null?'Destino fixado na posição '+reservada+
-     '. Aguardando ativação real da indicação.':
-     'Escolha uma vez a posição de destino. O cadastro ficará reservado aqui;'+
-     ' a indicação só será ativada após comprovação.');
+    reservada!==null?'Destino fixado na posição '+reservada+'.':
+    !indicacaoValida?
+     'Nenhuma posição disponível: esta indicação ainda não é válida.':
+     'Indicação válida. Escolha a posição de destino uma única vez.');
    for(let n=1;n<=10;n++){
     const escolha=texto('button','loop03-rede-posicao',String(n));
     escolha.type='button';
-    escolha.disabled=reservada!==null||emAnalise||numero===null;
+    escolha.disabled=!indicacaoValida||reservada!==null||numero===null;
     escolha.setAttribute('aria-label',
      'Escolher posição '+n+' para @'+p.nick);
     escolha.setAttribute('aria-pressed',String(reservada===n));
@@ -1004,10 +1006,11 @@
      escolha.classList.add('loop03-rede-posicao-selecionada');
      escolha.title='Destino já escolhido e preservado';
     }else escolha.title=escolha.disabled?
-     'Destino fixado ou indicação já vinculada':
+     indicacaoValida?'Destino fixado ou indicação já vinculada':
+      'Aguardando indicação válida':
      'Escolher posição '+n+' (escolha única)';
     escolha.addEventListener('click',async()=>{
-     if(reservada!==null||emAnalise||numero===null)return;
+     if(!indicacaoValida||reservada!==null||numero===null)return;
      for(const b of grade.querySelectorAll('button'))b.disabled=true;
      aviso.textContent='Salvando destino da indicação...';
      try{
