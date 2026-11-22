@@ -203,3 +203,5 @@ body.loop03-modo-operador #conteudoResumo .loop03-banner-item:not(.loop03-banner
  }
  .akitemm-loja .akitemm-banner .banner-mosaico{padding:5px;gap:4px}
 }
+
+#conteudoResumo .loop03-banner-item .loop03-banner-foto-manual[data-enquadramento="PREENCHER"]:not([hidden]){object-fit:cover}
