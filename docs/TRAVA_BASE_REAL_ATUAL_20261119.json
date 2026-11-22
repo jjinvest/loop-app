@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b"
+      "sha": "c9a10f8b1cdcb6cb143afe2e7e7d424fcd0a7907"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1456,7 +1456,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "223cdfe58a23ed5cc4622f727644b93e173fc849"
+      "sha": "cd4264616a39db5af59804209def12fa0350dca4"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -2613,6 +2613,10 @@
     {
       "path": "test/fonte-unica-pagamento-pedido-sandbox-lab.test.js",
       "sha": "5464f6a1b8b12a4fe25a31ddfaaf8ed70b073e44"
+    },
+    {
+      "path": "test/foto-perfil-akitemm-visoes-cliente-operador.test.js",
+      "sha": "21f386ae9d4d03edb8f944c0cb62359ad02f0c52"
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
@@ -3928,6 +3932,24 @@
       "antes": "6023c582166d352f26f9a059341d610c433bad62",
       "depois": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b",
       "objetivo": "Atualização autorizada em 22/11/2026 dos testes de navegador e relógio para novo placar real por hora: detalhes exclusivos no Tabuleiro, posição selecionada sem relógio."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "223cdfe58a23ed5cc4622f727644b93e173fc849",
+      "depois": "cd4264616a39db5af59804209def12fa0350dca4",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: restaurar foto de perfil na AKITEMM nos papéis operador e cliente, mesmo com cookies simultâneos, usando apenas imagens autenticadas já armazenadas no LOOP."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b",
+      "depois": "c9a10f8b1cdcb6cb143afe2e7e7d424fcd0a7907",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: restaurar foto de perfil na AKITEMM nos papéis operador e cliente, mesmo com cookies simultâneos, usando apenas imagens autenticadas já armazenadas no LOOP."
+    },
+    {
+      "path": "test/foto-perfil-akitemm-visoes-cliente-operador.test.js",
+      "antes": null,
+      "depois": "21f386ae9d4d03edb8f944c0cb62359ad02f0c52",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: restaurar foto de perfil na AKITEMM nos papéis operador e cliente, mesmo com cookies simultâneos, usando apenas imagens autenticadas já armazenadas no LOOP."
     }
   ]
 }

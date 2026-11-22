@@ -290,6 +290,21 @@ async function main(){
    await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
    assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
+   // A foto administrativa salva no LOOP deve aparecer na AKITEMM,
+   // inclusive quando o operador alternar para visão pública do cliente.
+   await operadorPage.goto(base+'/loja?visao=operador');
+   await operadorPage.locator('#akitemmFotoTitular').waitFor({state:'visible'});
+   const avatarOperador=await operadorPage.locator('#akitemmFotoTitular')
+    .evaluate(img=>({pronto:img.complete&&img.naturalWidth>0,
+     fonte:img.getAttribute('src')}));
+   assert.equal(avatarOperador.pronto,true);
+   assert.match(avatarOperador.fonte,/^\/api\/admin\/operador\/foto-perfil/);
+   await operadorPage.goto(base+'/loja?visao=cliente');
+   await operadorPage.locator('#akitemmFotoTitular').waitFor({state:'visible'});
+   assert.match(await operadorPage.locator('#akitemmFotoTitular')
+    .getAttribute('src'),/^\/api\/admin\/operador\/foto-perfil/);
+   await operadorPage.goto(base+'/escritorio?visao=operador');
+   await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#abaTabuleiro').click();
    await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});

@@ -22,28 +22,42 @@
  async function sincronizarFotoLoja(){
   if(!fotoTitular)return;
   const consulta=++consultaFotoLoja;
-  fotoTitular.hidden=true;
-  fotoTitular.removeAttribute('src');
-  if((visitante&&!operadorAtivo)||(operadorAtivo&&visaoClienteLoja))return;
-  const caminho=operadorAtivo?
-   '/api/admin/operador/foto-perfil':'/api/contas/foto-perfil';
+  // Duas fotos privadas separadas, mas a mesma conta/operador do LOOP.
+  // O operador pode manter o cookie administrativo quando visita a
+  // visão de cliente: se há sessão de cliente validada, usar sua foto.
+  const clienteComFoto=!visitante&&typeof clienteNick==='string'&&
+   (!operadorAtivo||visaoClienteLoja);
+  const caminho=clienteComFoto?'/api/contas/foto-perfil':
+   operadorAtivo?'/api/admin/operador/foto-perfil':null;
+  const limpar=()=>{
+   fotoTitular.hidden=true;
+   fotoTitular.removeAttribute('src');
+   fotoTitular.removeAttribute('data-foto-sessao');
+  };
+  if(!caminho){limpar();return;}
+  if(fotoTitular.getAttribute('data-foto-sessao')!==caminho)limpar();
   try{
    const r=await fetch(caminho,{credentials:'same-origin',cache:'no-store'});
    if(consulta!==consultaFotoLoja)return;
    if(!r.ok||!['image/jpeg','image/png','image/webp'].includes(
-    r.headers.get('content-type')?.split(';')[0]))return;
-   // URL de mesma origem autenticada: funciona sob a CSP sem blob:.
+    r.headers.get('content-type')?.split(';')[0])){
+    limpar();return;
+   }
+   // A imagem só aparece se carregada pela sessão autenticada correta.
+   // Não esconder a foto já validada a cada foco/troca de aba do Android.
    fotoTitular.onload=()=>{
-    if(consulta===consultaFotoLoja)fotoTitular.hidden=false;
+    if(consulta===consultaFotoLoja&&fotoTitular.naturalWidth>0)
+     fotoTitular.hidden=false;
    };
    fotoTitular.onerror=()=>{
-    if(consulta===consultaFotoLoja){
-     fotoTitular.hidden=true;fotoTitular.removeAttribute('src');
-    }
+    if(consulta===consultaFotoLoja)limpar();
    };
-   fotoTitular.src=caminho+'?versao='+Date.now();
+   fotoTitular.setAttribute('data-foto-sessao',caminho);
+   fotoTitular.src=caminho+'?versao='+Date.now()+'-'+consulta;
+   if(fotoTitular.complete&&fotoTitular.naturalWidth>0)
+    fotoTitular.hidden=false;
   }catch{
-   if(consulta===consultaFotoLoja)fotoTitular.hidden=true;
+   if(consulta===consultaFotoLoja&&fotoTitular.hidden)limpar();
   }
  }
  // Quando uma foto é trocada em outra aba do LOOP, refletir na loja
@@ -1172,7 +1186,10 @@
   const res=await fetch('/api/contas/me',{
    credentials:'same-origin',cache:'no-store'
   });
-  const semCliente=res.status===401||operadorAtivo;
+  // Visão de cliente validada pode coexistir com cookie de operador:
+  // a sessão pessoal pertence ao próprio titular autenticado, nunca
+  // ao usuário observado pelo administrador.
+  const semCliente=res.status===401||(operadorAtivo&&!visaoClienteLoja);
   if(semCliente){
    visitante=!operadorAtivo;clienteNick=null;csrfLoja=null;
    prepararLinkPessoal();
