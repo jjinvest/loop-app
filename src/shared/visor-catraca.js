@@ -120,17 +120,16 @@
     // locais, sem requisicoes por segundo e sem inventar evento bancario.
     const deltaLuzes=valido&&base?
      Math.max(0,estado.passadas-base.passadas):0;
-    const deltaCiclos=valido&&base?
-     Math.max(0,Math.floor(estado.passadas/6)-
-      Math.floor(base.passadas/6)):0;
     const ciclos=agenda?.ciclosRelogio24h;
-    if(giros)giros.textContent=Number.isSafeInteger(ciclos)&&ciclos>=0?
-     String(ciclos+deltaCiclos):'—';
-    const luzes24h=$('loop03LuzesHoraIntegrado');
     const luzes=agenda?.luzesRelogio24h;
-    if(luzes24h)luzes24h.textContent=
-     Number.isSafeInteger(luzes)&&luzes>=0?
-      String(luzes+deltaLuzes):'—';
+    const contagemValida=Number.isSafeInteger(ciclos)&&ciclos>=0&&
+     Number.isSafeInteger(luzes)&&luzes>=0&&
+     ciclos===Math.floor(luzes/6);
+    if(giros)giros.textContent=contagemValida?
+     String(Math.floor((luzes+deltaLuzes)/6)):'—';
+    const luzes24h=$('loop03LuzesHoraIntegrado');
+    if(luzes24h)luzes24h.textContent=contagemValida?
+     String(luzes+deltaLuzes):'—';
     if(operadorAberto&&selecionada&&valido){
      selecionada.textContent=estado.luzes+' / 6';
      const titulo=selecionada.parentElement?.querySelector?.('small');
