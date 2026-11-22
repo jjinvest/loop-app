@@ -53,7 +53,7 @@ const TABELAS_CONTATO=Object.freeze([
  'loop_real_destinos_indicacao','loop_real_carrinho_itens',
  'loop_real_migracoes_preview','loop_real_aceites_documentos',
  'loop_captcha_login_falhas_v1','loop_captcha_cadastro_v1',
- TABELA_FOTO_PERFIL_REAL
+ 'loja_real_atendimentos',TABELA_FOTO_PERFIL_REAL
 ]);
 // Administração, cotações, pedidos, custo congelado e outbox são protegidos
 // juntos quando coexistem no MESMO SQLite. Liquidação PSP/banco e tributos
@@ -69,7 +69,6 @@ const TABELAS_ADMIN=Object.freeze([
 const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_anuncios_operador',
  'loja_real_canais_fornecedor',
- 'loja_real_atendimentos',
  'loja_real_entrega_local_produto',
  'loja_real_avaliacoes_verificadas'
 ]);
@@ -386,11 +385,6 @@ function validarIdentidade(arquivo){
    ver('loja_real_anuncios_operador',[
     'produto_id','origem','categoria','marca','preco_centavos',
     'promocao_centavos','quantidade','revisao']);
-  if(lista.includes('loja_real_atendimentos'))
-   ver('loja_real_atendimentos',[
-    'id','titular_id','tipo','estado','mensagem_iv','mensagem_ct',
-    'mensagem_tag','resposta_iv','resposta_ct','resposta_tag',
-    'criado_em','respondido_em']);
   if(lista.includes('loja_real_canais_fornecedor'))
    ver('loja_real_canais_fornecedor',[
     'produto_id','canal','fornecedor_nome','fornecedor_sku',
@@ -426,6 +420,23 @@ function validarIdentidade(arquivo){
       .integridade!=='OK')
      falha('BACKUP_FILA_PROJECAO_DIVERGENTE');
    }catch{falha('BACKUP_FILA_PROJECAO_DIVERGENTE');}
+  }
+  if(lista.includes('loja_real_atendimentos')){
+   const colunas=b.prepare('PRAGMA table_info(loja_real_atendimentos)')
+    .all().map(x=>x.name);
+   if(['id','titular_id','tipo','estado','mensagem_iv','mensagem_ct',
+       'mensagem_tag','resposta_iv','resposta_ct','resposta_tag',
+       'criado_em','respondido_em'].some(x=>!colunas.includes(x)))
+    falha('BACKUP_ATENDIMENTO_ESQUEMA_INCOMPLETO');
+   const invalido=b.prepare([
+    'SELECT t.id FROM loja_real_atendimentos t',
+    'LEFT JOIN loop_real_contas c ON c.id=t.titular_id',
+    'WHERE c.id IS NULL OR',
+    "(t.estado='ABERTO' AND t.resposta_ct IS NOT NULL) OR",
+    "(t.estado='RESPONDIDO' AND t.resposta_ct IS NULL)",
+    'LIMIT 1'
+   ].join(' ')).get();
+   if(invalido)falha('BACKUP_ATENDIMENTO_DIVERGENTE');
   }
   const integridade=b.prepare('PRAGMA integrity_check').all();
   if(integridade.length!==1||integridade[0].integrity_check!=='ok')
