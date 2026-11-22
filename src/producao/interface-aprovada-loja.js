@@ -23,10 +23,9 @@
  async function sincronizarFotoLoja(){
   if(!fotoTitular)return;
   const consulta=++consultaFotoLoja;
-  // A visão demonstrativa do cliente no perfil administrativo NÃO herda
-  // a identidade/foto do operador; só clientes autenticados veem sua foto.
-  const bloqueado=(visitante&&!operadorAtivo)||
-   (operadorAtivo&&visaoClienteLoja);
+  // Mostrar somente a foto PRÓPRIA de quem está autenticado.
+  // Mesmo na visão de cliente, o operador usa seu avatar, não foto de clientes.
+  const bloqueado=visitante&&!operadorAtivo;
   const caminho=bloqueado?null:operadorAtivo?
    '/api/admin/operador/foto-perfil':'/api/contas/foto-perfil';
   if(!caminho){

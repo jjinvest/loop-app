@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "efdf97930665105bab08ec1c39b854105bc2c284"
+      "sha": "57b0ae5abe312be8715461c0f98bce031d90f507"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1456,7 +1456,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "13ff49dca91e276f68077ed357746740308f160a"
+      "sha": "b14d6df476e0f0da445e0f0610fb71cd769285f9"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1508,7 +1508,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "5fc627577e6096bb8afe5cf5c659bb3547ae8457"
+      "sha": "69676c58d784b09ba46bcb2f11b90c849715302d"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -2616,7 +2616,7 @@
     },
     {
       "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
-      "sha": "4f44cfcea8563f8108f4cb7be69d902ec28acfe8"
+      "sha": "57215f77ae4e3dc29749390e54c62c6ad3dc0ae9"
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
@@ -3998,6 +3998,30 @@
       "antes": "380428654e5d6579333ec1ee2cd3ecee7b6d93d8",
       "depois": "4f44cfcea8563f8108f4cb7be69d902ec28acfe8",
       "objetivo": "Assegurar que o avatar na loja pertence ao cliente autenticado ou ao operador, não à visualização pública administrativa."
+    },
+    {
+      "path": "src/producao/operador-loja-fotos-real.js",
+      "antes": "5fc627577e6096bb8afe5cf5c659bb3547ae8457",
+      "depois": "69676c58d784b09ba46bcb2f11b90c849715302d",
+      "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "13ff49dca91e276f68077ed357746740308f160a",
+      "depois": "b14d6df476e0f0da445e0f0610fb71cd769285f9",
+      "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "4f44cfcea8563f8108f4cb7be69d902ec28acfe8",
+      "depois": "57215f77ae4e3dc29749390e54c62c6ad3dc0ae9",
+      "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "efdf97930665105bab08ec1c39b854105bc2c284",
+      "depois": "57b0ae5abe312be8715461c0f98bce031d90f507",
+      "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
     }
   ]
 }
