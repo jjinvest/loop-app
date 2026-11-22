@@ -111,10 +111,14 @@
    }
    img.setAttribute('data-enquadramento','INTEIRA');
    const src='/api/loop/banners/'+slot.slot+'/imagem?rev='+slot.revisao;
-   if(img.getAttribute('src')!==src)img.src=src;
+   // Um img oculto com loading=lazy nao inicia a requisicao: a foto
+   // fica gravada no SQLite, mas nunca aparece depois de recarregar.
+   // Exibir a moldura e forcar carregamento real antes de aguardar onload.
+   img.loading='eager';
    img.onload=()=>{img.hidden=false;};
    img.onerror=()=>{img.hidden=true;};
-   if(img.complete&&img.naturalWidth>0)img.hidden=false;
+   img.hidden=false;
+   if(img.getAttribute('src')!==src)img.src=src;
   }
   exibirEditor();
  }
