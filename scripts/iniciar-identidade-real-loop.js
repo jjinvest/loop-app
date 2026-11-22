@@ -26,6 +26,8 @@ const {criarCatalogoMercadoriasReal}=
  require('../src/producao/catalogo-mercadorias-real');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
+const {BannersAkitemmRealSQLite}=
+ require('../src/producao/banners-akitemm-real-sqlite');
 const {criarAppIdentidadeLoop}=
  require('../src/producao/servidor-identidade-loop');
 const {criarTransporteEmailVerificacaoResend}=
@@ -149,6 +151,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
  let agendador=null,agendadorMidia=null,catalogoMidia=null;
  try{
   const contas=new IdentidadeClienteLoopReal({...config,banco});
+  const bannersAkitemm=new BannersAkitemmRealSQLite({banco});
   const motorLoop=new MotorLoopIntegradoSQLite({banco});
   const operacaoCatraca=new OperacaoCatracaAdminSQLite({banco,motor:motorLoop});
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
@@ -310,11 +313,13 @@ async function iniciar(ambiente=process.env,opcoes={}){
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
    pedidosComerciais,remessasOutbox,catalogoVitrine,catalogoMidiaLeitura,
+   bannersAkitemm,
    origemHttps:config.origemHttps,permitirCadastro:opcoes.cadastroPublico!==false,
    captchaCadastroObrigatorio:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
-    catalogoMidia,classificacaoLoop,operacaoCatraca,recuperacaoReservas}
+    catalogoMidia,classificacaoLoop,operacaoCatraca,recuperacaoReservas,
+    bannersAkitemm}
   });
   // Sonda informativa de somente leitura: nenhum dado pessoal ou produto
   // aparece no log. Falha não modifica contas, fotos nem reinicia o banco.
