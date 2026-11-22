@@ -43,7 +43,6 @@ function fotosNoProprioQuadro(op){
    reader.onload=()=>{
     if(pendentes.get(pos)!==f)return;
     miniaturas.set(pos,String(reader.result||''));pintar();
-    void abrirRecorte(pos);
    };
    reader.onerror=()=>{status.textContent='Não foi possível ler a foto.';};
    reader.readAsDataURL(f);
@@ -153,6 +152,11 @@ function fotosNoProprioQuadro(op){
  }
  return {
   pintar,
+  abrir:pos=>{
+   if(pendentes.has(pos)||slot()?.fotos?.[pos-1]?.temImagem)
+    void abrirRecorte(pos);
+   else inputs[pos-1]?.click();
+  },
   novas:n=>[...pendentes.keys()].some(x=>x<=n),
   arquivo:pos=>pendentes.get(pos)||null,
   limpar:()=>{pendentes.clear();miniaturas.clear();inputs.forEach(x=>x.value='');pintar();}
