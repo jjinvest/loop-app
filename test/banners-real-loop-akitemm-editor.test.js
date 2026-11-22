@@ -96,7 +96,7 @@ test('formulários reais: sinal + abre área de foto e envia à tabela correta',
  assert.doesNotMatch(lojaJs,/staging\/|laboratorio\//);
 });
 
-test('recorte opcional reutilizado em banners, produtos, e perfis cliente e operador',()=>{
+test('recorte opcional em banners e produtos, nunca nas fotos de perfil',()=>{
  const interfaceReal=require('../src/producao/interface-aprovada-loop');
  const htmls=[interfaceReal.renderizarInterfaceAprovada(),
   interfaceReal.renderizarLojaAprovada()];
@@ -111,7 +111,9 @@ test('recorte opcional reutilizado em banners, produtos, e perfis cliente e oper
  assert.match(shared,/Recortar foto \(opcional\)/);
  assert.match(shared,/input\[type=file\]\[accept\*="image\/"\]/);
  assert.match(shared,/MutationObserver\(descobrir\)/);
- assert.match(shared,/input\.id==='arquivoFotoPerfil'/);
+ assert.match(shared,/if\(input\.id==='arquivoFotoPerfil'\|\|input\.closest\?\.\('#formFotoPerfil'\)\)return/);
+ assert.doesNotMatch(shared,/loop03AlterarFotoTopo/);
+ assert.match(shared,/input\.dataset\.recorteNativo==='sim'/);
  assert.match(shared,/new DataTransfer\(\)/);
  assert.match(shared,/entrada\.dispatchEvent\(new Event\('change'/);
  assert.match(shared,/canvas\.toBlob/);
