@@ -2332,7 +2332,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "246379bd730239c025da3ef003804b97c7e3e9b7"
+      "sha": "c7050ffdb99bd6c07d2133c45c072c917b6abfb4"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
