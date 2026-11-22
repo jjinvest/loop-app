@@ -16,7 +16,7 @@ function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
  catalogoMidia=null,posicoesVitrine=null,anunciosManuais=null,
- contas=null,
+ contas=null,atendimento=null,
  entregaLocal=null,
  pedidosComerciais=null,
  motorLoop=null,operacaoCatraca=null,
@@ -130,6 +130,30 @@ function montarGatewayAdminComercial(app,{
   next();
  };
 
+ // Caixa de entrada do atendimento AKITEMM, independente de marketplaces.
+ if(atendimento){
+  app.get('/api/admin/akitemm/atendimentos',proteger,(_req,res)=>{
+   try{return res.json({atendimentos:atendimento.pendentes()});}
+   catch{return res.status(503).json({
+    erro:'ATENDIMENTO_OPERADOR_INDISPONIVEL'
+   });}
+  });
+  app.post('/api/admin/akitemm/atendimentos/:protocolo/responder',
+   proteger,validarCsrf,(req,res)=>{
+    if(!req.is('application/json')||!req.body||
+       Array.isArray(req.body)||Object.keys(req.body).join(',')!=='resposta')
+     return res.status(400).json({erro:'ATENDIMENTO_RESPOSTA_INVALIDA'});
+    try{return res.json(atendimento.responder({
+     protocolo:req.params.protocolo,resposta:req.body.resposta
+    }));}
+    catch(e){
+     const cod=e.codigo||'ATENDIMENTO_RESPOSTA_INDISPONIVEL';
+     return res.status(cod==='ATENDIMENTO_NAO_ENCONTRADO'?404:
+      cod==='ATENDIMENTO_JA_RESPONDIDO'?409:
+      cod.includes('INVALID')?400:503).json({erro:cod});
+    }
+   });
+ }
  // Gestão de cadastro: só a sessão autenticada como OPERADOR tem acesso.
  // Leitura exige nick exato; escrita exige CSRF, motivo e auditoria no SQLite.
  if(contas){
