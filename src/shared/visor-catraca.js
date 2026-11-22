@@ -110,26 +110,18 @@
    const ciclosRelogio=Math.floor(movimentosRelogio/6);
    if(compartilhado){
     const giros=$('loop03Giros24Integrado');
-    if(operadorAberto){
-     // Contrato anterior do operador permanece independente do placar cliente.
-     if(giros&&valido){
-      giros.textContent=String(movimentosRelogio);
-      const descricao=giros.parentElement?.querySelector?.('span');
-      if(descricao)descricao.textContent='Relógio: '+ciclosRelogio+
-       ' ciclos de 6 · sem pagamento';
-     }
-     if(selecionada&&valido){
-      selecionada.textContent=estado.luzes+' / 6';
-      const titulo=selecionada.parentElement?.querySelector?.('small');
-      if(titulo)titulo.textContent='EVENTOS NO CICLO';
-     }
-    }else{
-     const hora=agendaVisorCatraca?.girosReaisHora;
-     if(giros)giros.textContent=Number.isSafeInteger(hora)&&hora>=0?
-      String(hora):'—';
-     const luzesHora=$('loop03LuzesHoraIntegrado');
-     if(luzesHora)luzesHora.textContent=valido?
-      String(estado.luzesHora):'0';
+    // Mesmo placar central para cliente e operador: giros reais por
+    // hora e luzes projetadas por hora, lidos da agenda compartilhada.
+    const hora=agendaVisorCatraca?.girosReaisHora;
+    if(giros)giros.textContent=Number.isSafeInteger(hora)&&hora>=0?
+     String(hora):'—';
+    const luzesHora=$('loop03LuzesHoraIntegrado');
+    if(luzesHora)luzesHora.textContent=valido?
+     String(estado.luzesHora):'0';
+    if(operadorAberto&&selecionada&&valido){
+     selecionada.textContent=estado.luzes+' / 6';
+     const titulo=selecionada.parentElement?.querySelector?.('small');
+     if(titulo)titulo.textContent='EVENTOS NO CICLO';
     }
    }
    if(resumo&&compartilhado&&operadorAberto&&valido){
