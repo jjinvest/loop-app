@@ -29,20 +29,21 @@
  // A credencial de operador nunca é inferida pelo nick do cliente.
  // O gateway verifica a sessão administrativa isolada antes de revelar +.
  async function atualizarAtalhoOperadorReal(){
-  const atalhos=[$('loopOperadorMais'),$('loopAcessoAdminMenu')].filter(Boolean);
-  if(!atalhos.length)return;
+  const antigo=$('loopOperadorMais');
+  if(antigo){antigo.hidden=true;antigo.style.display='none';}
+  const barra=$('loopOperadorAtalhos'),voltar=$('loopVoltarOperador');
+  if(!barra&&!voltar)return;
   try{
    const r=await fetch('/api/operador/estado',{
     credentials:'same-origin',cache:'no-store'
    });
    const d=r.ok?await r.json():null;
-   for(const atalho of atalhos){
-    const liberado=d?.operador===true;
-    atalho.hidden=!liberado;
-    atalho.style.display=liberado?'inline-flex':'none';
-   }
+   const ativo=d?.operador===true;
+   if(barra)barra.hidden=!ativo||!modoOperadorAtual;
+   if(voltar)voltar.hidden=!ativo||modoOperadorAtual;
   }catch{
-   for(const atalho of atalhos){atalho.hidden=true;atalho.style.display='none';}
+   if(barra)barra.hidden=true;
+   if(voltar)voltar.hidden=true;
   }
  }
  void atualizarAtalhoOperadorReal();
@@ -77,6 +78,7 @@
  let captchaCadastroId=null,captchaObrigatorio=false;
  let captchaLoginAtivo=false,captchaLoginId=null;
  const parametrosEntrada=new URLSearchParams(location.search);
+ const visaoSolicitada=parametrosEntrada.get('visao');
  const ref=parametrosEntrada.get('ref');
  // /loja/NICK conserva o indicador no cadastro e abre a loja apos
  // autenticar a conta real; nao promove convidado a operador.
@@ -462,6 +464,151 @@
  }
  // Mesma tela aprovada, sem criar conta falsa nem acessar dados privados.
  // Somente uma sessao administrativa autenticada abre este modo.
+
+ // Áreas próprias do operador, sem atribuir a ele uma conta ou posição fictícia.
+ let paineisOperadorPreparados=false;
+ function prepararPaineisOperador(){
+  if(paineisOperadorPreparados)return;
+  paineisOperadorPreparados=true;
+  const areas={
+   conteudoPosicoes:[
+    '<h2>Posições e filas · Operador</h2>',
+    '<div id="adminResumoPosicoes" class="loop03-admin-dado" role="status">Consultando filas do servidor…</div>',
+    '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarPosicoes">Atualizar posições</button><a href="/administrador">Gerenciar na Central</a></div>'
+   ],
+   conteudoEquipe:[
+    '<h2>Cadastros · Operador</h2>',
+    '<p>Localize pelo nick. Nome e telefone podem ser corrigidos com motivo e auditoria. E-mail, CPF, senha e vínculos não são alterados aqui.</p>',
+    '<form id="adminBuscaCadastro" class="loop03-admin-campos"><label for="adminNickBusca">Nick do cliente</label>',
+    '<input id="adminNickBusca" name="nick" maxlength="12" pattern="[A-Za-z]{1,12}" required>',
+    '<div class="loop03-admin-acoes"><button type="submit">Localizar cadastro</button></div></form>',
+    '<div id="adminCadastroEstado" class="loop03-admin-dado" role="status" aria-live="polite">Digite o nick para consultar.</div>',
+    '<form id="adminCorrigeCadastro" class="loop03-admin-campos" hidden>',
+    '<label for="adminNomeCadastro">Nome</label><input id="adminNomeCadastro" maxlength="90" required>',
+    '<label for="adminTelefoneCadastro">Telefone</label><input id="adminTelefoneCadastro" inputmode="tel" maxlength="24">',
+    '<label for="adminMotivoCadastro">Motivo da correção</label><textarea id="adminMotivoCadastro" minlength="10" maxlength="200" required rows="3"></textarea>',
+    '<div class="loop03-admin-acoes"><button type="submit">Salvar correção auditada</button></div></form>',
+    '<div class="loop03-admin-acoes"><a href="/administrador">Abrir Central do Administrador</a></div>'
+   ],
+   conteudoFinanceiro:[
+    '<h2>Financeiro · Operador</h2>',
+    '<div id="adminResumoFinanceiro" class="loop03-admin-dado" role="status">Consultando controle de caixa e catraca…</div>',
+    '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarFinanceiro">Atualizar</button><a href="/administrador">Gestão financeira na Central</a></div>'
+   ],
+   conteudoMeusPedidos:[
+    '<h2>Pedidos · Operador</h2>',
+    '<div id="adminResumoPedidos" class="loop03-admin-dado" role="status">Consultando cadeia de pedidos…</div>',
+    '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarPedidos">Atualizar pedidos</button><a href="/administrador">Gerenciar na Central</a></div>'
+   ],
+   conteudoLinks:[
+    '<h2>Links e acessos · Operador</h2>',
+    '<p>Acessos oficiais ao escritório, à loja e à Central.</p>',
+    '<div class="loop03-admin-acoes"><a href="/escritorio/VILELA?visao=cliente">Meu escritório de cliente</a><a href="/loja/VILELA">Minha loja</a><a href="/administrador">Central do Administrador</a></div>'
+   ],
+   conteudoConta:[
+    '<h2>Conta do operador</h2>',
+    '<p>Seu perfil administrativo é independente da conta VILELA. A foto do operador é alterada tocando no retrato do cabeçalho.</p>',
+    '<div class="loop03-admin-acoes"><a href="/escritorio?visao=cliente">Ver Minha Conta como cliente</a><a href="/administrador">Central do Administrador</a></div>'
+   ]
+  };
+  for(const [id,linhas] of Object.entries(areas)){
+   const destino=$(id);if(!destino)continue;
+   const div=document.createElement('div');
+   div.className='loop03-admin-section';
+   div.innerHTML=linhas.join('');
+   destino.prepend(div);
+  }
+  $('adminAtualizarPosicoes')?.addEventListener('click',()=>void carregarAbaOperador('abaPosicoes'));
+  $('adminAtualizarFinanceiro')?.addEventListener('click',()=>void carregarAbaOperador('abaFinanceiro'));
+  $('adminAtualizarPedidos')?.addEventListener('click',()=>void carregarAbaOperador('abaMeusPedidos'));
+  let nickCadastroConsultado=null;
+  $('adminBuscaCadastro')?.addEventListener('submit',async e=>{
+   e.preventDefault();
+   const nick=$('adminNickBusca').value.trim(),estado=$('adminCadastroEstado');
+   const form=$('adminCorrigeCadastro');
+   form.hidden=true;nickCadastroConsultado=null;
+   estado.textContent='Consultando cadastro…';
+   try{
+    if(!/^[A-Za-z]{1,12}$/.test(nick))throw Error('Nick inválido.');
+    const r=await fetch('/api/admin/contas/cadastro?nick='+encodeURIComponent(nick),{
+     credentials:'same-origin',cache:'no-store'
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.cadastro)throw Error(d.erro||'Cadastro não localizado.');
+    const x=d.cadastro;
+    nickCadastroConsultado=x.nick;
+    estado.textContent='Nick: '+x.nick+'\nE-mail: '+x.email+
+     '\nVerificado: '+(x.emailVerificado?'Sim':'Pendente')+
+     '\nCPF: '+(x.cpfExibicao||'Não informado')+
+     '\nCadastro: '+new Date(x.registradoEm).toLocaleDateString('pt-BR');
+    $('adminNomeCadastro').value=x.nome;
+    $('adminTelefoneCadastro').value=x.telefone||'';
+    $('adminMotivoCadastro').value='';
+    form.hidden=false;
+   }catch(err){estado.textContent='Consulta não realizada: '+err.message;}
+  });
+  $('adminCorrigeCadastro')?.addEventListener('submit',async e=>{
+   e.preventDefault();
+   if(!nickCadastroConsultado)return;
+   const form=e.currentTarget,botao=form.querySelector('[type=submit]');
+   botao.disabled=true;
+   const estado=$('adminCadastroEstado');
+   try{
+    const token=await obterCsrfOperadorReal();
+    const r=await fetch('/api/admin/contas/cadastro/corrigir',{
+     method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+     body:JSON.stringify({
+      nick:nickCadastroConsultado,nome:$('adminNomeCadastro').value.trim(),
+      telefone:$('adminTelefoneCadastro').value.trim(),
+      motivo:$('adminMotivoCadastro').value.trim()
+     })
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.corrigido!==true)throw Error(d.erro||'Correção não confirmada.');
+    estado.textContent='Cadastro de '+nickCadastroConsultado+
+     ' corrigido, auditado e confirmado no banco.';
+    form.hidden=true;nickCadastroConsultado=null;
+   }catch(err){estado.textContent='Correção não realizada: '+err.message;}
+   finally{botao.disabled=false;}
+  });
+ }
+ async function carregarAbaOperador(id){
+  if(!modoOperadorAtual)return;
+  const rotas={
+   abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
+   abaFinanceiro:['/api/admin/loop/controle','adminResumoFinanceiro'],
+   abaMeusPedidos:['/api/admin/loop/cadeia-comercial','adminResumoPedidos']
+  };
+  const info=rotas[id];if(!info)return;
+  const destino=$(info[1]);if(!destino)return;
+  destino.textContent='Atualizando dados reais do servidor…';
+  try{
+   const r=await fetch(info[0],{credentials:'same-origin',cache:'no-store'});
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(d.erro||'Consulta indisponível.');
+   if(!modoOperadorAtual)return;
+   if(id==='abaPosicoes'){
+    destino.textContent='Fila A: '+d.filaA+' posições\nFila B: '+d.filaB+
+     ' posições\nEventos no ciclo: '+d.tabuleiro.eventosNoCiclo+
+     ' de 6\nCentros concluídos: '+d.tabuleiro.ciclosConcluidos;
+   }else if(id==='abaFinanceiro'){
+    destino.textContent='Modo da catraca: '+d.modo+
+     '\nGiros de hoje: '+d.girosHoje+
+     '\nMeta: '+d.metaCentrosDia+' centros'+
+     '\nCaixa comprovado para meta: '+(d.caixaConciliadoParaMeta?'Sim':'Não')+
+     '\nGiros financeiros: '+(d.autorizacaoFinanceiraDosGiros?'Autorizados':'Bloqueados até comprovação externa');
+   }else{
+    const p=d.pedidos||{},e=d.eventos||{},o=d.outbox||{};
+    destino.textContent='Pedidos aguardando pagamento: '+(p.aguardandoPagamento??'—')+
+     '\nPedidos aprovados: '+(p.aprovados??'—')+
+     '\nEventos aguardando conciliação: '+(e.aguardandoConciliacao??'—')+
+     '\nRemessas pendentes: '+(o.pendentes??'—')+
+     '\nEstrutura: '+d.statusEstrutural+
+     '\nA consulta não comprova liquidação bancária.';
+   }
+  }catch(e){destino.textContent='Dados indisponíveis: '+e.message;}
+ }
  function abrirPainelOperador(){
   modoOperadorAtual=true;csrf=null;
   posicionarCampoFotoPerfil(true);
@@ -483,14 +630,14 @@
   $('conteudoConta').hidden=true;
   const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=false;
   const indicadores=document.querySelector('.loop03-indicadores');
-  if(indicadores)indicadores.hidden=true;
+  if(indicadores)indicadores.hidden=false;
   // Abre somente a aba operacional existente; nao concede identidade de cliente.
   posicoesResumoReal=[];posicaoSelecionada='';
   $('posicoesPainel').replaceChildren();
   prepararAbasMotor();
   for(const tab of document.querySelectorAll('#loop03SidebarIntegrado [role=tab]')){
    const resumo=tab.id==='abaResumo';
-   const habilitada=resumo||tab.id==='abaTabuleiro';
+   const habilitada=true;
    tab.disabled=!habilitada;
    tab.setAttribute('aria-selected',String(resumo));
    tab.setAttribute('aria-current',resumo?'page':'false');
@@ -501,6 +648,15 @@
    else tab.removeAttribute('title');
   }
   $('conteudoResumo').hidden=false;
+  prepararPaineisOperador();
+  const caixas=document.querySelectorAll('.loop03-indicadores .loop03-indicador');
+  if(caixas.length===3){
+   caixas[0].querySelector('small').textContent='POSIÇÕES NAS FILAS';
+   caixas[0].querySelector('span').textContent='Ver posições e filas';
+   caixas[1].querySelector('small').textContent='GIROS HOJE';
+   caixas[2].querySelector('small').textContent='EVENTOS NO CICLO';
+  }
+  void carregarTabuleiroOperador();
   void atualizarAtalhoOperadorReal();
  }
  function painelConta(s){
@@ -1104,6 +1260,7 @@
   // O placar superior seleciona uma posição sem mudar a aba atual.
   const abrir=$('loop03IrPosicoesIntegrado'),popup=$('seletorPosicoesResumo');
   abrir.addEventListener('click',()=>{
+   if(modoOperadorAtual){$('abaPosicoes').click();return;}
    popupPosicoesRealAberto=!popupPosicoesRealAberto;
    popup.hidden=!popupPosicoesRealAberto;
    abrir.setAttribute('aria-expanded',String(popupPosicoesRealAberto));
@@ -1824,9 +1981,10 @@
    // Contador da aba do OPERADOR pertence exclusivamente ao visor do
    // relogio: evitar que leituras HTTP concorrentes substituam a legenda
    // a cada segundo, causando a oscilacao de uma para duas frases.
-   $('loop03TotalIntegrado').textContent='—';
-   $('loop03Giros24Integrado').textContent='—';
-   $('loop03NumeroIntegrado').textContent='—';
+   $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
+   $('loop03Giros24Integrado').textContent=String(controle.girosHoje);
+   $('loop03NumeroIntegrado').textContent=d.tabuleiro.eventosNoCiclo+' / 6';
+   void carregarAbaOperador('abaPosicoes');
    $('loop03StatusPosicao').textContent='';
    $('seletorPosicaoMotor').replaceChildren();
    $('estadoTabuleiroIntegrado').textContent='';
@@ -2121,11 +2279,16 @@
     proximaAbaVemDoQuadrado=false;
    }
    if(!modoOperadorAtual)posicionarCampoFotoPerfil(tab.id!=='abaConta');
-  if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
-   if(tab.id==='abaMeusPedidos')void carregarPedidos();
-   if(tab.id==='abaFinanceiro'){
-    if(ensaioFinanceiroAtivo)void carregarFinanceiroEnsaio();
-    else void carregarFinanceiroReal();
+  if(modoOperadorAtual){
+    if(tab.id==='abaTabuleiro')void carregarTabuleiroOperador();
+    else if(tab.id!=='abaResumo')void carregarAbaOperador(tab.id);
+   }else{
+    if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
+    if(tab.id==='abaMeusPedidos')void carregarPedidos();
+    if(tab.id==='abaFinanceiro'){
+     if(ensaioFinanceiroAtivo)void carregarFinanceiroEnsaio();
+     else void carregarFinanceiroReal();
+    }
    }
    const lateral=$('loop03SidebarIntegrado');
    if(lateral?.classList.contains('loop03-aberto')){
@@ -2319,7 +2482,7 @@
   }
   try{
    const login=await requisitar('/entrar',{method:'POST',body});
-   await terminarModoOperador();
+   if(visaoSolicitada!=='cliente')await terminarModoOperador();
    captchaLoginAtivo=false;captchaLoginId=null;
    $('captchaLoginArea').hidden=true;$('captchaLoginResposta').value='';
    $('senha').value='';
@@ -2453,7 +2616,7 @@
     mostrarLogin('login');dizer('Sessão do OPERADOR encerrada.');
     return;
    }
-   await terminarModoOperador();
+   if(visaoSolicitada!=='cliente')await terminarModoOperador();
    await requisitar('/sair',{method:'POST',body:{},csrfObrigatorio:true});
    csrf=null;limparFotoPerfilReal();
    mostrarLogin('login');dizer('Sessão encerrada.');
@@ -2623,7 +2786,9 @@
   credentials:'same-origin',cache:'no-store'
  }).then(async r=>{
   const estado=r.ok?await r.json():{operador:false};
-  if(estado.operador===true){abrirPainelOperador();return;}
+  if(estado.operador===true&&visaoSolicitada!=='cliente'){
+   abrirPainelOperador();return;
+  }
   const s=await requisitar('/me');
   painelConta(s);
   if(entradaPelaLoja&&s.aceiteDocumentosDefinitivosPendente!==true)
