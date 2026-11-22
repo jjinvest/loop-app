@@ -94,25 +94,7 @@ function renderizarInterfaceAprovada(){
   '<div id="loopVoltarOperador" class="loop03-operador-atalhos" hidden>'+
   '<a href="/escritorio?visao=operador">Voltar ao Escritório do Administrador</a>'+
   '</div>');
- html=trocarExato(html,'</head>',
-  '<style>'+
-  '.cliente-integrado #loopOperadorMais{display:none!important}'+
-  '.cliente-integrado #loopOperadorAtalhos[hidden],.cliente-integrado #loopVoltarOperador[hidden]{display:none!important}'+
-  '.cliente-integrado .loop03-operador-atalhos{display:flex;flex-direction:column;gap:9px;margin:7px 0 14px;width:100%}'+
-  '.cliente-integrado .loop03-operador-atalhos a{display:flex;width:100%;box-sizing:border-box;min-height:48px;align-items:center;justify-content:center;border-radius:999px;border:1px solid #b49562;background:linear-gradient(135deg,#2f3038,#151823 72%,#37303a);color:#f2d69d;text-decoration:none;font-weight:750;text-align:center;padding:10px 14px;box-shadow:inset 0 1px 0 #ffffff22,0 3px 9px #0006}'+
-  '.cliente-integrado .loop03-operador-atalhos a:focus-visible{outline:2px solid #f4ce81;outline-offset:2px}'+
-  '.cliente-integrado.loop03-modo-operador #conteudoPosicoes>:not(.loop03-admin-section),'+
-  '.cliente-integrado.loop03-modo-operador #conteudoEquipe>:not(.loop03-admin-section),'+
-  '.cliente-integrado.loop03-modo-operador #conteudoFinanceiro>:not(.loop03-admin-section),'+
-  '.cliente-integrado.loop03-modo-operador #conteudoMeusPedidos>:not(.loop03-admin-section),'+
-  '.cliente-integrado.loop03-modo-operador #conteudoLinks>:not(.loop03-admin-section),'+
-  '.cliente-integrado.loop03-modo-operador #conteudoConta>:not(.loop03-admin-section){display:none!important}'+
-  '.loop03-admin-section{display:grid;gap:12px;min-width:0}'+
-  '.loop03-admin-section .loop03-admin-campos{display:grid;gap:8px}'+
-  '.loop03-admin-section .loop03-admin-acoes{display:flex;flex-wrap:wrap;gap:9px}'+
-  '.loop03-admin-section .loop03-admin-acoes a,.loop03-admin-section .loop03-admin-acoes button{border-radius:14px;min-height:42px;padding:10px 14px;border:1px solid #af9156;background:#222535;color:#f0d59f;text-decoration:none}'+
-  '.loop03-admin-section .loop03-admin-dado{border:1px solid #967b51;border-radius:14px;background:#171a27;padding:12px;white-space:pre-line;line-height:1.5}'+
-  '</style></head>');
+
  // Os dois documentos já estão no mesmo painel da interface aprovada.
  // Uma única confirmação visual preserva duas versões/hashes distintos.
  for(const id of ['documentosCadastroDetalhes','versaoPrivacidadeCadastro',
