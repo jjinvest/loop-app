@@ -1956,33 +1956,17 @@
    for(let i=0;i<6;i++)
     visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),d.tabuleiro.vagas[i]);
    visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);
-   // Contador calculado no servidor sobre a meta gravada no MESMO SQLite.
-   // Previsao nao antecipa giro nem cria venda ou dinheiro.
-   // O relógio usa a data do turno, inclusive se passar da meia-noite.
-   // Eventos/pagamentos continuam seguindo a autorização do servidor.
-   const metaAtiva=Number.isSafeInteger(controle.metaCentrosDia)&&
-    controle.metaCentrosDia>0;
-   visorCatraca.registrarAgenda({
-    modoExecucao:controle.modo==='PAUSADA'?'STOP':
-     controle.modo==='MANUAL'?'NATURAL':'AGENDADA',
-    pausaManual:controle.modo==='PAUSADA',
-    dentroDoHorario:controle.horarioPermitido===true,
-    abertura:controle.janelaInicio,
-    fechamento:controle.janelaFim,
-    agoraServidorMs:controle.agoraServidorMs,
-    // Somente o operador, usando a programação salva e autenticada,
-    // acompanha a iluminação por horário, independente do livro de vendas.
-    // Eventos reais continuam separados no mesmo tabuleiro.
-    luzesDoRelogioOperador:true,
-    eventosReaisNoCiclo:d.tabuleiro.eventosNoCiclo,
-    metaLotes:metaAtiva?{
-     ativa:true,quantidade:controle.metaCentrosDia,
-     dataAlvo:controle.metaDataAlvo,
-     intervaloLuzSegundos:controle.intervaloLuzSegundos,
-     proximaLuzPrevistaEmMs:controle.proximaLuzPrevistaEmMs,
-     exigeCaixaReal:true
-    }:null
-   });
+   // Operador e cliente leem a MESMA projeção da catraca no SQLite.
+   // Luzes do relógio são visuais; giros e eventos têm livros separados.
+   if(controle.agenda?.origem!=='CATRACA_REAL_MESMO_SQLITE'||
+      controle.agenda.somenteLeitura!==true||
+      controle.agenda.luzesDoRelogioCompartilhado!==true||
+      controle.agenda.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
+      controle.agenda.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
+      controle.agenda.girosReaisHoje!==controle.girosHoje||
+      controle.agenda.girosReais24h!==controle.giros24h)
+    throw Error('AGENDA_COMPARTILHADA_DIVERGENTE');
+   visorCatraca.registrarAgenda(controle.agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
    mostrarAgendaOperador(controle);
    // Contador da aba do OPERADOR pertence exclusivamente ao visor do
@@ -2045,6 +2029,13 @@
     visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),
      visao(d.tabuleiro.vagas[i]));
    visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);
+   if(d.agenda&&(
+     d.agenda.origem!=='CATRACA_REAL_MESMO_SQLITE'||
+     d.agenda.luzesDoRelogioCompartilhado!==true||
+     d.agenda.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
+     d.agenda.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
+     d.agenda.girosReais24h!==d.catraca?.giros24h))
+    throw Error('AGENDA_CLIENTE_DIVERGENTE');
    visorCatraca.registrarAgenda(d.agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
    $('motorContadorEventos').textContent=d.tabuleiro.eventosNoCiclo+

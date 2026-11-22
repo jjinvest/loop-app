@@ -108,6 +108,15 @@ class OperacaoCatracaAdminSQLite{
  _girosDia(dia){return this.db.prepare(
   'SELECT COUNT(*) AS n FROM loop_real_catraca_admin_giros WHERE dia=?'
  ).get(dia).n;}
+ _giros24h(agoraMs){
+  if(!Number.isSafeInteger(agoraMs)||agoraMs<86400000)
+   falha('CATRACA_RELOGIO_INVALIDO');
+  // 24 horas móveis são diferentes de "hoje" no fuso do turno.
+  return this.db.prepare([
+   'SELECT COUNT(*) AS n FROM loop_real_catraca_admin_giros',
+   'WHERE executado_em>? AND executado_em<=?'
+  ].join(' ')).get(agoraMs-86400000,agoraMs).n;
+ }
  _log(acao,detalhes,ts){
   this.db.prepare([
    'INSERT INTO loop_real_catraca_admin_historico(acao,detalhes,executado_em)',
@@ -161,11 +170,13 @@ class OperacaoCatracaAdminSQLite{
     'MOTOR_REAL_AINDA_NAO_CONSOME_RESERVA_PROVISIONADA':
     'CAIXA_REAL_NAO_PROVISIONADO_E_HOMOLOGADO',
    limiteDiario:p.limite_diario,revisao:p.revisao,
-   girosHoje:girosDia,hoje:tempo.dia,horaLocal:tempo.hora,
+   girosHoje:girosDia,giros24h:this._giros24h(tempo.ts),
+   hoje:tempo.dia,horaLocal:tempo.hora,
    fuso:FUSO,horarioPermitido:dentro,
    limiteNaoAtingido:permitido,
    metaNaoAtingida:metaAplicavel&&meta.centrosDia>girosDia,
    eventosNoCiclo:motor.tabuleiro.eventosNoCiclo,
+   ciclosConcluidos:motor.tabuleiro.ciclosConcluidos,
    girosTotais:motor.catraca.giros,
    filaA:motor.filaA,filaB:motor.filaB,
    pausada:p.modo==='PAUSADA',

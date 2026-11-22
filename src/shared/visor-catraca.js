@@ -25,7 +25,8 @@
   }
   function horarioVisual({agenda,agoraMs}){
    const meta=agenda?.metaLotes;
-   if(agenda?.luzesDoRelogioOperador!==true||
+   if((agenda?.luzesDoRelogioCompartilhado!==true&&
+      agenda?.luzesDoRelogioOperador!==true)||
       agenda.modoExecucao!=='AGENDADA'||agenda.pausaManual===true||
       meta?.ativa!==true||meta.quantidade<1||
       !Number.isSafeInteger(meta.quantidade)||meta.quantidade>1000000)
@@ -60,21 +61,22 @@
    const chave=valido?estado.diaTurno+':'+estado.passadas:null;
    // Usa exatamente o brilho aprovado, sem alterar o CSS do tabuleiro.
    // A classe separada e o contador distinguem relógio de eventos confirmados.
-   const operador=agendaVisorCatraca?.luzesDoRelogioOperador===true;
-   const eventos=operador&&Number.isSafeInteger(
+   const compartilhado=agendaVisorCatraca?.luzesDoRelogioCompartilhado===true||
+    agendaVisorCatraca?.luzesDoRelogioOperador===true;
+   const eventos=compartilhado&&Number.isSafeInteger(
     agendaVisorCatraca.eventosReaisNoCiclo)?
     agendaVisorCatraca.eventosReaisNoCiclo:0;
    for(let i=1;i<=6;i++){
     const bola=$('motorBolinha'+i);
     if(!bola)continue;
-    const ligada=operador&&valido&&i<=estado.luzes;
+    const ligada=compartilhado&&valido&&i<=estado.luzes;
     const lampadaAtual=ligada&&estado.luzes>0&&i===estado.luzes;
     bola.classList.toggle('loop03-relogio-luz-visual',ligada);
     // A lâmpada alcançada pelo próximo marco do relógio pulsa enquanto
     // o turno está ativo. As anteriores permanecem acesas; a próxima
     // acende exatamente ao vencer o intervalo. Sem executar giro/pagamento.
     bola.classList.toggle('loop03-relogio-luz-atual',lampadaAtual);
-    if(operador)bola.classList.toggle('loop03-marcador-aceso',
+    if(compartilhado)bola.classList.toggle('loop03-marcador-aceso',
      ligada||i<=eventos);
     if(ligada&&chave!==ultimaJanelaVisual&&
        i===estado.luzes&&ultimaJanelaVisual!==null&&
@@ -86,8 +88,24 @@
     }
    }
    ultimaJanelaVisual=chave;
+   // A evolução visual não é contabilizada como giro/ciclo comprovado.
+   // Os números fortes dos 3 indicadores continuam vindos do livro real.
+   const resumo=$('loop03StatusPosicao'),selecionada=$('loop03NumeroIntegrado');
+   const operadorAberto=document.body?.classList?.contains?.('loop03-modo-operador')===true;
+   const giroReal=agendaVisorCatraca?.girosReaisHoje;
+   const ciclosReais=agendaVisorCatraca?.ciclosReaisConcluidos;
+   if(resumo&&compartilhado&&Number.isSafeInteger(giroReal)&&
+      Number.isSafeInteger(ciclosReais)&&
+      (operadorAberto||selecionada?.textContent==='—')){
+    resumo.textContent=valido?
+     'Relógio visual: '+estado.passadas+'/'+estado.total+
+      ' luzes previstas · Ciclos reais: '+ciclosReais+
+      ' · Giros reais hoje: '+giroReal:
+     'Relógio fora do turno · Ciclos reais: '+ciclosReais+
+      ' · Giros reais hoje: '+giroReal;
+   }
    const contador=$('motorContadorEventos');
-   if(contador&&agendaVisorCatraca?.luzesDoRelogioOperador===true){
+   if(contador&&compartilhado){
     const reais=agendaVisorCatraca.eventosReaisNoCiclo;
     contador.textContent=valido?
      'Relógio: '+estado.luzes+' de 6 luzes · Eventos confirmados: '+
@@ -107,7 +125,8 @@
     agenda.agoraServidorMs+(Date.now()-leituraVisorCatracaEm):Date.now();
    const visual=horarioVisual({agenda,agoraMs:agoraServidor});
    sincronizarLuzesVisuais(visual);
-   if(agenda?.luzesDoRelogioOperador===true){
+   if(agenda?.luzesDoRelogioCompartilhado===true||
+      agenda?.luzesDoRelogioOperador===true){
     if(visual){
      const proxima=visual.proxima;
      if(proxima!==null){

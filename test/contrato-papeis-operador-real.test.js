@@ -84,10 +84,19 @@ test('OPERADOR configura relogio pelo controle original, sem rota paralela',()=>
  assert.match(css,/overflow-y:auto/);
  assert.match(js,/metaCentrosDia:Number\(meta\.value\)/);
  assert.match(js,/fetch\('\/api\/admin\/loop\/controle',[\s\S]*?method:'POST'/);
- assert.match(js,/agoraServidorMs:controle\.agoraServidorMs/);
- assert.match(js,/proximaLuzPrevistaEmMs:controle\.proximaLuzPrevistaEmMs/);
- assert.match(js,/intervaloLuzSegundos:controle\.intervaloLuzSegundos/);
- assert.match(js,/exigeCaixaReal:true/);
+ // A configuração é agora projetada UMA VEZ no servidor para ambas as visões.
+ const agenda=codigo('src/producao/projecao-agenda-tabuleiro-compartilhada.js');
+ const apiCliente=codigo('src/producao/servidor-identidade-loop.js');
+ assert.match(js,/visorCatraca\.registrarAgenda\(controle\.agenda\)/);
+ assert.match(js,/visorCatraca\.registrarAgenda\(d\.agenda\)/);
+ assert.match(js,/controle\.agenda\?\.origem!=='CATRACA_REAL_MESMO_SQLITE'/);
+ assert.match(agenda,/agoraServidorMs:estado\.agoraServidorMs/);
+ assert.match(agenda,/proximaLuzPrevistaEmMs:estado\.proximaLuzPrevistaEmMs/);
+ assert.match(agenda,/intervaloLuzSegundos:estado\.intervaloLuzSegundos/);
+ assert.match(agenda,/exigeCaixaReal:true/);
+ assert.match(apiCliente,/catracaCompartilhada\?\.consultar\(\)/);
+ assert.match(apiCliente,/projetarAgendaTabuleiroCompartilhada\(controle\)/);
+ assert.match(api,/projetarAgendaTabuleiroCompartilhada\(controle\)/);
  assert.match(api,/app\.get\('\/api\/admin\/loop\/controle',proteger/);
  assert.match(api,/app\.post\('\/api\/admin\/loop\/controle',proteger,validarCsrf/);
  assert.match(admin,/id="tituloMotorInternoAdmin"/);

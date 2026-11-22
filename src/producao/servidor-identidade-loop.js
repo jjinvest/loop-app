@@ -26,6 +26,8 @@ const {AvaliacoesProdutoAkitemmSQLite}=
 const {FotoPerfilRealSQLite}=require('./foto-perfil-real-sqlite');
 const {CarrinhoInternoRealSQLite}=require('./carrinho-interno-real-sqlite');
 const {AtendimentoAkitemmSQLite}=require('./atendimento-akitemm-sqlite');
+const {projetarAgendaTabuleiroCompartilhada}=
+ require('./projecao-agenda-tabuleiro-compartilhada');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,captchaCadastroObrigatorio=false,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
@@ -94,6 +96,12 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    auditoria:adminComercial?.auditoria||null}):null;
  const avaliacoesProduto=catalogoVitrine?
   new AvaliacoesProdutoAkitemmSQLite({banco:contas.banco}):null;
+ const catracaCompartilhada=adminComercial?.operacaoCatraca??null;
+ if(catracaCompartilhada&&(
+   catracaCompartilhada.db!==contas.banco||
+   catracaCompartilhada.motor!==motorLoop||
+   typeof catracaCompartilhada.consultar!=='function'))
+  throw Error('CATRACA_CLIENTE_OPERADOR_MOTOR_DIVERGENTE');
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
    banco:contas.banco,motor:motorLoop,
@@ -658,12 +666,28 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   if(!motorLoop)return res.status(503).json({
    erro:'MOTOR_INTERNO_INDISPONIVEL',financeiroReal:false
   });
-  try{return res.json({
-   ...visaoEscritorio.consultarEstado({titularId:req.conta.titularId}),
-   confirmacaoAzulEnsaioDisponivel:aceitePosicaoAzulEnsaio!==null&&
-    process.env.NODE_ENV!=='production'
-  });}
-  catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
+  try{
+   const titular=visaoEscritorio.consultarEstado({
+    titularId:req.conta.titularId
+   });
+   // A sessão cliente consulta a MESMA programação administrativa do
+   // mesmo SQLite, mas nunca pode configurar a catraca nem executar giro.
+   const controle=catracaCompartilhada?.consultar()??null;
+   if(controle&&(
+     controle.filaA!==titular.filaA||controle.filaB!==titular.filaB||
+     controle.eventosNoCiclo!==titular.tabuleiro.eventosNoCiclo||
+     controle.girosTotais!==titular.catraca.giros))
+    throw Error('TABULEIRO_CLIENTE_OPERADOR_DIVERGENTE');
+   return res.set('Cache-Control','private, no-store').json({
+    ...titular,
+    ...(controle?{
+     agenda:projetarAgendaTabuleiroCompartilhada(controle),
+     catraca:{...titular.catraca,giros24h:controle.giros24h}
+    }:{}),
+    confirmacaoAzulEnsaioDisponivel:aceitePosicaoAzulEnsaio!==null&&
+     process.env.NODE_ENV!=='production'
+   });
+  }catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
  });
 
  // Fila paginada sem CPF, nick ou titulares de terceiros. A âncora é

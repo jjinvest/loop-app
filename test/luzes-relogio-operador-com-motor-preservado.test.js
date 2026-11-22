@@ -119,7 +119,7 @@ test('horário diferente, pausa e modo manual limpam LEDs agendados',()=>{
  assert.deepEqual(x.luzes(),[false,false,false,false,false,false]);
 });
 
-test('sessão cliente não acende LEDs só por haver meta; vendas continuam independentes',()=>{
+test('sem agenda autenticada não acende LEDs; com agenda compartilhada cliente e operador veem o mesmo relógio',()=>{
  const x=ambiente('2026-11-21T09:36:00-03:00');
  x.iniciar();
  x.visor.registrarAgenda(x.agenda({luzesDoRelogioOperador:false}));
@@ -127,11 +127,20 @@ test('sessão cliente não acende LEDs só por haver meta; vendas continuam inde
  assert.deepEqual(x.reais(),[false,false,false,false,false,false]);
  assert.doesNotMatch(code,/fetch\(/);
  assert.doesNotMatch(code,/registrarCompra|executarGiro|criarPosicao/);
- assert.match(interfaceReal,/luzesDoRelogioOperador:true/);
+ assert.match(interfaceReal,/controle\.agenda\?\.origem!=='CATRACA_REAL_MESMO_SQLITE'/);
+ assert.match(interfaceReal,/visorCatraca\.registrarAgenda\(controle\.agenda\)/);
+ assert.match(interfaceReal,/visorCatraca\.registrarAgenda\(d\.agenda\)/);
+ const agendaComum=x.agenda({luzesDoRelogioOperador:false});
+ agendaComum.luzesDoRelogioCompartilhado=true;
+ agendaComum.girosReaisHoje=0;
+ agendaComum.ciclosReaisConcluidos=0;
+ x.visor.registrarAgenda(agendaComum);
+ assert.deepEqual(x.luzes(),[true,true,false,false,false,false]);
+ assert.match(x.elements.motorContadorEventos.textContent,
+  /Eventos confirmados: 0 de 6/);
  assert.equal((interfaceReal.match(/\$\('motorContadorEventos'\)\.textContent=/g)||[]).length,1,
-  'apenas a rota do cliente escreve a legenda: operador usa o visor do relógio');
+  'legenda separa evento real de luz prevista e preserva visor original');
 
- assert.match(interfaceReal,/eventosReaisNoCiclo:d\.tabuleiro\.eventosNoCiclo/);
  assert.doesNotMatch(interfaceReal,/const metaAtiva=controle\.metaAplicavelHoje===true/,
   'data alvo do turno noturno deve ser avaliada pelo relógio local do servidor');
  assert.match(css,/loop03-marcador-aceso/);
