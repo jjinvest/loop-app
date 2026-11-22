@@ -145,7 +145,8 @@ test('21/11 17h até 22/11 00h20: 338 luzes do relógio, 56 ciclos e 2/6; sem pa
 test('ao fechar o turno da noite a contagem visual fica em 600 e não zera',()=>{
  const instante=Date.parse('2026-11-22T06:00:00-03:00');
  const agenda=projetarAgendaTabuleiroCompartilhada({
-  ...controle,agoraServidorMs:instante
+  ...controle,agoraServidorMs:instante,
+  luzesRelogio24h:600,ciclosRelogio24h:100
  });
  const painel=criarVisor('operador',agenda,instante);
  assert.equal(painel.loop03Giros24Integrado.textContent,'100');
