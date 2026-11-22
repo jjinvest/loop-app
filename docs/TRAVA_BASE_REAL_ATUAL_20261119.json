@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "74631d6957d3aa4a56a0483fe359bace315bed8b"
+      "sha": "8b2189f50a18b93ef8557d479f53eb2ca09c8393"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "bfd2f2aa2d74a69b5f3050d4071058d09bdf229e"
+      "sha": "54d74ee2f11797f60c4e08448822a03667e1a12c"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1472,7 +1472,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "99f2cff510a071d355db11c74fa93f4917156a4a"
+      "sha": "1c54f051be081a65f936cfae68232b5b7f49b287"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1480,7 +1480,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "1e5660665104c51d0f41e8c23ba8e8ca2943070d"
+      "sha": "6042daf424a35df74bd455fbcad0ab5e5b269935"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -2440,7 +2440,7 @@
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
-      "sha": "ce28a2519b3d428fea1c207e515c17f53f668a33"
+      "sha": "7d8b20011bc6ed94e33e0b2f23ec9085f0315b0c"
     },
     {
       "path": "test/controle-caixa-catraca-loop-sqlite.test.js",
