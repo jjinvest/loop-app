@@ -454,6 +454,71 @@ async function main(){
     }).then(r=>r.status);
    },bannerPersistido.slot.revisao);
    assert.equal(limpezaBanner,200);
+   // Duas fotos distintas e independentes: exatamente a montagem
+   // usada pelo operador no celular, sem transformar o banner em foto única.
+   const segundaFotoBase64=await operadorPage.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=700;c.height=430;
+    const x=c.getContext('2d');x.fillStyle='#147849';
+    x.fillRect(0,0,700,430);
+    x.fillStyle='#f7e7b0';x.font='bold 36px sans-serif';
+    x.fillText('QUADRO 2',120,210);
+    return c.toDataURL('image/jpeg',0.9).split(',')[1];
+   });
+   await operadorPage.locator(
+    '#loop03PistaBanners .loop03-banner-item[data-banner-slot="2"]'
+   ).click();
+   await operadorPage.locator('#loop03BannerFormularioReal')
+    .waitFor({state:'visible'});
+   await operadorPage.locator('#loop03BannerColunasReal').selectOption('2');
+   await operadorPage.locator('#loop03BannerArquivo2').waitFor({state:'visible'});
+   await operadorPage.locator('#loop03BannerArquivoReal').setInputFiles({
+    name:'quadro-1.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
+   });
+   await operadorPage.locator('#loop03BannerArquivo2').setInputFiles({
+    name:'quadro-2.jpg',mimeType:'image/jpeg',
+    buffer:Buffer.from(segundaFotoBase64,'base64')
+   });
+   await operadorPage.locator('#loop03BannerSalvarReal').click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Banner salvo e publicado'}).waitFor({state:'visible'});
+   let segundo=await operadorPage.evaluate(async()=>{
+    const d=await fetch('/api/loop/banners',{credentials:'same-origin'})
+     .then(r=>r.json());
+    return d.slots.find(x=>x.slot===2);
+   });
+   assert.equal(segundo.colunas,2);
+   assert.equal(segundo.publicado,true);
+   assert.deepEqual(segundo.fotos.slice(0,2).map(x=>x.temImagem),[true,true]);
+   operadorPage.once('dialog',d=>d.accept());
+   await operadorPage.getByRole('button',{
+    name:'Excluir foto 2 deste banner',exact:true
+   }).click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Foto 2 excluída.'}).waitFor({state:'visible'});
+   segundo=await operadorPage.evaluate(async()=>{
+    const d=await fetch('/api/loop/banners',{credentials:'same-origin'})
+     .then(r=>r.json());
+    return d.slots.find(x=>x.slot===2);
+   });
+   assert.equal(segundo.publicado,true);
+   assert.deepEqual(segundo.fotos.slice(0,2).map(x=>x.temImagem),[true,false]);
+   operadorPage.once('dialog',d=>d.accept());
+   await operadorPage.getByRole('button',{
+    name:'Excluir foto 1 deste banner',exact:true
+   }).click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Foto 1 excluída.'}).waitFor({state:'visible'});
+   segundo=await operadorPage.evaluate(async()=>{
+    const d=await fetch('/api/loop/banners',{credentials:'same-origin'})
+     .then(r=>r.json());
+    return d.slots.find(x=>x.slot===2);
+   });
+   assert.equal(segundo.publicado,false);
+   await operadorPage.locator('#loop03BannerColunasReal').selectOption('1');
+   await operadorPage.locator('#loop03BannerSalvarReal').click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Formato salvo.'}).waitFor({state:'visible'});
+   await operadorPage.locator('#loop03BannerFormularioReal .banner-real-fechar').click();
    // Foto do operador somente em modo operador autenticado.
    await operadorPage.goto(base+'/loja?visao=operador',{
     waitUntil:'domcontentloaded'
