@@ -2082,8 +2082,6 @@
     const tituloPosicao=$('loop03NumeroIntegrado')?.parentElement?.querySelector('small');
     if(tituloPosicao)tituloPosicao.textContent=selecionadaResumo?
      'POSIÇÃO SELECIONADA':'EVENTOS NO CICLO';
-    // O relógio recompõe GIROS HOJE e 1–6 sem aguardar o próximo segundo.
-    visorCatraca.registrarAgenda(d.agenda);
     $('loop03StatusPosicao').textContent=selecionadaResumo?
      ('@'+nickVisivel(nickResumoReal)+
       ' · Fila '+(selecionadaResumo.fila==='A'||selecionadaResumo.fila==='B'?
@@ -2092,6 +2090,8 @@
       ' · '+(selecionadaResumo.local||'Em acompanhamento')+
       ' · ID #'+selecionadaResumo.numero):
      '';
+    // Restaurar o placar do relógio após carregar os números do motor.
+    visorCatraca.registrarAgenda(d.agenda);
    }
    // A quantidade de cartões deriva do MESMO limite enviado pelo motor;
    // não esconder vagas vazias nem fabricar posições/pedidos.
