@@ -1001,7 +1001,7 @@ async function main(){
    assert.equal(await page.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
    assert.equal(await page.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
    assert.equal(await page.locator('#abaConta').isDisabled(),false);
-   await page.goto(base+'/loja');
+   await page.goto(base+'/loja?visao=operador');
    await page.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
    assert.equal(await page.locator('#copiarDivulgarLojaLoop').isDisabled(),true,
     'operador nunca recebe link privado de titular anterior');
@@ -1338,7 +1338,7 @@ async function main(){
    assert.equal(await pagina.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
    assert.equal(await pagina.locator('#abaFinanceiro').isDisabled(),false);
    assert.equal(await pagina.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
-   await pagina.goto(base+'/loja');
+   await pagina.goto(base+'/loja?visao=operador');
    await pagina.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
    assert.equal(await pagina.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
    await pagina.goto(base+'/administrador');
