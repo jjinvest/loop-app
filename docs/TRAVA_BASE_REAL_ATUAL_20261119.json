@@ -1368,7 +1368,7 @@
     },
     {
       "path": "src/producao/catalogo-multidistribuidores-sqlite.js",
-      "sha": "d3802673216bb87542ecf8d8416a8f63e5936570"
+      "sha": "442c9d665d81d3be418c4c959299567c55a34f6d"
     },
     {
       "path": "src/producao/classificacao-comercial-loop-sqlite.js",
@@ -5214,6 +5214,13 @@
       "antes": "7b5b5eb07d5758f350dbe4d1b724e769ea2728d3",
       "depois": "39e28a87d64b4724efac161102e3c67b5d537855",
       "objetivo": "Cobrir rota real de descarte por HTTP, com vários produtos pendentes, sessões de operador, CSRF, rascunho vinculado e proteção ao publicado; sem alterações financeiras."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/catalogo-multidistribuidores-sqlite.js",
+      "antes": "d3802673216bb87542ecf8d8416a8f63e5936570",
+      "depois": "442c9d665d81d3be418c4c959299567c55a34f6d",
+      "objetivo": "Compatibilidade com tabelas históricas de vitrine sem coluna revisao; usar posição+id dentro de transação IMMEDIATE, sem abrir exclusão para produtos publicados, com pedidos ou sem auditoria."
     }
   ]
 }
