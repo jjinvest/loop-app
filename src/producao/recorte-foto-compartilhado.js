@@ -71,7 +71,7 @@
   const pixels=formato.value==='livre'?
    Math.min(1600,Math.max(largura,altura)):1600;
   canvas.width=Math.max(1,Math.round(Math.min(1600,pixels)));
-  canvas.height=Math.max(1,Math.round(canvas.width/s.proporcao));
+  canvas.height=Math.max(1,Math.min(2400,Math.round(canvas.width/s.proporcao)));
   const ctx=canvas.getContext('2d',{alpha:false});
   if(!ctx)throw Error('EDITOR_DE_IMAGEM_INDISPONIVEL');
   ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -155,7 +155,8 @@
   finally{aplicar.disabled=false;}
  });
  function vincular(input){
-  if(vistos.has(input)||input.type!=='file'||!input.accept.includes('image/'))
+  if(vistos.has(input)||input.type!=='file'||!input.accept.includes('image/')||
+    input.dataset.recorteNativo==='sim')
    return;
   vistos.add(input);
   const botao=el('button','loop-recorte-botao','Recortar foto (opcional)');
