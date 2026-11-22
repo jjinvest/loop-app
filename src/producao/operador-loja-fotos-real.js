@@ -1170,8 +1170,10 @@
   const card=abaixo?.closest?.(
    '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem],'+
    '#catalogoLojaLoop .akitemm-slot-vazio[data-akitemm-slot]');
+  // Produto pode ser solto em produto OU espaço vazio. Moldura vazia
+  // continua movendo-se apenas sobre outra moldura vazia.
   if(!card||card===arrasto.origem||
-     !!card.dataset.produtoId!==!!arrasto.origem.dataset.produtoId){
+     (arrasto.origem.dataset.akitemmSlot&&!card.dataset.akitemmSlot)){
    destacarDestino(null,'');return;
   }
   const rect=card.getBoundingClientRect();
@@ -1203,7 +1205,7 @@
   d.origem.classList.add('akitemm-arrastando');
   avisarArrasto(d.origem.dataset.akitemmSlot?
    'Arraste até outro espaço vazio para trocar as molduras.':
-   'Arraste e solte sobre outro produto para mudar a posição.');
+   'Arraste o produto até outro produto ou quadrinho vazio para escolher onde ele aparece.');
   flutuarArrasto();
   const rolar=()=>{
    if(!arrasto?.ativo)return;
@@ -1269,9 +1271,10 @@
    })();
    return;
   }
-  const destino=numeroOrigem<numeroAlvo?
-   numeroAlvo-(lado==='antes'?1:0):
-   numeroAlvo+(lado==='antes'?0:1);
+  const destino=alvo.dataset.akitemmSlot?numeroAlvo:
+   numeroOrigem<numeroAlvo?
+    numeroAlvo-(lado==='antes'?1:0):
+    numeroAlvo+(lado==='antes'?0:1);
   if(destino===numeroOrigem){
    avisarArrasto('O produto já está nessa posição.');return;
   }
@@ -1288,8 +1291,8 @@
     const registro=slots.slots.find(r=>r.produtoId===origem);
     // Nunca ordenar por um item inexistente nem por um cadastro temporario.
     if(!registro)throw Error('PRODUTO_SEM_POSICAO_SALVA');
-    if(destino<1||destino>slots.slots.length)
-     throw Error('DESTINO_AINDA_NAO_SALVO');
+    if(destino<1||destino>400)
+     throw Error('DESTINO_FORA_DA_VITRINE');
     const resposta=await fetchJson('/api/admin/catalogo-midia/reordenar-vitrine',{
      method:'POST',headers:{'Content-Type':'application/json',
       'X-Loop-Admin-Csrf':sessao.csrfToken},
@@ -1298,8 +1301,8 @@
     });
     if(resposta.produtoId!==origem||resposta.posicao!==destino)
      throw Error('ORDENACAO_NAO_CONFIRMADA');
-    avisarArrasto('Produto movido para '+destino+
-     'º. Os demais foram reorganizados.');
+    avisarArrasto('Produto movido para o quadrinho '+destino+
+     '. Organização manual salva.');
     atualizarLoja();
    }catch(e){
     avisarArrasto('A ordem não foi alterada: '+e.message+
