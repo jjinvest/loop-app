@@ -18,6 +18,8 @@ const {BannersLojaAkitemmRealSQLite}=
  require('./banners-loja-akitemm-real-sqlite');
 const {consultarCofresOperador}=
  require('./cofres-operador-readonly');
+const {criarRelatorioClientesProdutosOperador}=
+ require('./relatorio-clientes-produtos-operador');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
@@ -66,6 +68,12 @@ function montarGatewayAdminComercial(app,{
    typeof recuperacaoReservas.consultar!=='function'||
    typeof recuperacaoReservas.reconsultarVencidas!=='function'))
   erro('ADMIN_RECUPERACAO_RESERVAS_MOTOR_DIVERGENTE');
+ // Relatorios do operador apenas sobre o mesmo banco e a leitura comercial
+ // ja autorizada. Nao instanciam checkout nem manipulam posicoes.
+ const relatorioComercial=contas&&motorLoop&&
+  contas.banco===motorLoop.banco&&pedidosComerciais&&
+  typeof pedidosComerciais.listarDoTitular==='function'?
+  criarRelatorioClientesProdutosOperador({banco:contas.banco}):null;
  const cookieValor=req=>{
   const raw=req.get('cookie')||'';
   if(raw.length>4096)return null;
@@ -297,6 +305,27 @@ function montarGatewayAdminComercial(app,{
      .json({erro:e.codigo||'CONSULTA_CADASTRO_INDISPONIVEL'});
    }
   });
+  // Consulta privada, paginada e de somente leitura para as compras
+  // aprovadas do cadastro localizado pelo operador.
+  app.get('/api/admin/contas/compras',proteger,(req,res)=>{
+   res.set('Cache-Control','private, no-store');
+   const ks=Object.keys(req.query).sort().join(',');
+   const nick=req.query.nick,offsetBruto=req.query.offset;
+   if(!['nick','nick,offset'].includes(ks)||
+      typeof nick!=='string'||!/^[A-Za-z]{1,12}$/.test(nick)||
+      (offsetBruto!==undefined&&(typeof offsetBruto!=='string'||
+       !/^(0|[1-9][0-9]*)$/.test(offsetBruto)||
+       !Number.isSafeInteger(Number(offsetBruto)))))
+    return res.status(400).json({erro:'RELATORIO_COMERCIAL_PARAMETRO_INVALIDO'});
+   if(!relatorioComercial)return res.status(503).json({
+    erro:'RELATORIO_COMERCIAL_NAO_DISPONIVEL'
+   });
+   try{return res.json(relatorioComercial.comprasDoCadastro({
+    nick,offset:offsetBruto===undefined?0:Number(offsetBruto)
+   }));}
+   catch(e){return res.status(e.codigo==='CADASTRO_NAO_LOCALIZADO'?404:503)
+    .json({erro:e.codigo||'COMPRAS_CADASTRO_INDISPONIVEIS'});}
+  });
   app.post('/api/admin/contas/cadastro/corrigir',proteger,validarCsrf,(req,res)=>{
    res.set('Cache-Control','private, no-store');
    if(!req.is('application/json')||!req.body||
@@ -443,6 +472,18 @@ function montarGatewayAdminComercial(app,{
   });
   try{return res.json(motorLoop.consultar());}
   catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
+ });
+ // Contadores independentes da fila: um cadastro = um cliente,
+ // uma unidade de item aprovado = um produto vendido.
+ app.get('/api/admin/loop/indicadores-comerciais',proteger,(_req,res)=>{
+  res.set('Cache-Control','private, no-store');
+  if(!relatorioComercial)return res.status(503).json({
+   erro:'RELATORIO_COMERCIAL_NAO_DISPONIVEL'
+  });
+  try{return res.json(relatorioComercial.indicadores());}
+  catch(e){return res.status(503).json({
+   erro:e.codigo||'RELATORIO_COMERCIAL_INDISPONIVEL'
+  });}
  });
  // Prova da ligação entre pedido, evento de pagamento, outbox e fila.
  // Somente leitura agregada; NÃO processa nem cria crédito ou posição.
