@@ -410,3 +410,79 @@ dialog.akitemm-operador-editor .akitemm-card-rascunho
   flex-basis:calc(50% - 6px);padding:9px 7px;
  }
 }
+
+
+/* Produtos em destaque — somente apresentação da grade de cartões.
+   PC: quatro cartões mais largos visualmente, na mesma fileira.
+   Celular: um cartão por linha, ocupando toda a largura útil.
+   Não altera cor, posição, conteúdo, operações nem número de itens. */
+@media (min-width:901px){
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop{
+  flex:0 0 calc(25% - 9.75px);
+  align-self:stretch;
+ }
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop
+ .akitemm-imagem-produto{
+  height:clamp(75px,7vw,94px);
+ }
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop
+ .akitemm-dados-produto{
+  min-height:80px;
+  padding:8px 10px 10px;
+ }
+}
+@media (max-width:900px){
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch;
+  gap:11px;
+  overflow-x:hidden;
+  overflow-y:visible;
+  scroll-snap-type:none;
+  padding:3px 3px 10px;
+ }
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop{
+  display:grid;
+  grid-template-columns:minmax(100px,38%) minmax(0,1fr);
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
+  height:auto;
+  min-height:134px;
+  align-items:stretch;
+  scroll-snap-align:none;
+ }
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop
+ .akitemm-imagem-produto{
+  height:100%!important;
+  min-height:130px;
+  border-bottom:0;
+  border-right:1px solid #3c4952;
+ }
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop
+ .akitemm-dados-produto{
+  min-width:0;
+  min-height:130px;
+  gap:5px;
+  padding:11px clamp(9px,3vw,18px);
+ }
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-vazio
+ .akitemm-dados-produto{
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+ }
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-vazio
+ .akitemm-imagem-produto{
+  border-bottom:0;
+  border-right:1px solid var(--ak-slot-cor);
+ }
+}
+@media(max-width:370px){
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop{
+  grid-template-columns:minmax(96px,35%) minmax(0,1fr);
+ }
+ .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop
+ .akitemm-dados-produto{padding:9px}
+}
