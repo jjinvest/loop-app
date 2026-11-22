@@ -27,11 +27,13 @@
   const id='akitemmGerenciarOfertasReal';
   const csvId='akitemmImportarFornecedorCsvReal';
   const suporteId='akitemmAcessarAtendimentosReal';
+  const draftsId='akitemmRascunhosProdutosReal';
   const atual=document.getElementById(id);
   const importar=document.getElementById(csvId);
   const suporteBotao=document.getElementById(suporteId);
+  const draftsBotao=document.getElementById(draftsId);
   const dica=document.getElementById('akitemmInstrucaoArrastar');
-  if(!operador){atual?.remove();importar?.remove();suporteBotao?.remove();dica?.remove();return;}
+  if(!operador){atual?.remove();importar?.remove();suporteBotao?.remove();draftsBotao?.remove();dica?.remove();return;}
   const filtro=document.getElementById('akitemmFiltroOfertas');
   if(!filtro)return;
   if(!atual){
@@ -62,6 +64,14 @@
     painel.scrollIntoView({block:'center',behavior:'smooth'});
    });
    (document.getElementById(csvId)||filtro).insertAdjacentElement('afterend',btn);
+  }
+  if(!draftsBotao){
+   const btn=document.createElement('button');
+   btn.type='button';btn.id=draftsId;btn.className='akitemm-chip';
+   btn.textContent='Produtos não publicados';
+   btn.setAttribute('aria-label','Ver e retomar produtos não publicados');
+   btn.addEventListener('click',()=>void abrirRascunhosNaoPublicados());
+   (document.getElementById(suporteId)||filtro).insertAdjacentElement('afterend',btn);
   }
   if(!document.getElementById('akitemmInstrucaoArrastar')){
    const instrucao=document.createElement('p');
@@ -807,7 +817,72 @@
      resposta.posicao>400)throw Error('QUADRINHO_NAO_CONFIRMADO');
   return resposta;
  }
- async function escolherProduto(indice){
+ // Aqui aparecem tanto cadastros reais RASCUNHO como formulários
+ // interrompidos antes da criação. Nenhum item desta lista é publicado.
+ async function abrirRascunhosNaoPublicados(){
+  if(!operador)return;
+  const {corpo,estado}=modal('Produtos não publicados · AKITEMM');
+  corpo.append(linha('Retome um cadastro sem começar de novo. '+
+   'Formulários interrompidos guardam os campos digitados; fotos não enviadas '+
+   'precisam ser selecionadas novamente.'));
+  try{
+   const [salvos,catalogo]=await Promise.all([
+    fetchJson('/api/admin/catalogo-midia/rascunhos-formulario'),
+    fetchJson('/api/admin/catalogo-midia/produtos')
+   ]);
+   if(!Array.isArray(salvos.rascunhos)||!Array.isArray(catalogo.produtos))
+    throw Error('LISTA_RASCUNHOS_INVALIDA');
+   const produtos=catalogo.produtos.filter(x=>x.estado==='RASCUNHO'&&
+    ID.test(x.produtoId));
+   const formulario=salvos.rascunhos;
+   const total=produtos.length+formulario.length;
+   estado.textContent=total?
+    total+' cadastro(s) não publicado(s) localizado(s).':
+    'Não existem produtos pendentes neste momento.';
+   for(const item of formulario){
+    const card=document.createElement('section');
+    card.className='akitemm-card-rascunho';
+    const titulo=linha(item.campos.titulo.trim()||'Produto sem nome','strong');
+    const data=linha('Formulário não finalizado · salvo em '+
+     new Date(item.atualizadoEm).toLocaleString('pt-BR'));
+    const continuar=document.createElement('button');
+    continuar.type='button';continuar.textContent='Continuar cadastro';
+    continuar.addEventListener('click',()=>void escolherProduto(1,item));
+    const excluir=document.createElement('button');
+    excluir.type='button';excluir.textContent='Descartar este rascunho';
+    excluir.addEventListener('click',async()=>{
+     if(!window.confirm('Descartar os dados deste formulário não publicado?'))
+      return;
+     excluir.disabled=true;
+     try{
+      const sessao=await fetchJson('/api/admin/comercial/sessao');
+      const r=await fetchJson(
+       '/api/admin/catalogo-midia/rascunhos-formulario/'+item.id+'/excluir',{
+        method:'POST',headers:{'Content-Type':'application/json',
+         'X-Loop-Admin-Csrf':sessao.csrfToken},body:'{}'
+       });
+      if(r.excluido!==true)throw Error('EXCLUSAO_NAO_CONFIRMADA');
+      card.remove();
+      estado.textContent='Rascunho descartado. Produto publicado não foi afetado.';
+     }catch(e){estado.textContent='Não foi possível descartar: '+e.message;}
+     finally{excluir.disabled=false;}
+    });
+    card.append(titulo,data,continuar,excluir);corpo.append(card);
+   }
+   for(const item of produtos){
+    const card=document.createElement('section');
+    card.className='akitemm-card-rascunho';
+    const titulo=document.createElement('strong');
+    titulo.textContent=item.nome||item.produtoId;
+    const d=linha('Produto cadastrado, mas ainda não publicado · '+item.produtoId);
+    const continuar=document.createElement('button');
+    continuar.type='button';continuar.textContent='Editar e publicar';
+    continuar.addEventListener('click',()=>void abrirProduto(item.produtoId));
+    card.append(titulo,d,continuar);corpo.append(card);
+   }
+  }catch(e){estado.textContent='Não foi possível carregar rascunhos: '+e.message;}
+ }
+ async function escolherProduto(indice,rascunhoInicial=null){
   if(!Number.isSafeInteger(indice)||indice<1||indice>400)return;
   const {corpo,estado}=modal('Cadastrar produto · AKITEMM');
   corpo.append(linha('Cadastro na AKITEMM. Cada campo com erro será marcado e terá um atalho para correção. '+
@@ -867,8 +942,7 @@
     abrir.addEventListener('click',async()=>{
      abrir.disabled=true;
      try{
-      if(!vinculados.has(seletor.s.value))
-       await vincularQuadradinho(indice,seletor.s.value);
+      // Consultar um rascunho não o transforma em produto publicado.
       dialogo.close();void abrirProduto(seletor.s.value);
      }catch(e){estado.textContent='Não foi possível abrir: '+e.message;}
      finally{abrir.disabled=false;}
