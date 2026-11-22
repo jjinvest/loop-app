@@ -248,7 +248,8 @@ test('rota real remove vários rascunhos distintos, preserva publicados e exige 
   assert.equal(forbidden.status,403);
   const deleted=await request(url+'/excluir-rascunho','POST',
    {revisaoEsperada:revisao});
-  assert.equal(deleted.status,200,await deleted.text().catch(()=>'')); // resposta clonada abaixo
+  assert.equal(deleted.status,200);
+  assert.equal((await deleted.json()).excluido,true);
  }
  assert.deepEqual(catalogo.listarProdutosAdministrativos().map(x=>x.produtoId),
   ['manual-publicado']);
