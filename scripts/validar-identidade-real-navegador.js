@@ -341,7 +341,9 @@ async function main(){
    const cortar=operadorPage.locator('#loopRecorteFotoOpcional');
    await cortar.waitFor({state:'visible'});
    await cortar.locator('select').selectOption('16/9');
-   await cortar.locator('input[type=range]').first().fill('1.20');
+   await cortar.locator('input[type=range]').first().evaluate(el=>{
+    el.value='1.20';el.dispatchEvent(new Event('input',{bubbles:true}));
+   });
    await cortar.getByRole('button',{name:'Usar esta foto'}).click();
    await cortar.waitFor({state:'hidden'});
    await operadorPage.locator('#loop03BannerSalvarReal').click();
