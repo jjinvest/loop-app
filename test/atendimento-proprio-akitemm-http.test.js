@@ -11,12 +11,12 @@ test('atendimento pertence à AKITEMM e exige sessão do próprio titular e CSRF
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
  t.after(()=>banco.close());
- const doc={versao:'TERMOS-2026',
+ const doc={versao:'LOOP-TERMOS-2026',
   texto:'Documento oficial da identidade de acesso para testes da AKITEMM sem dados reais, sem compras e sem pagamentos habilitados.'};
  const contas=new IdentidadeClienteLoopReal({
   banco,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32),termos:doc,
-  privacidade:{...doc,versao:'PRIVACIDADE-2026'},
+  privacidade:{...doc,versao:'LOOP-PRIVACIDADE-2026'},
   enviarEmail:async()=>true
  });
  const docs=contas.documentos();
