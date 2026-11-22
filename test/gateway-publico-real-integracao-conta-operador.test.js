@@ -212,6 +212,47 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  assert.ok((await retrato.arrayBuffer()).byteLength>30);
  assert.equal((await get('/api/admin/operador/foto-perfil',{Cookie:cookieCliente})).status,401);
  assert.equal((await get('/api/contas/foto-perfil',{Cookie:cookieCliente})).status,404);
+ // Prova ponta a ponta do banner: gateway publico -> CSRF do operador ->
+ // SQLite real -> consulta de imagem para o cliente, inclusive apos recarga.
+ // Esse caminho ja faltou em uma publicacao do gateway (404).
+ const rotaBanner='/api/admin/loop/banners/1/imagem';
+ assert.equal((await get('/api/loop/banners')).status,401,
+  'banner do LOOP nao deve virar rota 404 no gateway, nem ser publico sem sessao');
+ const vazio=await get('/api/loop/banners',{Cookie:cookieCliente});
+ assert.equal(vazio.status,200,'gateway deve encaminhar lista real dos banners');
+ assert.equal((await vazio.json()).slots[0].temImagem,false);
+ const headersBanner={Cookie:cookieOp,Origin:base,
+  'Content-Type':'image/png','X-Loop-Admin-Csrf':adminSessao.csrfToken,
+  'X-Banner-Revisao-Esperada':'0'};
+ const enviarBanner=headers=>fetch(base+rotaBanner,{
+  method:'PUT',headers,body:foto,redirect:'manual'
+ });
+ assert.equal((await enviarBanner({...headersBanner,Cookie:cookieCliente})).status,401,
+  'cliente nao grava banner com token administrativo');
+ assert.equal((await enviarBanner({...headersBanner,Origin:'https://externo.invalid'})).status,403);
+ const gravado=await enviarBanner(headersBanner);
+ assert.equal(gravado.status,200,'clicar em salvar deve gravar a imagem pelo gateway');
+ const gravacao=await gravado.json();
+ assert.equal(gravacao.slots[0].temImagem,true);
+ assert.equal(gravacao.slots[0].revisao,1);
+ assert.equal((await enviarBanner(headersBanner)).status,409,
+  'segundo envio com revisao antiga nao pode sobrescrever banner');
+ const persistido=await get('/api/loop/banners',{Cookie:cookieCliente});
+ assert.equal(persistido.status,200,'reconsulta apos salvar deve encontrar o banner');
+ assert.equal((await persistido.json()).slots[0].temImagem,true);
+ const arquivoGravado=await get('/api/loop/banners/1/imagem',{Cookie:cookieCliente});
+ assert.equal(arquivoGravado.status,200,'imagem gravada deve ser visivel na moldura');
+ assert.equal(arquivoGravado.headers.get('content-type'),'image/png');
+ assert.deepEqual(Buffer.from(await arquivoGravado.arrayBuffer()),foto);
+ const removerBanner=await fetch(base+rotaBanner,{
+  method:'DELETE',redirect:'manual',
+  headers:{Cookie:cookieOp,Origin:base,
+   'X-Loop-Admin-Csrf':adminSessao.csrfToken,
+   'X-Banner-Revisao-Esperada':'1'}
+ });
+ assert.equal(removerBanner.status,200);
+ assert.equal((await get('/api/loop/banners/1/imagem',{Cookie:cookieCliente})).status,404);
+ assert.equal((await get('/api/loop/banners',{Cookie:cookieCliente})).status,200);
  assert.equal((await get('/api/contas/me',{Cookie:cookieOp})).status,401);
  assert.equal((await get('/api/loja/pedidos',{Cookie:cookieOp})).status,401);
  assert.equal((await get('/loja',{Cookie:cookieOp})).status,200);
