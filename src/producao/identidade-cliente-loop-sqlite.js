@@ -120,11 +120,37 @@ function prepararEstruturaIdentidadeReal({
   if(process.env.NODE_ENV==='production'&&(somenteTeste||!local||
      local.includes('/dados-preview/')||!local.includes('/dados-reais/')))
    erro('BANCO_REAL_SEGREGADO_NAO_COMPROVADO');
+  // Apenas estas duas tabelas foram criadas pelos banners REAIS da
+  // AKITEMM. A guarda mantém a recusa de QUALQUER outro akitemm_/loop_lab_.
+  const mosaicosReais=[
+   'akitemm_banner_mosaico_layout','akitemm_banner_mosaico_foto'
+  ];
   const invasao=banco.prepare([
    "SELECT name FROM sqlite_master WHERE type='table'",
-   "AND (name LIKE 'akitemm_%' OR name LIKE 'loop_lab_%') LIMIT 1"
+   "AND ((name LIKE 'akitemm_%' AND",
+   "name NOT IN ('akitemm_banner_mosaico_layout',",
+   "'akitemm_banner_mosaico_foto')) OR name LIKE 'loop_lab_%') LIMIT 1"
   ].join(' ')).get();
   if(invasao)erro('BANCO_LABORATORIO_NAO_PODE_SER_REAL');
+  const presente=banco.prepare([
+   "SELECT name FROM sqlite_master WHERE type='table'",
+   "AND name IN ('akitemm_banner_mosaico_layout',",
+   "'akitemm_banner_mosaico_foto')"
+  ].join(' ')).all().map(x=>x.name);
+  if(presente.length!==0&&presente.length!==mosaicosReais.length)
+   erro('BANCO_MOSAICO_REAL_INCOMPLETO');
+  if(presente.length){
+   const colunas=nome=>banco.prepare('PRAGMA table_info('+nome+')')
+    .all().map(x=>x.name);
+   for(const [nome,esperadas] of [
+    ['akitemm_banner_mosaico_layout',['slot','colunas','modo']],
+    ['akitemm_banner_mosaico_foto',['slot','posicao','mime','imagem']]
+   ]){
+    const campos=colunas(nome);
+    if(esperadas.some(x=>!campos.includes(x)))
+     erro('BANCO_MOSAICO_REAL_ESTRUTURA_INVALIDA');
+   }
+  }
   banco.exec('PRAGMA foreign_keys=ON;');
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loop_real_contas(',
