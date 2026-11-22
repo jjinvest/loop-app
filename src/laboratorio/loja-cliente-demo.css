@@ -945,6 +945,9 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
    A regra anterior forçava o nome e o símbolo inteiro para branco. */
 .akitemm-loja .akitemm-marca-loop{font-family:system-ui,Arial,sans-serif;font-weight:900!important;letter-spacing:.045em;color:#f7c35d!important;font-size:clamp(19px,2.3vw,29px)!important;text-shadow:0 1px 0 #ffe5b6,0 3px 0 #5f350c,0 0 17px #e1a54480;line-height:1.2}
 .akitemm-loja .akitemm-marca-loop em{font-size:1em!important;font-weight:900!important;color:#e5e9f1!important;font-style:normal;text-shadow:0 1px 0 #fff8,0 3px 5px #000a}
+/* Cabeçalho unificado pode usar <span>3.0</span>, sem <em>. */
+.akitemm-loja .akitemm-marca-loop.loop-marca-unificada>span:last-child{font-size:1em!important;font-weight:900!important;color:#e5e9f1!important;font-style:normal;text-shadow:0 1px 0 #fff8,0 3px 5px #000a}
+
 .akitemm-loja .akitemm-marca-loop .akitemm-anel::before{content:'◎';color:#f7c35d!important;text-shadow:0 1px 0 #ffe5b6,0 0 11px #e1a54480}
 
 /* Identidade fixa dos filtros: selecao somente pelo contorno. */
