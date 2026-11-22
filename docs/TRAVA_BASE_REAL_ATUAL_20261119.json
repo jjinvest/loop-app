@@ -2984,7 +2984,7 @@
     },
     {
       "path": "test/operador-visoes-regressao.test.js",
-      "sha": "bb9923126b50d286a7a737a61cf4344094debd8c"
+      "sha": "ab8eafac9b42eabb0e8b15fe97dc78561dbcaa34"
     },
     {
       "path": "test/operar-receptor-asaas-railway-staging.test.js",
