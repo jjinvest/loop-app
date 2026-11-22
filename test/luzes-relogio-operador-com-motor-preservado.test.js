@@ -158,7 +158,8 @@ test('turno 22h–02h atravessa meia-noite e respeita data da programação',()=
  assert.deepEqual(x.luzes(),[true,false,false,false,false,false]);
  x.mover('2026-11-22T02:00:00-03:00');
  assert.deepEqual(x.luzes(),[false,false,false,false,false,false]);
- assert.equal(x.elements.tituloRelogioTabuleiro.textContent,'FORA DO TURNO');
+ assert.equal(x.elements.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
+ assert.match(x.elements.estadoRelogioTabuleiro.textContent,/12\/12 do dia/);
  x.visor.registrarAgenda(x.agenda({
   abertura:'22:00',fechamento:'02:00',
   meta:2,dataAlvo:'2026-11-20'
