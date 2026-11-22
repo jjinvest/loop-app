@@ -61,7 +61,8 @@ class BannerMosaicoSQLite{
    const modo=op?.modo||s.enquadramento||(colunas===1?'INTEIRA':'PREENCHER');
    const fotos=[{posicao:1,temImagem:s.temImagem},2,3].map((x,i)=>
     i===0?x:{posicao:i+1,temImagem:imagens.has(s.slot+':'+(i+1))});
-   const publicado=fotos.slice(0,colunas).every(x=>x.temImagem);
+   // Cada moldura é publicada ao receber a primeira foto; as demais são opcionais.
+   const publicado=fotos.slice(0,colunas).some(x=>x.temImagem);
    return {...s,colunas,modo,fotos,publicado};
   });
  }
