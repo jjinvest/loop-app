@@ -107,4 +107,12 @@ test('somente operador recebe novas rotas, sem acesso público e sem alterar o m
  assert.match(css,/body\.loop03-modo-operador #adminResumoComercial/);
  assert.doesNotMatch(gateway,/app\.post\('\/api\/admin\/loop\/indicadores-comerciais'/);
  assert.doesNotMatch(gateway,/app\.post\('\/api\/admin\/contas\/compras'/);
+ const identidade=fs.readFileSync(path.join(__dirname,
+  '../src/producao/servidor-identidade-loop.js'),'utf8');
+ const chamada=identidade.slice(
+  identidade.indexOf('montarGatewayAdminComercial(app,'),
+  identidade.indexOf('const mutation=(req,res,next)=>')
+ );
+ assert.doesNotMatch(chamada,/\bpedidosComerciais\b/,
+  'o histórico de leitura não deve ser passado como contabilidade de escrita');
 });
