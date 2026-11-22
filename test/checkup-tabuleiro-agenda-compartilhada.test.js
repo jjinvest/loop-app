@@ -62,7 +62,7 @@ test('operador e cliente recebem o mesmo cronômetro visual e os mesmos contador
  assert.match(cliente.estadoRelogioTabuleiro.textContent,
   /Relógio: [0-6]\/6 luzes/);
  assert.match(cliente.loop03StatusPosicao.textContent,
-  /luzes previstas · Ciclos reais: 0 · Giros reais hoje: 0/);
+  /luzes · \d+ ciclos completos · Sem pagamento real/);
  assert.equal(cliente.motorContadorEventos.textContent.match(
   /Eventos confirmados: 0 de 6/)?.[0],
   'Eventos confirmados: 0 de 6');
@@ -126,9 +126,8 @@ test('21/11 17h até 22/11 00h20: 338 giros do relógio, 56 ciclos e 2/6; sem pa
  for(const painel of [operador,cliente]){
   assert.equal(painel.loop03Giros24Integrado.textContent,'338');
   assert.equal(painel.loop03NumeroIntegrado.textContent,'2 / 6');
-  assert.match(painel.loop03StatusPosicao.textContent,/Giros do relógio: 338/);
-  assert.match(painel.loop03StatusPosicao.textContent,/Ciclos do relógio: 56/);
-  assert.match(painel.loop03StatusPosicao.textContent,/Giros reais hoje: 0/);
+  assert.match(painel.loop03StatusPosicao.textContent,
+   /Relógio: 338\/600 luzes · 56 ciclos completos · Sem pagamento real/);
   assert.equal(agenda.girosReaisHoje,0);
   assert.equal(agenda.eventosReaisNoCiclo,0);
  }
@@ -141,6 +140,6 @@ test('ao fechar o turno da noite a contagem visual fica em 600 e não zera',()=>
  const painel=criarVisor('operador',agenda,instante);
  assert.equal(painel.loop03Giros24Integrado.textContent,'600');
  assert.equal(painel.loop03NumeroIntegrado.textContent,'6 / 6');
- assert.match(painel.loop03StatusPosicao.textContent,/Ciclos do relógio: 100/);
+ assert.match(painel.loop03StatusPosicao.textContent,/100 ciclos completos/);
  assert.equal(painel.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
 });
