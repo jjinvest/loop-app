@@ -94,8 +94,8 @@ test('cada banner publica com uma imagem, mantendo dois ou três quadros indepen
   }
   const aposLoop=new BannersEscritorioCandidatoSQLite({banco:db});
   const aposLoja=new BannersLojaAkitemmRealSQLite({banco:db});
-  assert.equal(entrada(aposLoop,5).colunas,2);
-  assert.equal(entrada(aposLoja,5).colunas,2);
+  assert.equal(entrada(aposLoop,5).colunas,3);
+  assert.equal(entrada(aposLoja,5).colunas,3);
   assert.equal(entrada(aposLoop,5).publicado,true);
   assert.equal(entrada(aposLoja,5).publicado,true);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
