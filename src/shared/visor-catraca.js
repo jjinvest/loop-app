@@ -111,19 +111,20 @@
     if(ciclos)ciclos.textContent=valido?
      String(Math.floor(estado.passadas/6)):'—';
     const luzes24h=$('loop03LuzesHoraIntegrado');
-    // Usa exatamente o progresso mostrado no proprio relogio do tabuleiro:
-    // 45/60 aqui continua 45, mesmo com 621 pulsos de historicos anteriores.
+    // Exibe o progresso do turno no mesmo cartão em ambos os perfis.
+    // Ex.: 12/60, depois 60/60, sem somar pulsos históricos ou giros.
     if(luzes24h)luzes24h.textContent=valido?
-     String(estado.passadas):'—';
+     estado.passadas+' / '+estado.total:'—';
     if(operadorAberto&&selecionada&&valido){
      selecionada.textContent=estado.luzes+' / 6';
      const titulo=selecionada.parentElement?.querySelector?.('small');
      if(titulo)titulo.textContent='EVENTOS NO CICLO';
     }
    }
+   // No quadro direito do operador fica somente a luz do centro
+   // (0/6 a 6/6). O progresso do dia já está no quadro central.
    if(resumo&&compartilhado&&operadorAberto)
-    resumo.textContent=valido?
-     estado.passadas+' / '+estado.total+' luzes':'';
+    resumo.textContent='';
    const contador=$('motorContadorEventos');
    if(contador&&compartilhado){
     const reais=agendaVisorCatraca.eventosReaisNoCiclo;
