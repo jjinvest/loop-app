@@ -101,10 +101,12 @@ function renderizarInterfaceAprovada(){
  html=trocarExato(html,lojaBarra,lojaBarra+
   '<div id="loopOperadorAtalhos" class="loop03-operador-atalhos" hidden>'+
   '<a id="loopAcessoAdminMenu" href="/administrador">Escritório do Administrador</a>'+
-  '<a href="/escritorio?visao=cliente">Visão do Cliente</a>'+
+  '<a id="loopVisaoOperador" data-visao-do-escritorio="operador" href="/escritorio?visao=operador">Visão do Operador</a>'+
+  '<a id="loopVisaoCliente" data-visao-do-escritorio="cliente" href="/escritorio?visao=cliente">Visão do Cliente</a>'+
   '</div>'+
   '<div id="loopVoltarOperador" class="loop03-operador-atalhos" hidden>'+
-  '<a href="/escritorio?visao=operador">Voltar ao Escritório do Administrador</a>'+
+  '<a data-visao-do-escritorio="operador" href="/escritorio?visao=operador">Visão do Operador</a>'+
+  '<a data-visao-do-escritorio="cliente" href="/escritorio?visao=cliente">Visão do Cliente</a>'+
   '</div>');
 
  // Somente no HTML REAL servido a todos os titulares. Preserva o template,
