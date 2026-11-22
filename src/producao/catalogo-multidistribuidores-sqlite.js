@@ -27,6 +27,7 @@ class CatalogoMultiDistribuidoresSQLite{
    'descricao TEXT NOT NULL,tipo TEXT NOT NULL',
    "CHECK(tipo IN ('FISICO')),",
    'ativo INTEGER NOT NULL CHECK(ativo IN (0,1)),',
+   'arquivado_em INTEGER,',
    'criado_em INTEGER NOT NULL,atualizado_em INTEGER NOT NULL);',
    'CREATE TABLE IF NOT EXISTS loja_real_ofertas_distribuidores(',
    'produto_id TEXT NOT NULL REFERENCES loja_real_produtos(produto_id)',
@@ -40,6 +41,10 @@ class CatalogoMultiDistribuidoresSQLite{
    'CREATE INDEX IF NOT EXISTS idx_loja_real_ofertas_distribuidores',
    'ON loja_real_ofertas_distribuidores(distribuidor_id,ativo);'
   ].join(' '));
+  // Migração aditiva, sem mexer nas mercadorias já cadastradas.
+  if(!banco.prepare('PRAGMA table_info(loja_real_produtos)').all()
+      .some(col=>col.name==='arquivado_em'))
+   banco.exec('ALTER TABLE loja_real_produtos ADD COLUMN arquivado_em INTEGER');
  }
  criarProduto({produtoId,titulo,descricao='',tipo='FISICO'}={}){
   if(!id(produtoId)||typeof titulo!=='string'||
@@ -72,8 +77,9 @@ class CatalogoMultiDistribuidoresSQLite{
      !Number.isSafeInteger(prioridade)||prioridade<1||prioridade>9999)
    erro('OFERTA_COMERCIAL_INVALIDA');
   if(!this.db.prepare(
-   'SELECT produto_id FROM loja_real_produtos WHERE produto_id=?'
-  ).get(produtoId))erro('PRODUTO_COMERCIAL_NAO_EXISTE');
+   'SELECT produto_id FROM loja_real_produtos',
+   'WHERE produto_id=? AND arquivado_em IS NULL'
+  ].join(' ')).get(produtoId))erro('PRODUTO_COMERCIAL_NAO_EXISTE');
   // Criar oferta não significa ter contrato, frete ou integração.
   if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
   try{
@@ -111,10 +117,12 @@ class CatalogoMultiDistribuidoresSQLite{
   try{
    if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    const antes=this.db.prepare(
-    'SELECT ativo FROM loja_real_produtos WHERE produto_id=?'
+    'SELECT ativo FROM loja_real_produtos',
+    'WHERE produto_id=? AND arquivado_em IS NULL'
    ).get(produtoId);
    const r=this.db.prepare(
-    'UPDATE loja_real_produtos SET ativo=?,atualizado_em=? WHERE produto_id=?'
+    'UPDATE loja_real_produtos SET ativo=?,atualizado_em=?',
+    'WHERE produto_id=? AND arquivado_em IS NULL'
    ).run(ativo?1:0,this.agora(),produtoId);
    if(r.changes!==1)erro('PRODUTO_COMERCIAL_NAO_EXISTE');
    if(this.auditoria){
@@ -161,7 +169,7 @@ class CatalogoMultiDistribuidoresSQLite{
   if(!id(produtoId))erro('PRODUTO_COMERCIAL_INVALIDO');
   const p=this.db.prepare([
    'SELECT produto_id,titulo,tipo FROM loja_real_produtos',
-   'WHERE produto_id=? AND ativo=1'
+   'WHERE produto_id=? AND ativo=1 AND arquivado_em IS NULL'
   ].join(' ')).get(produtoId);
   if(!p)return null;
   const ofertas=this.db.prepare([
@@ -185,7 +193,7 @@ class CatalogoMultiDistribuidoresSQLite{
   const row=this.db.prepare([
    'SELECT produto_id AS produtoId,titulo,descricao,tipo,ativo,',
    'atualizado_em AS revisao',
-   'FROM loja_real_produtos WHERE produto_id=?'
+   'FROM loja_real_produtos WHERE produto_id=? AND arquivado_em IS NULL'
   ].join(' ')).get(produtoId);
   return row?Object.freeze({
    ...row,ativo:row.ativo===1
@@ -226,6 +234,56 @@ class CatalogoMultiDistribuidoresSQLite{
    throw e;
   }
  }
+ // A lixeira retira somente um produto nunca publicado da vitrine admin.
+ // O registro permanece no SQLite para não romper fotos, auditoria ou backups.
+ arquivarRascunho({produtoId,revisaoEsperada}={}){
+  if(!id(produtoId)||!Number.isSafeInteger(revisaoEsperada)||
+     revisaoEsperada<1)erro('RASCUNHO_EXCLUSAO_INVALIDA');
+  this.db.exec('BEGIN IMMEDIATE');
+  try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
+   const anterior=this.db.prepare([
+    'SELECT produto_id,titulo,ativo,atualizado_em,arquivado_em',
+    'FROM loja_real_produtos WHERE produto_id=?'
+   ].join(' ')).get(produtoId);
+   if(!anterior||anterior.arquivado_em!==null)
+    erro('RASCUNHO_NAO_ENCONTRADO');
+   if(anterior.ativo!==0)erro('PRODUTO_PUBLICADO_NAO_EXCLUIR');
+   if(anterior.atualizado_em!==revisaoEsperada)
+    erro('RASCUNHO_CONFLITO_REVISAO');
+   // Nunca arquivar produto que foi publicado anteriormente.
+   if(this.auditoria&&this.db.prepare([
+    "SELECT 1 FROM loja_real_auditoria_admin",
+    "WHERE entidade=? AND acao='PRODUTO_STATUS_ALTERADO' LIMIT 1"
+   ].join(' ')).get('PRODUTO_'+produtoId))
+    erro('PRODUTO_COM_HISTORICO_PUBLICACAO');
+   const tabelas=['loja_real_vitrine_posicoes','loja_real_custos_pedido'];
+   for(const tabela of tabelas){
+    const existe=this.db.prepare([
+     "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+    ].join(' ')).get(tabela);
+    if(existe&&this.db.prepare(
+     'SELECT 1 FROM '+tabela+' WHERE produto_id=? LIMIT 1'
+    ).get(produtoId))erro('PRODUTO_JA_VINCULADO_NAO_EXCLUIR');
+   }
+   const data=Math.max(this.agora(),anterior.atualizado_em+1);
+   const result=this.db.prepare([
+    'UPDATE loja_real_produtos',
+    'SET arquivado_em=?,atualizado_em=?',
+    'WHERE produto_id=? AND ativo=0 AND arquivado_em IS NULL',
+    'AND atualizado_em=?'
+   ].join(' ')).run(data,data,produtoId,revisaoEsperada);
+   if(result.changes!==1)erro('RASCUNHO_CONFLITO_REVISAO');
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'PRODUTO_RASCUNHO_ARQUIVADO',ator:'ADMIN_COMERCIAL',
+    entidade:'PRODUTO_'+produtoId,
+    antes:{arquivado:false,ativo:false},
+    depois:{arquivado:true,ativo:false}
+   });
+   this.db.exec('COMMIT');
+   return {produtoId,excluido:true,arquivado:true};
+  }catch(e){this.db.exec('ROLLBACK');throw e;}
+ }
  listarProdutosAdministrativos({limite=500}={}){
   if(!Number.isInteger(limite)||limite<1||limite>500)
    erro('CONSULTA_CATALOGO_INVALIDA');
@@ -235,6 +293,7 @@ class CatalogoMultiDistribuidoresSQLite{
    'FROM loja_real_produtos p',
    'LEFT JOIN loja_real_ofertas_distribuidores o',
    'ON o.produto_id=p.produto_id',
+   'WHERE p.arquivado_em IS NULL',
    'GROUP BY p.produto_id ORDER BY p.titulo,p.produto_id LIMIT ?'
   ].join(' ')).all(limite).map(p=>({
    produtoId:p.produtoId,titulo:p.titulo,descricao:p.descricao,
@@ -269,10 +328,11 @@ class CatalogoMultiDistribuidoresSQLite{
    'COALESCE(r.cor,\'CINZA\') AS cor',
    'FROM loja_real_produtos p LEFT JOIN loop_real_regras_cor r',
    'ON r.produto_id=p.produto_id',
-   'WHERE p.ativo=1 ORDER BY p.titulo,p.produto_id LIMIT ?'
+   'WHERE p.ativo=1 AND p.arquivado_em IS NULL',
+   'ORDER BY p.titulo,p.produto_id LIMIT ?'
   ].join(' '):[
    "SELECT produto_id,titulo,descricao,tipo,criado_em,'CINZA' AS cor",
-   'FROM loja_real_produtos WHERE ativo=1',
+   'FROM loja_real_produtos WHERE ativo=1 AND arquivado_em IS NULL',
    'ORDER BY titulo,produto_id LIMIT ?'
   ].join(' ')).all(limite);
   return rows.map(r=>Object.freeze({
@@ -292,7 +352,8 @@ class CatalogoMultiDistribuidoresSQLite{
    erro('CONSULTA_CATALOGO_INVALIDA');
   return this.db.prepare([
    'SELECT produto_id FROM loja_real_produtos',
-   'WHERE ativo=1 ORDER BY titulo ASC,produto_id ASC LIMIT ?'
+   'WHERE ativo=1 AND arquivado_em IS NULL',
+   'ORDER BY titulo ASC,produto_id ASC LIMIT ?'
   ].join(' ')).all(limite).map(x=>
    this.ofertasConfiaveis({produtoId:x.produto_id})
   ).filter(x=>x&&x.compravel).map(x=>({
