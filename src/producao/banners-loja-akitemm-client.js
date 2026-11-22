@@ -105,6 +105,11 @@
    x.linha.hidden=!visivel;
    x.linha.style.display=visivel?'flex':'none';
   });
+  const atual=current();
+  lixeirasFotos.forEach((b,i)=>{
+   b.hidden=!operador||i+1>Number(colunas.value)||
+    !atual?.fotos?.[i]?.temImagem;
+  });
  }
  colunas.addEventListener('change',mostrarCampos);
  const controles=document.createElement('div');
@@ -121,6 +126,15 @@
  }
  const estado=document.createElement('p');estado.id='akitemmBannerStatus';
  estado.setAttribute('role','status');
+ const lixeirasFotos=[escolher,...fotosExtras.map(x=>x.arquivo)].map((input,i)=>{
+  const b=document.createElement('button');
+  b.type='button';b.className='banner-foto-lixeira';
+  b.textContent='🗑 Excluir foto '+(i+1);b.hidden=true;
+  b.setAttribute('aria-label','Excluir foto '+(i+1)+' deste banner');
+  b.addEventListener('click',()=>void removerFotoIndividual(current()?.slot,i+1));
+  input.parentElement.insertAdjacentElement('afterend',b);
+  return b;
+ });
  caixa.append(topo,explicacao,linhaColunas,linhaModo,
   rotulo,previa,...fotosExtras.map(x=>x.linha),estado,controles);
  dialogo.append(caixa);document.body.append(dialogo);
@@ -186,6 +200,17 @@
      im.src='/api/loja/banners/'+slot.slot+'/foto/'+pos+
       '?rev='+slot.revisao;
      quadro.append(im);
+     if(operador){
+      const b=document.createElement('button');
+      b.type='button';b.className='banner-foto-lixeira-quadro';
+      b.textContent='🗑';b.title='Excluir apenas a foto '+pos;
+      b.setAttribute('aria-label','Excluir foto '+pos+' do banner '+slot.slot);
+      b.addEventListener('click',e=>{
+       e.preventDefault();e.stopPropagation();
+       void removerFotoIndividual(slot.slot,pos);
+      });
+      quadro.append(b);
+     }
     }else if(operador)quadro.textContent='Foto '+pos+' · adicionar';
     mosaico.append(quadro);
    }
@@ -290,6 +315,40 @@
    await carregar();
   }finally{bloqueio=false;rodar();}
  }
+ async function removerFotoIndividual(numero,pos){
+  if(bloqueio||!operador||!Number.isSafeInteger(numero)||
+     ![1,2,3].includes(pos))return;
+  const item=slots?.find(x=>x.slot===numero);
+  if(!item?.fotos?.[pos-1]?.temImagem)return;
+  if(!window.confirm('Excluir só a foto '+pos+' do banner '+numero+
+    '? As demais fotos serão preservadas.'))return;
+  bloqueio=true;parar();
+  lixeirasFotos.forEach(b=>{b.disabled=true;});
+  try{
+   const sessao=await requisitar('/api/admin/comercial/sessao');
+   if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<20)
+    throw Error('SESSAO_OPERADOR_INVALIDA');
+   const base='/api/admin/akitemm/banners/'+numero;
+   const resp=await requisitar(base+(pos===1?'/imagem':'/foto/'+pos),{
+    method:'DELETE',headers:{
+     'X-Loop-Admin-Csrf':sessao.csrfToken,
+     'X-Banner-Revisao-Esperada':String(item.revisao)
+    }
+   });
+   if(!Array.isArray(resp.slots))throw Error('BANNER_NAO_CONFIRMADO');
+   slots=resp.slots;
+   if(dialogo.open)estado.textContent='Foto '+pos+' excluída.';
+   renderizar();
+  }catch(e){
+   const msg='Não foi possível excluir a foto: '+e.message;
+   if(dialogo.open)estado.textContent=msg;
+   else window.alert(msg);
+   await carregar();
+  }finally{
+   bloqueio=false;lixeirasFotos.forEach(b=>{b.disabled=false;});
+   renderizar();if(dialogo.open)mostrarCampos();rodar();
+  }
+ }
  async function salvarComposicao(){
   if(bloqueio||!operador||!current()||current().adicionar)return;
   const atual=current(),n=Number(colunas.value);
@@ -335,8 +394,8 @@
      'PUT',foto,foto.type);
    }
    estado.textContent=escolhido.publicado?
-    'Banner publicado com '+n+' foto(s).':
-    'Formato salvo. Adicione as fotos que faltam para publicar.';
+    'Banner visível ao cliente; os quadros vazios podem ser preenchidos depois.':
+    'Formato salvo. Envie ao menos uma foto para exibir o banner.';
    fotos.forEach(x=>{x.value='';});
    indice=slots.findIndex(x=>x.slot===atual.slot);
    renderizar();
@@ -413,9 +472,10 @@
    void salvarComposicao();return;
   }
   if(acao==='remover'&&!window.confirm(
-   'Excluir esta foto da AKITEMM? Os outros banners continuam iguais.'))return;
+   'Excluir somente a foto 1? As outras fotos continuam no banner.'))return;
   if(acao==='anterior'||acao==='proximo')
    void salvar('trocar',null,acao==='anterior'?-1:1);
+  else if(acao==='remover')void removerFotoIndividual(current()?.slot,1);
   else void salvar(acao);
  });
  area.addEventListener('click',e=>{
