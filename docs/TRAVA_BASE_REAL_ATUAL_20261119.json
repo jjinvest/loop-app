@@ -1292,7 +1292,7 @@
     },
     {
       "path": "src/producao/atendimento-akitemm-sqlite.js",
-      "sha": "0cd566f1583d36ceecf3f684bed4392a05ecd213"
+      "sha": "5c45d26aac11729bfb0c3d2c53f1290b4819770d"
     },
     {
       "path": "src/producao/auditoria-acervo-real-sqlite.js",
