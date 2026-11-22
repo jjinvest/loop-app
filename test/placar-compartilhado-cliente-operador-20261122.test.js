@@ -20,6 +20,7 @@ function cenario(){
  const agenda={
   origem:'CATRACA_REAL_MESMO_SQLITE',somenteLeitura:true,
   luzesDoRelogioCompartilhado:true,girosReaisHora:2,
+  luzesRelogio24h:6,ciclosRelogio24h:1,
   girosReaisHoje:2,girosReais24h:2,eventosReaisNoCiclo:3,
   luzesRelogio24h:8,ciclosRelogio24h:1,
   ciclosReaisConcluidos:0
@@ -66,7 +67,7 @@ function cenario(){
  return {contexto,elementos,agenda,cliente,motor,controle,chamadas,visores};
 }
 
-test('cliente e operador mostram o mesmo numero de giros por hora, sem inventar luz',async()=>{
+test('cliente e operador mostram os mesmos ciclos visuais em 24h, sem inventar giro',async()=>{
  const x=cenario();
  await x.contexto.atualizarCliente();
  assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
@@ -83,9 +84,10 @@ test('cliente e operador mostram o mesmo numero de giros por hora, sem inventar 
  assert.equal(x.agenda.girosReaisHora,2);
 });
 
-test('atualizacao do mesmo livro chega aos dois perfis sem recriar tela',async()=>{
+test('atualizacao do relogio chega aos dois perfis sem recriar tela',async()=>{
  const x=cenario();
  await x.contexto.atualizarCliente();
+ x.agenda.luzesRelogio24h=12;x.agenda.ciclosRelogio24h=2;
  x.agenda.girosReaisHora=4;x.agenda.girosReaisHoje=4;
  x.agenda.girosReais24h=4;x.cliente.catraca.giros=4;
  x.motor.catraca.giros=4;x.controle.girosTotais=4;
