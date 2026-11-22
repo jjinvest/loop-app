@@ -101,8 +101,11 @@
    alvo.textContent=visaoClienteLoja?
     'Visualização do cliente. Dados pessoais de clientes não são exibidos.':
     'Sessão do operador; os dados dos clientes estão protegidos.';
-   $('akitemmEditarConta').href='/administrador';
-   $('akitemmEditarConta').textContent='Central do operador';
+   // Na visão de cliente, voltar ao mesmo escritório sem abrir a central.
+   $('akitemmEditarConta').href=visaoClienteLoja?
+    '/escritorio?visao=cliente':'/administrador';
+   $('akitemmEditarConta').textContent=visaoClienteLoja?
+    'Voltar à visão do cliente no LOOP':'Central do operador';
    return;
   }
   alvo.textContent='Consultando sua conta...';
