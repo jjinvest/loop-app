@@ -7,6 +7,8 @@ const editor=fs.readFileSync(path.join(__dirname,
  '../src/producao/operador-loja-fotos-real.js'),'utf8');
 const loja=fs.readFileSync(path.join(__dirname,
  '../src/producao/interface-aprovada-loja.js'),'utf8');
+const loop=fs.readFileSync(path.join(__dirname,
+ '../src/producao/interface-aprovada-contas.js'),'utf8');
 
 function recortar(inicio,fim){
  const a=editor.indexOf(inicio),b=editor.indexOf(fim,a);
@@ -102,4 +104,11 @@ test('prévia cliente nunca herda dados financeiros, identidade ou permissões d
  assert.match(loja,/if\(operadorAtivo\)\{\s*const pedidos=\$\('pedidosLojaLoop'\)/);
  assert.match(loja,/if\(visitante\|\|operadorAtivo\|\|!csrfLoja\)return/);
  assert.match(loja,/if\(\(visitante&&!operadorAtivo\)\|\|\(operadorAtivo&&visaoClienteLoja\)\)return/);
+});
+test('navegação entre LOOP e AKITEMM preserva a visão sem conceder poder ao cliente',()=>{
+ assert.match(loop,/\/loja\?visao=/);
+ assert.match(loop,/modoOperadorAtual\?'operador':'cliente'/);
+ assert.match(loja,/\/escritorio\?visao=/);
+ assert.match(loja,/visaoClienteLoja\?'cliente':'operador'/);
+ assert.match(loja,/if\(ativo\)/); // checagem visual de sessão
 });
