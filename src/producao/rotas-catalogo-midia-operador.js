@@ -340,6 +340,49 @@ function montarRotasCatalogoMidiaOperador({
    })),origem:'CATALOGO_REAL_PERSISTENTE',checkoutReal:false});
   }catch{return res.status(503).json({erro:'CATALOGO_REAL_INDISPONIVEL'});}
  });
+ // A lixeira atua somente em rascunhos, autenticada e protegida por
+ // revisão/CSRF. Publicados, pedidos e posições de vitrine são intocáveis.
+ app.post('/api/admin/catalogo-midia/produtos/:produtoId/excluir-rascunho',
+  autorizarOperador,validarCsrf,verificarId,(req,res)=>{
+   if(!req.is('application/json')||!req.body||
+      Array.isArray(req.body)||
+      Object.keys(req.body).sort().join(',')!=='revisaoEsperada'||
+      !Number.isSafeInteger(req.body.revisaoEsperada)||
+      req.body.revisaoEsperada<1)
+    return res.status(400).json({erro:'RASCUNHO_EXCLUSAO_INVALIDA'});
+   const produtoId=req.params.produtoId;
+   try{
+    const vinculado=posicoesVitrine?.listar().some(
+     x=>x.produtoId===produtoId);
+    if(vinculado)return res.status(409).json({
+     erro:'PRODUTO_JA_VINCULADO_NAO_EXCLUIR'
+    });
+    const principal=catalogoPrincipal?.
+     buscarProdutoAdministrativo({produtoId});
+    const local=ID_MIDIA.test(produtoId)?
+     catalogoMidia.repo.buscarRegistro(produtoId):null;
+    if(principal&&local)
+     return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
+    if(!principal&&!local)
+     return res.status(404).json({erro:'RASCUNHO_NAO_ENCONTRADO'});
+    const r=principal?
+     catalogoPrincipal.arquivarRascunho({
+      produtoId,revisaoEsperada:req.body.revisaoEsperada
+     }):
+     catalogoMidia.repo.arquivarRascunho({
+      id:produtoId,revisaoEsperada:req.body.revisaoEsperada
+     });
+    return res.set('Cache-Control','no-store').json({
+     ...r,checkoutReal:false,financeiroReal:false
+    });
+   }catch(e){
+    const codigo=e?.codigo||e?.message||'RASCUNHO_EXCLUSAO_INDISPONIVEL';
+    const status=/PUBLICADO|VINCULADO|CONFLITO|HISTORICO/.test(codigo)?409:
+     /NAO_ENCONTRADO|NAO_EXISTE/.test(codigo)?404:
+     /INVALID/.test(codigo)?400:503;
+    return res.status(status).json({erro:codigo});
+   }
+  });
  // Nome e descrição do quadrinho continuam no cadastro primário.
  // Não edita custos, preço, fornecedor, cor nem status de publicação.
  app.get('/api/admin/catalogo-midia/produtos/:produtoId',

@@ -64,6 +64,16 @@ class RepositorioCatalogoSQLite {
           atualizado_em TEXT NOT NULL
         );
       `);
+      // Arquivamento de rascunhos conserva os produtos e histórico
+      // intactos para auditoria e recuperações futuras.
+      this.banco.exec(`
+        CREATE TABLE IF NOT EXISTS catalogo_rascunhos_arquivados(
+         produto_id TEXT PRIMARY KEY NOT NULL REFERENCES catalogo_produtos(id)
+          ON DELETE RESTRICT,
+         revisao INTEGER NOT NULL,
+         arquivado_em TEXT NOT NULL
+        );
+      `);
       // Migracao transacional v1 -> v2. A base antiga nao contem as
       // revisoes anteriores: registrar apenas o estado encontrado na migracao.
       if (versao < 2) {
@@ -174,7 +184,7 @@ class RepositorioCatalogoSQLite {
 
   listar() {
     const linhas = this.banco.prepare(
-      'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos ORDER BY id'
+      'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id NOT IN (SELECT produto_id FROM catalogo_rascunhos_arquivados) ORDER BY id'
     ).all();
     return linhas.map(linha => extrairProduto(linha).produto);
   }
@@ -182,7 +192,7 @@ class RepositorioCatalogoSQLite {
   buscar(id) {
     verificarId(id);
     const linha = this.banco.prepare(
-      'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id = ?'
+      'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id = ? AND id NOT IN (SELECT produto_id FROM catalogo_rascunhos_arquivados)'
     ).get(id);
     return extrairProduto(linha)?.produto || null;
   }
@@ -190,7 +200,7 @@ class RepositorioCatalogoSQLite {
   buscarRegistro(id) {
     verificarId(id);
     const linha = this.banco.prepare(
-      'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id = ?'
+      'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id = ? AND id NOT IN (SELECT produto_id FROM catalogo_rascunhos_arquivados)'
     ).get(id);
     return extrairProduto(linha);
   }
@@ -205,9 +215,12 @@ class RepositorioCatalogoSQLite {
     this.banco.exec('BEGIN IMMEDIATE;');
     try {
       const anterior = this.banco.prepare(
-        'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id = ?'
+        'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id = ? AND id NOT IN (SELECT produto_id FROM catalogo_rascunhos_arquivados)'
       ).get(validado.id);
       const revisaoAtual = anterior ? anterior.revisao : 0;
+      if(this.banco.prepare(
+        'SELECT 1 FROM catalogo_rascunhos_arquivados WHERE produto_id=?'
+      ).get(validado.id))throw Error('RASCUNHO_ARQUIVADO_NAO_EDITAVEL');
       if (revisaoAtual !== revisaoEsperada) {
         throw new Error('Conflito de revisao do catalogo: recarregue o produto');
       }
@@ -263,6 +276,39 @@ class RepositorioCatalogoSQLite {
       produto: { ...registro.produto, ...alteracoes, id },
       revisaoEsperada
     });
+  }
+
+  // Retira somente um rascunho que nunca foi publicado. A ficha e a
+  // trilha continuam armazenadas, sem apagar imagens ou dados relacionados.
+  arquivarRascunho({ id, revisaoEsperada } = {}) {
+    verificarId(id);
+    validarRevisao(revisaoEsperada);
+    if(revisaoEsperada<1)throw Error('RASCUNHO_EXCLUSAO_INVALIDA');
+    this.banco.exec('BEGIN IMMEDIATE;');
+    try {
+      const r=this.banco.prepare(
+        'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id = ?'
+      ).get(id);
+      if(!r||this.banco.prepare(
+        'SELECT 1 FROM catalogo_rascunhos_arquivados WHERE produto_id=?'
+      ).get(id))throw Error('RASCUNHO_NAO_ENCONTRADO');
+      if(r.revisao!==revisaoEsperada)throw Error('RASCUNHO_CONFLITO_REVISAO');
+      const atual=extrairProduto(r).produto;
+      if(atual.estado!=='RASCUNHO')
+        throw Error('PRODUTO_PUBLICADO_NAO_EXCLUIR');
+      const mudancas=this.banco.prepare(
+        'SELECT depois_json FROM catalogo_historico WHERE produto_id=?'
+      ).all(id);
+      if(mudancas.some(h=>{
+        const depois=JSON.parse(h.depois_json);
+        return depois.estado==='PUBLICADO';
+      }))throw Error('PRODUTO_COM_HISTORICO_PUBLICACAO');
+      this.banco.prepare(
+        'INSERT INTO catalogo_rascunhos_arquivados(produto_id,revisao,arquivado_em) VALUES(?,?,?)'
+      ).run(id,r.revisao,new Date().toISOString());
+      this.banco.exec('COMMIT;');
+      return {produtoId:id,excluido:true,arquivado:true};
+    }catch(e){this.banco.exec('ROLLBACK;');throw e;}
   }
 
   historico(id) {

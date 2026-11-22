@@ -295,3 +295,52 @@ dialog.akitemm-operador-editor .akitemm-estado-rascunho{
 }
 dialog.akitemm-operador-editor .akitemm-editor-corpo
  button.akitemm-editor-secundario{border-radius:12px}
+
+/* Ajuste responsivo dos conteúdos dentro das abas e molduras aprovadas.
+   Não altera ordem, cores, quantidade de produtos nem tamanho da grade. */
+.akitemm-loja #akitemmAreaProdutos,
+.akitemm-loja #catalogoLojaLoop,
+.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal,
+.akitemm-loja #catalogoLojaLoop .produto-loja-loop,
+.akitemm-loja #catalogoLojaLoop .akitemm-dados-produto{
+ min-width:0;max-width:100%;box-sizing:border-box;
+}
+.akitemm-loja #catalogoLojaLoop .produto-loja-loop .akitemm-dados-produto>*,
+.akitemm-loja #catalogoLojaLoop .akitemm-acoes-produto>*,
+.akitemm-loja .akitemm-produto-inline .akitemm-detalhe-dados>*{
+ min-width:0;max-width:100%;box-sizing:border-box;
+ overflow-wrap:anywhere;word-break:normal;
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-acoes-produto button,
+.akitemm-loja #catalogoLojaLoop .akitemm-dados-produto button{
+ max-width:100%;white-space:normal;overflow-wrap:anywhere;
+}
+.akitemm-loja #akitemmAbasProdutos{
+ width:100%;min-width:0;max-width:100%;overflow-x:auto;
+}
+dialog.akitemm-modal.akitemm-operador-editor{
+ min-width:0;max-width:calc(100vw - 12px);
+ max-height:calc(100dvh - 16px);
+ overflow-x:hidden;
+}
+dialog.akitemm-operador-editor .akitemm-editor-corpo>*,
+dialog.akitemm-operador-editor .akitemm-editor-corpo form>*,
+dialog.akitemm-operador-editor .akitemm-card-rascunho>*{
+ box-sizing:border-box;min-width:0;max-width:100%;overflow-wrap:anywhere;
+}
+dialog.akitemm-operador-editor .akitemm-card-rascunho button{
+ box-sizing:border-box;width:100%;max-width:100%;white-space:normal;
+ overflow-wrap:anywhere;
+}
+dialog.akitemm-operador-editor .akitemm-card-rascunho
+ button.akitemm-lixeira-rascunho{
+ color:#ffe0ca;background:#352a2b;border-color:#b88c76;
+}
+@media(max-width:540px){
+ dialog.akitemm-modal.akitemm-operador-editor{
+  width:calc(100vw - 12px);padding:14px 12px;
+ }
+ .akitemm-loja #catalogoLojaLoop .akitemm-dados-produto{
+  padding-inline:min(8px,2vw);
+ }
+}

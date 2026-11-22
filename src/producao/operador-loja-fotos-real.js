@@ -883,6 +883,12 @@
     ID.test(x.produtoId));
    const formulario=salvos.rascunhos;
    const total=produtos.length+formulario.length;
+   let pendentes=total;
+   const atualizarQuantidade=()=>{
+    estado.textContent=pendentes>0?
+     pendentes+' cadastro(s) não publicado(s) localizado(s).':
+     'Não existem produtos pendentes neste momento.';
+   };
    estado.textContent=total?
     total+' cadastro(s) não publicado(s) localizado(s).':
     'Não existem produtos pendentes neste momento.';
@@ -896,7 +902,10 @@
     continuar.type='button';continuar.textContent='Continuar cadastro';
     continuar.addEventListener('click',()=>void escolherProduto(1,item));
     const excluir=document.createElement('button');
-    excluir.type='button';excluir.textContent='Descartar este rascunho';
+    excluir.type='button';excluir.textContent='🗑️ Excluir';
+    excluir.className='akitemm-lixeira-rascunho';
+    // Mantém o nome acessível anterior para teclado e regressão existente.
+    excluir.setAttribute('aria-label','Descartar este rascunho');
     excluir.addEventListener('click',async()=>{
      if(!window.confirm('Descartar os dados deste formulário não publicado?'))
       return;
@@ -909,8 +918,8 @@
          'X-Loop-Admin-Csrf':sessao.csrfToken},body:'{}'
        });
       if(r.excluido!==true)throw Error('EXCLUSAO_NAO_CONFIRMADA');
-      card.remove();
-      estado.textContent='Rascunho descartado. Produto publicado não foi afetado.';
+      card.remove();pendentes--;atualizarQuantidade();
+      estado.textContent='Rascunho descartado. '+estado.textContent;
      }catch(e){estado.textContent='Não foi possível descartar: '+e.message;}
      finally{excluir.disabled=false;}
     });
@@ -925,7 +934,39 @@
     const continuar=document.createElement('button');
     continuar.type='button';continuar.textContent='Editar e publicar';
     continuar.addEventListener('click',()=>void abrirProduto(item.produtoId));
-    card.append(titulo,d,continuar);corpo.append(card);
+    const excluir=document.createElement('button');
+    excluir.type='button';
+    excluir.className='akitemm-lixeira-rascunho';
+    excluir.textContent='🗑️ Excluir';
+    excluir.setAttribute('aria-label','Excluir produto não publicado '+(item.nome||item.produtoId));
+    excluir.addEventListener('click',async()=>{
+     if(!operador)return;
+     if(!window.confirm('Excluir o produto não publicado "'+
+       (item.nome||item.produtoId)+'" da lista? Produtos publicados não serão afetados.'))
+      return;
+     excluir.disabled=true;
+     try{
+      const [sessao,produto]=await Promise.all([
+       fetchJson('/api/admin/comercial/sessao'),
+       fetchJson('/api/admin/catalogo-midia/produtos/'+item.produtoId)
+      ]);
+      if(typeof sessao.csrfToken!=='string'||produto.estado!=='RASCUNHO'||
+         !Number.isSafeInteger(produto.revisao))
+       throw Error('RASCUNHO_NAO_VALIDADO');
+      const r=await fetchJson(
+       '/api/admin/catalogo-midia/produtos/'+item.produtoId+
+       '/excluir-rascunho',{
+        method:'POST',headers:{'Content-Type':'application/json',
+         'X-Loop-Admin-Csrf':sessao.csrfToken},
+        body:JSON.stringify({revisaoEsperada:produto.revisao})
+       });
+      if(r.excluido!==true||r.arquivado!==true)
+       throw Error('EXCLUSAO_NAO_CONFIRMADA');
+      card.remove();pendentes--;atualizarQuantidade();
+     }catch(e){estado.textContent='Não foi possível excluir: '+e.message;}
+     finally{excluir.disabled=false;}
+    });
+    card.append(titulo,d,continuar,excluir);corpo.append(card);
    }
   }catch(e){estado.textContent='Não foi possível carregar rascunhos: '+e.message;}
  }
