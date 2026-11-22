@@ -391,6 +391,11 @@
   if(!linkRodape)return;
   const exibir=permitido=>{
    operadorAtivo=permitido;
+   // Voltar ao LOOP conserva a visão atual, como no botão equivalente.
+   const voltarLoop=document.querySelector('.akitemm-voltar');
+   if(voltarLoop)voltarLoop.href=permitido?
+    '/escritorio?visao='+(visaoClienteLoja?'cliente':'operador'):
+    '/minha-conta';
    linkRodape.hidden=!permitido||visaoClienteLoja;
    linkRodape.style.display=permitido&&!visaoClienteLoja?
     'inline-flex':'none';
