@@ -14,7 +14,6 @@ const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
 const {montarRotasCatalogoMidiaOperador}=
  require('./rotas-catalogo-midia-operador');
-const express=require('express');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
