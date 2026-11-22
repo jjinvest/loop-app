@@ -68,6 +68,7 @@
   if(!slot)return;
   const imagem=slot.temImagem;
   foto.hidden=!imagem;
+  area.classList.toggle('akitemm-banner-com-foto',imagem);
   if(imagem){
    const caminho='/api/loja/banners/'+slot.slot+'/imagem?revisao='+
     (slot.atualizadoEm||slot.revisao);
