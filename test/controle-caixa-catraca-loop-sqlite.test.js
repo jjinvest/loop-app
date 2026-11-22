@@ -121,30 +121,35 @@ test('mudança de meta exige nova política e não consome outra reserva',()=>{
  }finally{db.close();}
 });
 
-test('reserva adulterada falha fechado antes da exibicao, ativacao ou luz',()=>{
- const {db,controle,avancar}=criar();
- try{
-  configurar(controle);
-  controle.definirAtivacao({dia,ativa:true,autorizacaoOperador:true});
-  // Simula divergencia no livro SQLite entre total e centros reservados.
-  db.prepare([
-   'UPDATE loop_real_catraca_caixa_programacao',
-   'SET reserva_total_centavos=reserva_total_centavos+1 WHERE dia=?'
-  ].join(' ')).run(dia);
-  assert.throws(()=>controle.consultar({dia}),
-   /CATRACA_CAIXA_RESERVA_DIVERGENTE/);
-  avancar('09:18');
-  assert.throws(()=>controle.autorizarLuz({
-   dia,indiceLuz:1,liberacaoOperador:true
-  }),/CATRACA_CAIXA_RESERVA_DIVERGENTE/);
-  assert.throws(()=>controle.definirAtivacao({
-   dia,ativa:false,autorizacaoOperador:true
-  }),/CATRACA_CAIXA_RESERVA_DIVERGENTE/);
-  assert.equal(db.prepare(
-   'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_autorizacoes'
-  ).get().n,0);
-  assert.equal(db.prepare(
-   'SELECT estado FROM loop_real_catraca_caixa_programacao WHERE dia=?'
-  ).get(dia).estado,'AUTORIZADA','tentativa nao reescreve o estado');
- }finally{db.close();}
+test('provas bancarias falsas ou divergentes nao criam reserva nem luzes',()=>{
+ const invalidas=[
+  {ambiente:'SANDBOX',estado:'RESERVA_SEGREGADA',
+   valorReservadoCentavos:750000,comprovanteId:'extrato-psp-sandbox'},
+  {ambiente:'PRODUCAO',estado:'PENDENTE',
+   valorReservadoCentavos:750000,comprovanteId:'extrato-psp-pendente'},
+  {ambiente:'PRODUCAO',estado:'RESERVA_SEGREGADA',
+   valorReservadoCentavos:749999,comprovanteId:'extrato-psp-divergente'},
+  {ambiente:'PRODUCAO',estado:'RESERVA_SEGREGADA',
+   valorReservadoCentavos:750000,comprovanteId:'x'}
+ ];
+ for(const prova of invalidas){
+  const db=new DatabaseSync(':memory:');
+  const controle=new ControleCaixaCatracaLoopSQLite({
+   banco:db,agora:()=>momento('09:18'),
+   provas:{confirmarReservaCentros:()=>prova}
+  });
+  try{
+   assert.throws(()=>configurar(controle),
+    /CATRACA_CAIXA_RESERVA_NAO_COMPROVADA/);
+   assert.equal(db.prepare(
+    'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_programacao'
+   ).get().n,0);
+   assert.equal(db.prepare(
+    'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_autorizacoes'
+   ).get().n,0);
+   assert.throws(()=>controle.autorizarLuz({
+    dia,indiceLuz:1,liberacaoOperador:true
+   }),/CATRACA_CAIXA_PAUSADA_OU_SEM_RESERVA/);
+  }finally{db.close();}
+ }
 });
