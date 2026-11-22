@@ -51,6 +51,7 @@
  fechar.className='banner-real-fechar';fechar.textContent='×';
  fechar.setAttribute('aria-label','Fechar formulário');
  fechar.addEventListener('click',()=>dialogo.close());
+ dialogo.addEventListener('close',()=>rodar());
  topo.append(titulo,fechar);
  const explicacao=document.createElement('p');
  explicacao.className='banner-real-explicacao';
@@ -79,7 +80,7 @@
  linhaModo.append(modo);
  const rotulo=document.createElement('label');
  rotulo.className='banner-real-arquivo';
- rotulo.textContent='Foto do banner (JPG, PNG ou WebP)';
+ rotulo.textContent='Foto do quadro 1 (JPG, PNG ou WebP)';
  const escolher=document.createElement('input');
  escolher.id='akitemmBannerArquivoOperador';escolher.type='file';
  escolher.accept='image/jpeg,image/png,image/webp';
@@ -135,7 +136,7 @@
   modo.value=atual.modo||(atual.colunas===1?'INTEIRA':'PREENCHER');
   mostrarCampos();
   estado.textContent='';
-  if(!dialogo.open)dialogo.showModal();
+  if(!dialogo.open){parar();dialogo.showModal();}
  }
  mais.addEventListener('click',e=>{e.preventDefault();abrirFormulario();});
  function visiveis(){
@@ -232,7 +233,7 @@
    acao('anterior').disabled=adicionando||slot.slot===1||bloqueio;
    acao('proximo').disabled=adicionando||
     slot.slot===slots[slots.length-1].slot||bloqueio;
-   acao('remover').disabled=adicionando||!imagem||bloqueio;
+   acao('remover').disabled=adicionando||!slot.temImagem||bloqueio;
   }
  }
  async function carregar(){
@@ -288,6 +289,61 @@
    estado.textContent='Não foi possível criar o banner: '+e.message;
    await carregar();
   }finally{bloqueio=false;rodar();}
+ }
+ async function salvarComposicao(){
+  if(bloqueio||!operador||!current()||current().adicionar)return;
+  const atual=current(),n=Number(colunas.value);
+  const inputs=[escolher,...fotosExtras.map(x=>x.arquivo)];
+  const fotos=inputs.slice(0,n);
+  const layoutMudou=atual.colunas!==n||atual.modo!==modo.value;
+  if(!layoutMudou&&!fotos.some(x=>x.files?.length)){
+   estado.textContent='Escolha uma foto ou mude o formato do banner.';return;
+  }
+  bloqueio=true;parar();
+  controles.querySelectorAll('button').forEach(b=>{b.disabled=true;});
+  try{
+   const sessao=await requisitar('/api/admin/comercial/sessao');
+   if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<20)
+    throw Error('SESSAO_OPERADOR_INVALIDA');
+   const auth={'X-Loop-Admin-Csrf':sessao.csrfToken};
+   const base='/api/admin/akitemm/banners/'+atual.slot;
+   let escolhido=atual;
+   async function executar(url,method,body,mime){
+    const r=await requisitar(url,{method,headers:{
+     ...auth,'X-Banner-Revisao-Esperada':String(escolhido.revisao),
+     ...(mime?{'Content-Type':mime}:{})},
+     ...(body===undefined?{}:{body})
+    });
+    slots=r.slots;
+    escolhido=slots.find(x=>x.slot===atual.slot);
+    if(!escolhido)throw Error('BANNER_NAO_CONFIRMADO');
+   }
+   if(layoutMudou){
+    estado.textContent='Salvando formato dos quadros...';
+    await executar(base+'/layout','POST',JSON.stringify({
+     colunas:n,modo:modo.value,revisaoEsperada:escolhido.revisao
+    }),'application/json');
+   }
+   for(let i=0;i<n;i++){
+    const foto=fotos[i].files?.[0];
+    if(!foto)continue;
+    if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||
+       foto.size<40||foto.size>4*1024*1024)
+     throw Error('A foto '+(i+1)+' deve ser JPG, PNG ou WebP de até 4 MB.');
+    estado.textContent='Salvando foto '+(i+1)+' de '+n+'...';
+    await executar(i===0?base+'/imagem':base+'/foto/'+(i+1),
+     'PUT',foto,foto.type);
+   }
+   estado.textContent=escolhido.publicado?
+    'Banner publicado com '+n+' foto(s).':
+    'Formato salvo. Adicione as fotos que faltam para publicar.';
+   fotos.forEach(x=>{x.value='';});
+   indice=slots.findIndex(x=>x.slot===atual.slot);
+   renderizar();
+  }catch(e){
+   estado.textContent='Não foi possível salvar: '+e.message;
+   await carregar();
+  }finally{bloqueio=false;renderizar();rodar();}
  }
  async function salvar(acao,arquivo=null,direcao=0){
   if(bloqueio||!operador||!current())return;
@@ -354,9 +410,7 @@
   if(!botao||!operador||bloqueio)return;
   const acao=botao.dataset.acao;
   if(acao==='foto'){
-   const f=escolher.files?.[0];
-   if(!f){estado.textContent='Selecione uma imagem antes de salvar.';return;}
-   void salvar('foto',f);return;
+   void salvarComposicao();return;
   }
   if(acao==='remover'&&!window.confirm(
    'Excluir esta foto da AKITEMM? Os outros banners continuam iguais.'))return;
