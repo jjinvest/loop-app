@@ -15,24 +15,39 @@
  let visitante=true,operadorAtivo=false,clienteNick=null,csrfLoja=null;
  const visaoClienteLoja=new URLSearchParams(location.search)
   .get('visao')==='cliente';
- // A foto do cabeçalho da loja é a mesma imagem privada da conta LOOP.
- // Nunca usar o retrato do cliente numa sessão de operador ou vice-versa.
+ // Foto individual por identidade REAL autenticada, sem exceção por nick:
+ // cada cliente vê a sua; o operador vê a sua, nos dois sistemas.
+ // Um modo visual não troca a credencial nem assume a identidade de cliente.
  const fotoTitular=$('akitemmFotoTitular');
- let consultaFotoLoja=0;
+ let consultaFotoLoja=0,caminhoFotoAtual=null;
  async function sincronizarFotoLoja(){
   if(!fotoTitular)return;
   const consulta=++consultaFotoLoja;
-  fotoTitular.hidden=true;
-  fotoTitular.removeAttribute('src');
-  if((visitante&&!operadorAtivo)||(operadorAtivo&&visaoClienteLoja))return;
-  const caminho=operadorAtivo?
+  // A fonte depende SOMENTE da sessão real, nunca da aba nem do parâmetro
+  // visao. A prévia do cliente não autentica outro cliente e não acessa
+  // nenhuma foto pessoal dele.
+  const bloqueado=visitante&&!operadorAtivo;
+  const caminho=bloqueado?null:operadorAtivo?
    '/api/admin/operador/foto-perfil':'/api/contas/foto-perfil';
+  if(!caminho){
+   caminhoFotoAtual=null;fotoTitular.hidden=true;
+   fotoTitular.removeAttribute('src');return;
+  }
+  // Nunca conservar o retrato de outro perfil ao trocar de sessão.
+  if(caminhoFotoAtual!==caminho){
+   caminhoFotoAtual=caminho;
+   fotoTitular.hidden=true;fotoTitular.removeAttribute('src');
+  }
   try{
    const r=await fetch(caminho,{credentials:'same-origin',cache:'no-store'});
    if(consulta!==consultaFotoLoja)return;
    if(!r.ok||!['image/jpeg','image/png','image/webp'].includes(
-    r.headers.get('content-type')?.split(';')[0]))return;
-   // URL de mesma origem autenticada: funciona sob a CSP sem blob:.
+    r.headers.get('content-type')?.split(';')[0])){
+    fotoTitular.hidden=true;fotoTitular.removeAttribute('src');return;
+   }
+   // Duas consultas podem ocorrer juntas no Android (pageshow/focus).
+   // A última vence SEM esconder uma imagem já carregada no mesmo perfil.
+   const url=caminho+'?revisao='+Date.now()+'-'+consulta;
    fotoTitular.onload=()=>{
     if(consulta===consultaFotoLoja)fotoTitular.hidden=false;
    };
@@ -41,17 +56,25 @@
      fotoTitular.hidden=true;fotoTitular.removeAttribute('src');
     }
    };
-   fotoTitular.src=caminho+'?versao='+Date.now();
+   fotoTitular.src=url;
   }catch{
-   if(consulta===consultaFotoLoja)fotoTitular.hidden=true;
+   if(consulta===consultaFotoLoja){
+    fotoTitular.hidden=true;fotoTitular.removeAttribute('src');
+   }
   }
  }
  // Quando uma foto é trocada em outra aba do LOOP, refletir na loja
  // assim que o cliente voltar. Sem armazenamento de fotografias no navegador.
- window.addEventListener('pageshow',()=>{void sincronizarFotoLoja();});
- window.addEventListener('focus',()=>{void sincronizarFotoLoja();});
+ async function revalidarFotoDaSessao(){
+  // Ao retornar de outra aba ou login, primeiro revalidar o papel REAL.
+  // Nunca reaproveitar foto do perfil anterior em mudança de sessão.
+  await atualizarAtalhoOperadorReal();
+  await sincronizarFotoLoja();
+ }
+ window.addEventListener('pageshow',()=>{void revalidarFotoDaSessao();});
+ window.addEventListener('focus',()=>{void revalidarFotoDaSessao();});
  document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden)void sincronizarFotoLoja();
+  if(!document.hidden)void revalidarFotoDaSessao();
  });
  let carrinhoOcupado=false;
  const quantidadesCarrinho=new Map();
@@ -408,9 +431,9 @@
    exibir(d?.operador===true);
   }catch{exibir(false);}
  }
+ // A revalidação de sessão/foto acima já cobre pageshow e focus,
+ // sem uma segunda consulta concorrente ao papel de usuário.
  void atualizarAtalhoOperadorReal();
- addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
- addEventListener('focus',()=>void atualizarAtalhoOperadorReal());
 
  // Carrinho interno real: item e quantidade ficam no SQLite do titular.
  // Nao simula dinheiro, preço, frete, pagamento, ordem ou posicao LOOP.

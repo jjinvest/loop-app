@@ -25,37 +25,9 @@
    operadorAutenticado=r.operador===true;
   }catch{operadorAutenticado=false;}
   operador=operadorAutenticado&&!visaoClienteSolicitada;
-  sincronizarAlternanciaVisao();
+  document.getElementById('akitemmAlternarVisao')?.remove();
   sincronizarEditorOfertas();
   prepararAlcas();
- }
- function sincronizarAlternanciaVisao(){
-  const id='akitemmAlternarVisao';
-  let nav=document.getElementById(id);
-  if(!operadorAutenticado){nav?.remove();return;}
-  const filtro=document.getElementById('akitemmFiltroOfertas');
-  const filtros=filtro?.closest('.akitemm-busca-filtros');
-  if(!filtros)return;
-  if(!nav){
-   nav=document.createElement('nav');
-   nav.id=id;
-   nav.setAttribute('aria-label','Alternar visão da AKITEMM');
-   nav.style.cssText='display:flex;justify-content:center;padding:10px 0 14px';
-   filtros.insertAdjacentElement('beforebegin',nav);
-  }
-  let acao=nav.querySelector('a');
-  if(!acao){
-   acao=document.createElement('a');
-   acao.className='akitemm-chip';
-   acao.style.cssText='display:inline-flex;align-items:center;justify-content:center;'+
-    'min-height:48px;text-align:center;font-weight:700;text-decoration:none;'+
-    'border:1px solid #ba9a68;border-radius:24px;padding:12px 22px;'+
-    'background:linear-gradient(110deg,#30271c,#171f2a);color:#f4d9a0';
-   nav.append(acao);
-  }
-  acao.href=visaoClienteSolicitada?'/loja?visao=operador':'/loja?visao=cliente';
-  acao.textContent=visaoClienteSolicitada?
-   'Visão do Administrador':'Visão do Cliente';
  }
  function sincronizarEditorOfertas(){
   const id='akitemmGerenciarOfertasReal';
@@ -1722,7 +1694,7 @@
  addEventListener('loop:operador-entrou',()=>void verificarOperador());
  addEventListener('loop:operador-saiu',()=>{
   operador=false;operadorAutenticado=false;
-  sincronizarAlternanciaVisao();
+  document.getElementById('akitemmAlternarVisao')?.remove();
   sincronizarEditorOfertas();prepararAlcas();desfazerArrasto();
   if(temporizadorAvisoArrasto!==null){
    clearTimeout(temporizadorAvisoArrasto);temporizadorAvisoArrasto=null;

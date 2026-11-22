@@ -50,51 +50,14 @@ test('mensagem de moldura some sozinha após 4 segundos e outra mensagem reinici
  visor.avisarArrasto('Nova mensagem.');
  assert.equal(anexos,2,'novo aviso aparece após o anterior sumir');
 });
-function simularVisao(autorizado,cliente){
- const codigo=recortar(' function sincronizarAlternanciaVisao(){',
-  ' function sincronizarEditorOfertas(){');
- let nav=null,link=null;
- const filtros={insertAdjacentElement(pos,n){
-  assert.equal(pos,'beforebegin');
-  nav=n;
- }};
- const filtro={closest(seletor){
-  assert.equal(seletor,'.akitemm-busca-filtros');return filtros;
- }};
- const documento={
-  getElementById(id){
-   if(id==='akitemmAlternarVisao')return nav;
-   if(id==='akitemmFiltroOfertas')return filtro;
-   return null;
-  },
-  createElement(tag){
-   if(tag==='nav')return {
-    id:null,style:{},setAttribute(){},
-    querySelector(){return link;},append(el){link=el;},
-    remove(){nav=null;}
-   };
-   assert.equal(tag,'a');
-   return {className:'',style:{}};
-  }
- };
- const rodar=new Function('document','operadorAutenticado',
-  'visaoClienteSolicitada',codigo+'; return sincronizarAlternanciaVisao');
- rodar(documento,autorizado,cliente)();
- return {nav,link};
-}
-test('só operador autenticado recebe alternância; os dois sentidos são reversíveis',()=>{
- const visitante=simularVisao(false,true);
- assert.equal(visitante.nav,null);
- const operador=simularVisao(true,false);
- assert.equal(operador.link?.href,'/loja?visao=cliente');
- assert.equal(operador.link?.textContent,'Visão do Cliente');
- const cliente=simularVisao(true,true);
- assert.equal(cliente.link?.href,'/loja?visao=operador');
- assert.equal(cliente.link?.textContent,'Visão do Administrador');
+test('alternância de visão fica no LOOP, sem botão duplicado na AKITEMM',()=>{
+ assert.doesNotMatch(editor,/function sincronizarAlternanciaVisao/);
+ assert.doesNotMatch(editor,/Visão do Administrador|Visão do Cliente/);
+ assert.match(editor,/document.getElementById\('akitemmAlternarVisao'\)\?\.remove\(\)/);
  assert.match(editor,/operador=operadorAutenticado&&!visaoClienteSolicitada/);
  assert.match(editor,/if\(!operador\)\{atual\?\.remove\(\)/);
- assert.match(editor,/if\(!operador\)\{/);
  assert.match(editor,/if\(!operador\|\|arrasto\|\|dialogo\?\.open/);
+ assert.match(loop,/\/loja\?visao=/);
 });
 test('prévia cliente nunca herda dados financeiros, identidade ou permissões de edição',()=>{
  assert.match(loja,/operadorAtivo=false,clienteNick=null,csrfLoja=null/);
@@ -103,7 +66,9 @@ test('prévia cliente nunca herda dados financeiros, identidade ou permissões d
  assert.match(loja,/Nenhuma conta pessoal foi acessada/);
  assert.match(loja,/if\(operadorAtivo\)\{\s*const pedidos=\$\('pedidosLojaLoop'\)/);
  assert.match(loja,/if\(visitante\|\|operadorAtivo\|\|!csrfLoja\)return/);
- assert.match(loja,/if\(\(visitante&&!operadorAtivo\)\|\|\(operadorAtivo&&visaoClienteLoja\)\)return/);
+ assert.match(loja,/const bloqueado=visitante&&!operadorAtivo;/);
+ assert.doesNotMatch(loja,/operadorAtivo&&visaoClienteLoja\)\)/);
+ assert.match(loja,/const caminho=bloqueado\?null:operadorAtivo\?/);
 });
 test('navegação entre LOOP e AKITEMM preserva a visão sem conceder poder ao cliente',()=>{
  assert.match(loop,/\/loja\?visao=/);

@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b"
+      "sha": "102298e4983b47bf18ea30992d489cb7f860da45"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1456,11 +1456,11 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "223cdfe58a23ed5cc4622f727644b93e173fc849"
+      "sha": "a161fb5b65dd94d595e47f513b7975a019bb8dc3"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "43e995265f08df4ac63b3a5637706b9200a9a347"
+      "sha": "d35e2b05282b0ee7d65fe28597e38156e699b2be"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -1508,7 +1508,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "5fc627577e6096bb8afe5cf5c659bb3547ae8457"
+      "sha": "69676c58d784b09ba46bcb2f11b90c849715302d"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -1884,7 +1884,7 @@
     },
     {
       "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
-      "sha": "f1ba18d4a50e8aed1ae89f3be9e0cf9e24859ee8"
+      "sha": "9ea392defc30ea39ec68f1b256a70275dc356226"
     },
     {
       "path": "test/akitemm-config-loja-demo.test.js",
@@ -2372,7 +2372,7 @@
     },
     {
       "path": "test/contrato-links-definitivos-real.test.js",
-      "sha": "858bf9494c4adc380f636c693fdca37b595cadf7"
+      "sha": "2fbccd874b020d75360f6bed4e0af001eaa1baa7"
     },
     {
       "path": "test/contrato-mensagens-operacionais-real.test.js",
@@ -2615,6 +2615,10 @@
       "sha": "5464f6a1b8b12a4fe25a31ddfaaf8ed70b073e44"
     },
     {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "sha": "606f144d79a319a5361130e00d7cef45313695d5"
+    },
+    {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
       "sha": "bc1605b3298310cc9ef60396fc509caf52a40fce"
     },
@@ -2740,7 +2744,7 @@
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
-      "sha": "b24ccb43506fd6510517b9c59858c2953de7d4fe"
+      "sha": "1d954ecb4b2a31a76ab4f853ecc9dcef2ef2271a"
     },
     {
       "path": "test/interface-loop-03.test.js",
@@ -3928,6 +3932,162 @@
       "antes": "6023c582166d352f26f9a059341d610c433bad62",
       "depois": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b",
       "objetivo": "Atualização autorizada em 22/11/2026 dos testes de navegador e relógio para novo placar real por hora: detalhes exclusivos no Tabuleiro, posição selecionada sem relógio."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "223cdfe58a23ed5cc4622f727644b93e173fc849",
+      "depois": "48595b04d60be979ad35060416821fd1114a8c28",
+      "objetivo": "Pedido de 22/11/2026: foto já cadastrada no LOOP aparece também na AKITEMM para cliente e operador, mantendo sessões separadas, sem alterar cadastro, molduras, dinheiro ou motor."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loop.js",
+      "antes": "43e995265f08df4ac63b3a5637706b9200a9a347",
+      "depois": "d35e2b05282b0ee7d65fe28597e38156e699b2be",
+      "objetivo": "Pedido de 22/11/2026: foto já cadastrada no LOOP aparece também na AKITEMM para cliente e operador, mantendo sessões separadas, sem alterar cadastro, molduras, dinheiro ou motor."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": null,
+      "depois": "b87f920af324803842eb3428da0912c0ca25a267",
+      "objetivo": "Pedido de 22/11/2026: foto já cadastrada no LOOP aparece também na AKITEMM para cliente e operador, mantendo sessões separadas, sem alterar cadastro, molduras, dinheiro ou motor."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b",
+      "depois": "20884598628b0707df0768ade39534d55087116d",
+      "objetivo": "Testar em Chromium PC e Android a foto já salva no LOOP, visível nas visões operador e cliente da AKITEMM, preservando identidade do titular."
+    },
+    {
+      "path": "test/contrato-links-definitivos-real.test.js",
+      "antes": "858bf9494c4adc380f636c693fdca37b595cadf7",
+      "depois": "2fbccd874b020d75360f6bed4e0af001eaa1baa7",
+      "objetivo": "Contrato real aceita hash de versão no JS da loja para evitar cache antigo no Chrome Android, sem alterar os links públicos."
+    },
+    {
+      "path": "test/interface-aprovada-identidade-real.test.js",
+      "antes": "b24ccb43506fd6510517b9c59858c2953de7d4fe",
+      "depois": "1d954ecb4b2a31a76ab4f853ecc9dcef2ef2271a",
+      "objetivo": "Contrato de interface permite URL versionada de JS da loja no Chrome Android, sem alterar a tela ou expor outras origens."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "48595b04d60be979ad35060416821fd1114a8c28",
+      "depois": "13ff49dca91e276f68077ed357746740308f160a",
+      "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "20884598628b0707df0768ade39534d55087116d",
+      "depois": "efdf97930665105bab08ec1c39b854105bc2c284",
+      "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
+    },
+    {
+      "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
+      "antes": "f1ba18d4a50e8aed1ae89f3be9e0cf9e24859ee8",
+      "depois": "6f868adf4e080c10a4f2a2c5fcfae4426937b95f",
+      "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "b87f920af324803842eb3428da0912c0ca25a267",
+      "depois": "380428654e5d6579333ec1ee2cd3ecee7b6d93d8",
+      "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "380428654e5d6579333ec1ee2cd3ecee7b6d93d8",
+      "depois": "4f44cfcea8563f8108f4cb7be69d902ec28acfe8",
+      "objetivo": "Assegurar que o avatar na loja pertence ao cliente autenticado ou ao operador, não à visualização pública administrativa."
+    },
+    {
+      "path": "src/producao/operador-loja-fotos-real.js",
+      "antes": "5fc627577e6096bb8afe5cf5c659bb3547ae8457",
+      "depois": "69676c58d784b09ba46bcb2f11b90c849715302d",
+      "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "13ff49dca91e276f68077ed357746740308f160a",
+      "depois": "b14d6df476e0f0da445e0f0610fb71cd769285f9",
+      "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "4f44cfcea8563f8108f4cb7be69d902ec28acfe8",
+      "depois": "57215f77ae4e3dc29749390e54c62c6ad3dc0ae9",
+      "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "efdf97930665105bab08ec1c39b854105bc2c284",
+      "depois": "57b0ae5abe312be8715461c0f98bce031d90f507",
+      "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
+    },
+    {
+      "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
+      "antes": "6f868adf4e080c10a4f2a2c5fcfae4426937b95f",
+      "depois": "6c94dd828602a5c487047b3ded92a561a5cb57f9",
+      "objetivo": "Contrato de regressão atualizado conforme decisão do proprietário: alternância é feita só no LOOP, a AKITEMM exibe avatar próprio do operador e permanece isolada dos dados dos clientes."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "b14d6df476e0f0da445e0f0610fb71cd769285f9",
+      "depois": "9ab86ea37a0003a2ceffc8fe44c1700db86ccc76",
+      "objetivo": "Regra permanente de 22/11/2026: cliente autenticado usa apenas foto de cliente, operador autenticado usa apenas foto de operador; prévia pública sem cliente identificado nunca herda retrato do operador. Botão duplicado permanece removido."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "57215f77ae4e3dc29749390e54c62c6ad3dc0ae9",
+      "depois": "10e6893ae5ce906fdb322a43ff1e46ba8967d75c",
+      "objetivo": "Regra permanente de 22/11/2026: cliente autenticado usa apenas foto de cliente, operador autenticado usa apenas foto de operador; prévia pública sem cliente identificado nunca herda retrato do operador. Botão duplicado permanece removido."
+    },
+    {
+      "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
+      "antes": "6c94dd828602a5c487047b3ded92a561a5cb57f9",
+      "depois": "e504051971d606d614cb8d594e1b39f530a5e662",
+      "objetivo": "Regra permanente de 22/11/2026: cliente autenticado usa apenas foto de cliente, operador autenticado usa apenas foto de operador; prévia pública sem cliente identificado nunca herda retrato do operador. Botão duplicado permanece removido."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "57b0ae5abe312be8715461c0f98bce031d90f507",
+      "depois": "24a1b78071bfcde4f811e4cbe940558414aaf5f4",
+      "objetivo": "Regra permanente de 22/11/2026: cliente autenticado usa apenas foto de cliente, operador autenticado usa apenas foto de operador; prévia pública sem cliente identificado nunca herda retrato do operador. Botão duplicado permanece removido."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "9ab86ea37a0003a2ceffc8fe44c1700db86ccc76",
+      "depois": "4efb490229eae5c43f9885bdcce60720f8de752d",
+      "objetivo": "Contrato geral do sistema 22/11/2026: foto é sempre escolhida pelo usuário/perfil autenticado, cliente individual ou operador; modo de visualização não troca identidade. Única integração LOOP/AKITEMM, sem mascarar nem duplicar fotos."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "10e6893ae5ce906fdb322a43ff1e46ba8967d75c",
+      "depois": "05a81a9a05e2be0f81f8f593aba611413ffbdb06",
+      "objetivo": "Contrato geral do sistema 22/11/2026: foto é sempre escolhida pelo usuário/perfil autenticado, cliente individual ou operador; modo de visualização não troca identidade. Única integração LOOP/AKITEMM, sem mascarar nem duplicar fotos."
+    },
+    {
+      "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
+      "antes": "e504051971d606d614cb8d594e1b39f530a5e662",
+      "depois": "9ea392defc30ea39ec68f1b256a70275dc356226",
+      "objetivo": "Contrato geral do sistema 22/11/2026: foto é sempre escolhida pelo usuário/perfil autenticado, cliente individual ou operador; modo de visualização não troca identidade. Única integração LOOP/AKITEMM, sem mascarar nem duplicar fotos."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "24a1b78071bfcde4f811e4cbe940558414aaf5f4",
+      "depois": "102298e4983b47bf18ea30992d489cb7f860da45",
+      "objetivo": "Contrato geral do sistema 22/11/2026: foto é sempre escolhida pelo usuário/perfil autenticado, cliente individual ou operador; modo de visualização não troca identidade. Única integração LOOP/AKITEMM, sem mascarar nem duplicar fotos."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "4efb490229eae5c43f9885bdcce60720f8de752d",
+      "depois": "a161fb5b65dd94d595e47f513b7975a019bb8dc3",
+      "objetivo": "Revalidação única da sessão real antes de ler avatar quando usuário retorna ao LOOP/AKITEMM: evita corrida Android que mostra foto errada em troca de acesso; aplica regra global a todos."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "05a81a9a05e2be0f81f8f593aba611413ffbdb06",
+      "depois": "606f144d79a319a5361130e00d7cef45313695d5",
+      "objetivo": "Revalidação única da sessão real antes de ler avatar quando usuário retorna ao LOOP/AKITEMM: evita corrida Android que mostra foto errada em troca de acesso; aplica regra global a todos."
     }
   ]
 }

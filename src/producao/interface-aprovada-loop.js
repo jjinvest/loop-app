@@ -149,7 +149,10 @@ function renderizarLojaAprovada(){
   '');
  html=trocarExato(html,
   '<script src="/laboratorio/loja.js" defer></script>',
-  '<script src="/identidade/assets/loja.js" defer></script>');
+  '<script src="/identidade/assets/loja.js?rev='+
+   createHash('sha256').update(fs.readFileSync(path.join(__dirname,
+    'interface-aprovada-loja.js'))).digest('hex').slice(0,16)+
+   '" defer></script>');
  // Reutiliza o CSS horizontal aprovado (dez abas, 40 posições cada)
  // e conecta somente o comportamento de toque do operador real.
  html=trocarExato(html,'</head>',

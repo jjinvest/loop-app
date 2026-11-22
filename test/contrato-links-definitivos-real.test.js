@@ -41,7 +41,7 @@ test('contrato definitivo: loja abre sem nick; convite vai para a loja e nao par
  assert.equal(inicio.status,200,'o dominio publico nunca pede sessao para a vitrine');
  const html=await inicio.text();
  assert.ok(html.includes('id="catalogoLojaLoop"'));
- assert.ok(html.includes('src="/identidade/assets/loja.js"'));
+ assert.match(html,/src="\/identidade\/assets\/loja\.js\?rev=[a-f0-9]{16}"/);
  const vitrineConvite=await acessar('/loja?ref=VILELA');
  assert.equal(vitrineConvite.status,200,'a vitrine pelo link indicado e a mesma');
  assert.equal(await vitrineConvite.text(),html,'convite nao pode criar tela paralela');
