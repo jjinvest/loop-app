@@ -81,6 +81,38 @@ class BannersEscritorioCandidatoSQLite{
    return {...this.listar(),novoSlot:slot};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+ excluirEspaco({slot,revisaoEsperada}={}){
+  slotValido(slot);
+  // As quatro molduras aprovadas não podem ser apagadas desta tabela.
+  if(slot<=4)falha('BANNER_ESPACO_BASE_PROTEGIDO');
+  if(!Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<0)
+   falha('BANNER_REVISAO_INVALIDA');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=this.banco.prepare(
+    'SELECT revisao FROM loop_banner_escritorio_extensao WHERE slot=?'
+   ).get(slot);
+   if(!atual||atual.revisao!==revisaoEsperada)
+    falha('BANNER_CONFLITO_REVISAO');
+   // Todas as fotos e o layout deste espaço são retirados juntos,
+   // sem atingir as outras posições ou qualquer tabela financeira.
+   this.banco.prepare(
+    'DELETE FROM loop_banner_mosaico_foto WHERE slot=?'
+   ).run(slot);
+   this.banco.prepare(
+    'DELETE FROM loop_banner_mosaico_layout WHERE slot=?'
+   ).run(slot);
+   const deletado=this.banco.prepare(
+    'DELETE FROM loop_banner_escritorio_extensao WHERE slot=? AND revisao=?'
+   ).run(slot,revisaoEsperada);
+   if(deletado.changes!==1)falha('BANNER_CONFLITO_REVISAO');
+   this.banco.exec('COMMIT');
+   return this.listar();
+  }catch(e){
+   this.banco.exec('ROLLBACK');
+   throw e;
+  }
+ }
  listar(){
   return {quantidadeMaxima:MAX_SLOTS,slots:this.mosaico.listar([
    ...this.banco.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,revisao,atualizado_em,enquadramento FROM loop_banner_escritorio_manual ORDER BY slot').all(),
