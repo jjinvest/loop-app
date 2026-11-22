@@ -30,10 +30,21 @@
  dialogo.innerHTML='<form method="dialog" class="banner-real-caixa">'+
   '<div class="banner-real-cabecalho"><h3 id="loop03BannerTituloEditor">Banner LOOP</h3>'+
   '<button type="submit" class="banner-real-fechar" aria-label="Fechar">×</button></div>'+
-  '<p class="banner-real-explicacao">Escolha a arte. O enquadramento é automático e mostra a imagem inteira.</p>'+
+  '<p class="banner-real-explicacao">Escolha o formato e envie até três fotos para um banner.</p>'+
+   '<label class="banner-real-arquivo">Formato do banner'+
+   '<select id="loop03BannerColunasReal"><option value="1">1 foto comprida</option>'+
+   '<option value="2">2 quadros lado a lado</option>'+
+   '<option value="3">3 quadros lado a lado</option></select></label>'+
+   '<label class="banner-real-arquivo">Enquadramento'+
+   '<select id="loop03BannerModoReal"><option value="PREENCHER">Preencher os quadrinhos</option>'+
+   '<option value="INTEIRA">Mostrar foto inteira</option></select></label>'+
   '<label class="banner-real-arquivo">Foto do banner (JPG, PNG ou WebP)'+
   '<input id="loop03BannerArquivoReal" type="file" accept="image/jpeg,image/png,image/webp"></label>'+
   '<img id="loop03BannerPreviaReal" class="banner-real-previa" alt="Prévia da foto" hidden>'+
+   '<label class="banner-real-arquivo banner-foto-extra" data-posicao="2" hidden>'+
+   'Foto do quadro 2<input id="loop03BannerArquivo2" type="file" accept="image/jpeg,image/png,image/webp"></label>'+
+   '<label class="banner-real-arquivo banner-foto-extra" data-posicao="3" hidden>'+
+   'Foto do quadro 3<input id="loop03BannerArquivo3" type="file" accept="image/jpeg,image/png,image/webp"></label>'+
   '<p id="loop03BannerEditorStatus" role="status"></p>'+
   '<div class="banner-real-acoes">'+
   '<button type="button" id="loop03BannerSalvarReal" class="banner-real-salvar">Salvar banner</button>'+
@@ -45,6 +56,17 @@
  const status=dialogo.querySelector('#loop03BannerEditorStatus');
  const salvarBotao=dialogo.querySelector('#loop03BannerSalvarReal');
  const excluirBotao=dialogo.querySelector('#loop03BannerExcluirReal');
+ const colunas=dialogo.querySelector('#loop03BannerColunasReal');
+ const modo=dialogo.querySelector('#loop03BannerModoReal');
+ const extras=[2,3].map(n=>dialogo.querySelector('#loop03BannerArquivo'+n));
+ const camposExtras=[...dialogo.querySelectorAll('.banner-foto-extra')];
+ function mostrarCampos(){
+  camposExtras.forEach(x=>{
+   const visivel=Number(x.dataset.posicao)<=Number(colunas.value);
+   x.hidden=!visivel;x.style.display=visivel?'flex':'none';
+  });
+ }
+ colunas.addEventListener('change',mostrarCampos);
  let leitura=0;
  // Fotos da galeria Android podem trazer EXIF, bytes finais extras ou
  // codificação JPEG que a verificação binária estrita do servidor rejeita.
@@ -194,6 +216,11 @@
   dialogo.querySelector('#loop03BannerTituloEditor').textContent=
    'Banner '+slotEditor+' · LOOP';
   arquivo.value='';previa.hidden=true;previa.removeAttribute('src');
+  const atual=dados?.slots?.find(x=>x.slot===slotEditor);
+  colunas.value=String(atual?.colunas||1);
+  modo.value=atual?.modo||(atual?.colunas===1?'INTEIRA':'PREENCHER');
+  extras.forEach(x=>{x.value='';});
+  mostrarCampos();
   status.textContent='';
   excluirBotao.disabled=!dados?.slots?.find(x=>x.slot===slotEditor)?.temImagem;
   if(!dialogo.open)dialogo.showModal();
