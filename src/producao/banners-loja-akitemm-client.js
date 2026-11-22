@@ -438,7 +438,7 @@
      'PUT',pronta,'image/jpeg');
    }
    estado.textContent=escolhido.publicado?
-    'Banner visível ao cliente; os quadros vazios podem ser preenchidos depois.':
+    'Banner salvo e publicado. Os quadros vazios podem ser preenchidos depois.':
     'Formato salvo. Envie ao menos uma foto para exibir o banner.';
    fotos.forEach(x=>{x.value='';});
    indice=slots.findIndex(x=>x.slot===atual.slot);
