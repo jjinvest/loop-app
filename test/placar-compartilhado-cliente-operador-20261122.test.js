@@ -15,14 +15,13 @@ const rotinas=codigo.slice(inicio,fim);
 function cenario(){
  const elementos=Object.fromEntries([
   'painelConta','loop03TotalIntegrado','loop03Giros24Integrado',
-  'loop03NumeroIntegrado'
+  'loop03LuzesHoraIntegrado','loop03NumeroIntegrado'
  ].map(id=>[id,{hidden:id==='painelConta'?false:null,textContent:'—'}]));
  const agenda={
   origem:'CATRACA_REAL_MESMO_SQLITE',somenteLeitura:true,
   luzesDoRelogioCompartilhado:true,girosReaisHora:2,
-  luzesRelogio24h:6,ciclosRelogio24h:1,
-  girosReaisHoje:2,girosReais24h:2,eventosReaisNoCiclo:3,
   luzesRelogio24h:8,ciclosRelogio24h:1,
+  girosReaisHoje:2,girosReais24h:2,eventosReaisNoCiclo:3,
   ciclosReaisConcluidos:0
  };
  const motor={
@@ -58,7 +57,15 @@ function cenario(){
    return {ok:!!retorno,json:async()=>retorno};
   },
   visorCatraca:{
-   registrarAgenda:x=>visores.push(['agenda',x]),
+   registrarAgenda:x=>{
+    visores.push(['agenda',x]);
+    if(!Number.isSafeInteger(x.ciclosRelogio24h)||
+       !Number.isSafeInteger(x.luzesRelogio24h))return;
+    elementos.loop03Giros24Integrado.textContent=
+     String(x.ciclosRelogio24h);
+    elementos.loop03LuzesHoraIntegrado.textContent=
+     String(x.luzesRelogio24h);
+   },
    observar:(g,e)=>visores.push(['eventos',g,e])
   }
  };
@@ -71,6 +78,7 @@ test('cliente e operador mostram os mesmos ciclos visuais em 24h, sem inventar g
  const x=cenario();
  await x.contexto.atualizarCliente();
  assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
+ assert.equal(x.elementos.loop03LuzesHoraIntegrado.textContent,'8');
  assert.equal(x.elementos.loop03TotalIntegrado.textContent,'0 / 10');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
@@ -88,15 +96,18 @@ test('atualizacao do relogio chega aos dois perfis sem recriar tela',async()=>{
  const x=cenario();
  await x.contexto.atualizarCliente();
  x.agenda.luzesRelogio24h=12;x.agenda.ciclosRelogio24h=2;
+ x.controle.luzesRelogio24h=12;x.controle.ciclosRelogio24h=2;
  x.agenda.girosReaisHora=4;x.agenda.girosReaisHoje=4;
  x.agenda.girosReais24h=4;x.cliente.catraca.giros=4;
  x.motor.catraca.giros=4;x.controle.girosTotais=4;
  x.controle.girosHoje=4;x.controle.giros24h=4;
  await x.contexto.atualizarCliente();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
+ assert.equal(x.elementos.loop03LuzesHoraIntegrado.textContent,'12');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
+ assert.equal(x.elementos.loop03LuzesHoraIntegrado.textContent,'12');
  assert.equal(x.elementos.loop03NumeroIntegrado.textContent,'3 / 6');
  assert.equal(x.visores.every(v=>v[0]==='eventos'||v[1]===x.agenda),true);
 });
