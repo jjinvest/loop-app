@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "1324325d603e312d5df59c4d41054a5e1c133d14"
+      "sha": "c216578fd91ed77a2a2c69f7e53dc92ee32e9877"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1320,7 +1320,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "0cbc27e25209d89f3853f8147a8259e2fbac5b78"
+      "sha": "60c1388b32396d5a62b7e6fcc28b8b91052e0fa6"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1332,7 +1332,7 @@
     },
     {
       "path": "src/producao/banner-mosaico-sqlite.js",
-      "sha": "3481862dbd04faa56584693d05180a13483bbdc3"
+      "sha": "418bd12f967a23cf2229da92ed159b817c18d5a9"
     },
     {
       "path": "src/producao/banners-editor-real.css",
@@ -4936,6 +4936,27 @@
       "antes": "812c86667d804fbd16096f23e162bfb84cd986a6",
       "depois": "9ed58c36158e5ef8564530edcb6427183c36c0d1",
       "objetivo": "Acabamento do enquadramento panorâmico e prevenção de abertura acidental do editor ao deslizar no celular, sem alterar lógica do motor."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/banner-mosaico-sqlite.js",
+      "antes": "3481862dbd04faa56584693d05180a13483bbdc3",
+      "depois": "418bd12f967a23cf2229da92ed159b817c18d5a9",
+      "objetivo": "Ampliação autorizada de banners: preservar a estrutura anterior, validar restauração do backup cifrado das extensões e adaptar o teste de navegador ao botão + que cria novo banner. Sem tocar na lógica do motor, financeiro ou posições."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/backup-identidade-real.js",
+      "antes": "0cbc27e25209d89f3853f8147a8259e2fbac5b78",
+      "depois": "60c1388b32396d5a62b7e6fcc28b8b91052e0fa6",
+      "objetivo": "Ampliação autorizada de banners: preservar a estrutura anterior, validar restauração do backup cifrado das extensões e adaptar o teste de navegador ao botão + que cria novo banner. Sem tocar na lógica do motor, financeiro ou posições."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "1324325d603e312d5df59c4d41054a5e1c133d14",
+      "depois": "c216578fd91ed77a2a2c69f7e53dc92ee32e9877",
+      "objetivo": "Ampliação autorizada de banners: preservar a estrutura anterior, validar restauração do backup cifrado das extensões e adaptar o teste de navegador ao botão + que cria novo banner. Sem tocar na lógica do motor, financeiro ou posições."
     }
   ]
 }
