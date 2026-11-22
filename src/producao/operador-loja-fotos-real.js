@@ -6,7 +6,11 @@
  // IDs legados do catálogo central conservam letras maiúsculas e _.
  const ID=/^[A-Za-z0-9_-]{1,80}$/;
  const ID_NOVO=/^[a-z0-9-]{3,80}$/;
- let operador=false,dialogo=null,aberto=false;
+ let operador=false,operadorAutenticado=false,dialogo=null,aberto=false;
+ // A visualização de cliente não encerra nem amplia a sessão administrativa.
+ // Serve apenas para ocultar as ferramentas e mostrar a vitrine como público.
+ const visaoClienteSolicitada=new URLSearchParams(location.search)
+  .get('visao')==='cliente';
  const fetchJson=async(rota,opcoes={})=>{
   const res=await fetch(rota,{
    credentials:'same-origin',cache:'no-store',...opcoes
@@ -18,10 +22,40 @@
  async function verificarOperador(){
   try{
    const r=await fetchJson('/api/operador/estado');
-   operador=r.operador===true;
-  }catch{operador=false;}
+   operadorAutenticado=r.operador===true;
+  }catch{operadorAutenticado=false;}
+  operador=operadorAutenticado&&!visaoClienteSolicitada;
+  sincronizarAlternanciaVisao();
   sincronizarEditorOfertas();
   prepararAlcas();
+ }
+ function sincronizarAlternanciaVisao(){
+  const id='akitemmAlternarVisao';
+  let nav=document.getElementById(id);
+  if(!operadorAutenticado){nav?.remove();return;}
+  const filtro=document.getElementById('akitemmFiltroOfertas');
+  const filtros=filtro?.closest('.akitemm-busca-filtros');
+  if(!filtros)return;
+  if(!nav){
+   nav=document.createElement('nav');
+   nav.id=id;
+   nav.setAttribute('aria-label','Alternar visão da AKITEMM');
+   nav.style.cssText='display:flex;justify-content:center;padding:10px 0 14px';
+   filtros.insertAdjacentElement('beforebegin',nav);
+  }
+  let acao=nav.querySelector('a');
+  if(!acao){
+   acao=document.createElement('a');
+   acao.className='akitemm-chip';
+   acao.style.cssText='display:inline-flex;align-items:center;justify-content:center;'+
+    'min-height:48px;text-align:center;font-weight:700;text-decoration:none;'+
+    'border:1px solid #ba9a68;border-radius:24px;padding:12px 22px;'+
+    'background:linear-gradient(110deg,#30271c,#171f2a);color:#f4d9a0';
+   nav.append(acao);
+  }
+  acao.href=visaoClienteSolicitada?'/loja?visao=operador':'/loja?visao=cliente';
+  acao.textContent=visaoClienteSolicitada?
+   'Visão do Administrador':'Visão do Cliente';
  }
  function sincronizarEditorOfertas(){
   const id='akitemmGerenciarOfertasReal';
@@ -1307,8 +1341,12 @@
  // Arrastar e soltar e exclusivo do operador; visitantes apenas navegam.
  // No celular, use a alca: o resto do card continua com a rolagem natural.
  let arrasto=null,alvoVisual=null,suprimirCliqueAte=0,animacao=null;
- let anuncioArrasto=null;
+ let anuncioArrasto=null,temporizadorAvisoArrasto=null;
  const avisarArrasto=mensagem=>{
+  if(temporizadorAvisoArrasto!==null){
+   clearTimeout(temporizadorAvisoArrasto);
+   temporizadorAvisoArrasto=null;
+  }
   if(!anuncioArrasto){
    anuncioArrasto=document.createElement('div');
    anuncioArrasto.className='akitemm-arrasto-aviso';
@@ -1317,6 +1355,12 @@
    document.body.append(anuncioArrasto);
   }
   anuncioArrasto.textContent=mensagem;
+  // O aviso não fica sobre os produtos: desaparece sozinho após quatro segundos.
+  // Mensagem mais recente substitui a anterior e reinicia a contagem.
+  temporizadorAvisoArrasto=setTimeout(()=>{
+   anuncioArrasto?.remove();anuncioArrasto=null;
+   temporizadorAvisoArrasto=null;
+  },4000);
  };
  const posicaoCard=c=>{
   const p=Number(c?.dataset?.akitemmOrdem||c?.dataset?.akitemmSlot);
@@ -1610,7 +1654,13 @@
  addEventListener('focus',()=>void verificarOperador());
  addEventListener('loop:operador-entrou',()=>void verificarOperador());
  addEventListener('loop:operador-saiu',()=>{
-  operador=false;sincronizarEditorOfertas();prepararAlcas();desfazerArrasto();
+  operador=false;operadorAutenticado=false;
+  sincronizarAlternanciaVisao();
+  sincronizarEditorOfertas();prepararAlcas();desfazerArrasto();
+  if(temporizadorAvisoArrasto!==null){
+   clearTimeout(temporizadorAvisoArrasto);temporizadorAvisoArrasto=null;
+  }
+  anuncioArrasto?.remove();anuncioArrasto=null;
   if(dialogo?.open)dialogo.close();
  });
 })();
