@@ -20,6 +20,7 @@ const ARQUIVOS=Object.freeze({
  '/identidade/assets/loja.css':'../laboratorio/loja-cliente-demo.css',
  '/identidade/assets/loja.js':'./interface-aprovada-loja.js',
  '/identidade/assets/operador-fotos.js':'./operador-loja-fotos-real.js',
+ '/identidade/assets/loja-banners.js':'./banners-loja-akitemm-client.js',
  '/identidade/assets/vitrine-horizontal.css':'../candidato/vitrine-horizontal.css',
  '/identidade/assets/acabamento-loop.js':'../shared/acabamento-visual-loop.js'
 });
@@ -151,7 +152,8 @@ function renderizarLojaAprovada(){
  html=trocarExato(html,'</head>',
   '<link rel="stylesheet" href="/identidade/assets/vitrine-horizontal.css">'+
   '<script src="/identidade/assets/acabamento-loop.js" defer></script>'+
-  '<script src="/identidade/assets/operador-fotos.js" defer></script></head>');
+  '<script src="/identidade/assets/operador-fotos.js" defer></script>'+ 
+  '<script src="/identidade/assets/loja-banners.js" defer></script></head>');
  // Manter o visual aprovado: atualizar somente o destino dos acessos
  // administrativos e ocultar o link ate a sessao real ser confirmada.
  const botaoTopo=html.match(/<a id="akitemmOperadorMais"[\s\S]*?<\/a>/g);
