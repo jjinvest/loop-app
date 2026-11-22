@@ -172,7 +172,9 @@ function montarRotasCatalogoMidiaOperador({
     const b=req.body;
     if(!req.is('application/json')||!b||Array.isArray(b)||
        Object.keys(b).sort().join(',')!==
-       'categoria,marca,origem,precoCentavos,promocaoCentavos,quantidade,revisaoEsperada')
+       'categoria,marca,origem,precoCentavos,promocaoCentavos,quantidade,revisaoEsperada'&&
+       Object.keys(b).sort().join(',')!==
+       'categoria,corDescricao,marca,origem,precoCentavos,promocaoCentavos,quantidade,revisaoEsperada')
      return res.status(400).json({erro:'ANUNCIO_CAMPOS_INVALIDOS'});
     try{
      const atualizado=anunciosManuais.atualizar({
@@ -187,6 +189,38 @@ function montarRotasCatalogoMidiaOperador({
       codigo.includes('INVALIDO')||codigo.includes('INVALIDOS')?400:503)
       .json({erro:codigo});
     }
+   });
+ }
+ // Rascunhos do formulário não são publicados e ficam só no operador.
+ // As chaves são validadas pelo serviço e o SQLite guarda o conteúdo real.
+ if(anunciosManuais?.rascunhos){
+  const drafts=anunciosManuais.rascunhos;
+  app.get('/api/admin/catalogo-midia/rascunhos-formulario',
+   autorizarOperador,(_req,res)=>{
+    try{return res.set('Cache-Control','private, no-store')
+     .json({rascunhos:drafts.listar(),checkoutReal:false});}
+    catch{return res.status(503).json({erro:'RASCUNHO_LISTA_INDISPONIVEL'});}
+   });
+  app.post('/api/admin/catalogo-midia/rascunhos-formulario',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).sort().join(',')!=='campos,id,revisaoEsperada')
+     return res.status(400).json({erro:'RASCUNHO_REQUISICAO_INVALIDA'});
+    try{return res.json(drafts.salvar(b));}
+    catch(e){
+     const cod=e.codigo||'RASCUNHO_SALVAMENTO_INDISPONIVEL';
+     return res.status(cod.includes('CONCORRENTE')?409:
+      cod.includes('LIMITE')?429:
+      cod.includes('INVALID')?400:503).json({erro:cod});
+    }
+   });
+  app.post('/api/admin/catalogo-midia/rascunhos-formulario/:id/excluir',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    try{return res.json(drafts.excluir(req.params.id));}
+    catch(e){return res.status(400).json({
+     erro:e.codigo||'RASCUNHO_EXCLUSAO_INVALIDA'
+    });}
    });
  }
  // Canal não é credencial externa: apenas os modos com função implementada
