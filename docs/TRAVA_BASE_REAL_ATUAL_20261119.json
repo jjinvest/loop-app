@@ -436,7 +436,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "fefbbc6bd5cb22f03d5790bd11acde151573737c"
+      "sha": "f136e39328f3380d653e18bb00da14dcc6e423f5"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
