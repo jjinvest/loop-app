@@ -297,21 +297,15 @@ async function main(){
      waitUntil:'domcontentloaded'
     });
     assert.equal(await operadorPage.locator('#akitemmAlternarVisao').count(),0,
-     'botão de alternar visão pertence ao LOOP e não à AKITEMM');
-    if(visao==='cliente'){
-     await operadorPage.locator('#akitemmFotoTitular').waitFor({state:'hidden'});
-     assert.equal(await operadorPage.locator('#akitemmFotoTitular')
-      .getAttribute('src'),null,
-      'visualização sem cliente logado não deve mostrar foto do operador');
-    }else{
-     await operadorPage.locator('#akitemmFotoTitular')
-      .waitFor({state:'visible',timeout:12000});
-     const imagem=await operadorPage.locator('#akitemmFotoTitular')
-      .evaluate(img=>({ok:img.complete&&img.naturalWidth>0,
-       src:new URL(img.src).pathname}));
-     assert.equal(imagem.ok,true,'a foto própria do operador deve aparecer');
-     assert.equal(imagem.src,'/api/admin/operador/foto-perfil');
-    }
+     'o botão de visão é único no LOOP, não na AKITEMM');
+    await operadorPage.locator('#akitemmFotoTitular')
+     .waitFor({state:'visible',timeout:12000});
+    const imagem=await operadorPage.locator('#akitemmFotoTitular')
+     .evaluate(img=>({ok:img.complete&&img.naturalWidth>0,
+      src:new URL(img.src).pathname}));
+    assert.equal(imagem.ok,true,'a foto do próprio operador deve aparecer');
+    assert.equal(imagem.src,'/api/admin/operador/foto-perfil',
+     'a visão da loja não converte operador em cliente');
    }
    await operadorPage.goto(base+'/escritorio?visao=operador',{
     waitUntil:'domcontentloaded'

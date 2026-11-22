@@ -9,14 +9,23 @@ test('foto da AKITEMM lê a mesma origem autenticada de cliente ou operador',()=
  const s=ler('src/producao/interface-aprovada-loja.js');
  assert.match(s,/\/api\/admin\/operador\/foto-perfil/);
  assert.match(s,/\/api\/contas\/foto-perfil/);
- assert.match(s,/const bloqueado=\(visitante&&!operadorAtivo\)\|\|/);
- assert.match(s,/\(operadorAtivo&&visaoClienteLoja\)/);
+ assert.match(s,/const bloqueado=visitante&&!operadorAtivo;/);
+ assert.doesNotMatch(s,/operadorAtivo&&visaoClienteLoja\)\)/);
  assert.match(s,/const caminho=bloqueado\?null:operadorAtivo\?/);
  assert.match(s,/caminhoFotoAtual!==caminho/);
  assert.match(s,/consulta===consultaFotoLoja\)fotoTitular.hidden=false/);
  assert.match(s,/credentials:'same-origin',cache:'no-store'/);
  assert.match(s,/r.headers.get\('content-type'\)/);
  assert.match(s,/fotoTitular.src=url/);
+ const contas=ler('src/producao/servidor-identidade-loop.js');
+ const admin=ler('src/producao/gateway-admin-comercial.js');
+ const loop=ler('src/producao/interface-aprovada-contas.js');
+ assert.match(contas,/fotosPerfil.consultar\(req.conta.titularId\)/);
+ assert.match(admin,/loop_real_operador_foto_perfil/);
+ assert.match(loop,/atualizarFotoPerfilReal\(\)/);
+ assert.match(loop,/atualizarFotoOperadorReal\(\)/);
+ assert.match(loop,/limparFotoPerfilReal\(\)/);
+ assert.doesNotMatch(s,/nickVisivel\([^)]*\)\s*===?\s*['"]VILELA/);
 });
 test('loja real invalida cache do Android sem alterar o template visual aprovado',()=>{
  const r=ler('src/producao/interface-aprovada-loop.js');

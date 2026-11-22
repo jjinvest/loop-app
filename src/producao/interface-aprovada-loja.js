@@ -15,20 +15,18 @@
  let visitante=true,operadorAtivo=false,clienteNick=null,csrfLoja=null;
  const visaoClienteLoja=new URLSearchParams(location.search)
   .get('visao')==='cliente';
- // A foto segue a credencial exibida: titular vê a sua, operador a sua.
- // A visão de cliente do operador não troca de titular nem deve apagar
- // a foto DO OPERADOR que ele já gravou em sua própria sessão.
+ // Foto individual por identidade REAL autenticada, sem exceção por nick:
+ // cada cliente vê a sua; o operador vê a sua, nos dois sistemas.
+ // Um modo visual não troca a credencial nem assume a identidade de cliente.
  const fotoTitular=$('akitemmFotoTitular');
  let consultaFotoLoja=0,caminhoFotoAtual=null;
  async function sincronizarFotoLoja(){
   if(!fotoTitular)return;
   const consulta=++consultaFotoLoja;
-  // Foto privada segue APENAS o perfil autenticado:
-  // cliente na própria conta; operador na própria área.
-  // Visualização pública solicitada pelo operador não identifica cliente
-  // algum e não reutiliza sua foto administrativa.
-  const bloqueado=(visitante&&!operadorAtivo)||
-   (operadorAtivo&&visaoClienteLoja);
+  // A fonte depende SOMENTE da sessão real, nunca da aba nem do parâmetro
+  // visao. A prévia do cliente não autentica outro cliente e não acessa
+  // nenhuma foto pessoal dele.
+  const bloqueado=visitante&&!operadorAtivo;
   const caminho=bloqueado?null:operadorAtivo?
    '/api/admin/operador/foto-perfil':'/api/contas/foto-perfil';
   if(!caminho){
