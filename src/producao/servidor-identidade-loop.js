@@ -31,7 +31,7 @@ const {projetarAgendaTabuleiroCompartilhada}=
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,captchaCadastroObrigatorio=false,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
- catalogoMidiaLeitura=null,adminComercial=null,
+ catalogoMidiaLeitura=null,adminComercial=null,bannersAkitemm=null,
  motorLoop=null,eventosComerciais=null,tesourariaEnsaio=null,
  aceitePosicaoAzulEnsaio=null,preflightCapacidade=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
@@ -757,6 +757,30 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   }catch{return res.status(503).json({
    erro:'CAPACIDADE_CHECKOUT_INDISPONIVEL',checkoutReal:false
   });}
+ });
+ // Banners públicos: só fotos que o operador gravou nos quatro slots.
+ // Não expor BLOB nem revisão confidencial fora da leitura da própria imagem.
+ app.get('/api/loja/banners',(_req,res)=>{
+  try{
+   const estado=bannersAkitemm?bannersAkitemm.listar():{
+    quantidadeMaxima:4,financeiroReal:false,
+    slots:[1,2,3,4].map(slot=>({
+     slot,temImagem:false,revisao:0,enquadramento:'INTEIRA'
+    }))
+   };
+   return res.set('Cache-Control','no-store').json(estado);
+  }catch{return res.status(503).json({erro:'BANNERS_INDISPONIVEIS'});}
+ });
+ app.get('/api/loja/banners/:slot/imagem',(req,res)=>{
+  if(!/^[1-4]$/.test(req.params.slot)||!bannersAkitemm)
+   return res.status(404).end();
+  try{
+   const foto=bannersAkitemm.imagem(Number(req.params.slot));
+   return res.set({
+    'Cache-Control':'public,max-age=60',
+    'X-Content-Type-Options':'nosniff'
+   }).type(foto.mime).send(foto.dados);
+  }catch{return res.status(404).end();}
  });
  // Pré-vitrine de itens publicados: somente leitura; nenhum preço
  // estimado, carrinho ou estoque antes de fornecedor homologado.
