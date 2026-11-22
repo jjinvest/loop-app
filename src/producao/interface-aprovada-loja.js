@@ -224,6 +224,159 @@
    }
   });
  });
+
+ // Atendimento direto da AKITEMM: protocolo próprio, não ligado a marketplaces.
+ // O cliente abre e acompanha; só o operador responde.
+ function montarAtendimentoAkitemm(){
+  const suporte=$('akitemmSuporte');
+  if(!suporte)return;
+  const texto=$('akitemmTextoSuporte');
+  if(texto)texto.textContent='Atendimento da AKITEMM, com protocolo e resposta da equipe.';
+  const bot=$('akitemmAbrirChatbot'),statusChat=$('akitemmStatusChatbot');
+  if(bot)bot.hidden=true;
+  if(statusChat)statusChat.hidden=true;
+  const caixa=document.createElement('section');
+  caixa.className='akitemm-atendimento-proprio';
+  const resultado=document.createElement('p');resultado.setAttribute('role','status');
+  resultado.className='akitemm-atendimento-status';
+  const atualizar=document.createElement('button');
+  atualizar.type='button';atualizar.textContent='Consultar meus atendimentos';
+  const conteudo=document.createElement('div');
+  caixa.append(atualizar,resultado,conteudo);suporte.append(caixa);
+  let carregando=false;
+  const linha=(txt,tag='p')=>{
+   const x=document.createElement(tag);x.textContent=txt;return x;
+  };
+  const apresentar=(atendimentos,operador=false)=>{
+   conteudo.replaceChildren();
+   if(!atendimentos.length){
+    conteudo.append(linha('Nenhum atendimento registrado.'));return;
+   }
+   for(const t of atendimentos){
+    const artigo=document.createElement('article');
+    artigo.className='akitemm-protocolo-atendimento';
+    artigo.append(linha('Protocolo: '+t.protocolo,'strong'));
+    artigo.append(linha(t.tipo+' · '+(t.estado==='ABERTO'?
+     'Aguardando resposta':'Respondido')));
+    if(operador&&t.nick)artigo.append(linha('Conta: @'+t.nick));
+    artigo.append(linha('Solicitação: '+t.mensagem));
+    if(t.resposta)artigo.append(linha('Resposta AKITEMM: '+t.resposta));
+    if(operador&&t.estado==='ABERTO'){
+     const label=document.createElement('label');
+     label.textContent='Resposta da AKITEMM';
+     const campo=document.createElement('textarea');
+     campo.maxLength=1500;campo.minLength=10;
+     const enviar=document.createElement('button');
+     enviar.type='button';enviar.textContent='Responder atendimento';
+     label.append(campo);artigo.append(label,enviar);
+     enviar.addEventListener('click',async()=>{
+      const txt=campo.value.trim();
+      if(txt.length<10){
+       resultado.textContent='Digite pelo menos 10 caracteres na resposta.';
+       campo.focus();return;
+      }
+      enviar.disabled=true;
+      try{
+       const sessao=await pegar('/api/admin/comercial/sessao');
+       const r=await fetch('/api/admin/akitemm/atendimentos/'+
+        encodeURIComponent(t.protocolo)+'/responder',{
+        method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json',
+         'X-Loop-Admin-Csrf':sessao.csrfToken},
+        body:JSON.stringify({resposta:txt})
+       });
+       const d=await r.json().catch(()=>({}));
+       if(!r.ok||d.estado!=='RESPONDIDO')
+        throw Error(d.erro||'RESPOSTA_NAO_CONFIRMADA');
+       resultado.textContent='Resposta registrada para '+t.protocolo+'.';
+       await carregar();
+      }catch(e){resultado.textContent='Resposta não enviada: '+e.message;}
+      finally{enviar.disabled=false;}
+     });
+    }
+    conteudo.append(artigo);
+   }
+  };
+  async function carregar(){
+   if(carregando)return;
+   carregando=true;atualizar.disabled=true;
+   resultado.textContent='Consultando atendimentos…';
+   try{
+    const op=await pegar('/api/operador/estado');
+    if(op.operador===true){
+     const d=await pegar('/api/admin/akitemm/atendimentos');
+     if(!Array.isArray(d.atendimentos))throw Error('LISTA_INDISPONIVEL');
+     apresentar(d.atendimentos,true);
+     resultado.textContent='Atendimentos da loja — visão do operador.';
+     return;
+    }
+    const me=await pegar('/api/contas/me');
+    if(typeof me.csrf!=='string'||me.csrf.length<20)
+     throw Error('ENTRE_NA_CONTA_PARA_ATENDIMENTO');
+    const d=await pegar('/api/loja/atendimentos');
+    if(!Array.isArray(d.atendimentos))throw Error('LISTA_INDISPONIVEL');
+    apresentar(d.atendimentos,false);
+    const form=document.createElement('form');
+    form.noValidate=true;
+    const tlabel=document.createElement('label');
+    tlabel.textContent='Assunto';
+    const tipo=document.createElement('select');
+    for(const [value,nome] of [
+     ['PRODUTO','Dúvida sobre produto'],['PEDIDO','Pedido'],
+     ['ENTREGA','Entrega'],['TROCAS','Trocas e devoluções'],
+     ['OUTROS','Outros assuntos']
+    ]){
+     const opt=document.createElement('option');
+     opt.value=value;opt.textContent=nome;tipo.append(opt);
+    }
+    tlabel.append(tipo);
+    const mlabel=document.createElement('label');
+    mlabel.textContent='Descreva sua dúvida ou solicitação';
+    const mensagem=document.createElement('textarea');
+    mensagem.required=true;mensagem.minLength=10;mensagem.maxLength=1500;
+    mensagem.placeholder='Explique o que precisa, sem informar senhas ou dados bancários.';
+    mlabel.append(mensagem);
+    const enviar=document.createElement('button');enviar.type='submit';
+    enviar.textContent='Abrir atendimento AKITEMM';
+    form.append(tlabel,mlabel,enviar);
+    conteudo.prepend(form);
+    form.addEventListener('submit',async ev=>{
+     ev.preventDefault();
+     if(mensagem.value.trim().length<10){
+      mensagem.setAttribute('aria-invalid','true');
+      resultado.textContent='Descreva sua solicitação com pelo menos 10 caracteres.';
+      mensagem.focus();mensagem.scrollIntoView({block:'center'});return;
+     }
+     mensagem.removeAttribute('aria-invalid');
+     enviar.disabled=true;
+     try{
+      const r=await fetch('/api/loja/atendimentos',{
+       method:'POST',credentials:'same-origin',
+       headers:{'Content-Type':'application/json','X-Loop-Csrf':me.csrf},
+       body:JSON.stringify({tipo:tipo.value,mensagem:mensagem.value.trim()})
+      });
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok||d.estado!=='ABERTO')
+       throw Error(d.erro||'ATENDIMENTO_NAO_GRAVADO');
+      resultado.textContent='Solicitação registrada com protocolo '+d.protocolo+'.';
+      await carregar();
+     }catch(e){resultado.textContent='Solicitação não registrada: '+e.message;}
+     finally{enviar.disabled=false;}
+    });
+    resultado.textContent='Envie sua solicitação e acompanhe a resposta nesta área.';
+   }catch(e){
+    conteudo.replaceChildren();
+    resultado.textContent='Atendimento disponível para clientes autenticados: '+
+     (e.message==='CONSULTA_INDISPONIVEL'?'entre na sua conta.':e.message);
+    const link=document.createElement('a');
+    link.href='/escritorio';link.textContent='Entrar no Escritório Virtual';
+    conteudo.append(link);
+   }finally{carregando=false;atualizar.disabled=false;}
+  }
+  atualizar.addEventListener('click',()=>void carregar());
+  suporte.addEventListener('toggle',()=>{if(suporte.open)void carregar();});
+ }
+ montarAtendimentoAkitemm();
  prepararLinkPessoal();
  // Somente o link do rodapé leva à administração protegida,
  // e apenas quando a sessão de operador é comprovada.
