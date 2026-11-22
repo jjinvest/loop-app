@@ -67,7 +67,7 @@
    const instrucao=document.createElement('p');
    instrucao.id='akitemmInstrucaoArrastar';
    instrucao.className='akitemm-instrucao-arrastar';
-   instrucao.textContent='Organizar a vitrine: a alça ⠿ aparece em cada quadrinho, mesmo vazio. Segure e arraste uma moldura vazia sobre outra para trocar suas cores. Produtos já cadastrados podem ser reordenados entre si. Produto novo entra sempre no primeiro espaço livre: com 10 produtos, o próximo é o 11º, independentemente do quadrinho tocado.';
+   instrucao.textContent='Organizar a vitrine: a alça ⠿ aparece em cada quadrinho, mesmo vazio. Segure e arraste uma moldura vazia sobre outra para trocar suas cores. Produtos já cadastrados podem ser arrastados para qualquer posição livre ou trocados entre si. Produto novo entra automaticamente no primeiro espaço livre: com 10 produtos, o próximo é o 11º, independentemente do quadrinho tocado.';
    (document.getElementById(csvId)||document.getElementById(id)||filtro)
     .insertAdjacentElement('afterend',instrucao);
   }
