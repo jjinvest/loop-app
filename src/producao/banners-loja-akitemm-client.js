@@ -1,5 +1,5 @@
 'use strict';
-// Quatro banners REAIS da AKITEMM, sem alterar a estrutura aprovada.
+// Banners dinâmicos REAIS da AKITEMM, sem alterar a estrutura aprovada.
 // Arquivos só são enviados pela sessão autenticada do operador.
 (()=>{
  const area=document.querySelector('.akitemm-banner');
@@ -26,6 +26,11 @@
  const placeholder=document.createElement('div');
  placeholder.className='akitemm-banner-espaco-livre';placeholder.hidden=true;
  foto.insertAdjacentElement('afterend',placeholder);
+ const adicionarVisual=document.createElement('button');
+ adicionarVisual.type='button';adicionarVisual.className='akitemm-banner-adicionar';
+ adicionarVisual.textContent='＋ Adicionar novo banner';
+ adicionarVisual.setAttribute('aria-label','Criar mais um banner da AKITEMM');
+ adicionarVisual.addEventListener('click',()=>void criarBanner());
  const mais=document.createElement('button');
  mais.type='button';mais.id='akitemmBannerMaisReal';
  mais.className='banner-real-mais';mais.textContent='+';
@@ -76,6 +81,7 @@
  function abrirFormulario(){
   if(!operador||bloqueio||!slots)return;
   const atual=current();if(!atual)return;
+  if(atual.adicionar){void criarBanner();return;}
   titulo.textContent='Banner '+atual.slot+' · AKITEMM';
   escolher.value='';previa.hidden=true;previa.removeAttribute('src');
   estado.textContent='';
@@ -84,7 +90,7 @@
  mais.addEventListener('click',e=>{e.preventDefault();abrirFormulario();});
  function visiveis(){
   if(!slots)return [];
-  if(operador)return slots;
+  if(operador)return [...slots,{slot:slots.at(-1).slot+1,adicionar:true}];
   const imagens=slots.filter(s=>s.temImagem);
   return imagens.length?imagens:[slots[0]];
  }
@@ -92,11 +98,16 @@
  function parar(){if(intervalo!==null)clearInterval(intervalo);intervalo=null;}
  function rodar(){
   parar();
-  if(visiveis().length>1&&!document.hidden)
-   intervalo=setInterval(()=>{
-    if(document.hidden)return;
-    indice=(indice+1)%visiveis().length;renderizar();
-   },7500);
+  if(document.hidden||dialogo.open)return;
+  const publicadas=visiveis().filter(x=>x.temImagem);
+  if(publicadas.length>1)intervalo=setInterval(()=>{
+   if(document.hidden||dialogo.open)return;
+   const visao=visiveis(),atual=visao[indice];
+   const lugar=publicadas.findIndex(x=>x.slot===atual?.slot);
+   const proxima=publicadas[(lugar+1)%publicadas.length];
+   indice=visao.findIndex(x=>x.slot===proxima.slot);
+   renderizar();
+  },7500);
  }
  function selecionar(index){
   const lista=visiveis();
@@ -106,7 +117,7 @@
  function renderizar(){
   const lista=visiveis(),slot=current();
   if(!slot)return;
-  const imagem=slot.temImagem;
+  const imagem=slot.temImagem===true,adicionando=slot.adicionar===true;
   foto.hidden=!imagem;
   area.classList.toggle('akitemm-banner-com-foto',imagem);
   if(imagem){
@@ -116,11 +127,13 @@
    foto.style.objectFit='contain';
    foto.alt='Banner '+slot.slot+' da AKITEMM';
   }else foto.removeAttribute('src');
-  conteudo.style.display=(imagem||slot.slot!==1)?'none':'';
-  placeholder.hidden=imagem||slot.slot===1;
-  if(!placeholder.hidden)
-   placeholder.textContent='Banner '+slot.slot+
-    (operador?' · toque para adicionar uma foto':' · AKITEMM');
+  conteudo.style.display=(imagem||slot.slot!==1||adicionando)?'none':'';
+  placeholder.hidden=imagem||(!adicionando&&slot.slot===1);
+  if(!placeholder.hidden){
+   if(adicionando)placeholder.replaceChildren(adicionarVisual);
+   else placeholder.textContent='Banner '+slot.slot+
+    (operador?' · toque para colocar a imagem':' · AKITEMM');
+  }
   area.classList.toggle('akitemm-banner-operador-clicavel',operador);
   area.setAttribute('aria-label',operador?
    'Banner '+slot.slot+' · toque para escolher uma foto':
@@ -133,30 +146,33 @@
   lista.forEach((item,i)=>{
    const b=document.createElement('button');
    b.type='button';b.className='akitemm-banner-ponto';
-   b.textContent=String(item.slot);
+   b.textContent=item.adicionar?'+':String(item.slot);
    b.setAttribute('aria-label','Mostrar banner '+item.slot);
    b.setAttribute('aria-current',String(i===indice));
    b.addEventListener('click',()=>selecionar(i));
    pontos.append(b);
   });
-  mais.hidden=!operador;
+  mais.hidden=true; // o + fica somente no fim do carrossel
   if(!operador&&dialogo.open)dialogo.close();
   if(operador){
    const acao=n=>controles.querySelector('[data-acao="'+n+'"]');
    mais.setAttribute('aria-label','Editar banner '+slot.slot+' da AKITEMM');
    acao('foto').textContent='Salvar banner '+slot.slot;
-   acao('foto').disabled=bloqueio;
-   acao('anterior').disabled=slot.slot===1||bloqueio;
-   acao('proximo').disabled=slot.slot===4||bloqueio;
-   acao('remover').disabled=!imagem||bloqueio;
+   acao('foto').disabled=adicionando||bloqueio;
+   acao('anterior').disabled=adicionando||slot.slot===1||bloqueio;
+   acao('proximo').disabled=adicionando||
+    slot.slot===slots[slots.length-1].slot||bloqueio;
+   acao('remover').disabled=adicionando||!imagem||bloqueio;
   }
  }
  async function carregar(){
   try{
    const dados=await requisitar('/api/loja/banners');
-   if(dados.quantidadeMaxima!==4||!Array.isArray(dados.slots)||
-      dados.slots.length!==4||
-      dados.slots.some((x,i)=>x.slot!==i+1||
+   if(!Number.isSafeInteger(dados.quantidadeMaxima)||
+      dados.quantidadeMaxima<4||!Array.isArray(dados.slots)||
+      dados.slots.length<4||
+      dados.slots.some((x,i)=>!Number.isSafeInteger(x.slot)||
+       (i>0&&x.slot<=dados.slots[i-1].slot)||
        !Number.isSafeInteger(x.revisao)||typeof x.temImagem!=='boolean'))
     throw Error('BANNERS_RESPOSTA_INVALIDA');
    slots=dados.slots;
@@ -182,6 +198,26 @@
    }
   }catch{operador=false;}
   renderizar();await carregar();
+ }
+ async function criarBanner(){
+  if(!operador||bloqueio)return;
+  bloqueio=true;parar();
+  try{
+   const sessao=await requisitar('/api/admin/comercial/sessao');
+   if(typeof sessao.csrfToken!=='string')throw Error('SESSAO_OPERADOR_INVALIDA');
+   const r=await requisitar('/api/admin/akitemm/banners/adicionar',{
+    method:'POST',headers:{'X-Loop-Admin-Csrf':sessao.csrfToken}
+   });
+   if(!Array.isArray(r.slots)||!Number.isSafeInteger(r.novoSlot))
+    throw Error('BANNER_NAO_CRIADO');
+   slots=r.slots;
+   indice=slots.findIndex(x=>x.slot===r.novoSlot);
+   bloqueio=false;renderizar();
+   abrirFormulario();
+  }catch(e){
+   estado.textContent='Não foi possível criar o banner: '+e.message;
+   await carregar();
+  }finally{bloqueio=false;rodar();}
  }
  async function salvar(acao,arquivo=null,direcao=0){
   if(bloqueio||!operador||!current())return;
@@ -214,11 +250,10 @@
     }else throw Error('BANNER_ACAO_INVALIDA');
    }
    const resultado=await requisitar(url,{method,headers,body});
-   if(resultado.quantidadeMaxima!==4||
-      !Array.isArray(resultado.slots)||resultado.slots.length!==4)
+   if(!Array.isArray(resultado.slots)||resultado.slots.length<4)
     throw Error('BANNER_GRAVACAO_NAO_CONFIRMADA');
    slots=resultado.slots;
-   if(acao==='trocar')indice=Math.min(3,Math.max(0,slot.slot+direcao-1));
+   if(acao==='trocar')indice=slots.findIndex(x=>x.slot===slot.slot+direcao);
    estado.textContent='Banner salvo e atualizado na loja.';
   }catch(e){
    estado.textContent='Não foi possível salvar o banner: '+e.message;
