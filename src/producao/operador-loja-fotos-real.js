@@ -403,7 +403,6 @@
       revisaoEsperada:revisaoCanal}};
    },
    canalGravado(revisao){revisaoCanal=revisao;}
-   }
   };
  }
  async function salvarAnuncio(id,csrf,campos,revisaoEsperada){
