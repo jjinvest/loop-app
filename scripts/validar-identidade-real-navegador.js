@@ -1079,6 +1079,20 @@ async function main(){
    await page.locator('#akitemmNomeTitular').filter({
     hasText:nick.toLowerCase()
    }).waitFor({state:'visible'});
+   // Mesmo acabamento de marca entre as duas interfaces: LOOP e aro
+   // dourados, versão 3.0 prateada (sem branco integral na loja).
+   const identidadeMarca=await page.locator('.akitemm-marca-loop')
+    .evaluate(el=>({
+     loop:getComputedStyle(el).color,
+     versao:getComputedStyle(el.querySelector('em')).color,
+     aro:getComputedStyle(el.querySelector('.akitemm-anel'),'::before').color
+    }));
+   assert.equal(identidadeMarca.loop,'rgb(247, 195, 93)',
+    'LOOP no cabeçalho da loja deve ser dourado');
+   assert.equal(identidadeMarca.versao,'rgb(229, 233, 241)',
+    '3.0 deve permanecer prateado');
+   assert.equal(identidadeMarca.aro,'rgb(247, 195, 93)',
+    'símbolo do LOOP também deve ser dourado');
    await page.locator('#akitemmFotoTitular').waitFor({state:'visible'});
    const imagemLoja=await page.locator('#akitemmFotoTitular').evaluate(
     img=>({ok:img.complete&&img.naturalWidth>0,src:img.getAttribute('src')})
