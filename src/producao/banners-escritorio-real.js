@@ -25,10 +25,10 @@ function montarBannersEscritorioReal(app,{
  };
  const erro=(res,e)=>{
   const codigo=e?.codigo||'BANNER_LOOP_INDISPONIVEL';
-  return res.status(codigo==='BANNER_CONFLITO_REVISAO'?409:
-   codigo==='BANNER_SEM_IMAGEM'?404:
+  return res.status(codigo.includes('CONFLITO_REVISAO')?409:
+   codigo.includes('SEM_IMAGEM')?404:
    codigo==='BANNER_ARQUIVO_INVALIDO'||codigo==='BANNER_REVISAO_INVALIDA'||
-   codigo==='BANNER_SLOT_INVALIDO'?400:503).json({erro:codigo});
+   codigo==='BANNER_SLOT_INVALIDO'||codigo.includes('_INVALIDO')?400:503).json({erro:codigo});
  };
  app.get('/api/loop/banners',protegidoLoja,(_req,res)=>{
   try{return res.set('Cache-Control','private, no-store').json(banners.listar());}
@@ -79,6 +79,46 @@ function montarBannersEscritorioReal(app,{
     return res.set('Cache-Control','no-store').json(resultado);
    }catch(e){return erro(res,e);}
   });
- return banners;
+ const uploadMosaico=express.raw({
+  type:['image/png','image/jpeg','image/webp'],limit:'4mb',inflate:false
+ });
+ app.get('/api/loop/banners/:slot/foto/:posicao',protegidoLoja,(req,res)=>{
+  const n=slot(req),pos=Number(req.params.posicao);
+  if(n===null||![1,2,3].includes(pos))return res.status(404).end();
+  try{
+   const img=pos===1?banners.imagem(n):
+    banners.imagemMosaico({slot:n,posicao:pos});
+   return res.set('Cache-Control','private, no-store')
+    .set('X-Content-Type-Options','nosniff').type(img.mime).send(img.bytes);
+  }catch(e){return erro(res,e);}
+ });
+ app.post('/api/admin/loop/banners/:slot/layout',protegerOperador,(req,res)=>{
+  if(slot(req)===null)return res.status(404).end();
+  const {colunas,revisaoEsperada}=req.body||{};
+  if(Object.keys(req.body||{}).sort().join(',')!=='colunas,revisaoEsperada')
+   return res.status(400).json({erro:'BANNER_MOSAICO_CAMPOS_INVALIDOS'});
+  try{return res.json(banners.configurarMosaico({
+   slot:slot(req),colunas,revisaoEsperada
+  }));}catch(e){return erro(res,e);}
+ });
+ app.put('/api/admin/loop/banners/:slot/foto/:posicao',
+  protegerOperador,uploadMosaico,(req,res)=>{
+   const n=slot(req),pos=Number(req.params.posicao);
+   if(n===null||![2,3].includes(pos))return res.status(404).end();
+   try{return res.json(banners.salvarFotoMosaico({
+    slot:n,posicao:pos,mime:req.get('content-type')?.split(';')[0],
+    bytes:req.body,revisaoEsperada:Number(req.get('x-banner-revisao-esperada'))
+   }));}catch(e){return erro(res,e);}
+  });
+ app.delete('/api/admin/loop/banners/:slot/foto/:posicao',
+  protegerOperador,(req,res)=>{
+   const n=slot(req),pos=Number(req.params.posicao);
+   if(n===null||![2,3].includes(pos))return res.status(404).end();
+   try{return res.json(banners.removerFotoMosaico({
+    slot:n,posicao:pos,
+    revisaoEsperada:Number(req.get('x-banner-revisao-esperada'))
+   }));}catch(e){return erro(res,e);}
+  });
+  return banners;
 }
 module.exports={montarBannersEscritorioReal};
