@@ -123,8 +123,10 @@ test('carrossel de quatro e foto acessivel nas interfaces compartilhadas',()=>{
  const css=fs.readFileSync(require.resolve('../src/candidato/escritorio-cliente-integrado.css'),'utf8');
  assert.match(js,/pontos\.length!==4/);
  assert.match(js,/\(atual\+1\)%pontos\.length/);
- assert.match(real,/pontosResumo\.length===4/);
- assert.match(real,/\(indice\+1\)%pontosResumo\.length/);
+ assert.match(real,/banners-escritorio-real-client\.js/);
+ const dinamico=fs.readFileSync(require.resolve('../src/producao/banners-escritorio-real-client.js'),'utf8');
+ assert.match(dinamico,/function visiveis\(/);
+ assert.match(dinamico,/api\/admin\/loop\/banners\/adicionar/);
  assert.match(js,/async function carregarFotosBannersEscritorio/);
  assert.match(admin,/async function gerenciarBannerFotoAdmin/);
  assert.match(css,/\.loop03-banner-foto-manual\[hidden\]/);

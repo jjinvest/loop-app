@@ -143,7 +143,7 @@ function montarGatewayAdminComercial(app,{
  // publicadas; gravação, ordenação e enquadramento exigem operador+CSRF.
  if(motorLoop?.banco){
   const banners=new BannersLojaAkitemmRealSQLite({banco:motorLoop.banco});
-  const slot=req=>/^[1-4]$/.test(req.params.slot||'')?
+  const slot=req=>/^[1-9][0-9]{0,3}$/.test(req.params.slot||'')?
    Number(req.params.slot):null;
   const responderErro=(res,e)=>{
    const codigo=e?.codigo||'BANNER_LOJA_INDISPONIVEL';
@@ -163,10 +163,57 @@ function montarGatewayAdminComercial(app,{
      .set('X-Content-Type-Options','nosniff').type(f.mime).send(f.bytes);
    }catch{return res.status(404).end();}
   });
+  app.get('/api/loja/banners/:slot/foto/:posicao',(req,res)=>{
+   const n=slot(req),pos=Number(req.params.posicao);
+   if(n===null||![1,2,3].includes(pos))return res.status(404).end();
+   try{
+    const img=pos===1?banners.imagem(n):
+     banners.imagemMosaico({slot:n,posicao:pos});
+    return res.set('Cache-Control','no-store')
+     .set('X-Content-Type-Options','nosniff').type(img.mime).send(img.bytes);
+   }catch(e){return responderErro(res,e);}
+  });
+  app.post('/api/admin/akitemm/banners/:slot/layout',
+   proteger,validarCsrf,(req,res)=>{
+    if(slot(req)===null)return res.status(404).end();
+    if(!req.is('application/json')||!req.body||
+       Object.keys(req.body).sort().join(',')!=='colunas,modo,revisaoEsperada')
+     return res.status(400).json({erro:'BANNER_MOSAICO_CAMPOS_INVALIDOS'});
+    try{return res.json(banners.configurarMosaico({
+     slot:slot(req),colunas:req.body.colunas,modo:req.body.modo,
+     revisaoEsperada:req.body.revisaoEsperada
+    }));}catch(e){return responderErro(res,e);}
+   });
+  app.put('/api/admin/akitemm/banners/:slot/foto/:posicao',
+   proteger,validarCsrf,express.raw({
+    type:['image/jpeg','image/png','image/webp'],limit:'4mb',inflate:false
+   }),(req,res)=>{
+    const n=slot(req),pos=Number(req.params.posicao);
+    if(n===null||![2,3].includes(pos))return res.status(404).end();
+    try{return res.json(banners.salvarFotoMosaico({
+     slot:n,posicao:pos,bytes:req.body,
+     mime:req.get('content-type')?.split(';')[0],
+     revisaoEsperada:Number(req.get('x-banner-revisao-esperada'))
+    }));}catch(e){return responderErro(res,e);}
+   });
+  app.delete('/api/admin/akitemm/banners/:slot/foto/:posicao',
+   proteger,validarCsrf,(req,res)=>{
+    const n=slot(req),pos=Number(req.params.posicao);
+    if(n===null||![2,3].includes(pos))return res.status(404).end();
+    try{return res.json(banners.removerFotoMosaico({
+     slot:n,posicao:pos,
+     revisaoEsperada:Number(req.get('x-banner-revisao-esperada'))
+    }));}catch(e){return responderErro(res,e);}
+   });
   const corpoBanner=express.raw({
    type:['image/jpeg','image/png','image/webp'],limit:'4mb',inflate:false
   });
-  app.put('/api/admin/akitemm/banners/:slot/imagem',
+  app.post('/api/admin/akitemm/banners/adicionar',proteger,validarCsrf,
+   (req,res)=>{
+    try{return res.set('Cache-Control','no-store').json(banners.adicionar());}
+    catch(e){return responderErro(res,e);}
+   });
+    app.put('/api/admin/akitemm/banners/:slot/imagem',
    proteger,validarCsrf,corpoBanner,(req,res)=>{
     if(slot(req)===null)return res.status(404).json({erro:'BANNER_LOJA_SLOT_INVALIDO'});
     if(!['image/jpeg','image/png','image/webp'].includes(req.get('content-type')))

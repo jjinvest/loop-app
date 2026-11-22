@@ -1,12 +1,14 @@
 'use strict';
-// Quatro banners exclusivos da AKITEMM, salvos no SQLite real e no backup
+// Banners dinâmicos exclusivos da AKITEMM, salvos no SQLite real e no backup
 // da identidade. Não compartilham imagens com os banners do LOOP.
 const {dimensoesImagem}=require('../domain/novidades-loja-candidato-sqlite');
+const {BannerMosaicoSQLite}=require('../producao/banner-mosaico-sqlite');
 const MIME=new Set(['image/jpeg','image/png','image/webp']);
 const MAX=4*1024*1024;
+const MAX_SLOTS=10000;
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function slotValido(n){
- if(!Number.isSafeInteger(n)||n<1||n>4)erro('BANNER_LOJA_SLOT_INVALIDO');
+ if(!Number.isSafeInteger(n)||n<1||n>MAX_SLOTS)erro('BANNER_LOJA_SLOT_INVALIDO');
  return n;
 }
 function revisaoValida(n){
@@ -46,21 +48,52 @@ class BannersLojaAkitemmRealSQLite{
   const insert=banco.prepare(
    'INSERT OR IGNORE INTO loja_real_banners_akitemm(slot) VALUES(?)');
   for(let n=1;n<=4;n++)insert.run(n);
+  // Extensão aditiva: os quatro banners publicados permanecem intactos.
+  banco.exec([
+   'CREATE TABLE IF NOT EXISTS loja_real_banners_akitemm_extensao(',
+   'slot INTEGER PRIMARY KEY CHECK(slot>=5),',
+   'mime TEXT,imagem BLOB,',
+   "enquadramento TEXT NOT NULL DEFAULT 'INTEIRA' ",
+   "CHECK(enquadramento IN ('INTEIRA','PREENCHER')),",
+   'revisao INTEGER NOT NULL DEFAULT 0,',
+   'atualizado_em INTEGER NOT NULL DEFAULT 0,',
+   'CHECK((mime IS NULL AND imagem IS NULL) OR',
+   '(mime IS NOT NULL AND imagem IS NOT NULL)));'
+  ].join(' '));
+  this.mosaico=new BannerMosaicoSQLite({banco,area:'akitemm',validarImagem:arquivoValido,agora});
+ }
+ _tabela(slot){
+  return slot<=4?'loja_real_banners_akitemm':
+   'loja_real_banners_akitemm_extensao';
+ }
+ adicionar(){
+  this.db.exec('BEGIN IMMEDIATE');
+  try{
+   const maior=this.db.prepare(
+    'SELECT MAX(slot) AS maior FROM loja_real_banners_akitemm_extensao'
+   ).get().maior||4;
+   const novoSlot=slotValido(maior+1);
+   this.db.prepare(
+    'INSERT INTO loja_real_banners_akitemm_extensao(slot) VALUES(?)'
+   ).run(novoSlot);
+   this.db.exec('COMMIT');
+   return {...this.listar(),novoSlot};
+  }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
  listar(){
-  return {quantidadeMaxima:4,slots:this.db.prepare([
-   'SELECT slot,mime,imagem IS NOT NULL AS temImagem,enquadramento,',
-   'revisao,atualizado_em FROM loja_real_banners_akitemm ORDER BY slot'
-  ].join(' ')).all().map(r=>({
+  return {quantidadeMaxima:MAX_SLOTS,slots:this.mosaico.listar([
+   ...this.db.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,enquadramento,revisao,atualizado_em FROM loja_real_banners_akitemm ORDER BY slot').all(),
+   ...this.db.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,enquadramento,revisao,atualizado_em FROM loja_real_banners_akitemm_extensao ORDER BY slot').all()
+  ].map(r=>({
    slot:r.slot,temImagem:!!r.temImagem,
    enquadramento:r.enquadramento,revisao:r.revisao,
    atualizadoEm:r.atualizado_em||null
-  }))};
+  })))};
  }
  imagem(slot){
   slotValido(slot);
   const row=this.db.prepare([
-   'SELECT mime,imagem FROM loja_real_banners_akitemm WHERE slot=?'
+   'SELECT mime,imagem FROM '+this._tabela(slot)+' WHERE slot=?'
   ].join(' ')).get(slot);
   if(!row?.imagem)erro('BANNER_LOJA_SEM_IMAGEM');
   return {mime:row.mime,bytes:Buffer.from(row.imagem)};
@@ -71,7 +104,7 @@ class BannersLojaAkitemmRealSQLite{
    erro('BANNER_LOJA_ENQUADRAMENTO_INVALIDO');
   arquivoValido(mime,bytes);
   const result=this.db.prepare([
-   'UPDATE loja_real_banners_akitemm SET mime=?,imagem=?,',
+   'UPDATE '+this._tabela(slot)+' SET mime=?,imagem=?,',
    'enquadramento=?,revisao=revisao+1,atualizado_em=?',
    'WHERE slot=? AND revisao=?'
   ].join(' ')).run(mime,bytes,enquadramento,this.agora(),
@@ -82,7 +115,7 @@ class BannersLojaAkitemmRealSQLite{
  remover({slot,revisaoEsperada}={}){
   slotValido(slot);revisaoValida(revisaoEsperada);
   const result=this.db.prepare([
-   'UPDATE loja_real_banners_akitemm SET mime=NULL,imagem=NULL,',
+   'UPDATE '+this._tabela(slot)+' SET mime=NULL,imagem=NULL,',
    "enquadramento='PREENCHER',revisao=revisao+1,atualizado_em=?",
    'WHERE slot=? AND revisao=?'
   ].join(' ')).run(this.agora(),slot,revisaoEsperada);
@@ -94,37 +127,51 @@ class BannersLojaAkitemmRealSQLite{
   if(!['INTEIRA','PREENCHER'].includes(enquadramento))
    erro('BANNER_LOJA_ENQUADRAMENTO_INVALIDO');
   const result=this.db.prepare([
-   'UPDATE loja_real_banners_akitemm SET enquadramento=?,',
+   'UPDATE '+this._tabela(slot)+' SET enquadramento=?,',
    'revisao=revisao+1,atualizado_em=? WHERE slot=?',
    'AND revisao=? AND imagem IS NOT NULL'
   ].join(' ')).run(enquadramento,this.agora(),slot,revisaoEsperada);
   if(result.changes!==1)erro('BANNER_LOJA_CONFLITO_REVISAO');
   return this.listar();
  }
- trocar({origem,destino,revisaoOrigem,revisaoDestino}={}){
+ configurarMosaico(d){this.mosaico.configurar(d);return this.listar();}
+ salvarFotoMosaico(d){this.mosaico.salvarFoto(d);return this.listar();}
+ removerFotoMosaico(d){this.mosaico.removerFoto(d);return this.listar();}
+ imagemMosaico(d){return this.mosaico.imagem(d);}
+  trocar({origem,destino,revisaoOrigem,revisaoDestino}={}){
   slotValido(origem);slotValido(destino);
+  if(Math.abs(origem-destino)!==1)erro('BANNER_LOJA_ORDEM_INVALIDA');
   revisaoValida(revisaoOrigem);revisaoValida(revisaoDestino);
   if(origem===destino)erro('BANNER_LOJA_ORDEM_INVALIDA');
   this.db.exec('BEGIN IMMEDIATE');
   try{
    const get=this.db.prepare([
     'SELECT slot,mime,imagem,enquadramento,revisao',
-    'FROM loja_real_banners_akitemm WHERE slot=?'
+    'FROM '+this._tabela(origem)+' WHERE slot=?'
    ].join(' '));
-   const a=get.get(origem),b=get.get(destino);
+   const a=get.get(origem),b=this.db.prepare([
+    'SELECT slot,mime,imagem,enquadramento,revisao',
+    'FROM '+this._tabela(destino)+' WHERE slot=?'
+   ].join(' ')).get(destino);
    if(!a||!b||a.revisao!==revisaoOrigem||b.revisao!==revisaoDestino)
     erro('BANNER_LOJA_CONFLITO_REVISAO');
    const put=this.db.prepare([
-    'UPDATE loja_real_banners_akitemm SET mime=?,imagem=?,',
+    'UPDATE '+this._tabela(origem)+' SET mime=?,imagem=?,',
     'enquadramento=?,revisao=revisao+1,atualizado_em=?',
     'WHERE slot=? AND revisao=?'
    ].join(' '));
    const agora=this.agora();
    const x=put.run(b.mime,b.imagem,b.enquadramento,agora,
     origem,revisaoOrigem);
-   const y=put.run(a.mime,a.imagem,a.enquadramento,agora,
+   const putDestino=this.db.prepare([
+    'UPDATE '+this._tabela(destino)+' SET mime=?,imagem=?,',
+    'enquadramento=?,revisao=revisao+1,atualizado_em=?',
+    'WHERE slot=? AND revisao=?'
+   ].join(' '));
+   const y=putDestino.run(a.mime,a.imagem,a.enquadramento,agora,
     destino,revisaoDestino);
    if(x.changes!==1||y.changes!==1)erro('BANNER_LOJA_CONFLITO_REVISAO');
+   this.mosaico.trocarEmTransacao(origem,destino);
    this.db.exec('COMMIT');
    return this.listar();
   }catch(e){this.db.exec('ROLLBACK');throw e;}

@@ -71,3 +71,137 @@
  .cliente-integrado .banner-real-mais,
  .akitemm-loja .banner-real-mais{top:8px;right:8px;width:38px;height:38px;font-size:27px}
 }
+
+
+/* Banners variáveis: o + é a última moldura, nunca um botão flutuante. */
+#conteudoResumo .loop03-banners-pista>.loop03-banner-adicionar{
+ position:relative;box-sizing:border-box;flex:0 0 100%;width:100%;
+ aspect-ratio:16/8.5;min-height:300px;max-height:490px;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:13px;scroll-snap-align:start;border:2px dashed #d8b36f;
+ border-radius:20px;background:linear-gradient(140deg,#111c32,#29183e);
+ color:#ffe0a0;box-shadow:inset 0 0 0 2px #645077;
+ cursor:pointer;font:700 clamp(.95rem,2vw,1.25rem) system-ui,sans-serif;
+}
+#conteudoResumo .loop03-banners-pista>.loop03-banner-adicionar span{
+ display:grid;place-items:center;width:74px;height:74px;border:2px solid #e7c989;
+ border-radius:50%;font-size:3.2rem;line-height:1;
+ background:linear-gradient(130deg,#72512c,#261c35)
+}
+#conteudoResumo .loop03-banners-pista>.loop03-banner-adicionar[hidden]{
+ display:none!important;
+}
+#conteudoResumo .loop03-banner-item[hidden]{display:none!important}
+#conteudoResumo .loop03-banner-item{position:relative}
+#conteudoResumo .loop03-banner-item .loop03-banner-foto-manual:not([hidden]){
+ position:absolute;inset:0;width:100%;height:100%;z-index:4;
+ object-fit:contain;object-position:center;border-radius:inherit;
+ background:#080e1c;
+}
+#conteudoResumo .loop03-banner-item:has(.loop03-banner-foto-manual:not([hidden])) .loop03-banner-anuncio-conteudo{
+ visibility:hidden;
+}
+body.loop03-modo-operador #conteudoResumo .loop03-banner-item:not(.loop03-banner-adicionar){
+ cursor:pointer;
+}
+#conteudoResumo .loop03-banners-pontos{flex-wrap:wrap}
+.akitemm-loja .akitemm-banner .akitemm-banner-foto-editavel:not([hidden]){
+ display:block;position:absolute;inset:0;width:100%;height:100%;
+ object-fit:contain;object-position:center;background:#0b101a;z-index:1;
+}
+.akitemm-loja .akitemm-banner .akitemm-banner-foto-editavel[hidden]{display:none!important}
+.akitemm-loja .akitemm-banner .akitemm-banner-espaco-livre{
+ position:absolute;inset:0;z-index:2;display:flex;align-items:center;
+ justify-content:center;min-height:100%;padding:20px;box-sizing:border-box;
+ background:linear-gradient(130deg,#121c2a,#23142f);
+ color:#f8e4bd;text-align:center;font-weight:750;
+}
+.akitemm-loja .akitemm-banner .akitemm-banner-espaco-livre[hidden]{display:none!important}
+.akitemm-loja .akitemm-banner .akitemm-banner-adicionar{
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ min-height:120px;max-width:100%;width:min(440px,95%);padding:22px;
+ border:2px dashed #e8ba72;border-radius:18px;
+ background:linear-gradient(145deg,#342741,#161f30);
+ color:#ffe1ab;font:800 clamp(1rem,2vw,1.35rem) system-ui,sans-serif;
+ cursor:pointer;
+}
+.akitemm-loja .akitemm-banner .akitemm-banner-rodizio{
+ z-index:5;left:0;right:0;bottom:6px;justify-content:center;
+ pointer-events:none;
+}
+.akitemm-loja .akitemm-banner .akitemm-banner-rodizio button{
+ pointer-events:auto;border-radius:50%;min-width:31px;min-height:31px;
+}
+.akitemm-loja .akitemm-banner #akitemmBannerPontos{
+ display:flex;gap:5px;max-width:70%;overflow-x:auto;scrollbar-width:none;
+ align-items:center;pointer-events:auto;
+}
+.akitemm-loja .akitemm-banner #akitemmBannerPontos button{
+ padding:3px 8px;min-width:29px;min-height:29px;
+ color:#ead5ae;background:#25202d;border:1px solid #967853;
+ font-size:.78rem;font-weight:750;
+}
+.akitemm-loja .akitemm-banner #akitemmBannerPontos button[aria-current="true"]{
+ background:#b68b49;color:#12131d;box-shadow:0 0 10px #dfae5b80;
+}
+@media(max-width:600px){
+ #conteudoResumo .loop03-banners-pista>.loop03-banner-adicionar{
+  min-height:0;max-height:none;aspect-ratio:3/4;border-radius:17px;
+ }
+ #conteudoResumo .loop03-banners-pista>.loop03-banner-adicionar span{
+  width:60px;height:60px;font-size:2.6rem;
+ }
+ .akitemm-loja .akitemm-banner .akitemm-banner-espaco-livre{padding:14px}
+ .akitemm-loja .akitemm-banner .akitemm-banner-adicionar{min-height:100px}
+}
+
+
+/* Grades internas independentes: 1 panorâmica, 2 ou 3 fotografias. */
+.banner-real-formulario .banner-real-arquivo select{
+ width:100%;max-width:100%;min-height:45px;padding:10px 12px;
+ color:#f7e5bf;background:#263442;border:1px solid #8e7855;
+ border-radius:12px;font:650 .92rem system-ui,sans-serif;
+}
+.banner-real-formulario .banner-foto-extra[hidden]{display:none!important}
+#conteudoResumo .loop03-banner-item .banner-mosaico,
+.akitemm-loja .akitemm-banner .banner-mosaico{
+ position:absolute;inset:0;box-sizing:border-box;z-index:5;
+ display:grid;grid-template-columns:repeat(var(--banner-quadros),minmax(0,1fr));
+ align-items:stretch;gap:clamp(3px,.65vw,9px);
+ padding:clamp(4px,1vw,11px);width:100%;height:100%;
+ border-radius:inherit;background:#090e1a;overflow:hidden;
+}
+#conteudoResumo .loop03-banner-item .banner-mosaico[hidden],
+.akitemm-loja .akitemm-banner .banner-mosaico[hidden]{display:none!important}
+#conteudoResumo .banner-mosaico-celula,
+.akitemm-loja .akitemm-banner .banner-mosaico-celula{
+ min-width:0;min-height:0;display:flex;align-items:center;
+ justify-content:center;overflow:hidden;position:relative;
+ border:1px solid #b99055;border-radius:clamp(5px,.7vw,11px);
+ background:linear-gradient(140deg,#1c2442,#231c30);
+ color:#f3d9a9;text-align:center;font-weight:750;
+ font-size:clamp(.72rem,1.5vw,1.05rem);padding:0;
+}
+#conteudoResumo .banner-mosaico-celula img,
+.akitemm-loja .akitemm-banner .banner-mosaico-celula img{
+ display:block;width:100%;height:100%;min-width:0;min-height:0;
+ object-fit:cover;object-position:center;
+}
+#conteudoResumo .banner-mosaico[data-modo="INTEIRA"] img,
+.akitemm-loja .akitemm-banner .banner-mosaico[data-modo="INTEIRA"] img{
+ object-fit:contain;background:#090e1a;
+}
+#conteudoResumo .loop03-banner-item:has(.banner-mosaico) .loop03-banner-anuncio-conteudo{
+ visibility:hidden;
+}
+.akitemm-loja .akitemm-banner .banner-mosaico{z-index:3;border-radius:12px}
+.akitemm-loja .akitemm-banner .akitemm-banner-rodizio{z-index:7}
+@media(max-width:480px){
+ #conteudoResumo .banner-mosaico-celula,
+ .akitemm-loja .akitemm-banner .banner-mosaico-celula{
+  font-size:.66rem;
+ }
+ .akitemm-loja .akitemm-banner .banner-mosaico{padding:5px;gap:4px}
+}
+
+#conteudoResumo .loop03-banner-item .loop03-banner-foto-manual[data-enquadramento="PREENCHER"]:not([hidden]){object-fit:cover}
