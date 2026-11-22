@@ -1304,7 +1304,7 @@
     },
     {
       "path": "src/producao/auditoria-operacional-sqlite.js",
-      "sha": "3466a08279224240cc6a61d9b07e27105d9d773d"
+      "sha": "ce112c08e0b55fc9aa0a427a98bd92d377f4ef77"
     },
     {
       "path": "src/producao/avaliacoes-produto-akitemm-sqlite.js",
@@ -5200,6 +5200,13 @@
       "antes": "dda14be0974f71f4bf55270e18b4958172f3ca35",
       "depois": "7b5b5eb07d5758f350dbe4d1b724e769ea2728d3",
       "objetivo": "Pedido explícito de 22/11/2026, após imagem da janela Produtos não publicados · AKITEMM: lixeiras dos rascunhos devem funcionar para cada item. Tratar formulário interrompido e produto cadastrado separadamente, dar feedback legível na própria ficha. Permitir desvincular e arquivar, na mesma transação auditada, somente rascunho comercial que nunca teve publicação e não possui pedidos. Produtos publicados, com histórico, mídia sem auditoria ou dados vinculados a pedidos permanecem protegidos. Preservar demais elementos do LOOP e da AKITEMM."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/auditoria-operacional-sqlite.js",
+      "antes": "3466a08279224240cc6a61d9b07e27105d9d773d",
+      "depois": "ce112c08e0b55fc9aa0a427a98bd92d377f4ef77",
+      "objetivo": "Permitir novo evento administrativo auditado VITRINE_RASCUNHO_DESVINCULADO para remoção atômica de rascunho nunca publicado sem pedidos; preservar auditoria imutável."
     }
   ]
 }
