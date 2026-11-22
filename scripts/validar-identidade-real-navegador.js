@@ -1108,7 +1108,7 @@ async function main(){
    // dourados, versão 3.0 prateada (sem branco integral na loja).
    const identidadeMarca=await page.locator('.akitemm-marca-loop')
     .evaluate(el=>{
-     const versao=el.querySelector('em');
+     const versao=el.querySelector('em')||el.querySelector('span:last-child');
      const aro=el.querySelector('.akitemm-anel');
      return {
       html:el.outerHTML.slice(0,1100),
