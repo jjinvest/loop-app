@@ -23,9 +23,12 @@
  async function sincronizarFotoLoja(){
   if(!fotoTitular)return;
   const consulta=++consultaFotoLoja;
-  const caminho=operadorAtivo?
-   '/api/admin/operador/foto-perfil':
-   visitante?null:'/api/contas/foto-perfil';
+  // A visão demonstrativa do cliente no perfil administrativo NÃO herda
+  // a identidade/foto do operador; só clientes autenticados veem sua foto.
+  const bloqueado=(visitante&&!operadorAtivo)||
+   (operadorAtivo&&visaoClienteLoja);
+  const caminho=bloqueado?null:operadorAtivo?
+   '/api/admin/operador/foto-perfil':'/api/contas/foto-perfil';
   if(!caminho){
    caminhoFotoAtual=null;fotoTitular.hidden=true;
    fotoTitular.removeAttribute('src');return;

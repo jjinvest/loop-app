@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "20884598628b0707df0768ade39534d55087116d"
+      "sha": "efdf97930665105bab08ec1c39b854105bc2c284"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1456,7 +1456,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "48595b04d60be979ad35060416821fd1114a8c28"
+      "sha": "13ff49dca91e276f68077ed357746740308f160a"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1884,7 +1884,7 @@
     },
     {
       "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
-      "sha": "f1ba18d4a50e8aed1ae89f3be9e0cf9e24859ee8"
+      "sha": "6f868adf4e080c10a4f2a2c5fcfae4426937b95f"
     },
     {
       "path": "test/akitemm-config-loja-demo.test.js",
@@ -2616,7 +2616,7 @@
     },
     {
       "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
-      "sha": "b87f920af324803842eb3428da0912c0ca25a267"
+      "sha": "380428654e5d6579333ec1ee2cd3ecee7b6d93d8"
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
@@ -3968,6 +3968,30 @@
       "antes": "b24ccb43506fd6510517b9c59858c2953de7d4fe",
       "depois": "1d954ecb4b2a31a76ab4f853ecc9dcef2ef2271a",
       "objetivo": "Contrato de interface permite URL versionada de JS da loja no Chrome Android, sem alterar a tela ou expor outras origens."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "48595b04d60be979ad35060416821fd1114a8c28",
+      "depois": "13ff49dca91e276f68077ed357746740308f160a",
+      "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "20884598628b0707df0768ade39534d55087116d",
+      "depois": "efdf97930665105bab08ec1c39b854105bc2c284",
+      "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
+    },
+    {
+      "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
+      "antes": "f1ba18d4a50e8aed1ae89f3be9e0cf9e24859ee8",
+      "depois": "6f868adf4e080c10a4f2a2c5fcfae4426937b95f",
+      "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "b87f920af324803842eb3428da0912c0ca25a267",
+      "depois": "380428654e5d6579333ec1ee2cd3ecee7b6d93d8",
+      "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
     }
   ]
 }
