@@ -72,7 +72,8 @@ const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_rascunhos_cadastro',
  'loja_real_canais_fornecedor',
  'loja_real_entrega_local_produto',
- 'loja_real_avaliacoes_verificadas'
+ 'loja_real_avaliacoes_verificadas',
+ 'loja_real_banners'
 ]);
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function conferir({origem,destino,chaveBackup,autorizado,restaurar=false}){
