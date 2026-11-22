@@ -461,6 +461,37 @@ async function main(){
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#abaTabuleiro').click();
    await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});
+   // Cofres exclusivos do operador, com centro destacado.
+   const painelCofres=operadorPage.locator('#loop03CofresOperador');
+   await painelCofres.waitFor({state:'visible'});
+   await operadorPage.locator('#loop03CofresEstado').filter({
+    hasText:/Aguardando conciliação externa/
+   }).waitFor({state:'visible'});
+   const geometriaCofres=await painelCofres.evaluate(painel=>{
+    return [...painel.querySelectorAll('.loop03-cofre')].map(el=>({
+     codigo:el.dataset.cofre,largura:el.getBoundingClientRect().width,
+     altura:el.getBoundingClientRect().height,
+     valor:el.querySelector('.loop03-cofre-valor')?.textContent
+    }));
+   });
+   assert.deepEqual(geometriaCofres.map(x=>x.codigo),
+    ['INVESTIMENTO','CENTRAL','RESERVA']);
+   assert.ok(geometriaCofres[1].largura>geometriaCofres[0].largura);
+   assert.ok(geometriaCofres[1].altura>geometriaCofres[2].altura);
+   assert.ok(geometriaCofres.every(x=>x.valor==='—'));
+   const saldosCofres=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/admin/loop/cofres',{credentials:'same-origin'});
+    return {status:r.status,d:await r.json()};
+   });
+   assert.equal(saldosCofres.status,200);
+   assert.equal(saldosCofres.d.somenteLeitura,true);
+   assert.equal(saldosCofres.d.estado,'AGUARDANDO_CONCILIACAO_EXTERNA');
+   assert.equal(saldosCofres.d.cofres.length,3);
+   assert.ok(saldosCofres.d.cofres.every(x=>x.saldoCentavos===null));
+   await operadorPage.locator('#loop03CofresAtualizar').click();
+   await operadorPage.locator('#loop03CofresEstado').filter({
+    hasText:/Aguardando conciliação externa/
+   }).waitFor();
    await operadorPage.locator('#atualizarTabuleiroIntegrado').click();
    const modal=operadorPage.locator('#loopOperadorCatracaDialog');
    await modal.waitFor({state:'visible'});
