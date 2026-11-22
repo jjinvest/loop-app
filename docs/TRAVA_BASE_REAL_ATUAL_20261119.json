@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "8b2189f50a18b93ef8557d479f53eb2ca09c8393"
+      "sha": "b2899a7aa466d64c07883ed7747bea5b9457a7c3"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1184,7 +1184,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "19ff777f77fecb14cca101aa0755bb435be6182a"
+      "sha": "721cc6d9e22b104d5a70cf1b86586c4d9be3f07a"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
@@ -1925,6 +1925,10 @@
     {
       "path": "test/akitemm-cursos-admin-integrado.test.js",
       "sha": "26bc0ec5681f5d9054e9ba763d7f0e660ba9f3dc"
+    },
+    {
+      "path": "test/akitemm-filtros-faixa-responsiva.test.js",
+      "sha": "496a233336b33c032843dd8b0d2c052d61d68a7e"
     },
     {
       "path": "test/akitemm-fluxo-pix-sandbox-seguranca.test.js",
