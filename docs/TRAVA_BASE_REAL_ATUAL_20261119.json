@@ -1428,7 +1428,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "7c98c0d6e090d2bb993be9b9f9032b6f00b9f650"
+      "sha": "e58253114e40f02807d45cbe2518cc5904f32620"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
