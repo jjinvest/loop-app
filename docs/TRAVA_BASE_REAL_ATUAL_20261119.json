@@ -1632,7 +1632,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "664c3a20edf2095e466495fe48683e71a9cc887a"
+      "sha": "2739dd77527cf64cbb4b3d424713b0abcdb560f5"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -3112,7 +3112,7 @@
     },
     {
       "path": "test/operador-clientes-produtos-relatorio-real.test.js",
-      "sha": "4b3eef64fe7fa1e8754b9574f3cd6135671b56eb"
+      "sha": "ce16a08f630ecf54b48b13692ed9b42775cf8981"
     },
     {
       "path": "test/operador-fotos-conta-real-unificada.test.js",
