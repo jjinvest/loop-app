@@ -1336,11 +1336,11 @@
     },
     {
       "path": "src/producao/banners-editor-real.css",
-      "sha": "64c0c458b62815dc7eb9b5a6eb833e206047c68a"
+      "sha": "8b6992210955375845da54ff86e4a2eaca1cc46f"
     },
     {
       "path": "src/producao/banners-escritorio-real-client.js",
-      "sha": "812c86667d804fbd16096f23e162bfb84cd986a6"
+      "sha": "9ed58c36158e5ef8564530edcb6427183c36c0d1"
     },
     {
       "path": "src/producao/banners-escritorio-real.js",
@@ -1348,7 +1348,7 @@
     },
     {
       "path": "src/producao/banners-loja-akitemm-client.js",
-      "sha": "ce0c8095d0a787450166c27f7e8dc4f7d3354925"
+      "sha": "4913af494f729271783c5a37b8fd3f504b96b102"
     },
     {
       "path": "src/producao/banners-loja-akitemm-real-sqlite.js",
@@ -4915,6 +4915,27 @@
       "antes": null,
       "depois": "2dc3079e30cd7cb5c544df64727de763fc21676f",
       "objetivo": "Solicitação direta em 22/11/2026: nos carrosséis do LOOP e AKITEMM, o operador pode criar banners sucessivos pelo botão + ao final e escolher 1 imagem panorâmica, 2 ou 3 quadros com fotos distintas e preenchimento/encaixe. Cliente visualiza apenas as composições completas da respectiva área; sem misturar imagens, sem mexer em relógio, catraca, posições ou dinheiro. Migração SQLite apenas aditiva, preservando os quatro primeiros banners, controle de operador/CSRF, validação de imagem, proteção de revisão e testes antes de publicação."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/banners-loja-akitemm-client.js",
+      "antes": "ce0c8095d0a787450166c27f7e8dc4f7d3354925",
+      "depois": "4913af494f729271783c5a37b8fd3f504b96b102",
+      "objetivo": "Acabamento do enquadramento panorâmico e prevenção de abertura acidental do editor ao deslizar no celular, sem alterar lógica do motor."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/banners-editor-real.css",
+      "antes": "64c0c458b62815dc7eb9b5a6eb833e206047c68a",
+      "depois": "8b6992210955375845da54ff86e4a2eaca1cc46f",
+      "objetivo": "Acabamento do enquadramento panorâmico e prevenção de abertura acidental do editor ao deslizar no celular, sem alterar lógica do motor."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/banners-escritorio-real-client.js",
+      "antes": "812c86667d804fbd16096f23e162bfb84cd986a6",
+      "depois": "9ed58c36158e5ef8564530edcb6427183c36c0d1",
+      "objetivo": "Acabamento do enquadramento panorâmico e prevenção de abertura acidental do editor ao deslizar no celular, sem alterar lógica do motor."
     }
   ]
 }
