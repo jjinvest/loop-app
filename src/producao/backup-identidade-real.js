@@ -74,11 +74,64 @@ const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_canais_fornecedor',
  'loja_real_entrega_local_produto',
  'loja_real_avaliacoes_verificadas',
- 'loja_real_banners_akitemm'
+ 'loja_real_banners_akitemm','loja_real_banners_akitemm_extensao',
+ 'akitemm_banner_mosaico_layout','akitemm_banner_mosaico_foto'
 ]);
-// Quatro banners exclusivos do Escritório LOOP real.
-const TABELAS_BANNERS_LOOP=Object.freeze(['loop_banner_escritorio_manual']);
+// Banners LOOP e extensões opcionais: backups antigos continuam restauráveis.
+const TABELAS_BANNERS_LOOP=Object.freeze([
+ 'loop_banner_escritorio_manual','loop_banner_escritorio_extensao',
+ 'loop_banner_mosaico_layout','loop_banner_mosaico_foto'
+]);
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
+// Valida fotos, composição e vínculo com a moldura. Backups históricos sem
+// as novas tabelas permanecem válidos; tabelas parciais falham fechadas.
+function validarExtensaoBanners(b,lista,{base,extensao,layout,foto}){
+ const presentes=[extensao,layout,foto].filter(x=>lista.includes(x));
+ if(!presentes.length)return;
+ if(presentes.length!==3||!lista.includes(base))
+  falha('BACKUP_BANNER_MOSAICO_ESQUEMA_INCOMPLETO');
+ const temColunas=(nome,esperadas)=>{
+  const col=b.prepare('PRAGMA table_info('+nome+')').all().map(x=>x.name);
+  if(esperadas.some(x=>!col.includes(x)))
+   falha('BACKUP_BANNER_MOSAICO_COLUNAS_INVALIDAS');
+ };
+ temColunas(extensao,
+  ['slot','mime','imagem','enquadramento','revisao','atualizado_em']);
+ temColunas(layout,['slot','colunas','modo']);
+ temColunas(foto,['slot','posicao','mime','imagem']);
+ const invalidosExt=b.prepare([
+  'SELECT slot FROM '+extensao,'WHERE slot<5 OR slot>10000',
+  'OR revisao<0 OR atualizado_em<0',
+  "OR enquadramento NOT IN ('INTEIRA','PREENCHER')",
+  'OR (imagem IS NULL AND mime IS NOT NULL)',
+  'OR (imagem IS NOT NULL AND (mime IS NULL OR',
+  "mime NOT IN ('image/jpeg','image/png','image/webp')",
+  'OR length(imagem)<40 OR length(imagem)>4194304)) LIMIT 1'
+ ].join(' ')).get();
+ if(invalidosExt)falha('BACKUP_BANNER_MOSAICO_IMAGEM_INVALIDA');
+ const orfao=nome=>b.prepare([
+  'SELECT x.slot FROM '+nome+' x',
+  'LEFT JOIN '+base+' b ON b.slot=x.slot',
+  'LEFT JOIN '+extensao+' e ON e.slot=x.slot',
+  'WHERE b.slot IS NULL AND e.slot IS NULL LIMIT 1'
+ ].join(' ')).get();
+ if(orfao(layout)||orfao(foto))
+  falha('BACKUP_BANNER_MOSAICO_ORFAO');
+ const invalidLayout=b.prepare([
+  'SELECT slot FROM '+layout,
+  'WHERE slot<1 OR slot>10000 OR colunas NOT IN (1,2,3)',
+  "OR modo NOT IN ('INTEIRA','PREENCHER') LIMIT 1"
+ ].join(' ')).get();
+ if(invalidLayout)falha('BACKUP_BANNER_MOSAICO_LAYOUT_INVALIDO');
+ const invalidFoto=b.prepare([
+  'SELECT slot FROM '+foto,
+  'WHERE slot<1 OR slot>10000 OR posicao NOT IN (2,3)',
+  "OR mime NOT IN ('image/jpeg','image/png','image/webp')",
+  'OR length(imagem)<40 OR length(imagem)>4194304 LIMIT 1'
+ ].join(' ')).get();
+ if(invalidFoto)falha('BACKUP_BANNER_MOSAICO_FOTO_INVALIDA');
+}
+
 function conferir({origem,destino,chaveBackup,autorizado,restaurar=false}){
  if(autorizado!==true||!Buffer.isBuffer(chaveBackup)||
     chaveBackup.length!==32)falha('CUSTODIA_BACKUP_REAL_NAO_AUTORIZADA');
@@ -162,7 +215,19 @@ function validarIdentidade(arquivo){
    ].join(' ')).get();
    if(invalido)falha('BACKUP_BANNERS_LOOP_INVALIDOS');
   }
-  // A escolha de destino imutável também integra a mesma cópia cifrada.
+  validarExtensaoBanners(b,lista,{
+    base:'loop_banner_escritorio_manual',
+    extensao:'loop_banner_escritorio_extensao',
+    layout:'loop_banner_mosaico_layout',
+    foto:'loop_banner_mosaico_foto'
+   });
+   validarExtensaoBanners(b,lista,{
+    base:'loja_real_banners_akitemm',
+    extensao:'loja_real_banners_akitemm_extensao',
+    layout:'akitemm_banner_mosaico_layout',
+    foto:'akitemm_banner_mosaico_foto'
+   });
+   // A escolha de destino imutável também integra a mesma cópia cifrada.
   // Backups históricos sem essa tabela continuam recuperáveis.
   if(lista.includes('loop_real_destinos_indicacao')){
    const tabela=b.prepare('PRAGMA table_info(loop_real_destinos_indicacao)')
