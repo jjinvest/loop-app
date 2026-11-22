@@ -169,7 +169,17 @@ async function principal(){
   ).boundingBox();
   assert.ok(puxar&&soltar);
   const x1=puxar.x+puxar.width/2,y1=puxar.y+puxar.height/2;
-  const x2=soltar.x+soltar.width/2,y2=soltar.y+soltar.height/2;
+  // No móvel, o centro do segundo cartão horizontal pode ficar FORA da
+  // viewport. Soltar sobre a faixa visível evita um gesto impossível.
+  const viewport=page.viewportSize();
+  const x2=Math.min(soltar.x+Math.min(12,soltar.width/5),
+   viewport.width-12);
+  const y2=soltar.y+Math.min(soltar.height/2,85);
+  assert.ok(x2>soltar.x&&x2<soltar.x+soltar.width,
+   'A área de soltura deve estar visível dentro do segundo cartão');
+  console.log('GESTO_VAZIO='+JSON.stringify({
+   larguraViewport:viewport.width,puxar,soltar,x1,y1,x2,y2
+  }));
   await sessaoTouch.send('Input.dispatchTouchEvent',{
    type:'touchStart',touchPoints:[{x:x1,y:y1}]
   });
@@ -184,7 +194,16 @@ async function principal(){
   });
   await page.getByText('Molduras vazias trocadas entre as posições',{
    exact:false
-  }).waitFor({timeout:12000});
+  }).waitFor({timeout:12000}).catch(async err=>{
+   const dados=await page.evaluate(()=>({
+    aviso:document.querySelector('.akitemm-arrasto-aviso')?.textContent,
+    slots:[...document.querySelectorAll('.akitemm-slot-vazio')].slice(0,3)
+     .map(n=>({slot:n.dataset.akitemmSlot,classes:n.className})),
+    erros:document.getElementById('akitemmResultadoProdutos')?.textContent
+   }));
+   throw Error('ARRASTE_VAZIOS_NAO_CONFIRMADO '+JSON.stringify(dados)+
+    ' '+err.message);
+  });
   await page.waitForFunction(cores=>document.querySelector(
    '#catalogoLojaLoop [data-akitemm-slot="1"]'
   )?.classList.contains('akitemm-slot-'+cores[1].toLowerCase()),
