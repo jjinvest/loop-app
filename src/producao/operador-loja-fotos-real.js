@@ -926,7 +926,7 @@
   let rascunhoId=rascunhoInicial?.id||null;
   let revisaoRascunho=rascunhoInicial?.revisao||0;
   let salvarEmCurso=Promise.resolve(),temporizadorRascunho=null;
-  let formularioFinalizado=false;
+  let formularioFinalizado=false,formularioAlterado=false;
   const avisoRascunho=linha('Os campos digitados são salvos como rascunho. '+
    'A foto ainda não enviada precisa ser selecionada novamente.');
   avisoRascunho.className='akitemm-estado-rascunho';
@@ -967,6 +967,7 @@
   };
   const agendarRascunho=()=>{
    if(formularioFinalizado)return;
+   formularioAlterado=true;
    clearTimeout(temporizadorRascunho);
    avisoRascunho.textContent='Alterações ainda não salvas...';
    temporizadorRascunho=setTimeout(()=>{
@@ -977,7 +978,7 @@
   form.addEventListener('change',agendarRascunho);
   // Fechar pelo X também tenta gravar a última alteração, sem publicar.
   dialogo.addEventListener('close',()=>{
-   if(!formularioFinalizado){
+   if(!formularioFinalizado&&formularioAlterado){
     clearTimeout(temporizadorRascunho);
     void salvarRascunho().catch(falhaRascunho);
    }
