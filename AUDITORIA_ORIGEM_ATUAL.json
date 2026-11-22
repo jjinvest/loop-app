@@ -1,0 +1,45 @@
+{
+  "dataUTC": "2026-11-22T12:10:57Z",
+  "construcao": {
+    "branch": "feature/unificar-escritorio-real-20261105",
+    "sha": "8a0ed83812d9714bf0428697a350f7d7c39ecd21"
+  },
+  "railway": {
+    "projeto": "8c1ab327-16f0-409a-90ac-8f02a3f5eae0",
+    "ambiente": "e5c30d7f-086f-4845-93ad-7d1a5ca5e31b",
+    "servico": "ac28edec-50ad-4187-99e2-8f7014735b63",
+    "deployment": "2026-11-22T11:38:01.015Z",
+    "status": "SUCCESS",
+    "sha": "8a0ed83812d9714bf0428697a350f7d7c39ecd21",
+    "observacao": "SUCCESS confirma deployment, nao prova equivalencia visual, transacoes bancarias ou comportamento em navegador"
+  },
+  "base": {
+    "branch": "base-limpa/loop-3-0-marco-zero-v0-20261121",
+    "shaAntes": "553f89d39c256bb81a4fa4daf5b083061afe7e0f",
+    "ciAnterior": "success",
+    "arquivosManifestados": 147
+  },
+  "comparacao": {
+    "divergencia": "branches diverged; diff entre pontas 57 arquivos; 129 commits a frente e 4 atras na comparacao GitHub",
+    "novosModulosExemplos": [
+      "banners-loja-akitemm-real-sqlite.js",
+      "avaliador-qualificacao-pedidos-real.js",
+      "diagnostico-cadeia-pedidos-filas.js"
+    ],
+    "promocaoAutomatica": false,
+    "motivo": "faltam verificacao de imports transitivos, equivalencia visual real e testes dirigidos da revisao publicada; manter base congelada"
+  },
+  "pendencias": [
+    "provar equivalencia visual no site real das alteracoes recentes",
+    "verificar cadeia completa de imports dos novos modulos",
+    "executar testes dirigidos e confirmar CI apos eventual incorporacao",
+    "confirmar PSP, split, liquidacao, fornecedor, reservas e saques reais",
+    "provar escala de 100 mil usuarios por teste especifico de carga, concorrencia e p95/p99"
+  ],
+  "garantias": {
+    "dadosReaisCopiados": false,
+    "operacoesFinanceirasLiberadas": false,
+    "servicoPublicadoAlterado": false,
+    "versoesAnterioresPreservadas": true
+  }
+}

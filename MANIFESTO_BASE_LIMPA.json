@@ -602,6 +602,10 @@
     {
       "path": "test/varredura-visual-publicacao-real.test.js",
       "gitSha": "560cc4db8d6756ff67ad2ac943d76edb01134880"
+    },
+    {
+      "path": "AUDITORIA_ORIGEM_ATUAL.json",
+      "gitSha": "cdf1f5cba8427439f7eae88c34d318cb0b6d51db"
     }
   ],
   "unverified": [
@@ -610,5 +614,9 @@
     "restauração isolada nesta cópia",
     "equivalência HTTP/telas da cópia"
   ],
-  "pendingApproval": "Proprietário aprova operação e telas reais; não presumir autorização bancária."
+  "pendingApproval": "Proprietário aprova operação e telas reais; não presumir autorização bancária.",
+  "lastObservedConstructionCommit": "8a0ed83812d9714bf0428697a350f7d7c39ecd21",
+  "lastObservedRailwayDeploymentCommit": "8a0ed83812d9714bf0428697a350f7d7c39ecd21",
+  "lastObservedRailwayDeploymentAt": "2026-11-22T11:38:01.015Z",
+  "lastAuditPath": "AUDITORIA_ORIGEM_ATUAL.json"
 }
