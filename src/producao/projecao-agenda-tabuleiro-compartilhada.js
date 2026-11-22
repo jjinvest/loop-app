@@ -14,6 +14,8 @@ function projetarAgendaTabuleiroCompartilhada(estado){
     estado.metaCentrosDia<0||estado.metaCentrosDia>1000000||
     !Number.isSafeInteger(estado.eventosNoCiclo)||
     estado.eventosNoCiclo<0||estado.eventosNoCiclo>6||
+    !Number.isSafeInteger(estado.ciclosConcluidos)||
+    estado.ciclosConcluidos<0||
     !Number.isSafeInteger(estado.girosHoje)||estado.girosHoje<0||
     !Number.isSafeInteger(estado.giros24h)||estado.giros24h<0||
     (estado.metaDataAlvo!==null&&estado.metaDataAlvo!==undefined&&
@@ -32,6 +34,7 @@ function projetarAgendaTabuleiroCompartilhada(estado){
   agoraServidorMs:estado.agoraServidorMs,
   luzesDoRelogioCompartilhado:true,
   eventosReaisNoCiclo:estado.eventosNoCiclo,
+  ciclosReaisConcluidos:estado.ciclosConcluidos,
   girosReaisHoje:estado.girosHoje,girosReais24h:estado.giros24h,
   metaLotes:estado.metaCentrosDia>0?{
    ativa:true,quantidade:estado.metaCentrosDia,
