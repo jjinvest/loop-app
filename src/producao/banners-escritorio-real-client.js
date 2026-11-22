@@ -139,7 +139,7 @@
  function renderizar(){
   if(!dados?.slots)return;
   const editavel=podeEditar();
-  const publicados=dados.slots.filter(x=>x.temImagem);
+  const publicados=dados.slots.filter(x=>x.publicado);
   for(const slot of dados.slots){
    let moldura=molduras.find(x=>Number(x.dataset.bannerSlot)===slot.slot);
    if(!moldura){
@@ -157,12 +157,36 @@
     moldura.dataset.bannerSlot=String(slot.slot);
    }
    const img=moldura.querySelector('[data-banner-imagem]');
-   const mostrar=editavel||slot.temImagem||(!publicados.length&&slot.slot===1);
+   const mostrar=editavel||slot.publicado||(!publicados.length&&slot.slot===1);
    moldura.hidden=!mostrar;
    moldura.style.display=mostrar?'block':'none';
-   if(!slot.temImagem){img.hidden=true;img.removeAttribute('src');}
-   else{
-    img.setAttribute('data-enquadramento','INTEIRA');
+   moldura.querySelector('.banner-mosaico')?.remove();
+   const quadros=Number(slot.colunas)||1;
+   if(quadros>1){
+    img.hidden=true;img.removeAttribute('src');
+    const grade=document.createElement('div');
+    grade.className='banner-mosaico';
+    grade.style.setProperty('--banner-quadros',String(quadros));
+    grade.dataset.modo=slot.modo||'PREENCHER';
+    for(let pos=1;pos<=quadros;pos++){
+     const f=slot.fotos?.[pos-1];
+     const quadro=document.createElement('div');
+     quadro.className='banner-mosaico-celula';
+     if(f?.temImagem){
+      const im=document.createElement('img');
+      im.alt='Foto '+pos+' do banner '+slot.slot;
+      im.loading='eager';
+      im.src='/api/loop/banners/'+slot.slot+'/foto/'+pos+
+       '?rev='+slot.revisao;
+      quadro.append(im);
+     }else if(editavel)quadro.textContent='Foto '+pos+' · adicionar';
+     grade.append(quadro);
+    }
+    moldura.append(grade);
+   }else if(!slot.temImagem){
+    img.hidden=true;img.removeAttribute('src');
+   }else{
+    img.setAttribute('data-enquadramento',slot.modo||'INTEIRA');
     img.loading='eager';
     img.onload=()=>{img.hidden=false;};
     img.onerror=()=>{img.hidden=true;};
