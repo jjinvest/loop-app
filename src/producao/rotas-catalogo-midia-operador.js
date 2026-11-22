@@ -68,6 +68,34 @@ function montarRotasCatalogoMidiaOperador({
       .json({erro:cod});
     }
    });
+  // Novo produto entra obrigatoriamente na primeira posição não ocupada.
+  // Não receber número solicitado pelo navegador evita buracos e disputas.
+  app.post('/api/admin/catalogo-midia/vincular-proximo',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).join(',')!=='produtoId'||!ID.test(b.produtoId))
+     return res.status(400).json({erro:'VITRINE_PROXIMO_CAMPOS_INVALIDOS'});
+    try{
+     const local=ID_MIDIA.test(b.produtoId)?
+      catalogoMidia.repo.buscar(b.produtoId):null;
+     const central=catalogoPrincipal?.
+      buscarProdutoAdministrativo({produtoId:b.produtoId});
+     if(local&&central)
+      return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
+     const resultado=posicoesVitrine.atribuirProximo({
+      produtoId:b.produtoId,produtoExiste:()=>!!(local||central)
+     });
+     return res.status(resultado.jaVinculado?200:201).json({
+      ...resultado,checkoutReal:false
+     });
+    }catch(e){
+     const cod=e?.codigo||'VITRINE_PROXIMO_INDISPONIVEL';
+     return res.status(cod.includes('SEM_ESPACO')?409:
+      cod.includes('NAO_ENCONTRADO')?404:
+      cod.includes('INVALIDA')?400:503).json({erro:cod});
+    }
+   });
   app.post('/api/admin/catalogo-midia/slots/:posicao',
    autorizarOperador,validarCsrf,(req,res)=>{
     const n=Number(req.params.posicao),b=req.body;
