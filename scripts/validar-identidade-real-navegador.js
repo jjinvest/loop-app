@@ -415,7 +415,7 @@ async function main(){
     name:'1001177708.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
    });
    await operadorPage.locator('#loop03BannerFormularioReal .loop-recorte-botao')
-    .click();
+    .first().click();
    const cortar=operadorPage.locator('#loopRecorteFotoOpcional');
    await cortar.waitFor({state:'visible'});
    await cortar.locator('select').selectOption('16/9');
