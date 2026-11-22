@@ -101,48 +101,30 @@
     }
    }
    ultimaJanelaVisual=chave;
-   // O cliente vê duas fontes separadas: GIROS registrados no SQLite e
-   // LUZES calculadas pelo mesmo relógio do tabuleiro, na hora local atual.
-   // Nunca alterar o cartão de posição selecionada a partir do relógio.
+   // O quadro do meio pertence aos dois perfis: ciclos efetivamente
+   // concluidos no livro de giros e luzes da programacao VIGENTE do relogio.
+   // Nao misturar luzes de turnos antigos, metas diferentes ou ciclos visuais.
    const resumo=$('loop03StatusPosicao'),selecionada=$('loop03NumeroIntegrado');
    const operadorAberto=document.body?.classList?.contains?.('loop03-modo-operador')===true;
-   const movimentosRelogio=valido?estado.passadas:0;
-   const ciclosRelogio=Math.floor(movimentosRelogio/6);
    if(compartilhado){
-    const giros=$('loop03Giros24Integrado');
-    // Mesmo placar central para os dois perfis: ciclos e luzes do
-    // RELOGIO nas ultimas 24h, reconstruidos das revisoes no SQLite.
-    // Jamais usar esta contagem como giro ou pagamento confirmado.
-    const agenda=agendaVisorCatraca;
-    const base=Number.isSafeInteger(agenda?.agoraServidorMs)?
-     horarioVisual({agenda,agoraMs:agenda.agoraServidorMs}):null;
-    // Entre leituras HTTP, manter o placar na mesma cadencia dos LEDs
-    // locais, sem requisicoes por segundo e sem inventar evento bancario.
-    const deltaLuzes=valido&&base?
-     Math.max(0,estado.passadas-base.passadas):0;
-    const ciclos=agenda?.ciclosRelogio24h;
-    const luzes=agenda?.luzesRelogio24h;
-    const contagemValida=Number.isSafeInteger(ciclos)&&ciclos>=0&&
-     Number.isSafeInteger(luzes)&&luzes>=0&&
-     ciclos===Math.floor(luzes/6);
-    if(giros)giros.textContent=contagemValida?
-     String(Math.floor((luzes+deltaLuzes)/6)):'—';
+    const ciclos=$('loop03Giros24Integrado');
+    const concluidos=agendaVisorCatraca?.girosReais24h;
+    if(ciclos)ciclos.textContent=Number.isSafeInteger(concluidos)&&
+     concluidos>=0?String(concluidos):'—';
     const luzes24h=$('loop03LuzesHoraIntegrado');
-    if(luzes24h)luzes24h.textContent=contagemValida?
-     String(luzes+deltaLuzes):'—';
+    // Usa exatamente o progresso mostrado no proprio relogio do tabuleiro:
+    // 45/60 aqui continua 45, mesmo com 621 pulsos de historicos anteriores.
+    if(luzes24h)luzes24h.textContent=valido?
+     String(estado.passadas):'—';
     if(operadorAberto&&selecionada&&valido){
      selecionada.textContent=estado.luzes+' / 6';
      const titulo=selecionada.parentElement?.querySelector?.('small');
      if(titulo)titulo.textContent='EVENTOS NO CICLO';
     }
    }
-   if(resumo&&compartilhado&&operadorAberto&&valido){
-    const giroReal=agendaVisorCatraca?.girosReaisHoje;
-    const ciclosReais=agendaVisorCatraca?.ciclosReaisConcluidos;
-    if(Number.isSafeInteger(giroReal)&&Number.isSafeInteger(ciclosReais))
-     resumo.textContent='Relógio: '+movimentosRelogio+'/'+estado.total+
-      ' luzes · '+ciclosRelogio+' ciclos completos · Sem pagamento real';
-   }
+   if(resumo&&compartilhado&&operadorAberto)
+    resumo.textContent=valido?
+     estado.passadas+' / '+estado.total+' luzes':'';
    const contador=$('motorContadorEventos');
    if(contador&&compartilhado){
     const reais=agendaVisorCatraca.eventosReaisNoCiclo;
