@@ -120,7 +120,7 @@ test('checkup das filas: 3A:1B, fallback B, 6 vagas e máximo 2 por titular',()=
  assert.equal(s.estado().catraca.giros,0);
 });
 
-test('21/11 17h até 22/11 00h20: 338 giros do relógio, 56 ciclos e 2/6; sem pagamentos',()=>{
+test('21/11 17h até 22/11 00h20: 338 luzes do relógio, 56 ciclos e 2/6; sem pagamentos',()=>{
  const instante=Date.parse('2026-11-22T00:20:00-03:00');
  const agenda=projetarAgendaTabuleiroCompartilhada({
   ...controle,agoraServidorMs:instante,girosHoje:0,giros24h:0,
@@ -128,7 +128,8 @@ test('21/11 17h até 22/11 00h20: 338 giros do relógio, 56 ciclos e 2/6; sem pa
  });
  const operador=criarVisor('operador',agenda,instante);
  const cliente=criarVisor('cliente',agenda,instante);
- assert.equal(operador.loop03Giros24Integrado.textContent,'338');
+ assert.equal(operador.loop03Giros24Integrado.textContent,'0');
+ assert.equal(operador.loop03LuzesHoraIntegrado.textContent,'15');
  assert.equal(operador.loop03NumeroIntegrado.textContent,'2 / 6');
  assert.match(operador.loop03StatusPosicao.textContent,
   /Relógio: 338\/600 luzes · 56 ciclos completos · Sem pagamento real/);
@@ -145,7 +146,8 @@ test('ao fechar o turno da noite a contagem visual fica em 600 e não zera',()=>
   ...controle,agoraServidorMs:instante
  });
  const painel=criarVisor('operador',agenda,instante);
- assert.equal(painel.loop03Giros24Integrado.textContent,'600');
+ assert.equal(painel.loop03Giros24Integrado.textContent,'0');
+ assert.equal(painel.loop03LuzesHoraIntegrado.textContent,'0');
  assert.equal(painel.loop03NumeroIntegrado.textContent,'6 / 6');
  assert.match(painel.loop03StatusPosicao.textContent,/100 ciclos completos/);
  assert.equal(painel.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
