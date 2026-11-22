@@ -1273,15 +1273,56 @@
   }catch{resposta.textContent='Saque indisponível. Nenhum Pix foi enviado.';}
   finally{botao.disabled=false;}
  }
+
+ // Atualização leve do placar em TODAS as abas, sem reconstruir os cartões,
+ // apagar formulários, perder o scroll ou reabrir a aba do Tabuleiro.
+ let placarClienteConsultando=false;
+ async function atualizarPlacarCliente(){
+  if(placarClienteConsultando||modoOperadorAtual||
+     $('painelConta')?.hidden!==false)return;
+  placarClienteConsultando=true;
+  try{
+   const r=await fetch('/api/loop/estado',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)return;
+   const d=await r.json();
+   if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
+      d.somenteLeitura!==true||d.financeiroReal!==false||
+      !Array.isArray(d.minhasPosicoes)||
+      d.agenda?.origem!=='CATRACA_REAL_MESMO_SQLITE'||
+      d.agenda?.luzesDoRelogioCompartilhado!==true)return;
+   if(modoOperadorAtual||$('painelConta')?.hidden!==false)return;
+   posicoesResumoReal=d.minhasPosicoes.filter(p=>Number.isSafeInteger(p.numero))
+    .sort((a,b)=>a.numero-b.numero);
+   if(!posicoesResumoReal.some(p=>String(p.numero)===posicaoSelecionada)){
+    posicaoResumoEscolhidaManualmente=false;
+    posicaoSelecionada=posicoesResumoReal.length?
+     String(posicoesResumoReal[0].numero):'';
+   }
+   $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
+    ' / '+String(d.limitePosicoesAtivas);
+   atualizarTopoPosicaoReal();
+   if(popupPosicoesRealAberto)preencherPopupReal();
+   visorCatraca.registrarAgenda(d.agenda);
+  }catch{
+   // Uma leitura indisponível não altera cartões, posições ou contas.
+  }finally{placarClienteConsultando=false;}
+ }
+
  function prepararAbasMotor(){
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
   visorCatraca.iniciar();
-  // O placar aparece em TODAS as abas: leitura periódica autenticada
-  // do mesmo estado, mesmo quando o Tabuleiro está recolhido.
+  // Sem reproduzir os cartões ao atualizar o placar nas outras abas.
+  // O operador mantém seu fluxo de atualização somente no Tabuleiro.
   window.setInterval(()=>{
-   if(!document.hidden&&$('painelConta')?.hidden===false)
+   if(document.hidden)return;
+   if($('conteudoTabuleiro')?.hidden===false){
     void carregarMotor();
+   }else if(!modoOperadorAtual&&$('painelConta')?.hidden===false){
+    void atualizarPlacarCliente();
+   }
   },15000);
     for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
    $(id)?.addEventListener('click',()=>{

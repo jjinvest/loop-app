@@ -1452,7 +1452,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "eeed403e0e4fde728373c8d92c3a844ff08beedb"
+      "sha": "388d11b10491e26ca25bad08147645f43640084c"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -3112,7 +3112,7 @@
     },
     {
       "path": "test/placar-cliente-hora-real-escritorio.test.js",
-      "sha": "af0c1e582c5b7ec6ea7517b4f09b9f7752fd3427"
+      "sha": "5c965fef8911cde78bb0210ebdbe27b4db443e1e"
     },
     {
       "path": "test/planejamento-vendas-fisicas-demo.test.js",
@@ -3904,6 +3904,18 @@
       "antes": "6de5013e398bf4f142c7fe2879529bf1f2e8a66a",
       "depois": "ce28a2519b3d428fea1c207e515c17f53f668a33",
       "objetivo": "Autorização do titular de 22/11/2026: primeira posição no placar sem esconder dez cartões, preservando seleção manual e ajustando contrato visual antigo à nova regra."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "eeed403e0e4fde728373c8d92c3a844ff08beedb",
+      "depois": "388d11b10491e26ca25bad08147645f43640084c",
+      "objetivo": "Resguardo de todos os cartões e formulários em 22/11/2026: placar leve em todas abas, atualização total somente no tabuleiro."
+    },
+    {
+      "path": "test/placar-cliente-hora-real-escritorio.test.js",
+      "antes": "af0c1e582c5b7ec6ea7517b4f09b9f7752fd3427",
+      "depois": "5c965fef8911cde78bb0210ebdbe27b4db443e1e",
+      "objetivo": "Resguardo de todos os cartões e formulários em 22/11/2026: placar leve em todas abas, atualização total somente no tabuleiro."
     }
   ]
 }

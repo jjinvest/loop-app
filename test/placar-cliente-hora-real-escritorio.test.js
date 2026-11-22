@@ -15,6 +15,9 @@ test('os tres quadros pertencem ao shell comum de todas as abas do cliente',()=>
  assert.match(css,/#loop03IrPosicoesIntegrado>span/);
  assert.match(css,/#loop03StatusPosicao/);
  assert.match(js,/\$\('painelConta'\)\?\.hidden===false/);
+ assert.match(js,/async function atualizarPlacarCliente\(\)/);
+ assert.match(js,/else if\(!modoOperadorAtual&&\$\('painelConta'\)\?\.hidden===false\)/);
+ assert.match(js,/if\(placarClienteConsultando\|\|modoOperadorAtual/);
  assert.match(js,/atualizarTopoPosicaoReal\(\)/);
  assert.match(js,/posicoesResumoReal\[0\]\.numero/);
 });
