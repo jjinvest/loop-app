@@ -798,6 +798,24 @@ async function main(){
    assert.equal(await page.locator('#cadastroNick').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#login').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#conteudoResumo').isVisible(),true);
+   // Mesmo sem fotos personalizadas, manter os quatro banners originais.
+   // A presença de apenas duas fotos não pode reduzir o carrossel a dois.
+   await page.waitForFunction(()=>{
+    const pista=document.getElementById('loop03PistaBanners');
+    if(!pista||pista.dataset.carrosselDinamico!=='true')return false;
+    const originais=[...pista.querySelectorAll('.loop03-banner-item')]
+     .filter(x=>Number(x.dataset.bannerSlot)>=1&&
+      Number(x.dataset.bannerSlot)<=4);
+    return originais.length===4&&originais.every(x=>
+     !x.hidden&&getComputedStyle(x).display!=='none');
+   });
+   assert.equal(await page.locator('#loop03PistaBanners .loop03-banner-item[data-banner-slot]:visible').count(),4,
+    'os quatro banners de origem devem permanecer visíveis para o cliente');
+   assert.equal(await page.locator('#loop03BannerMaisReal').isHidden(),true,
+    'o cliente não pode criar banners');
+   assert.equal(await page.locator('.loop03-banners-pontos button').count(),4,
+    'o cliente deve ter quatro posições navegáveis no carrossel');
+
    // Cliente troca a foto clicando no retrato do LOOP com Minha Conta fechada.
    // A imagem deve ser salva automaticamente no SQLite real.
    const escolhaFoto=page.waitForEvent('filechooser',{timeout:12000});
