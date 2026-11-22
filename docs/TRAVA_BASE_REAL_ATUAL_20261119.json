@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "c216578fd91ed77a2a2c69f7e53dc92ee32e9877"
+      "sha": "e7fcb265416836262eb632fd25632b6f1b7caff3"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -4957,6 +4957,13 @@
       "antes": "1324325d603e312d5df59c4d41054a5e1c133d14",
       "depois": "c216578fd91ed77a2a2c69f7e53dc92ee32e9877",
       "objetivo": "Ampliação autorizada de banners: preservar a estrutura anterior, validar restauração do backup cifrado das extensões e adaptar o teste de navegador ao botão + que cria novo banner. Sem tocar na lógica do motor, financeiro ou posições."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "c216578fd91ed77a2a2c69f7e53dc92ee32e9877",
+      "depois": "e7fcb265416836262eb632fd25632b6f1b7caff3",
+      "objetivo": "Atualização da prova visual: o recorte individual deve apontar o primeiro campo de foto, com três opções de edição por banner, sem alterar fluxo ou dados."
     }
   ]
 }
