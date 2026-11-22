@@ -125,7 +125,8 @@ test('21/11 17h até 22/11 00h20: 338 giros do relógio, 56 ciclos e 2/6; sem pa
  const cliente=criarVisor('cliente',agenda,instante);
  for(const painel of [operador,cliente]){
   assert.equal(painel.loop03Giros24Integrado.textContent,'338');
-  assert.equal(painel.loop03NumeroIntegrado.textContent,'2 / 6');
+  assert.equal(painel.loop03NumeroIntegrado.textContent,
+   painel===operador?'2 / 6':'—');
   assert.match(painel.loop03StatusPosicao.textContent,
    /Relógio: 338\/600 luzes · 56 ciclos completos · Sem pagamento real/);
   assert.equal(agenda.girosReaisHoje,0);
