@@ -742,3 +742,92 @@ body.loop03-modo-operador .cliente-integrado .loop03-placar-hora{
   min-height:125px!important;padding:6px 3px!important;
  }
 }
+
+/* Cofres somente no rodapé do Tabuleiro do OPERADOR.
+   Central maior e lateral menor, respeitando mobile, sem tocar no motor. */
+#loop03CofresOperador[hidden]{display:none!important}
+body.loop03-modo-operador .cliente-integrado #conteudoTabuleiro .loop03-cofres-rodape{
+ display:block;box-sizing:border-box;width:100%;min-width:0;
+ margin:18px 0 3px;padding:14px 9px 11px;border-radius:23px;
+ border:1px solid #96784f;
+ background:linear-gradient(160deg,#141e2c,#0a121d 75%,#1c1b2c);
+ box-shadow:inset 0 1px #f7d89126,0 5px 18px #0007;
+}
+#loop03CofresOperador .loop03-cofres-cabecalho{
+ display:flex;justify-content:space-between;align-items:center;gap:8px;
+ margin:0 3px 12px;color:#eccd8a;
+}
+#loop03CofresOperador .loop03-cofres-cabecalho strong{
+ font-size:clamp(.75rem,2.4vw,1rem);letter-spacing:.07em;
+}
+#loop03CofresAtualizar{
+ border:1px solid #baa06d;border-radius:16px;background:#252736;
+ color:#ead1a2;padding:5px 11px;min-height:32px;cursor:pointer;
+ font-size:clamp(.65rem,1.9vw,.8rem);
+}
+#loop03CofresAtualizar:disabled{opacity:.55}
+#loop03CofresOperador .loop03-cofres-tres{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.22fr) minmax(0,1fr);
+ gap:clamp(5px,1.8vw,11px);align-items:end;width:100%;min-width:0;
+}
+#loop03CofresOperador .loop03-cofre{
+ min-width:0;display:flex;flex-direction:column;
+ justify-content:flex-end;align-items:center;box-sizing:border-box;
+ padding:9px 3px 10px;border-radius:17px;
+ border:1px solid #80643c;
+ background:linear-gradient(150deg,#232a35,#101724 68%,#282331);
+ text-align:center;gap:6px;color:#f4dfb0;overflow:hidden;
+ min-height:172px;
+}
+#loop03CofresOperador .loop03-cofre-centro{
+ min-height:192px;border:2px solid #caa457;
+ background:radial-gradient(circle at 50% 12%,#1c4036,#1b2930 50%,#151b29);
+ box-shadow:0 0 17px #c8a45735,inset 0 1px #fde29a77;
+}
+#loop03CofresOperador .loop03-cofre-fisico{
+ display:block;position:relative;box-sizing:border-box;
+ width:clamp(45px,12.4vw,69px);height:clamp(46px,12.8vw,70px);
+ flex:none;border:5px ridge #d2b477;border-radius:9px;
+ background:radial-gradient(circle at 35% 25%,#505869,#1a2631 64%,#0b111b);
+ box-shadow:inset 0 0 1px 2px #0b1019,0 3px 8px #0009;
+}
+#loop03CofresOperador .loop03-cofre-centro .loop03-cofre-fisico{
+ width:clamp(60px,16vw,85px);height:clamp(60px,16vw,88px);
+ border-color:#e2c16c;
+}
+#loop03CofresOperador .loop03-cofre-fisico::before{
+ content:'';position:absolute;top:11%;bottom:11%;right:10%;
+ width:2px;background:#f0d39177;
+}
+#loop03CofresOperador .loop03-cofre-volante{
+ position:absolute;left:50%;top:50%;
+ width:46%;aspect-ratio:1;border-radius:50%;
+ border:3px solid #d8c28a;transform:translate(-50%,-50%);
+ box-shadow:0 0 0 2px #080e1a,inset 0 0 0 2px #151d2a;
+ background:linear-gradient(90deg,transparent 42%,#d3b777 44% 56%,transparent 58%),
+ linear-gradient(transparent 42%,#d3b777 44% 56%,transparent 58%);
+}
+#loop03CofresOperador .loop03-cofre-nome{
+ font-size:clamp(.56rem,1.8vw,.85rem);line-height:1.16;
+ letter-spacing:.02em;overflow-wrap:anywhere;
+}
+#loop03CofresOperador .loop03-cofre-centro .loop03-cofre-nome{
+ font-size:clamp(.65rem,2.05vw,.93rem);color:#fff2c1;
+}
+#loop03CofresOperador .loop03-cofre-valor{
+ font-weight:800;font-variant-numeric:tabular-nums;
+ font-size:clamp(.75rem,2.3vw,1.08rem);color:#fff;overflow-wrap:anywhere;
+}
+#loop03CofresOperador .loop03-cofre-estado{
+ color:#e0cfae;font-size:clamp(.52rem,1.45vw,.71rem);
+ line-height:1.15;overflow-wrap:anywhere;
+}
+#loop03CofresOperador .loop03-cofres-estado-geral{
+ margin:10px 4px 0;color:#cfb88e;text-align:center;
+ font-size:clamp(.68rem,2vw,.8rem);line-height:1.35;
+}
+@media(max-width:390px){
+ #loop03CofresOperador .loop03-cofres-tres{gap:4px}
+ #loop03CofresOperador .loop03-cofre{padding:7px 2px 9px;gap:5px}
+ #loop03CofresOperador .loop03-cofres-cabecalho{margin-bottom:9px}
+}
