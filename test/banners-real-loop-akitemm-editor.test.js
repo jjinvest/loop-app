@@ -81,6 +81,8 @@ test('formulários reais: sinal + abre área de foto e envia à tabela correta',
  const gateway=ler('scripts/iniciar-gateway-publico-real-loop.js');
  assert.match(frente,/loop03BannerMaisReal/);
  assert.match(frente,/loop03BannerFormularioReal/);
+ assert.match(frente,/img\.loading='eager'/);
+ assert.match(frente,/img\.hidden=false/);
  assert.match(frente,/api\/loop\/banners/);
  assert.match(frente,/api\/admin\/loop\/banners/);
  assert.match(frente,/document\.body\.classList\.contains\('loop03-modo-operador'\)/);
@@ -92,4 +94,28 @@ test('formulários reais: sinal + abre área de foto e envia à tabela correta',
  assert.match(gateway,/api\\\/loop\\\/banners/);
  assert.doesNotMatch(frente,/staging\/|laboratorio\//);
  assert.doesNotMatch(lojaJs,/staging\/|laboratorio\//);
+});
+
+test('recorte opcional reutilizado em banners, produtos, e perfis cliente e operador',()=>{
+ const interfaceReal=require('../src/producao/interface-aprovada-loop');
+ const htmls=[interfaceReal.renderizarInterfaceAprovada(),
+  interfaceReal.renderizarLojaAprovada()];
+ for(const html of htmls){
+  assert.match(html,/\/identidade\/assets\/recorte-foto-real\.js\?rev=[a-f0-9]{16}/);
+  assert.match(html,/\/identidade\/assets\/recorte-foto-real\.css/);
+ }
+ const shared=ler('src/producao/recorte-foto-compartilhado.js');
+ const server=ler('src/producao/interface-aprovada-loop.js');
+ assert.match(server,/recorte-foto-compartilhado\.js/);
+ assert.match(server,/recorte-foto-compartilhado\.css/);
+ assert.match(shared,/Recortar foto \(opcional\)/);
+ assert.match(shared,/input\[type=file\]\[accept\*="image\/"\]/);
+ assert.match(shared,/MutationObserver\(descobrir\)/);
+ assert.match(shared,/input\.id==='arquivoFotoPerfil'/);
+ assert.match(shared,/new DataTransfer\(\)/);
+ assert.match(shared,/entrada\.dispatchEvent\(new Event\('change'/);
+ assert.match(shared,/canvas\.toBlob/);
+ assert.match(shared,/formato\.value/);
+ assert.match(shared,/const leitor=new FileReader\(\)/);
+ assert.doesNotMatch(shared,/createObjectURL/);
 });

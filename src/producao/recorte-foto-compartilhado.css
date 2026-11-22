@@ -1,0 +1,49 @@
+/* Recorte opcional em qualquer foto real; sem alterar as molduras aprovadas. */
+.loop-recorte-botao{
+ display:inline-flex;align-items:center;justify-content:center;
+ box-sizing:border-box;max-width:100%;min-height:42px;margin:7px 0;
+ padding:8px 15px;border:1px solid #aa8a53;border-radius:20px;
+ background:linear-gradient(145deg,#26313d,#111a29);
+ color:#f4d89c;font-size:.9rem;font-weight:700;line-height:1.3;cursor:pointer;
+}
+body:not(.loop03-logado) #loop03AlterarFotoTopo + .loop-recorte-botao{display:none}
+.loop-recorte-botao:focus-visible{outline:3px solid #e0ba6a;outline-offset:2px}
+.loop-recorte-dialogo{
+ box-sizing:border-box;border:2px solid #bb9453;border-radius:22px;
+ padding:0;width:min(94vw,640px);max-width:94vw;
+ max-height:90dvh;overflow:auto;color:#f2e4ca;
+ background:linear-gradient(145deg,#1b2736,#080e1c);
+ box-shadow:0 18px 60px #000c;
+}
+.loop-recorte-dialogo::backdrop{background:#000c}
+.loop-recorte-dialogo .loop-recorte-caixa{
+ display:grid;gap:12px;box-sizing:border-box;padding:18px;
+}
+.loop-recorte-dialogo h3{font-size:1.17rem;margin:0;color:#f4d89c}
+.loop-recorte-dialogo p{font-size:.88rem;line-height:1.4;margin:0}
+.loop-recorte-dialogo .loop-recorte-canvas{
+ box-sizing:border-box;width:100%;height:auto;max-height:44dvh;
+ object-fit:contain;background:#060a12;border:1px solid #77633e;
+ border-radius:12px;touch-action:none;
+}
+.loop-recorte-dialogo .loop-recorte-controles{display:grid;gap:10px}
+.loop-recorte-dialogo label{display:grid;gap:5px;font-size:.85rem;color:#e8d5ac}
+.loop-recorte-dialogo select{
+ width:100%;min-height:42px;background:#223042;color:#fff;
+ border:1px solid #88754f;border-radius:10px;padding:8px;
+}
+.loop-recorte-dialogo input[type=range]{width:100%;accent-color:#c69b50;min-height:29px}
+.loop-recorte-dialogo .loop-recorte-status{min-height:1.3em;color:#efd2a0}
+.loop-recorte-dialogo .loop-recorte-acoes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.loop-recorte-dialogo .loop-recorte-acoes button{
+ min-height:46px;border-radius:12px;border:1px solid #a98855;
+ background:#293341;color:#f5deaf;font-weight:750;cursor:pointer;
+}
+.loop-recorte-dialogo .loop-recorte-acoes .loop-recorte-aplicar{
+ background:linear-gradient(120deg,#aa802d,#6b4530);color:#fff;
+}
+.loop-recorte-dialogo button:disabled{opacity:.55}
+@media(max-width:430px){
+ .loop-recorte-dialogo .loop-recorte-caixa{padding:12px;gap:9px}
+ .loop-recorte-dialogo .loop-recorte-canvas{max-height:37dvh}
+}

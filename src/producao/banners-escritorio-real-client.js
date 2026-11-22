@@ -43,6 +43,54 @@
  const salvarBotao=dialogo.querySelector('#loop03BannerSalvarReal');
  const excluirBotao=dialogo.querySelector('#loop03BannerExcluirReal');
  let leitura=0;
+ // Fotos da galeria Android podem trazer EXIF, bytes finais extras ou
+ // codificação JPEG que a verificação binária estrita do servidor rejeita.
+ // Decodificar e reexportar como JPEG padrão (sem recortar a imagem)
+ // mantém a validação do servidor, sem ampliar os tipos aceitos por ele.
+ async function prepararFotoBanner(foto){
+  if(!foto||!['image/jpeg','image/png','image/webp'].includes(foto.type)||
+     foto.size<40||foto.size>16*1024*1024)
+   throw Error('SELECIONE_IMAGEM_JPG_PNG_WEBP_ATE_16MB');
+  const imagem=new Image();
+  const src=await new Promise((resolve,reject)=>{
+   const leitor=new FileReader();
+   leitor.onload=()=>resolve(String(leitor.result||''));
+   leitor.onerror=()=>reject(Error('IMAGEM_NAO_PODE_SER_LIDA'));
+   leitor.readAsDataURL(foto);
+  });
+  // Content-Security-Policy da identidade permite data:, mas nao blob:.
+  try{
+   imagem.src=src;
+   try{await imagem.decode();}
+   catch{throw Error('IMAGEM_NAO_PODE_SER_ABERTA');}
+   const origemLargura=imagem.naturalWidth,origemAltura=imagem.naturalHeight;
+   if(!origemLargura||!origemAltura||
+      origemLargura>12000||origemAltura>12000||
+      origemLargura*origemAltura>40000000)
+    throw Error('IMAGEM_DIMENSOES_INVALIDAS');
+   const escala=Math.min(1,2600/Math.max(origemLargura,origemAltura));
+   let largura=Math.max(1,Math.round(origemLargura*escala));
+   let altura=Math.max(1,Math.round(origemAltura*escala));
+   const canvas=document.createElement('canvas');
+   const contexto=canvas.getContext('2d',{alpha:false});
+   if(!contexto)throw Error('IMAGEM_NAO_PODE_SER_PROCESSADA');
+   for(let tentativa=0;tentativa<4;tentativa++){
+    canvas.width=largura;canvas.height=altura;
+    contexto.fillStyle='#ffffff';
+    contexto.fillRect(0,0,largura,altura);
+    contexto.drawImage(imagem,0,0,largura,altura);
+    for(const qualidade of [0.92,0.85,0.76]){
+     const convertido=await new Promise(resolve=>
+      canvas.toBlob(resolve,'image/jpeg',qualidade));
+     if(convertido?.type==='image/jpeg'&&convertido.size>=40&&
+        convertido.size<=4*1024*1024)return convertido;
+    }
+    largura=Math.max(1,Math.round(largura*0.76));
+    altura=Math.max(1,Math.round(altura*0.76));
+   }
+   throw Error('IMAGEM_NAO_CABE_EM_4MB');
+  }finally{imagem.src='';}
+ }
  function slotAtual(){
   if(!pista.clientWidth)return 1;
   return Math.min(4,Math.max(1,1+Math.round(
@@ -63,10 +111,14 @@
    }
    img.setAttribute('data-enquadramento','INTEIRA');
    const src='/api/loop/banners/'+slot.slot+'/imagem?rev='+slot.revisao;
-   if(img.getAttribute('src')!==src)img.src=src;
+   // Um img oculto com loading=lazy nao inicia a requisicao: a foto
+   // fica gravada no SQLite, mas nunca aparece depois de recarregar.
+   // Exibir a moldura e forcar carregamento real antes de aguardar onload.
+   img.loading='eager';
    img.onload=()=>{img.hidden=false;};
    img.onerror=()=>{img.hidden=true;};
-   if(img.complete&&img.naturalWidth>0)img.hidden=false;
+   img.hidden=false;
+   if(img.getAttribute('src')!==src)img.src=src;
   }
   exibirEditor();
  }
@@ -110,8 +162,8 @@
   const f=arquivo.files?.[0];
   if(!f){previa.hidden=true;return;}
   if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
-     f.size<40||f.size>4*1024*1024){
-   status.textContent='Escolha JPG, PNG ou WebP de até 4 MB.';
+     f.size<40||f.size>16*1024*1024){
+   status.textContent='Escolha JPG, PNG ou WebP de até 16 MB.';
    arquivo.value='';previa.hidden=true;return;
   }
   status.textContent='Imagem pronta para salvar.';
@@ -137,22 +189,24 @@
   }
   if(!remover&&(!foto||
      !['image/jpeg','image/png','image/webp'].includes(foto.type)||
-     foto.size<40||foto.size>4*1024*1024)){
-   status.textContent='Selecione uma foto válida antes de salvar.';return;
+     foto.size<40||foto.size>16*1024*1024)){
+   status.textContent='Selecione uma foto JPG, PNG ou WebP válida.';return;
   }
   gravando=true;salvarBotao.disabled=true;excluirBotao.disabled=true;
-  status.textContent=remover?'Excluindo foto...':'Salvando banner no LOOP...';
+  status.textContent=remover?'Excluindo foto...':'Preparando a imagem automaticamente...';
   try{
+   const imagemPronta=remover?null:await prepararFotoBanner(foto);
+   status.textContent=remover?'Excluindo foto...':'Salvando banner no LOOP...';
    const token=await solicitar('/api/admin/comercial/sessao');
    if(typeof token.csrfToken!=='string'||token.csrfToken.length<20)
     throw Error('SESSAO_OPERADOR_INVALIDA');
    const caminho='/api/admin/loop/banners/'+slotEditor+'/imagem';
    const headers={'X-Loop-Admin-Csrf':token.csrfToken,
     'X-Banner-Revisao-Esperada':String(slot.revisao)};
-   if(!remover)headers['Content-Type']=foto.type;
+   if(!remover)headers['Content-Type']='image/jpeg';
    const resultado=await solicitar(caminho,{
     method:remover?'DELETE':'PUT',headers,
-    ...(!remover?{body:foto}:{})
+    ...(!remover?{body:imagemPronta}:{})
    });
    if(resultado.quantidadeMaxima!==4||resultado.slots?.length!==4)
     throw Error('BANNER_NAO_CONFIRMADO');

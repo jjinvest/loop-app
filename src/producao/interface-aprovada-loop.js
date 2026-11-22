@@ -23,6 +23,8 @@ const ARQUIVOS=Object.freeze({
  '/identidade/assets/loja-banners.js':'./banners-loja-akitemm-client.js',
  '/identidade/assets/loop-banners-real.js':'./banners-escritorio-real-client.js',
  '/identidade/assets/banners-editor-real.css':'./banners-editor-real.css',
+ '/identidade/assets/recorte-foto-real.js':'./recorte-foto-compartilhado.js',
+ '/identidade/assets/recorte-foto-real.css':'./recorte-foto-compartilhado.css',
  '/identidade/assets/vitrine-horizontal.css':'../candidato/vitrine-horizontal.css',
  '/identidade/assets/acabamento-loop.js':'../shared/acabamento-visual-loop.js'
 });
@@ -30,6 +32,13 @@ function trocarExato(texto,antes,depois){
  const partes=texto.split(antes);
  if(partes.length!==2)throw Error('INTERFACE_APROVADA_DESATUALIZADA');
  return partes.join(depois);
+}
+function recursoRecorteFoto(){
+ const arquivo=fs.readFileSync(path.join(__dirname,'recorte-foto-compartilhado.js'));
+ const hash=createHash('sha256').update(arquivo).digest('hex').slice(0,16);
+ return '<link rel="stylesheet" href="/identidade/assets/recorte-foto-real.css">'+
+  '<script src="/identidade/assets/recorte-foto-real.js?rev='+hash+
+  '" defer></script>';
 }
 function renderizarInterfaceAprovada(){
  let html=htmlOriginal;
@@ -138,6 +147,7 @@ function renderizarInterfaceAprovada(){
   '<script src="/identidade/assets/cliente.js?rev='+revisao+'" defer></script>');
  html=trocarExato(html,'</head>',
   '<link rel="stylesheet" href="/identidade/assets/banners-editor-real.css">'+
+  recursoRecorteFoto()+
   '<script src="/identidade/assets/loop-banners-real.js?rev='+
   createHash('sha256').update(fs.readFileSync(path.join(__dirname,
    'banners-escritorio-real-client.js'))).digest('hex').slice(0,16)+
@@ -164,6 +174,7 @@ function renderizarLojaAprovada(){
  // e conecta somente o comportamento de toque do operador real.
  html=trocarExato(html,'</head>',
   '<link rel="stylesheet" href="/identidade/assets/vitrine-horizontal.css">'+
+  recursoRecorteFoto()+
   '<script src="/identidade/assets/acabamento-loop.js" defer></script>'+
   '<script src="/identidade/assets/operador-fotos.js" defer></script>'+ 
   '<link rel="stylesheet" href="/identidade/assets/banners-editor-real.css">'+

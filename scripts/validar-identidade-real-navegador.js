@@ -290,6 +290,97 @@ async function main(){
    await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
    assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
+   // Teste REAL dos banners com foto JPEG de galeria Android contendo
+   // bytes extras após o marcador JPEG: a prévia aparece, mas o arquivo
+   // original é rejeitado pelo validador binário. A normalização deve
+   // gerar JPEG canônico, salvar, permitir GET e sobreviver a um reload.
+   const jpegBase64=await operadorPage.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=440;c.height=740;
+    const x=c.getContext('2d');x.fillStyle='#221b27';x.fillRect(0,0,440,740);
+    x.fillStyle='#e2b659';x.fillRect(40,95,360,510);
+    x.fillStyle='#222';x.font='bold 34px sans-serif';
+    x.fillText('LOOP',148,370);
+    return c.toDataURL('image/jpeg',0.90).split(',')[1];
+   });
+   const jpegAndroid=Buffer.concat([
+    Buffer.from(jpegBase64,'base64'),
+    Buffer.from('ANDROID-TRAILING-METADATA')
+   ]);
+   const revisaoBannerAntes=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/loop/banners',{credentials:'same-origin',cache:'no-store'});
+    const d=await r.json();return d.slots?.[0]?.revisao;
+   });
+   assert.ok(Number.isSafeInteger(revisaoBannerAntes));
+   const botaoBanner=operadorPage.locator('#loop03BannerMaisReal');
+   await botaoBanner.waitFor({state:'visible',timeout:12000});
+   await botaoBanner.click();
+   await operadorPage.locator('#loop03BannerFormularioReal')
+    .waitFor({state:'visible'});
+   await operadorPage.locator('#loop03BannerArquivoReal').setInputFiles({
+    name:'1001177708.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
+   });
+   await operadorPage.locator('#loop03BannerPreviaReal')
+    .waitFor({state:'visible'});
+   await operadorPage.locator('#loop03BannerSalvarReal').click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Foto salva no LOOP.'}).waitFor({state:'visible'});
+   const bannerSalvo=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/loop/banners/1/imagem',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    const a=new Uint8Array(await r.arrayBuffer());
+    return {status:r.status,mime:r.headers.get('content-type'),
+     tamanho:a.length,inicio:[...a.slice(0,3)],fim:[...a.slice(-2)]};
+   });
+   assert.equal(bannerSalvo.status,200);
+   assert.equal(bannerSalvo.mime,'image/jpeg');
+   assert.deepEqual(bannerSalvo.inicio,[255,216,255]);
+   assert.deepEqual(bannerSalvo.fim,[255,217]);
+   // Segunda passagem: o recorte e opcional e aplicado ANTES de salvar,
+   // usando a mesma interface nos banners e produtos do operador.
+   await operadorPage.locator('#loop03BannerArquivoReal').setInputFiles({
+    name:'1001177708.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
+   });
+   await operadorPage.locator('#loop03BannerFormularioReal .loop-recorte-botao')
+    .click();
+   const cortar=operadorPage.locator('#loopRecorteFotoOpcional');
+   await cortar.waitFor({state:'visible'});
+   await cortar.locator('select').selectOption('16/9');
+   await cortar.locator('input[type=range]').first().evaluate(el=>{
+    el.value='1.20';el.dispatchEvent(new Event('input',{bubbles:true}));
+   });
+   await cortar.getByRole('button',{name:'Usar esta foto'}).click();
+   await cortar.waitFor({state:'hidden'});
+   await operadorPage.locator('#loop03BannerSalvarReal').click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Foto salva no LOOP.'}).waitFor({state:'visible'});
+   await operadorPage.locator('#loop03BannerFormularioReal .banner-real-fechar').click();
+   await operadorPage.reload();
+   await operadorPage.locator('[data-banner-imagem="1"]')
+    .waitFor({state:'visible',timeout:12000});
+   await operadorPage.waitForFunction(()=>{
+    const img=document.querySelector('[data-banner-imagem="1"]');
+    return img?.complete===true&&img.naturalWidth>0&&!img.hidden;
+   },null,{timeout:12000});
+   const bannerPersistido=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/loop/banners',{credentials:'same-origin'});
+    const d=await r.json();return {status:r.status,slot:d.slots?.[0]};
+   });
+   assert.equal(bannerPersistido.status,200);
+   assert.equal(bannerPersistido.slot.temImagem,true);
+   assert.equal(bannerPersistido.slot.revisao,revisaoBannerAntes+2);
+   // Limpeza deste ensaio: a tela dos proximos testes volta ao estado inicial.
+   const limpezaBanner=await operadorPage.evaluate(async revisaoEsperada=>{
+    const sessao=await fetch('/api/admin/comercial/sessao',{
+     credentials:'same-origin',cache:'no-store'
+    }).then(r=>r.json());
+    return fetch('/api/admin/loop/banners/1/imagem',{
+     method:'DELETE',credentials:'same-origin',
+     headers:{'X-Loop-Admin-Csrf':sessao.csrfToken,
+      'X-Banner-Revisao-Esperada':String(revisaoEsperada)}
+    }).then(r=>r.status);
+   },bannerPersistido.slot.revisao);
+   assert.equal(limpezaBanner,200);
    // Foto do operador somente em modo operador autenticado.
    await operadorPage.goto(base+'/loja?visao=operador',{
     waitUntil:'domcontentloaded'

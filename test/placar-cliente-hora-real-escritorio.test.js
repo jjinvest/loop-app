@@ -33,3 +33,45 @@ test('contadores separados de giros persistidos e luzes no relógio',()=>{
  assert.match(visor,/if\(resumo&&compartilhado&&operadorAberto&&valido\)/);
  assert.doesNotMatch(visor,/Nao renomear GIROS NAS ULTIMAS 24H/);
 });
+
+test('moldura central do operador usa exatamente giros e luzes por hora do cliente',()=>{
+ const vm=require('node:vm');
+ const js=source('src/producao/interface-aprovada-contas.js');
+ const visor=source('src/shared/visor-catraca.js');
+ assert.match(js,/caixas\[1\]\.querySelector\('small'\)\.textContent='GIROS \/ HORA'/);
+ assert.match(js,/const girosHora=controle\.agenda\?\.girosReaisHora/);
+ assert.doesNotMatch(visor,/giros\.textContent=String\(movimentosRelogio\)/);
+ function executar(operador){
+  const agora=Date.parse('2026-11-22T09:36:00-03:00');
+  const FakeDate=class extends Date{static now(){return agora;}};
+  const elements={};
+  for(const id of ['loop03Giros24Integrado','loop03LuzesHoraIntegrado',
+   'relogioTabuleiroIntegrado','tituloRelogioTabuleiro',
+   'estadoRelogioTabuleiro','loop03NumeroIntegrado','loop03StatusPosicao']){
+   elements[id]={textContent:'',parentElement:{querySelector:()=>({textContent:''})}};
+  }
+  const document={hidden:false,body:{classList:{
+   contains:classe=>classe==='loop03-modo-operador'&&operador
+  }}};
+  const ctx={window:{setInterval:()=>1},document,
+   Date:FakeDate,Intl,Math,Number,String,Object};
+  vm.runInNewContext(visor,ctx,{timeout:2000});
+  const instancia=ctx.window.LoopVisorCatraca.criar({
+   elemento:id=>elements[id]||null
+  });
+  instancia.registrarAgenda({
+   origem:'CATRACA_REAL_MESMO_SQLITE',
+   modoExecucao:'AGENDADA',pausaManual:false,
+   luzesDoRelogioCompartilhado:true,
+   abertura:'09:00',fechamento:'18:00',agoraServidorMs:agora,
+   girosReaisHora:3,girosReaisHoje:6,ciclosReaisConcluidos:1,
+   eventosReaisNoCiclo:0,
+   metaLotes:{ativa:true,quantidade:5,dataAlvo:null}
+  });
+  return {giros:elements.loop03Giros24Integrado.textContent,
+   luzes:elements.loop03LuzesHoraIntegrado.textContent};
+ }
+ const cliente=executar(false),operador=executar(true);
+ assert.deepEqual(operador,cliente);
+ assert.deepEqual(cliente,{giros:'3',luzes:'2'});
+});

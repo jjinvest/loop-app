@@ -681,7 +681,7 @@
   if(caixas.length===3){
    caixas[0].querySelector('small').textContent='POSIÇÕES NAS FILAS';
    caixas[0].querySelector('span').textContent='Ver posições e filas';
-   caixas[1].querySelector('small').textContent='GIROS HOJE';
+   caixas[1].querySelector('small').textContent='GIROS / HORA';
    caixas[2].querySelector('small').textContent='EVENTOS NO CICLO';
   }
   void carregarTabuleiroOperador();
@@ -2065,7 +2065,9 @@
    // relogio: evitar que leituras HTTP concorrentes substituam a legenda
    // a cada segundo, causando a oscilacao de uma para duas frases.
    $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
-   $('loop03Giros24Integrado').textContent=String(controle.girosHoje);
+   const girosHora=controle.agenda?.girosReaisHora;
+   $('loop03Giros24Integrado').textContent=
+    Number.isSafeInteger(girosHora)&&girosHora>=0?String(girosHora):'—';
    $('loop03NumeroIntegrado').textContent=d.tabuleiro.eventosNoCiclo+' / 6';
    // Atualizar os 3 quadros APÓS a leitura financeira para não voltar a zero.
    visorCatraca.registrarAgenda(controle.agenda);
