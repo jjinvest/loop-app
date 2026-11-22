@@ -821,6 +821,14 @@
    if(!Array.isArray(r.produtos)||r.checkoutReal!==false||
       !Array.isArray(slots.slots)||slots.total!==400)
     throw Error('CATALOGO_ADMIN_INCONSISTENTE');
+   const ocupadas=new Set(slots.slots.map(x=>x.posicao));
+   const primeiraLivre=Array.from({length:400},(_,i)=>i+1)
+    .find(n=>!ocupadas.has(n));
+   if(!primeiraLivre)throw Error('VITRINE_SEM_ESPACO');
+   const numero=linha('Próximo produto: posição '+primeiraLivre+
+    '. A posição é automática, mesmo que você tenha clicado no quadrinho '+indice+'.');
+   numero.className='akitemm-indicador-proxima-posicao';
+   corpo.insertBefore(numero,form);
    const vinculados=new Set(slots.slots.map(x=>x.produtoId));
    const existentes=r.produtos.filter(p=>ID.test(p.produtoId)&&
     (p.estado==='RASCUNHO'||!vinculados.has(p.produtoId)));
