@@ -21,6 +21,7 @@ const LIMITES=Object.freeze({
  login:{janelaMs:15*60000,max:20},
  cadastro:{janelaMs:60*60000,max:5},
  solicitar:{janelaMs:60*60000,max:12},
+ atendimento:{janelaMs:60*60000,max:8},
  confirmar:{janelaMs:15*60000,max:15},
  escolherDestino:{janelaMs:15*60000,max:20},
  carrinho:{janelaMs:15*60000,max:120},

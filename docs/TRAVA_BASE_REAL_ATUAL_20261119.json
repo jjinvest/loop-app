@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026; implementação autorizada em 21/11/2026 de cadastro manual por operador, recorte de imagem, controle de cor, ordem de chegada sem lacunas e arrastar com mouse/dedo, sem alterar aparência aprovada do cliente, relógio, motor ou operações financeiras; cadastro manual normalizado com preços anunciados, preço promocional, categoria, marca e quantidade informada, somente rótulos da vitrine, sem desbloquear transações (21/11/2026); Entrega local configurada pelo operador e validada via CEP no carrinho, ficha expandida e avaliações de compras verificadas, sem mudar relógio/motor/pagamentos, 21/11/2026; estendida cobertura do backup cifrado ao catálogo, taxa regional e avaliações, com restauração segura; produtos próprios e de terceiros mantêm visual único; regra regional editada pelo operador exibe aviso de CEP somente no carrinho, 21/11/2026; revisão autorizada do perfil cliente: foto única do titular no LOOP e AKITEMM, seletor acessível pelo topo e confirmação manual na conta, apresentação legível dos dados, confirmação de e-mail com prazo real de 120 segundos e acabamento localizado, sem modificar motor, filas ou pagamento (21/11/2026); Correção autorizada pelo proprietário em 22/11/2026: escritório administrativo completo nas abas existentes, botão da Central abaixo da AKITEMM, painel de indicadores agregado, visão própria de cliente alternável sem encerrar sessão administrativa e correção auditada limitada a nome e telefone mediante permissão de operador; sem mudar CPF, e-mail, senha, motor, catraca ou finanças. Revalidar testes, Railway e domínio antes de declarar publicação.; Correção CSS da interface administrativa alojada no acabamento externo, compatível com CSP style-src self e com body.loop03-modo-operador; sem alterar proteção do navegador.; 22/11/2026: autorização do proprietário para canais de abastecimento funcionais; cadastro e contato de fornecedor sem API e importação real de tabela CSV com prévia, validação, revisão concorrente, auditoria e backup. API/ERP/marketplaces somente pendentes, sem credenciais nem autorização de terceiros; nenhum pagamento, expedição ou estoque confirmado é liberado.; Ações CANAL_FORNECEDOR_CONFIGURADO e PLANILHA_FORNECEDOR_IMPORTADA integradas à auditoria HMAC imutável, com provas automatizadas.",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026; implementação autorizada em 21/11/2026 de cadastro manual por operador, recorte de imagem, controle de cor, ordem de chegada sem lacunas e arrastar com mouse/dedo, sem alterar aparência aprovada do cliente, relógio, motor ou operações financeiras; cadastro manual normalizado com preços anunciados, preço promocional, categoria, marca e quantidade informada, somente rótulos da vitrine, sem desbloquear transações (21/11/2026); Entrega local configurada pelo operador e validada via CEP no carrinho, ficha expandida e avaliações de compras verificadas, sem mudar relógio/motor/pagamentos, 21/11/2026; estendida cobertura do backup cifrado ao catálogo, taxa regional e avaliações, com restauração segura; produtos próprios e de terceiros mantêm visual único; regra regional editada pelo operador exibe aviso de CEP somente no carrinho, 21/11/2026; revisão autorizada do perfil cliente: foto única do titular no LOOP e AKITEMM, seletor acessível pelo topo e confirmação manual na conta, apresentação legível dos dados, confirmação de e-mail com prazo real de 120 segundos e acabamento localizado, sem modificar motor, filas ou pagamento (21/11/2026); Correção autorizada pelo proprietário em 22/11/2026: escritório administrativo completo nas abas existentes, botão da Central abaixo da AKITEMM, painel de indicadores agregado, visão própria de cliente alternável sem encerrar sessão administrativa e correção auditada limitada a nome e telefone mediante permissão de operador; sem mudar CPF, e-mail, senha, motor, catraca ou finanças. Revalidar testes, Railway e domínio antes de declarar publicação.; Correção CSS da interface administrativa alojada no acabamento externo, compatível com CSP style-src self e com body.loop03-modo-operador; sem alterar proteção do navegador.; 22/11/2026: autorização do proprietário para canais de abastecimento funcionais; cadastro e contato de fornecedor sem API e importação real de tabela CSV com prévia, validação, revisão concorrente, auditoria e backup. API/ERP/marketplaces somente pendentes, sem credenciais nem autorização de terceiros; nenhum pagamento, expedição ou estoque confirmado é liberado.; Ações CANAL_FORNECEDOR_CONFIGURADO e PLANILHA_FORNECEDOR_IMPORTADA integradas à auditoria HMAC imutável, com provas automatizadas.; 22/11/2026: proprietário confirmou AKITEMM loja própria, sem integração ou marcas de marketplaces na origem dos produtos; correção do arraste com alça e toque longo, bloqueio de arraste nativo de fotos, destaque acessível dos campos inválidos, diagnóstico específico, navegação e foco até o campo; conservar tabuleiro, pedidos, posições, financeiro, molduras e proteção da base.; Atendimento AKITEMM independente: protocolos cifrados no SQLite, cliente autenticado com CSRF vê apenas os seus, operador autorizado responde; dados de atendimento incluídos no backup; nenhuma integração marketplace ou API externa. Testes funcionais de frontend e backend exigidos antes da publicação.; Endpoint de atendimento cliente com rate limit dedicado na custódia do titular e teste HTTP com termos válidos da identidade, sem modificar critérios de cadastro.",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -436,7 +436,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "d7a67971e59383da4ee2ebf52e0db6730d9eab79"
+      "sha": "6ccd082caf1ba2ccdbea3b32da19c2adc1840350"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -512,7 +512,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "655b9a99b257a7bc0c9afa1b60b53ad36e8cab7b"
+      "sha": "9660c3dfa08239d3169f1cc3bf1f7934d60a3a30"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -1291,6 +1291,10 @@
       "sha": "f44ec47b1e3b5cfd7509056b4cf3d50cd7b0ac4f"
     },
     {
+      "path": "src/producao/atendimento-akitemm-sqlite.js",
+      "sha": "5c45d26aac11729bfb0c3d2c53f1290b4819770d"
+    },
+    {
       "path": "src/producao/auditoria-acervo-real-sqlite.js",
       "sha": "20a5582973856462993975f8255cbb885cae4e5f"
     },
@@ -1300,7 +1304,7 @@
     },
     {
       "path": "src/producao/auditoria-operacional-sqlite.js",
-      "sha": "06974cbeca8026faecb974f1d17f63bfd20dc31d"
+      "sha": "42e1f062d9a6b68890216494c11d9976fbb68799"
     },
     {
       "path": "src/producao/avaliacoes-produto-akitemm-sqlite.js",
@@ -1316,7 +1320,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "265e40201ac6ce8ef2ccf8b1a7310d6943798708"
+      "sha": "3948f25e0682e9ea3b296401c1f3e61247b7eb1d"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1416,7 +1420,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "baf42112defb60a30f1eb3fd3e0e5f03265232d3"
+      "sha": "b955f1bd6986cad51d8491090db9e9966bd0cfff"
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
@@ -1424,7 +1428,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "a5a58877e26b3ba299c3c8d5093b02e726cc233b"
+      "sha": "4ca4a11754833aa6bddae124f14f867b16257b7a"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -1444,7 +1448,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "e3cd49aeeb70e6245f18e9621effafdc3e68f4cf"
+      "sha": "d982a3cea8e465f016369c51ad2a5b86f644f945"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1496,7 +1500,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "e98e69233fc126ccc4c6665a66998fee64d23a7e"
+      "sha": "615ae5d1e1aeaaaf1344741317efa2d49e999fb1"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -1580,7 +1584,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "3613c25656934c33e7fb472a81f98685647bc614"
+      "sha": "fbea7c2235551ef3fb075c578cd2cafd296e7c24"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -2017,6 +2021,14 @@
     {
       "path": "test/atalho-operador-unico-ambas-telas.test.js",
       "sha": "e8dbef4a7ed6cde69f08f3e4fdff11ee3be44392"
+    },
+    {
+      "path": "test/atendimento-proprio-akitemm-http.test.js",
+      "sha": "7ae041e9bc28eda85269d02d0c86518554dd5338"
+    },
+    {
+      "path": "test/atendimento-proprio-akitemm-sqlite.test.js",
+      "sha": "12dc876db63eca7a3d5bb2265720d5213dc248b8"
     },
     {
       "path": "test/ativacao-dupla-bonificacoes-loop.test.js",
