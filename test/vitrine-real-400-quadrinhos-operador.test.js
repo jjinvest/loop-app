@@ -107,3 +107,22 @@ test('400 fixtures tecnicas em banco descartavel, 10 abas x 40 e operador isolad
  assert.match(fonte,/data.*akitemmSlot|dataset.akitemmSlot/);
  assert.equal(db.prepare('PRAGMA quick_check').get().quick_check,'ok');
 });
+
+test('destaques PC lado a lado, celular em coluna, sem aviso redundante de ofertas',()=>{
+ const js=fs.readFileSync(path.join(__dirname,
+  '../src/producao/interface-aprovada-loja.js'),'utf8');
+ const css=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/vitrine-horizontal.css'),'utf8');
+ assert.doesNotMatch(js,/Nenhuma oferta publicada neste filtro\./);
+ assert.match(js,/filtroOfertas\?'':/);
+ assert.match(css,/@media \(min-width:901px\)/);
+ assert.match(css,/flex:0 0 calc\(25% - 9\.75px\)/);
+ assert.match(css,/@media \(max-width:900px\)/);
+ assert.match(css,/flex-direction:column!important/);
+ assert.match(css,/grid-template-columns:minmax\(100px,38%\) minmax\(0,1fr\)/);
+ for(const cor of ['roxo','dourado','verde','cinza'])
+  assert.match(css,new RegExp('akitemm-slot-'+cor));
+ // Apenas a aparência: continuam dez abas, com até quarenta espaços por aba.
+ assert.match(js,/const linhas=expandida\?4:2/);
+ assert.match(js,/const slotsVisiveis=Array\.from\(\{length:400\}/);
+});
