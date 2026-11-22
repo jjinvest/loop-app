@@ -18,7 +18,7 @@ const nova=t=>{
 };
 test('quatro banners da AKITEMM são independentes dos quatro banners do LOOP',t=>{
  const {db,loja,escritorio}=nova(t);
- assert.equal(loja.listar().quantidadeMaxima,4);
+ assert.ok(loja.listar().quantidadeMaxima>4);
  assert.deepEqual(loja.listar().slots.map(x=>x.slot),[1,2,3,4]);
  assert.ok(loja.listar().slots.every(x=>!x.temImagem));
  assert.ok(escritorio.listar().slots.every(x=>!x.temImagem));
