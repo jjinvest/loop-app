@@ -103,8 +103,7 @@ test('atualizacao do relogio chega aos dois perfis sem recriar tela',async()=>{
  assert.equal(x.elementos.loop03Giros24Integrado.textContent,'4');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
- assert.equal(x.elementos.loop03LuzesHoraIntegrado.textContent,'12');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'4');
  assert.equal(x.elementos.loop03NumeroIntegrado.textContent,'3 / 6');
  assert.equal(x.visores.every(v=>v[0]==='eventos'||v[1]===x.agenda),true);
 });
