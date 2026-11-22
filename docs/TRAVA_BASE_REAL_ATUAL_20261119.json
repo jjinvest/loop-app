@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "356d13e02b840bc0428702d9ab8955f4919a2030"
+      "sha": "e9a91d794b47e692a9a371bbc174a9c04c12f4e3"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -5077,6 +5077,13 @@
       "antes": "755d3ad4ccde761fcc81223ee70af978fde324f7",
       "depois": "356d13e02b840bc0428702d9ab8955f4919a2030",
       "objetivo": "Correção solicitada 22/11/2026: o carrossel do Escritório Virtual do cliente tinha quatro banners originais, mas a filtragem por foto publicada escondia espaços e exibia somente dois. Restaurar permanentemente quatro posições originais com arte padrão aprovada, mantendo todos os adicionais acessíveis ao operador pelo + e visíveis ao cliente apenas após publicação completa. Desativar o antigo temporizador de scroll quando o carrossel dinâmico assume, mantendo arraste e rotação automática. Não alterar motor, loja ou dados."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "356d13e02b840bc0428702d9ab8955f4919a2030",
+      "depois": "e9a91d794b47e692a9a371bbc174a9c04c12f4e3",
+      "objetivo": "Diagnóstico de regressão visual no navegador: ler o HTML renderizado da marca na loja sem TypeError, validar LOOP dourado e 3.0 prateado e aro somente quando presente. Sem alterações em dados ou permissões."
     }
   ]
 }
