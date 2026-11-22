@@ -8,7 +8,7 @@
  const area=pista.closest('.loop03-banners-resumo');
  if(!area)return;
  let dados=null,operador=false,gravando=false,slotEditor=1;
- let indice=0,interagindoAte=0;
+ let indice=0,interagindoAte=0,bloquearCliqueAte=0,inicioGesto=null;
  const solicitar=async(url,opts={})=>{
   const r=await fetch(url,{credentials:'same-origin',cache:'no-store',...opts});
   const corpo=await r.json().catch(()=>({}));
@@ -272,7 +272,7 @@
  botao.addEventListener('click',e=>{e.preventDefault();void adicionar();});
  pista.addEventListener('click',e=>{
   const item=e.target.closest('.loop03-banner-item');
-  if(!item||item===botao||!podeEditar())return;
+  if(!item||item===botao||!podeEditar()||Date.now()<bloquearCliqueAte)return;
   e.preventDefault();abrir(Number(item.dataset.bannerSlot));
  });
  pista.addEventListener('scroll',()=>{
@@ -283,6 +283,12 @@
     p.setAttribute('aria-current',String(i===indice));
   }
  },{passive:true});
+ pista.addEventListener('pointerdown',e=>{inicioGesto=e.clientX;});
+ pista.addEventListener('pointerup',e=>{
+  if(inicioGesto!==null&&Math.abs(e.clientX-inicioGesto)>20)
+   bloquearCliqueAte=Date.now()+500;
+  inicioGesto=null;
+ });
  for(const evento of ['pointerdown','focusin','wheel'])
   pista.addEventListener(evento,()=>{interagindoAte=Date.now()+9000;});
  setInterval(()=>{
