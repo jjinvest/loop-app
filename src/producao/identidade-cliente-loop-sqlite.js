@@ -673,6 +673,84 @@ class IdentidadeClienteLoopReal{
    nenhumPagamentoRealNesteServico:true
   };
  }
+
+ // Busca de cadastro pelo operador: a rota exige credencial administrativa.
+ // Nunca disponibilizar senhas, tokens, dados de outros clientes sem controle.
+ consultarCadastroOperador({nick}={}){
+  const n=validaNick(nick);
+  const row=this.banco.prepare('SELECT * FROM loop_real_contas WHERE nick=?').get(n);
+  if(!row)erro('CADASTRO_NAO_LOCALIZADO');
+  const contato=this.banco.prepare(
+   'SELECT * FROM loop_real_contatos_cadastro WHERE titular_id=?'
+  ).get(row.id);
+  const telefone=contato?decifrar(this.keyCipher,contato.telefone_iv,
+   contato.telefone_ct,contato.telefone_tag):null;
+  const cpf=contato?decifrar(this.keyCipher,contato.cpf_iv,
+   contato.cpf_ct,contato.cpf_tag):null;
+  return {
+   nick:row.nick,
+   nome:decifrar(this.keyCipher,row.nome_iv,row.nome_ct,row.nome_tag),
+   email:decifrar(this.keyCipher,row.email_iv,row.email_ct,row.email_tag),
+   telefone,cpfExibicao:cpf?'***.***.***-'+cpf.slice(-2):null,
+   emailVerificado:row.email_confirmado_em!==null,
+   registradoEm:row.criado_em
+  };
+ }
+ // Correções auditadas de nome/telefone, sem modificar identidade financeira,
+ // CPF, e-mail verificado, senha, vinculação nem posição.
+ corrigirCadastroOperador({nick,nome,telefone,motivo}={}){
+  const n=validaNick(nick);
+  if(typeof motivo!=='string'||motivo.trim().length<10||
+     motivo.trim().length>200)erro('MOTIVO_CORRECAO_OBRIGATORIO');
+  if(typeof nome!=='string'||!NOME.test(nome.trim()))
+   erro('NOME_INVALIDO');
+  const tel=telefone===''?null:validarTelefoneCadastro(telefone);
+  const row=this.banco.prepare(
+   'SELECT id,nome_iv,nome_ct,nome_tag FROM loop_real_contas WHERE nick=?'
+  ).get(n);
+  if(!row)erro('CADASTRO_NAO_LOCALIZADO');
+  const contato=this.banco.prepare(
+   'SELECT telefone_iv,telefone_ct,telefone_tag FROM loop_real_contatos_cadastro WHERE titular_id=?'
+  ).get(row.id);
+  if(tel!==null&&!contato)erro('TELEFONE_SEM_CADASTRO_ORIGINAL');
+  const anterior=decifrar(this.keyCipher,row.nome_iv,row.nome_ct,row.nome_tag);
+  const telAnterior=contato?decifrar(this.keyCipher,contato.telefone_iv,
+   contato.telefone_ct,contato.telefone_tag):null;
+  const mudouNome=nome.trim()!==anterior;
+  const mudouTelefone=tel!==null&&tel!==telAnterior;
+  if(!mudouNome&&!mudouTelefone)erro('NENHUMA_ALTERACAO');
+  this.banco.exec([
+   'CREATE TABLE IF NOT EXISTS loop_real_auditoria_cadastros_operador(',
+   'id TEXT PRIMARY KEY,titular_id TEXT NOT NULL',
+   'REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'campos TEXT NOT NULL,motivo TEXT NOT NULL,',
+   'alterado_em INTEGER NOT NULL CHECK(alterado_em>0));'
+  ].join(' '));
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   if(mudouNome){
+    const e=cifrar(this.keyCipher,nome.trim());
+    this.banco.prepare(
+     'UPDATE loop_real_contas SET nome_iv=?,nome_ct=?,nome_tag=? WHERE id=?'
+    ).run(...e,row.id);
+   }
+   if(mudouTelefone){
+    const e=cifrar(this.keyCipher,tel);
+    this.banco.prepare([
+     'UPDATE loop_real_contatos_cadastro',
+     'SET telefone_iv=?,telefone_ct=?,telefone_tag=? WHERE titular_id=?'
+    ].join(' ')).run(...e,row.id);
+   }
+   this.banco.prepare([
+    'INSERT INTO loop_real_auditoria_cadastros_operador',
+    '(id,titular_id,campos,motivo,alterado_em) VALUES(?,?,?,?,?)'
+   ].join(' ')).run('correcao-'+randomUUID(),row.id,
+    [mudouNome?'NOME':null,mudouTelefone?'TELEFONE':null]
+     .filter(Boolean).join(','),motivo.trim(),this._agora());
+   this.banco.exec('COMMIT');
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+  return {corrigido:true,cadastro:this.consultarCadastroOperador({nick:n})};
+ }
  _codigo(id,codigo,finalidade){
   return assinar(this.keyCodigo,'CODIGO-'+finalidade,id+':'+codigo);
  }
