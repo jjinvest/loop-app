@@ -73,10 +73,32 @@ test('cadastro do link não confirma CPF; confirmação é explícita, privada e
  assert.equal(x.confirmar(caio.titularId,4).repetido,true);
  rede=x.visao.listarRede({titularId:dono.titularId});
  assert.deepEqual([rede.total,rede.resumo.cadastrosConfirmados,
-  rede.resumo.indicacoesVinculadas,rede.resumo.aDistribuir],[3,2,0,2]);
+  rede.resumo.indicacoesVinculadas,rede.resumo.aDistribuir],[3,2,0,0]);
  assert.equal(rede.indicados.find(p=>p.nick==='thais').cadastroConfirmado,false);
  assert.equal(rede.indicados.find(p=>p.nick==='bruna').cadastroConfirmado,true);
  assert.equal(x.contas.dadosTitular(bruna.titularId).cadastroConfirmado,true);
+ assert.throws(()=>x.contas.reservarDestinoIndicacao({
+  indicadorId:dono.titularId,numeroCadastro:1,posicao:7
+ }),{codigo:'INDICACAO_AGUARDA_CONFIRMACAO'});
+ assert.throws(()=>x.contas.reservarDestinoIndicacao({
+  indicadorId:dono.titularId,numeroCadastro:2,posicao:7
+ }),{codigo:'INDICACAO_AGUARDA_QUALIFICACAO'});
+ // O teste insere fotografia de prova externa apenas na memória,
+ // sem habilitar PIX, saldo ou PSP no serviço de produção.
+ for(const [id,indice] of [[bruna.titularId,2],[caio.titularId,3]]){
+  x.banco.prepare([
+   'INSERT INTO loop_real_indicacoes_validas_financeiro',
+   '(indicado_id,indicador_id,pedido_id,pagamento_id,comprovante_bancario_id,',
+   'valor_qualificado_centavos,tipo,confirmado_em)',
+   "VALUES(?,?,?,?,?,25000,'COMPRA_250',?)"
+  ].join(' ')).run(id,dono.titularId,'pedido_'+indice,'pag_'+indice,
+   'comprovante_bancario_'+indice,1700000000000+indice);
+ }
+ rede=x.visao.listarRede({titularId:dono.titularId});
+ assert.deepEqual([rede.total,rede.resumo.cadastrosConfirmados,
+  rede.resumo.indicacoesVinculadas,rede.resumo.aDistribuir],[3,2,0,2]);
+ assert.equal(rede.indicados.find(p=>p.nick==='bruna').indicacaoValida,true);
+ assert.equal(rede.indicados.find(p=>p.nick==='thais').indicacaoValida,false);
  x.contas.reservarDestinoIndicacao({
   indicadorId:dono.titularId,numeroCadastro:2,posicao:7
  });
@@ -150,6 +172,12 @@ test('mil cadastros, cem confirmações, cinquenta vinculados e cinquenta a dist
   '(indicado_id,indicador_id,numero_posicao,registrado_em)',
   'VALUES(?,?,?,?)'
  ].join(' '));
+ const prova=x.banco.prepare([
+  'INSERT INTO loop_real_indicacoes_validas_financeiro',
+  '(indicado_id,indicador_id,pedido_id,pagamento_id,comprovante_bancario_id,',
+  'valor_qualificado_centavos,tipo,confirmado_em)',
+  "VALUES(?,?,?,?,?,25000,'COMPRA_250',?)"
+ ].join(' '));
  x.banco.exec('BEGIN IMMEDIATE');
  try{
   for(let i=1;i<=1000;i++){
@@ -163,6 +191,8 @@ test('mil cadastros, cem confirmações, cinquenta vinculados e cinquenta a dist
    inserirContato.run(id,hmac,'a','b','c','d','e','f',1700000000000+i);
    if(i<=100){
     confirmacao.run(id,hmac,base.termos_versao,base.termos_hash,1700000000000+i);
+    prova.run(id,dono.titularId,'pedido_'+i,'pagamento_'+i,
+     'comprovante_bancario_'+i,1700000000000+i);
     if(i<=50)destino.run(id,dono.titularId,(i-1)%10+1,1700000000000+i);
    }
   }
