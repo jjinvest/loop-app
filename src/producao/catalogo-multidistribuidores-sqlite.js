@@ -76,7 +76,7 @@ class CatalogoMultiDistribuidoresSQLite{
      precoUnitCentavos>100000000||
      !Number.isSafeInteger(prioridade)||prioridade<1||prioridade>9999)
    erro('OFERTA_COMERCIAL_INVALIDA');
-  if(!this.db.prepare(
+  if(!this.db.prepare([
    'SELECT produto_id FROM loja_real_produtos',
    'WHERE produto_id=? AND arquivado_em IS NULL'
   ].join(' ')).get(produtoId))erro('PRODUTO_COMERCIAL_NAO_EXISTE');
@@ -116,14 +116,14 @@ class CatalogoMultiDistribuidoresSQLite{
   if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
   try{
    if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
-   const antes=this.db.prepare(
+   const antes=this.db.prepare([
     'SELECT ativo FROM loja_real_produtos',
     'WHERE produto_id=? AND arquivado_em IS NULL'
-   ).get(produtoId);
-   const r=this.db.prepare(
+   ].join(' ')).get(produtoId);
+   const r=this.db.prepare([
     'UPDATE loja_real_produtos SET ativo=?,atualizado_em=?',
     'WHERE produto_id=? AND arquivado_em IS NULL'
-   ).run(ativo?1:0,this.agora(),produtoId);
+   ].join(' ')).run(ativo?1:0,this.agora(),produtoId);
    if(r.changes!==1)erro('PRODUTO_COMERCIAL_NAO_EXISTE');
    if(this.auditoria){
     this.auditoria.registrar({
