@@ -3392,7 +3392,7 @@
     },
     {
       "path": "test/varredura-visual-publicacao-real.test.js",
-      "sha": "560cc4db8d6756ff67ad2ac943d76edb01134880"
+      "sha": "7bcbe10fe53968fc56a44aab7e4c89815f8c0064"
     },
     {
       "path": "test/verificacao-email-conta-unica-candidata.test.js",
