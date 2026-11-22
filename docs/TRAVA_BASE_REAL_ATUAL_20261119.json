@@ -1836,7 +1836,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "f32590ec5a2258f11c45bf1cb08cedb59fa593bb"
+      "sha": "72d446f2436d11ff4c76b772cc8f0e88e2efbd45"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2332,7 +2332,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "246379bd730239c025da3ef003804b97c7e3e9b7"
+      "sha": "c7050ffdb99bd6c07d2133c45c072c917b6abfb4"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
@@ -3180,7 +3180,7 @@
     },
     {
       "path": "test/placar-cliente-hora-real-escritorio.test.js",
-      "sha": "0de436a7ae0518a58ba3dc324b856a9ed74952ca"
+      "sha": "c773bde7425981ac2a2f0cc8bcc44f9e984c2dc2"
     },
     {
       "path": "test/placar-compartilhado-cliente-operador-20261122.test.js",
