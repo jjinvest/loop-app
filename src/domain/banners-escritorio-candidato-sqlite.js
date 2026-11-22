@@ -2,6 +2,7 @@
 // Banners dinâmicos do Escritório Virtual. Persistência no MESMO
 // SQLite da conta e da loja, sem acesso a Pix, posições nem motor.
 const {dimensoesImagem}=require('./novidades-loja-candidato-sqlite');
+const {BannerMosaicoSQLite}=require('../producao/banner-mosaico-sqlite');
 const LIMITE_IMAGEM=4*1024*1024;
 const MAX_SLOTS=10000; // proteção técnica; não limita a quatro a operação
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
@@ -60,6 +61,7 @@ class BannersEscritorioCandidatoSQLite{
    'CHECK((mime IS NULL AND imagem IS NULL) OR',
    '(mime IS NOT NULL AND imagem IS NOT NULL)));'
   ].join(' '));
+  this.mosaico=new BannerMosaicoSQLite({banco,area:'loop',validarImagem:validarFoto,agora});
  }
  _tabela(slot){
   return slot<=4?'loop_banner_escritorio_manual':
@@ -80,14 +82,14 @@ class BannersEscritorioCandidatoSQLite{
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  listar(){
-  return {quantidadeMaxima:MAX_SLOTS,slots:[
+  return {quantidadeMaxima:MAX_SLOTS,slots:this.mosaico.listar([
    ...this.banco.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,revisao,atualizado_em,enquadramento FROM loop_banner_escritorio_manual ORDER BY slot').all(),
    ...this.banco.prepare('SELECT slot,mime,imagem IS NOT NULL AS temImagem,revisao,atualizado_em,enquadramento FROM loop_banner_escritorio_extensao ORDER BY slot').all()
   ].map(r=>({
    slot:r.slot,temImagem:!!r.temImagem,revisao:r.revisao,
    mime:r.temImagem?r.mime:null,enquadramento:r.enquadramento,
    atualizadoEm:r.atualizado_em||null
-  }))};
+  })))};
  }
  imagem(slot){
   const r=this.banco.prepare('SELECT mime,imagem,revisao FROM '+
@@ -109,7 +111,11 @@ class BannersEscritorioCandidatoSQLite{
   if(r.changes!==1)falha('BANNER_CONFLITO_REVISAO');
   return this.listar();
  }
- remover({slot,revisaoEsperada}={}){
+ configurarMosaico(d){this.mosaico.configurar(d);return this.listar();}
+ salvarFotoMosaico(d){this.mosaico.salvarFoto(d);return this.listar();}
+ removerFotoMosaico(d){this.mosaico.removerFoto(d);return this.listar();}
+ imagemMosaico(d){return this.mosaico.imagem(d);}
+  remover({slot,revisaoEsperada}={}){
   slotValido(slot);
   if(!Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<0)
    falha('BANNER_REVISAO_INVALIDA');
