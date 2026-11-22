@@ -9,7 +9,8 @@ test('AKITEMM reutiliza fotos privadas do LOOP em ambos os papeis e sessoes',()=
  assert.match(js,/const clienteComFoto=!visitante&&typeof clienteNick==='string'/);
  assert.match(js,/\(!operadorAtivo\|\|visaoClienteLoja\)/);
  assert.match(js,/const semCliente=res.status===401\|\|\(operadorAtivo&&!visaoClienteLoja\)/);
- assert.match(js,/operadorAtivo\?'\/api\/admin\/operador\/foto-perfil':null/);
+ assert.match(js,/operadorAtivo&&!visaoClienteLoja\?/);
+ assert.match(js,/'\/api\/admin\/operador\/foto-perfil':null/);
  assert.match(js,/data-foto-sessao/);
  assert.match(js,/fotoTitular\.naturalWidth>0/);
  assert.match(js,/fotoTitular\.src=caminho\+'\?versao='/);
