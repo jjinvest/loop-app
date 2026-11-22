@@ -26,6 +26,10 @@
  const placeholder=document.createElement('div');
  placeholder.className='akitemm-banner-espaco-livre';placeholder.hidden=true;
  foto.insertAdjacentElement('afterend',placeholder);
+ const mosaico=document.createElement('div');
+ mosaico.className='banner-mosaico akitemm-mosaico';
+ mosaico.hidden=true;
+ foto.insertAdjacentElement('afterend',mosaico);
  const adicionarVisual=document.createElement('button');
  adicionarVisual.type='button';adicionarVisual.className='akitemm-banner-adicionar';
  adicionarVisual.textContent='＋ Adicionar novo banner';
@@ -137,7 +141,7 @@
  function visiveis(){
   if(!slots)return [];
   if(operador)return [...slots,{slot:slots.at(-1).slot+1,adicionar:true}];
-  const imagens=slots.filter(s=>s.temImagem);
+  const imagens=slots.filter(s=>s.publicado);
   return imagens.length?imagens:[slots[0]];
  }
  function current(){return visiveis()[indice]||null;}
@@ -145,7 +149,7 @@
  function rodar(){
   parar();
   if(document.hidden||dialogo.open)return;
-  const publicadas=visiveis().filter(x=>x.temImagem);
+  const publicadas=visiveis().filter(x=>x.publicado);
   if(publicadas.length>1)intervalo=setInterval(()=>{
    if(document.hidden||dialogo.open)return;
    const visao=visiveis(),atual=visao[indice];
@@ -163,8 +167,28 @@
  function renderizar(){
   const lista=visiveis(),slot=current();
   if(!slot)return;
-  const imagem=slot.temImagem===true,adicionando=slot.adicionar===true;
-  foto.hidden=!imagem;
+  const imagem=slot.publicado===true,adicionando=slot.adicionar===true;
+  const quadros=Number(slot.colunas)||1;
+  const exibirMosaico=quadros>1&&(imagem||operador)&&!adicionando;
+  foto.hidden=!imagem||quadros>1;
+  mosaico.hidden=!exibirMosaico;
+  mosaico.replaceChildren();
+  if(exibirMosaico){
+   mosaico.style.setProperty('--banner-quadros',String(quadros));
+   mosaico.dataset.modo=slot.modo||'PREENCHER';
+   for(let pos=1;pos<=quadros;pos++){
+    const sub=slot.fotos?.[pos-1],quadro=document.createElement('div');
+    quadro.className='banner-mosaico-celula';
+    if(sub?.temImagem){
+     const im=document.createElement('img');
+     im.alt='Foto '+pos+' do banner '+slot.slot;
+     im.src='/api/loja/banners/'+slot.slot+'/foto/'+pos+
+      '?rev='+slot.revisao;
+     quadro.append(im);
+    }else if(operador)quadro.textContent='Foto '+pos+' · adicionar';
+    mosaico.append(quadro);
+   }
+  }
   area.classList.toggle('akitemm-banner-com-foto',imagem);
   if(imagem){
    const caminho='/api/loja/banners/'+slot.slot+'/imagem?revisao='+
@@ -174,7 +198,7 @@
    foto.alt='Banner '+slot.slot+' da AKITEMM';
   }else foto.removeAttribute('src');
   conteudo.style.display=(imagem||slot.slot!==1||adicionando)?'none':'';
-  placeholder.hidden=imagem||(!adicionando&&slot.slot===1);
+  placeholder.hidden=exibirMosaico||imagem||(!adicionando&&slot.slot===1);
   if(!placeholder.hidden){
    if(adicionando)placeholder.replaceChildren(adicionarVisual);
    else placeholder.textContent='Banner '+slot.slot+
