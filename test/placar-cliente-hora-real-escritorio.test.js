@@ -9,8 +9,8 @@ test('os tres quadros pertencem ao shell comum de todas as abas do cliente',()=>
  const html=source('src/producao/interface-aprovada-loop.js');
  const css=source('src/producao/acabamento-botoes-real.css');
  const js=source('src/producao/interface-aprovada-contas.js');
- assert.match(html,/GIROS \/ HORA/);
- assert.match(html,/LUZES \/ HORA/);
+ assert.match(html,/CICLOS \/ 24H/);
+ assert.match(html,/LUZES \/ 24H/);
  assert.match(html,/loop03LuzesHoraIntegrado/);
  assert.match(css,/#loop03IrPosicoesIntegrado>span/);
  assert.match(css,/#loop03StatusPosicao/);
@@ -29,7 +29,7 @@ test('contadores separados de giros persistidos e luzes no relógio',()=>{
  assert.match(admin,/executado_em>=\? AND executado_em<=\?/);
  assert.match(agenda,/girosReaisHora:estado\.girosHora/);
  assert.match(visor,/const luzesHora=emTurno&&!finalizado/);
- assert.match(visor,/const luzesHora=\$\('loop03LuzesHoraIntegrado'\)/);
+ assert.match(visor,/const luzes24h=\$\('loop03LuzesHoraIntegrado'\)/);
  assert.match(visor,/if\(resumo&&compartilhado&&operadorAberto&&valido\)/);
  assert.doesNotMatch(visor,/Nao renomear GIROS NAS ULTIMAS 24H/);
 });
@@ -38,8 +38,8 @@ test('moldura central do operador usa exatamente giros e luzes por hora do clien
  const vm=require('node:vm');
  const js=source('src/producao/interface-aprovada-contas.js');
  const visor=source('src/shared/visor-catraca.js');
- assert.match(js,/caixas\[1\]\.querySelector\('small'\)\.textContent='GIROS \/ HORA'/);
- assert.match(js,/const girosHora=controle\.agenda\?\.girosReaisHora/);
+ assert.match(js,/caixas\[1\]\.querySelector\('small'\)\.textContent='CICLOS \/ 24H'/);
+ assert.match(js,/controle\.agenda\.ciclosRelogio24h!==controle\.ciclosRelogio24h/);
  assert.doesNotMatch(visor,/giros\.textContent=String\(movimentosRelogio\)/);
  function executar(operador){
   const agora=Date.parse('2026-11-22T09:36:00-03:00');
@@ -65,6 +65,7 @@ test('moldura central do operador usa exatamente giros e luzes por hora do clien
    luzesDoRelogioCompartilhado:true,
    abertura:'09:00',fechamento:'18:00',agoraServidorMs:agora,
    girosReaisHora:3,girosReaisHoje:6,ciclosReaisConcluidos:1,
+   ciclosRelogio24h:1,luzesRelogio24h:6,
    eventosReaisNoCiclo:0,
    metaLotes:{ativa:true,quantidade:5,dataAlvo:null}
   });
@@ -73,7 +74,7 @@ test('moldura central do operador usa exatamente giros e luzes por hora do clien
  }
  const cliente=executar(false),operador=executar(true);
  assert.deepEqual(operador,cliente);
- assert.deepEqual(cliente,{giros:'3',luzes:'2'});
+ assert.deepEqual(cliente,{giros:'1',luzes:'6'});
 });
 
 test('somente o quadro central exibe duas metades iguais no operador e cliente',()=>{

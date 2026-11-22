@@ -259,7 +259,7 @@ async function main(){
     'OPERADOR');
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
    // As fotos do usuário exigem o MESMO quadro central no operador:
-   // GIROS/HORA acima, linha divisória, LUZES/HORA abaixo.
+   // CICLOS/24H acima, linha divisória, LUZES/24H abaixo.
    // As pontas continuam com os rótulos exclusivamente administrativos.
    const placarOperador=await operadorPage.locator(
     '.loop03-indicadores').evaluate(painel=>{
@@ -282,8 +282,8 @@ async function main(){
    assert.equal(placarOperador.total,3);
    assert.deepEqual(placarOperador.pontas,
     ['POSIÇÕES NAS FILAS','EVENTOS NO CICLO']);
-   assert.equal(placarOperador.topo,'GIROS / HORA');
-   assert.equal(placarOperador.baixo,'LUZES / HORA');
+   assert.equal(placarOperador.topo,'CICLOS / 24H');
+   assert.equal(placarOperador.baixo,'LUZES / 24H');
    assert.equal(placarOperador.topoId,'loop03Giros24Integrado');
    assert.equal(placarOperador.baixoId,'loop03LuzesHoraIntegrado');
    assert.equal(placarOperador.visivel,true);
