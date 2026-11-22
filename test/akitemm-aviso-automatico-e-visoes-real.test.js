@@ -54,13 +54,16 @@ test('alternância de visão fica no LOOP, sem botão duplicado na AKITEMM',()=>
  assert.doesNotMatch(editor,/function sincronizarAlternanciaVisao/);
  assert.doesNotMatch(editor,/Visão do Administrador|Visão do Cliente/);
  assert.match(editor,/document.getElementById\('akitemmAlternarVisao'\)\?\.remove\(\)/);
- assert.match(editor,/operador=operadorAutenticado&&!visaoClienteSolicitada/);
+ assert.match(editor,/if\(operadorAutenticado&&!visaoClienteSolicitada\)/);
+ assert.match(editor,/operador=cliente\.status===401/);
  assert.match(editor,/if\(!operador\)\{atual\?\.remove\(\)/);
  assert.match(editor,/if\(!operador\|\|arrasto\|\|dialogo\?\.open/);
  assert.match(loop,/\/loja\?visao=/);
 });
 test('prévia cliente nunca herda dados financeiros, identidade ou permissões de edição',()=>{
- assert.match(loja,/operadorAtivo=false,clienteNick=null,csrfLoja=null/);
+ assert.match(loja,/operadorAtivo=false,operadorAutenticadoLoja=false/);
+ assert.match(loja,/clienteNick=null,csrfLoja=null/);
+ assert.match(loja,/function deveAtivarOperadorLoja/);
  assert.match(loja,/visaoClienteLoja/);
  assert.match(loja,/VISÃO DO CLIENTE/);
  assert.match(loja,/Nenhuma conta pessoal foi acessada/);
@@ -74,6 +77,7 @@ test('navegação entre LOOP e AKITEMM preserva a visão sem conceder poder ao c
  assert.match(loop,/\/loja\?visao=/);
  assert.match(loop,/modoOperadorAtual\?'operador':'cliente'/);
  assert.match(loja,/\/escritorio\?visao=/);
- assert.match(loja,/visaoClienteLoja\?'cliente':'operador'/);
- assert.match(loja,/voltarLoop\.href=permitido\?/); // depende da sessão de operador
+ assert.match(loja,/visaoOperadorLoja\|\|clienteAutenticado===false/);
+ assert.match(loja,/voltarLoop\.href=operadorAtivo\?/);
+ assert.match(loja,/\/escritorio\?visao=cliente/); // retorno do cliente
 });
