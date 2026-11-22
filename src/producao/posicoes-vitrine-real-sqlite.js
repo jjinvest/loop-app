@@ -154,6 +154,50 @@ class PosicoesVitrineRealSQLite{
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
 
+
+ // Admissão de produto SEMPRE sequencial, independente do espaço tocado.
+ // É atômica e não substitui a movimentação voluntária de produtos existentes.
+ atribuirProximo({produtoId,produtoExiste}={}){
+  if(!ID.test(produtoId)||typeof produtoExiste!=='function')
+   falha('VITRINE_REAL_ATRIBUICAO_INVALIDA');
+  if(produtoExiste(produtoId)!==true)
+   falha('VITRINE_REAL_PRODUTO_NAO_ENCONTRADO');
+  const ts=this.agora();
+  if(!Number.isSafeInteger(ts)||ts<1)
+   falha('VITRINE_REAL_RELOGIO_INVALIDO');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const existente=this.banco.prepare([
+    'SELECT posicao,revisao FROM loja_real_vitrine_posicoes',
+    'WHERE produto_id=?'
+   ].join(' ')).get(produtoId);
+   if(existente){
+    this.banco.exec('COMMIT');
+    return {produtoId,posicao:existente.posicao,
+     revisao:existente.revisao,jaVinculado:true,automatico:true};
+   }
+   const usados=new Set(this.listar().map(x=>x.posicao));
+   let livre=null;
+   for(let i=1;i<=TOTAL;i++){
+    if(!usados.has(i)){livre=i;break;}
+   }
+   if(livre===null)falha('VITRINE_REAL_SEM_ESPACO');
+   const resultado=this.banco.prepare([
+    'INSERT INTO loja_real_vitrine_posicoes',
+    '(posicao,produto_id,revisao,atualizado_em) VALUES(?,?,1,?)'
+   ].join(' ')).run(livre,produtoId,ts);
+   if(resultado.changes!==1)falha('VITRINE_REAL_ATRIBUICAO_FALHOU');
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'VITRINE_PRODUTO_VINCULADO',ator:'ADMIN_COMERCIAL',
+    entidade:'PRODUTO_'+produtoId,
+    antes:{posicao:null},depois:{posicao:livre},
+    revisaoAnterior:0,revisaoNova:1
+   });
+   this.banco.exec('COMMIT');
+   return {produtoId,posicao:livre,revisao:1,
+    jaVinculado:false,automatico:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  // São apenas molduras vazias. As classificações dos produtos permanecem
  // vinculadas ao produto; cores vazias não mudam qualificação nem financeiro.
  consultarLayoutVazio(){
