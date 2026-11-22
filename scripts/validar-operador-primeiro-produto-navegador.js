@@ -148,6 +148,14 @@ async function principal(){
   assert.equal(await page.locator(
    '#catalogoLojaLoop .akitemm-slot-vazio .akitemm-alca-arrastar'
   ).count(),20);
+  // Ofertas mantém os espaços vazios; não cria promoções fictícias.
+  await page.locator('#akitemmFiltroOfertas').click();
+  await page.locator('#catalogoLojaLoop .akitemm-slot-vazio .akitemm-alca-arrastar')
+   .first().waitFor({state:'visible'});
+  assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
+  await page.locator('#akitemmFiltroTodos').click();
+  await page.locator('#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar')
+   .waitFor({state:'visible'});
   const vazioOriginal=await page.evaluate(async()=>{
    const r=await fetch('/api/admin/catalogo-midia/slots');
    return (await r.json()).layoutVazio;
