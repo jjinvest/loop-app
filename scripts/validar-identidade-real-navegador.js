@@ -474,6 +474,9 @@ async function main(){
    await operadorPage.locator('#loop03BannerArquivoReal').setInputFiles({
     name:'quadro-1.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
    });
+   await operadorPage.locator('#loop03BannerSalvarReal').click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Banner salvo e publicado'}).waitFor({state:'visible'});
    await operadorPage.locator('#loop03BannerArquivo2').setInputFiles({
     name:'quadro-2.jpg',mimeType:'image/jpeg',
     buffer:Buffer.from(segundaFotoBase64,'base64')
@@ -570,6 +573,9 @@ async function main(){
    await operadorPage.locator('#akitemmBannerArquivoOperador').setInputFiles({
     name:'loja-quadro-1.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
    });
+   await operadorPage.locator('#akitemmBannerControlesOperador [data-acao="foto"]').click();
+   await operadorPage.locator('#akitemmBannerStatus')
+    .filter({hasText:'Banner salvo e publicado'}).waitFor({state:'visible'});
    await operadorPage.locator('#akitemmBannerArquivo2').setInputFiles({
     name:'loja-quadro-2.jpg',mimeType:'image/jpeg',
     buffer:Buffer.from(segundaFotoBase64,'base64')
