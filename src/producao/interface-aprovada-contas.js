@@ -2208,7 +2208,8 @@
    // Atualizar os 3 quadros APÓS a leitura financeira para não voltar a zero.
    visorCatraca.registrarAgenda(controle.agenda);
    void carregarAbaOperador('abaPosicoes');
-   $('loop03StatusPosicao').textContent='';
+   // O progresso 45/60 permanece visivel apos a leitura do operador.
+   // O visor compartilhado ja atualizou o mesmo texto para este turno.
    $('seletorPosicaoMotor').replaceChildren();
    $('estadoTabuleiroIntegrado').textContent='';
    $('estadoTabuleiroIntegrado').hidden=true;
