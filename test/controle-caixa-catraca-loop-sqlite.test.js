@@ -120,3 +120,31 @@ test('mudança de meta exige nova política e não consome outra reserva',()=>{
   assert.equal(controle.consultar({dia}).reservaTotalCentavos,750000);
  }finally{db.close();}
 });
+
+test('reserva adulterada falha fechado antes da exibicao, ativacao ou luz',()=>{
+ const {db,controle,avancar}=criar();
+ try{
+  configurar(controle);
+  controle.definirAtivacao({dia,ativa:true,autorizacaoOperador:true});
+  // Simula divergencia no livro SQLite entre total e centros reservados.
+  db.prepare([
+   'UPDATE loop_real_catraca_caixa_programacao',
+   'SET reserva_total_centavos=reserva_total_centavos+1 WHERE dia=?'
+  ].join(' ')).run(dia);
+  assert.throws(()=>controle.consultar({dia}),
+   /CATRACA_CAIXA_RESERVA_DIVERGENTE/);
+  avancar('09:18');
+  assert.throws(()=>controle.autorizarLuz({
+   dia,indiceLuz:1,liberacaoOperador:true
+  }),/CATRACA_CAIXA_RESERVA_DIVERGENTE/);
+  assert.throws(()=>controle.definirAtivacao({
+   dia,ativa:false,autorizacaoOperador:true
+  }),/CATRACA_CAIXA_RESERVA_DIVERGENTE/);
+  assert.equal(db.prepare(
+   'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_autorizacoes'
+  ).get().n,0);
+  assert.equal(db.prepare(
+   'SELECT estado FROM loop_real_catraca_caixa_programacao WHERE dia=?'
+  ).get(dia).estado,'AUTORIZADA','tentativa nao reescreve o estado');
+ }finally{db.close();}
+});
