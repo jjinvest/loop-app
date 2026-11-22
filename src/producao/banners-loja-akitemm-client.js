@@ -50,7 +50,29 @@
  topo.append(titulo,fechar);
  const explicacao=document.createElement('p');
  explicacao.className='banner-real-explicacao';
- explicacao.textContent='Escolha a imagem. Ela será ajustada automaticamente sem cortar a arte.';
+ explicacao.textContent='Escolha 1, 2 ou 3 fotos dentro do mesmo banner.';
+ const linhaColunas=document.createElement('label');
+ linhaColunas.className='banner-real-arquivo';
+ linhaColunas.textContent='Formato do banner';
+ const colunas=document.createElement('select');
+ colunas.id='akitemmBannerColunasReal';
+ for(const [valor,t] of [['1','1 foto comprida'],['2','2 quadros lado a lado'],
+  ['3','3 quadros lado a lado']]){
+  const op=document.createElement('option');op.value=valor;op.textContent=t;
+  colunas.append(op);
+ }
+ linhaColunas.append(colunas);
+ const linhaModo=document.createElement('label');
+ linhaModo.className='banner-real-arquivo';
+ linhaModo.textContent='Enquadramento';
+ const modo=document.createElement('select');
+ modo.id='akitemmBannerModoReal';
+ for(const [valor,t] of [['PREENCHER','Preencher os quadrinhos'],
+  ['INTEIRA','Mostrar foto inteira']]){
+  const op=document.createElement('option');op.value=valor;op.textContent=t;
+  modo.append(op);
+ }
+ linhaModo.append(modo);
  const rotulo=document.createElement('label');
  rotulo.className='banner-real-arquivo';
  rotulo.textContent='Foto do banner (JPG, PNG ou WebP)';
@@ -61,6 +83,25 @@
  const previa=document.createElement('img');
  previa.id='akitemmBannerPreviaReal';previa.className='banner-real-previa';
  previa.alt='Prévia do banner AKITEMM';previa.hidden=true;
+ const fotosExtras=[2,3].map(n=>{
+  const linha=document.createElement('label');
+  linha.className='banner-real-arquivo banner-foto-extra';
+  linha.dataset.posicao=String(n);
+  linha.textContent='Foto do quadro '+n;
+  const arquivo=document.createElement('input');
+  arquivo.type='file';arquivo.id='akitemmBannerArquivo'+n;
+  arquivo.accept='image/jpeg,image/png,image/webp';
+  linha.append(arquivo);
+  return {linha,arquivo};
+ });
+ function mostrarCampos(){
+  fotosExtras.forEach(x=>{
+   const visivel=Number(x.linha.dataset.posicao)<=Number(colunas.value);
+   x.linha.hidden=!visivel;
+   x.linha.style.display=visivel?'flex':'none';
+  });
+ }
+ colunas.addEventListener('change',mostrarCampos);
  const controles=document.createElement('div');
  controles.id='akitemmBannerControlesOperador';
  controles.className='banner-real-acoes';
@@ -75,7 +116,8 @@
  }
  const estado=document.createElement('p');estado.id='akitemmBannerStatus';
  estado.setAttribute('role','status');
- caixa.append(topo,explicacao,rotulo,previa,estado,controles);
+ caixa.append(topo,explicacao,linhaColunas,linhaModo,
+  rotulo,previa,...fotosExtras.map(x=>x.linha),estado,controles);
  dialogo.append(caixa);document.body.append(dialogo);
  let leitorFoto=0;
  function abrirFormulario(){
@@ -84,6 +126,10 @@
   if(atual.adicionar){void criarBanner();return;}
   titulo.textContent='Banner '+atual.slot+' · AKITEMM';
   escolher.value='';previa.hidden=true;previa.removeAttribute('src');
+  fotosExtras.forEach(x=>{x.arquivo.value='';});
+  colunas.value=String(atual.colunas||1);
+  modo.value=atual.modo||(atual.colunas===1?'INTEIRA':'PREENCHER');
+  mostrarCampos();
   estado.textContent='';
   if(!dialogo.open)dialogo.showModal();
  }
