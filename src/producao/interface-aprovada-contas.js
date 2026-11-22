@@ -636,6 +636,84 @@
    }
   }catch(e){destino.textContent='Dados indisponíveis: '+e.message;}
  }
+ // Cofres do LOOP: apenas leitura de banco/PSP conciliado no servidor.
+ // O operador pode atualizar; o cliente nunca recebe dados destes cofres.
+ const cofresIds=Object.freeze({
+  INVESTIMENTO:'Investimento',CENTRAL:'Central',RESERVA:'Reserva'
+ });
+ const moedaCofres=new Intl.NumberFormat('pt-BR',{
+  style:'currency',currency:'BRL'
+ });
+ let consultaCofresEmCurso=false,ultimaConsultaCofres=0;
+ function limparCofresOperador(){
+  for(const id of Object.values(cofresIds)){
+   if($('loop03Cofre'+id))$('loop03Cofre'+id).textContent='—';
+   if($('loop03Cofre'+id+'Estado'))
+    $('loop03Cofre'+id+'Estado').textContent='Aguardando conciliação';
+  }
+  if($('loop03CofresEstado'))
+   $('loop03CofresEstado').textContent='Aguardando comprovação bancária.';
+ }
+ function revelarCofresOperador(ativo){
+  const painel=$('loop03CofresOperador');
+  if(!painel)return;
+  painel.hidden=!ativo;
+  if(!ativo){
+   ultimaConsultaCofres=0;
+   limparCofresOperador();
+  }
+ }
+ async function carregarCofresOperador({forcar=false}={}){
+  const painel=$('loop03CofresOperador'),botao=$('loop03CofresAtualizar');
+  if(!modoOperadorAtual||!painel||painel.hidden||consultaCofresEmCurso)return;
+  if(!forcar&&Date.now()-ultimaConsultaCofres<60000)return;
+  consultaCofresEmCurso=true;
+  if(botao)botao.disabled=true;
+  try{
+   const resposta=await fetch('/api/admin/loop/cofres',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!resposta.ok)throw Error('CONSULTA_BANCARIA_INDISPONIVEL');
+   const d=await resposta.json();
+   const codigos=['INVESTIMENTO','CENTRAL','RESERVA'];
+   if(d.somenteLeitura!==true||d.moeda!=='BRL'||
+      !Array.isArray(d.cofres)||d.cofres.length!==3||
+      d.cofres.some((cofre,i)=>cofre.codigo!==codigos[i]||
+       !['CONCILIADO','AGUARDANDO_CONCILIACAO',
+        'CONCILIACAO_DESATUALIZADA'].includes(cofre.estado)||
+       (cofre.estado==='CONCILIADO'?
+        (!Number.isSafeInteger(cofre.saldoCentavos)||
+         cofre.saldoCentavos<0||cofre.saldoCentavos>1e12||
+         !Number.isSafeInteger(cofre.atualizadoEm)):
+        cofre.saldoCentavos!==null)))
+    throw Error('COFRES_FONTE_NAO_CONFIAVEL');
+   if(!modoOperadorAtual||painel.hidden)return;
+   let confirmados=0;
+   for(const cofre of d.cofres){
+    const id=cofresIds[cofre.codigo];
+    const comProva=cofre.estado==='CONCILIADO';
+    if(comProva)confirmados++;
+    $('loop03Cofre'+id).textContent=comProva?
+     moedaCofres.format(cofre.saldoCentavos/100):'—';
+    $('loop03Cofre'+id+'Estado').textContent=
+     comProva?'Saldo conciliado':
+     cofre.estado==='CONCILIACAO_DESATUALIZADA'?
+      'Extrato desatualizado':'Aguardando conciliação';
+   }
+   $('loop03CofresEstado').textContent=confirmados?
+    confirmados+' de 3 cofres com saldo bancário conciliado.':
+    'Aguardando conciliação externa. Nenhum saldo bancário confirmado.';
+   ultimaConsultaCofres=Date.now();
+  }catch{
+   if(!modoOperadorAtual||painel?.hidden)return;
+   limparCofresOperador();
+   $('loop03CofresEstado').textContent=
+    'Saldos indisponíveis. Nenhum valor não comprovado será mostrado.';
+  }finally{
+   consultaCofresEmCurso=false;
+   if(botao)botao.disabled=false;
+  }
+ }
  function abrirPainelOperador(){
   modoOperadorAtual=true;csrf=null;
   direcionarAcessosAkitemm('operador');
@@ -659,6 +737,8 @@
   const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=false;
   const indicadores=document.querySelector('.loop03-indicadores');
   if(indicadores)indicadores.hidden=false;
+  revelarCofresOperador(true);
+  void carregarCofresOperador({forcar:true});
   // Abre somente a aba operacional existente; nao concede identidade de cliente.
   posicoesResumoReal=[];posicaoSelecionada='';posicaoResumoEscolhidaManualmente=false;
   $('posicoesPainel').replaceChildren();
@@ -691,6 +771,7 @@
   limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
+  revelarCofresOperador(false);
   direcionarAcessosAkitemm('cliente');
   document.body.classList.remove('loop03-modo-operador');
   const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=true;
@@ -835,6 +916,7 @@
    // Verde é a confirmação explícita do CPF/termos do indicado,
    // não a simples criação da conta nem uma compra de ensaio.
    const registroValidado=p.cadastroConfirmado===true;
+   const indicacaoValida=registroValidado&&p.indicacaoValida===true;
    const emAnalise=p.estado==='QUALIFICACAO_ENSAIO';
    const aguardando=p.estado==='COMPRA_ENSAIO_SEM_QUALIFICACAO';
    const cor=registroValidado?'verde':emAnalise?'azul':
@@ -897,7 +979,8 @@
      p.filaCadastro==='B'?'B':'não informada'))
    );
    const anotacao=texto('p','loop03-rede-pessoa-vinculo',
-    registroValidado?'Cadastro confirmado. Ativação no LOOP depende da qualificação.':
+    indicacaoValida?'Indicação válida e confirmada. Pode vincular à posição.':
+    registroValidado?'Cadastro confirmado. Aguardando compra qualificada e conciliação.':
     emAnalise?'Vínculo aguardando comprovação real.':
     aguardando?'Aguardando confirmação da posição.':
     'Aguardando ativação no LOOP.');
@@ -908,14 +991,14 @@
     p.posicaoDestinoReservada>=1&&p.posicaoDestinoReservada<=10?
     p.posicaoDestinoReservada:null;
    const aviso=texto('p','loop03-rede-pessoa-aviso',
-    reservada!==null?'Destino fixado na posição '+reservada+
-     '. Aguardando ativação real da indicação.':
-     'Escolha uma vez a posição de destino. O cadastro ficará reservado aqui;'+
-     ' a indicação só será ativada após comprovação.');
+    reservada!==null?'Destino fixado na posição '+reservada+'.':
+    !indicacaoValida?
+     'Nenhuma posição disponível: esta indicação ainda não é válida.':
+     'Indicação válida. Escolha a posição de destino uma única vez.');
    for(let n=1;n<=10;n++){
     const escolha=texto('button','loop03-rede-posicao',String(n));
     escolha.type='button';
-    escolha.disabled=reservada!==null||emAnalise||numero===null;
+    escolha.disabled=!indicacaoValida||reservada!==null||numero===null;
     escolha.setAttribute('aria-label',
      'Escolher posição '+n+' para @'+p.nick);
     escolha.setAttribute('aria-pressed',String(reservada===n));
@@ -923,10 +1006,11 @@
      escolha.classList.add('loop03-rede-posicao-selecionada');
      escolha.title='Destino já escolhido e preservado';
     }else escolha.title=escolha.disabled?
-     'Destino fixado ou indicação já vinculada':
+     indicacaoValida?'Destino fixado ou indicação já vinculada':
+      'Aguardando indicação válida':
      'Escolher posição '+n+' (escolha única)';
     escolha.addEventListener('click',async()=>{
-     if(reservada!==null||emAnalise||numero===null)return;
+     if(!indicacaoValida||reservada!==null||numero===null)return;
      for(const b of grade.querySelectorAll('button'))b.disabled=true;
      aviso.textContent='Salvando destino da indicação...';
      try{
@@ -1325,6 +1409,8 @@
  function prepararAbasMotor(){
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
+  $('loop03CofresAtualizar')?.addEventListener('click',()=>
+   void carregarCofresOperador({forcar:true}));
   visorCatraca.iniciar();
   // Sem reproduzir os cartões ao atualizar o placar nas outras abas.
   // O operador mantém seu fluxo de atualização somente no Tabuleiro.
@@ -2011,6 +2097,7 @@
   }catch(e){status.textContent='Não foi possível abrir: '+e.message;}
  }
  async function carregarTabuleiroOperador(){
+  void carregarCofresOperador();
   try{
    // Reutiliza as rotas existentes da mesma sessao administrativa e motor real.
    // Nunca consulta posicoes, saldo, CPF ou sessao de um cliente.

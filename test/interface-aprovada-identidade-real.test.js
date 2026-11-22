@@ -115,7 +115,9 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.doesNotMatch(script,/Indicação qualificada em ensaio/);
  assert.doesNotMatch(script,/Motor interno indisponível/);
  assert.match(script,/Aguardando ativação no LOOP/);
- assert.match(script,/a indicação só será ativada após comprovação/);
+ assert.match(script,/esta indicação ainda não é válida/);
+ assert.match(script,/Aguardando compra qualificada e conciliação/);
+ assert.match(script,/escolha.disabled=!indicacaoValida/);
  assert.doesNotMatch(script,/Bonificações somente após confirmação comercial/);
  assert.match(script,/\/api\/contas/);
  assert.doesNotMatch(script,/pedido de ensaio /);
@@ -125,7 +127,7 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/loop03-rede-pessoa-menu/);
  assert.match(script,/loop03-rede-alocar-posicoes/);
  assert.match(script,/for\(let n=1;n<=10;n\+\+\)/);
- assert.match(script,/escolha\.disabled=reservada!==null/);
+ assert.match(script,/escolha\.disabled=!indicacaoValida\|\|reservada!==null/);
  assert.match(script,/\/minha-rede\/destino/);
  assert.doesNotMatch(script,/escolha\.disabled=true/);
  assert.match(script,/posicionarCampoFotoPerfil\(true\)/);

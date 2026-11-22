@@ -138,6 +138,13 @@ function renderizarInterfaceAprovada(){
   '<select id="seletorPosicaoMotor">'+
   '<option value="">Todas as posições</option></select></label>'+
   '<div id="posicoesPainel" aria-live="polite">Consultando posições…</div>');
+ // Cofres aparecem somente na aba Tabuleiro do operador, no rodapé marcado.
+ // Sem extrato autenticado não renderizar valores inventados.
+ const cofresRodape="<section id=\"loop03CofresOperador\" class=\"loop03-cofres-rodape\" aria-label=\"Cofres financeiros do LOOP\" hidden><div class=\"loop03-cofres-cabecalho\"><strong>COFRES DO LOOP</strong><button type=\"button\" id=\"loop03CofresAtualizar\" aria-label=\"Atualizar saldos conciliados dos cofres\">Atualizar</button></div><div class=\"loop03-cofres-tres\"><div class=\"loop03-cofre loop03-cofre-lateral\" data-cofre=\"INVESTIMENTO\"><span class=\"loop03-cofre-fisico\" aria-hidden=\"true\"><span class=\"loop03-cofre-volante\"></span></span><strong class=\"loop03-cofre-nome\">INVESTIMENTO</strong><span class=\"loop03-cofre-valor\" id=\"loop03CofreInvestimento\">—</span><small class=\"loop03-cofre-estado\" id=\"loop03CofreInvestimentoEstado\">Aguardando conciliação</small></div><div class=\"loop03-cofre loop03-cofre-centro\" data-cofre=\"CENTRAL\"><span class=\"loop03-cofre-fisico\" aria-hidden=\"true\"><span class=\"loop03-cofre-volante\"></span></span><strong class=\"loop03-cofre-nome\">COFRE CENTRAL</strong><span class=\"loop03-cofre-valor\" id=\"loop03CofreCentral\">—</span><small class=\"loop03-cofre-estado\" id=\"loop03CofreCentralEstado\">Aguardando conciliação</small></div><div class=\"loop03-cofre loop03-cofre-lateral\" data-cofre=\"RESERVA\"><span class=\"loop03-cofre-fisico\" aria-hidden=\"true\"><span class=\"loop03-cofre-volante\"></span></span><strong class=\"loop03-cofre-nome\">RESERVA</strong><span class=\"loop03-cofre-valor\" id=\"loop03CofreReserva\">—</span><small class=\"loop03-cofre-estado\" id=\"loop03CofreReservaEstado\">Aguardando conciliação</small></div></div><p id=\"loop03CofresEstado\" class=\"loop03-cofres-estado-geral\" role=\"status\">Aguardando comprovação bancária.</p></section>";
+ html=trocarExato(html,
+  '   <button type="button" id="tabuleiroVerPosicoesIntegrado">Ver minhas posições</button>',
+  '   <button type="button" id="tabuleiroVerPosicoesIntegrado">Ver minhas posições</button>'+
+  cofresRodape);
  // Cada versão de cliente.js recebe URL distinta na página real.
  // Evita reutilizar JavaScript antigo em navegadores integrados no Android.
  const clienteJs=fs.readFileSync(path.join(__dirname,'interface-aprovada-contas.js'));

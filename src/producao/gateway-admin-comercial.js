@@ -16,6 +16,8 @@ const {montarRotasCatalogoMidiaOperador}=
  require('./rotas-catalogo-midia-operador');
 const {BannersLojaAkitemmRealSQLite}=
  require('./banners-loja-akitemm-real-sqlite');
+const {consultarCofresOperador}=
+ require('./cofres-operador-readonly');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
@@ -23,7 +25,7 @@ function montarGatewayAdminComercial(app,{
  contas=null,atendimento=null,
  entregaLocal=null,
  pedidosComerciais=null,
- motorLoop=null,operacaoCatraca=null,
+ motorLoop=null,operacaoCatraca=null,consultarSaldosCofres=null,
  integradorComercialEnsaio=null,jornadaComercialEnsaio=null,
  recuperacaoReservas=null,classificacaoLoop=null,origemHttps
 }={}){
@@ -32,6 +34,9 @@ function montarGatewayAdminComercial(app,{
     typeof sessoes?.sair!=='function'||
     !controle||!catalogo||typeof origemHttps!=='string'||
     (auditoria!==null&&typeof auditoria.verificar!=='function')||
+    (consultarSaldosCofres!==null&&(
+     typeof consultarSaldosCofres?.consultarSaldosConciliados!=='function'||
+     typeof consultarSaldosCofres?.comprovarSaldo!=='function'))||
     (process.env.NODE_ENV==='production'&&
      (auditoria===null||manutencao===null)))
   erro('ADMIN_REAL_SEM_CUSTODIA');
@@ -411,6 +416,16 @@ function montarGatewayAdminComercial(app,{
    banco:motorLoop.banco,motorLoop,classificacaoLoop
   }));}
   catch{return res.status(503).json({erro:'QUALIFICACAO_REAL_CONSULTA_INDISPONIVEL'});}
+ });
+ // Cofres exclusivamente do operador: apenas saldos com prova externa.
+ // A ausência da integração retorna valores desconhecidos, não R$ 0 fictício.
+ // Não expõe comandos de criação, depósito, saída ou saque.
+ app.get('/api/admin/loop/cofres',proteger,async(_req,res)=>{
+  res.set('Cache-Control','private, no-store');
+  try{return res.json(await consultarCofresOperador({
+   adaptador:consultarSaldosCofres
+  }));}
+  catch{return res.status(503).json({erro:'COFRES_CONCILIACAO_INDISPONIVEL'});}
  });
  // Controles de operacao da catraca: mesma sessao administrativa, motor e SQLite.
  // Nunca recebem titularId, pedidoId nem eventos inventados do navegador.

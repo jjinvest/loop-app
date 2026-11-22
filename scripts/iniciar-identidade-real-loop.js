@@ -314,7 +314,9 @@ async function iniciar(ambiente=process.env,opcoes={}){
    captchaCadastroObrigatorio:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
-    catalogoMidia,classificacaoLoop,operacaoCatraca,recuperacaoReservas}
+    catalogoMidia,classificacaoLoop,operacaoCatraca,recuperacaoReservas,
+    // Futuro adaptador bancário, injetado somente pelo servidor.
+    consultarSaldosCofres:opcoes.consultarSaldosCofres??null}
   });
   // Sonda informativa de somente leitura: nenhum dado pessoal ou produto
   // aparece no log. Falha não modifica contas, fotos nem reinicia o banco.

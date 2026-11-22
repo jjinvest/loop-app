@@ -184,6 +184,25 @@ function prepararEstruturaIdentidadeReal({
    "BEFORE UPDATE ON loop_real_destinos_indicacao BEGIN SELECT RAISE(ABORT,'destino imutavel'); END;",
    'CREATE TRIGGER IF NOT EXISTS loop_real_destino_sem_delete',
    "BEFORE DELETE ON loop_real_destinos_indicacao BEGIN SELECT RAISE(ABORT,'destino imutavel'); END;",
+   // Indicacao qualificada e financeiramente comprovada em fonte separada.
+   // O cadastro, a confirmacao de CPF/termos e as compras em ensaio nunca
+   // criam registros nesta tabela: apenas a futura conciliacao externa.
+   'CREATE TABLE IF NOT EXISTS loop_real_indicacoes_validas_financeiro(',
+   'indicado_id TEXT PRIMARY KEY REFERENCES loop_real_vinculos_indicacao(indicado_id)',
+   'ON DELETE RESTRICT,',
+   'indicador_id TEXT NOT NULL REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'pedido_id TEXT NOT NULL UNIQUE,pagamento_id TEXT NOT NULL UNIQUE,',
+   'comprovante_bancario_id TEXT NOT NULL UNIQUE,',
+   'valor_qualificado_centavos INTEGER NOT NULL CHECK(valor_qualificado_centavos>0),',
+   "tipo TEXT NOT NULL CHECK(tipo IN ('COMPRA_250','DOURADA_DIRETA')),",
+   'confirmado_em INTEGER NOT NULL CHECK(confirmado_em>0),',
+   "CHECK(tipo!='COMPRA_250' OR valor_qualificado_centavos>=25000));",
+   'CREATE INDEX IF NOT EXISTS idx_loop_real_indicacoes_validas_indicador',
+   'ON loop_real_indicacoes_validas_financeiro(indicador_id);',
+   'CREATE TRIGGER IF NOT EXISTS loop_real_indicacao_valida_sem_update',
+   "BEFORE UPDATE ON loop_real_indicacoes_validas_financeiro BEGIN SELECT RAISE(ABORT,'indicacao valida imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS loop_real_indicacao_valida_sem_delete',
+   "BEFORE DELETE ON loop_real_indicacoes_validas_financeiro BEGIN SELECT RAISE(ABORT,'indicacao valida imutavel'); END;",
    'CREATE TABLE IF NOT EXISTS loop_real_sessoes(',
    'token_hash TEXT PRIMARY KEY,titular_id TEXT NOT NULL',
    'REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
@@ -517,6 +536,16 @@ class IdentidadeClienteLoopReal{
     'ORDER BY registrado_em ASC,indicado_id ASC LIMIT 1 OFFSET ?'
    ].join(' ')).get(indicadorId,numeroCadastro-1);
    if(!indicado)erro('CADASTRO_INDICADO_NAO_PERTENCE');
+   const confirmado=this.banco.prepare([
+    'SELECT 1 FROM loop_real_confirmacoes_cadastro',
+    'WHERE titular_id=?'
+   ].join(' ')).get(indicado.indicado_id);
+   if(!confirmado)erro('INDICACAO_AGUARDA_CONFIRMACAO');
+   const comprovado=this.banco.prepare([
+    'SELECT 1 FROM loop_real_indicacoes_validas_financeiro',
+    'WHERE indicado_id=? AND indicador_id=?'
+   ].join(' ')).get(indicado.indicado_id,indicadorId);
+   if(!comprovado)erro('INDICACAO_AGUARDA_QUALIFICACAO');
    const anterior=this.banco.prepare([
     'SELECT indicador_id,numero_posicao FROM loop_real_destinos_indicacao',
     'WHERE indicado_id=?'
@@ -557,12 +586,15 @@ class IdentidadeClienteLoopReal{
   const rows=this.banco.prepare([
    'SELECT v.indicado_id AS indicadoId,c.nick,v.registrado_em AS registradoEm,',
    'd.numero_posicao AS posicaoDestinoReservada,',
-   'x.titular_id AS confirmacaoTitularId',
+   'x.titular_id AS confirmacaoTitularId,',
+   'q.indicado_id AS qualificacaoRealIndicadoId',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_contas c ON c.id=v.indicado_id',
    'LEFT JOIN loop_real_destinos_indicacao d',
    'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
    'LEFT JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
+   'LEFT JOIN loop_real_indicacoes_validas_financeiro q',
+   'ON q.indicado_id=v.indicado_id AND q.indicador_id=v.indicador_id',
    'WHERE v.indicador_id=?',
    ...(ponto?[
     'AND (v.registrado_em>? OR',
@@ -579,22 +611,29 @@ class IdentidadeClienteLoopReal{
   ).get(titularId).n;
   const contagem=this.banco.prepare([
    'SELECT COUNT(*) AS confirmados,',
-   'COALESCE(SUM(CASE WHEN d.indicado_id IS NULL THEN 1 ELSE 0 END),0)',
-   'AS aDistribuir',
+   'COALESCE(SUM(CASE WHEN q.indicado_id IS NOT NULL',
+   'AND d.indicado_id IS NULL THEN 1 ELSE 0 END),0) AS aDistribuir',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
+   'LEFT JOIN loop_real_indicacoes_validas_financeiro q',
+   'ON q.indicado_id=v.indicado_id AND q.indicador_id=v.indicador_id',
    'LEFT JOIN loop_real_destinos_indicacao d',
    'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
    'WHERE v.indicador_id=?'
   ].join(' ')).get(titularId);
   const vinculadas=this.banco.prepare([
-   'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao',
-   'WHERE indicador_id=?'
+   'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao d',
+   'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=d.indicado_id',
+   'JOIN loop_real_indicacoes_validas_financeiro q',
+   'ON q.indicado_id=d.indicado_id AND q.indicador_id=d.indicador_id',
+   'WHERE d.indicador_id=?'
   ].join(' ')).get(titularId).n;
   return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
    numeroCadastro:base+i+1,filaCadastro:'B',
    cadastroConfirmado:x.confirmacaoTitularId!==null,
+   indicacaoValida:x.confirmacaoTitularId!==null&&
+    x.qualificacaoRealIndicadoId!==null,
    posicaoDestinoReservada:x.posicaoDestinoReservada,
    telefone:this.telefoneIndicadoVinculado({
     indicadorId:titularId,indicadoId:x.indicadoId

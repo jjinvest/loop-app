@@ -51,7 +51,8 @@ const TABELAS=Object.freeze([
 const TABELAS_CONTATO=Object.freeze([
  'loop_real_contatos_cadastro','loop_real_confirmacoes_cadastro',
  'loop_real_telefones_legados',
- 'loop_real_destinos_indicacao','loop_real_carrinho_itens',
+ 'loop_real_destinos_indicacao','loop_real_indicacoes_validas_financeiro',
+ 'loop_real_carrinho_itens',
  'loop_real_migracoes_preview','loop_real_aceites_documentos',
  'loop_captcha_login_falhas_v1','loop_captcha_cadastro_v1',
  'loja_real_atendimentos',TABELA_FOTO_PERFIL_REAL
