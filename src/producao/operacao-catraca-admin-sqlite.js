@@ -108,6 +108,17 @@ class OperacaoCatracaAdminSQLite{
  _girosDia(dia){return this.db.prepare(
   'SELECT COUNT(*) AS n FROM loop_real_catraca_admin_giros WHERE dia=?'
  ).get(dia).n;}
+ _girosHora(agoraMs,horaLocal){
+  if(!Number.isSafeInteger(agoraMs)||agoraMs<86400000||
+     !horaOk(horaLocal))falha('CATRACA_RELOGIO_INVALIDO');
+  // A hora civil é a de São Paulo do mesmo relógio autenticado.
+  const dentroHora=Number(horaLocal.slice(3))*60000+
+   new Date(agoraMs).getUTCSeconds()*1000+(agoraMs%1000);
+  return this.db.prepare([
+   'SELECT COUNT(*) AS n FROM loop_real_catraca_admin_giros',
+   'WHERE executado_em>=? AND executado_em<=?'
+  ].join(' ')).get(agoraMs-dentroHora,agoraMs).n;
+ }
  _giros24h(agoraMs){
   if(!Number.isSafeInteger(agoraMs)||agoraMs<86400000)
    falha('CATRACA_RELOGIO_INVALIDO');
@@ -170,7 +181,8 @@ class OperacaoCatracaAdminSQLite{
     'MOTOR_REAL_AINDA_NAO_CONSOME_RESERVA_PROVISIONADA':
     'CAIXA_REAL_NAO_PROVISIONADO_E_HOMOLOGADO',
    limiteDiario:p.limite_diario,revisao:p.revisao,
-   girosHoje:girosDia,giros24h:this._giros24h(tempo.ts),
+   girosHoje:girosDia,girosHora:this._girosHora(tempo.ts,tempo.hora),
+   giros24h:this._giros24h(tempo.ts),
    hoje:tempo.dia,horaLocal:tempo.hora,
    fuso:FUSO,horarioPermitido:dentro,
    limiteNaoAtingido:permitido,

@@ -55,7 +55,17 @@
    const proxima=!finalizado&&passadas<total?
     agoraMs+Math.max(0,Math.ceil((passadas+1)*duracaoMs/total-decorrido)):
     null;
-   return {luzes,passadas,total,proxima,diaTurno,finalizado,
+   // Quantidade de LUZES desta hora, não giros financeiros nem total do dia.
+   // Mantém o mesmo cálculo por intervalos do relógio do tabuleiro.
+   const emTurno=inicio<fim?atual>=inicio&&atual<fim:
+    inicio>fim?atual>=inicio||atual<fim:true;
+   const decorridoAntesHora=decorrido-
+    (Number(partes.minute)*60000+Number(partes.second)*1000+agoraMs%1000);
+   const passadasNoInicioHora=Math.min(total,Math.floor(
+    Math.max(0,decorridoAntesHora)*total/duracaoMs));
+   const luzesHora=emTurno&&!finalizado?
+    Math.max(0,passadas-passadasNoInicioHora):0;
+   return {luzes,passadas,total,proxima,diaTurno,finalizado,luzesHora,
     intervalo:Math.max(1,Math.round(duracaoMs/total/1000))};
   }
   function sincronizarLuzesVisuais(estado){
@@ -91,39 +101,43 @@
     }
    }
    ultimaJanelaVisual=chave;
-   // Contador visível do RELÓGIO: um avanço por luz e um ciclo por seis.
-   // A contagem financeira segue independente, sem crédito bancário.
+   // O cliente vê duas fontes separadas: GIROS registrados no SQLite e
+   // LUZES calculadas pelo mesmo relógio do tabuleiro, na hora local atual.
+   // Nunca alterar o cartão de posição selecionada a partir do relógio.
    const resumo=$('loop03StatusPosicao'),selecionada=$('loop03NumeroIntegrado');
    const operadorAberto=document.body?.classList?.contains?.('loop03-modo-operador')===true;
    const movimentosRelogio=valido?estado.passadas:0;
    const ciclosRelogio=Math.floor(movimentosRelogio/6);
-   if(compartilhado&&valido){
+   if(compartilhado){
     const giros=$('loop03Giros24Integrado');
-    if(giros){
-     giros.textContent=String(movimentosRelogio);
-     // Não renomear GIROS NAS ÚLTIMAS 24H do cliente: os três cartões
-     // têm papéis distintos, apesar de consultarem a mesma agenda.
-     const descricao=giros.parentElement?.querySelector?.('span');
-     if(descricao)descricao.textContent='Relógio: '+ciclosRelogio+
-      ' ciclos de 6 · sem pagamento';
-    }
-    // EVENTOS NO CICLO pertence somente ao quadro administrativo.
-    // A terceira caixa do cliente continua sendo POSIÇÃO SELECIONADA.
-    if(selecionada&&operadorAberto){
-     selecionada.textContent=estado.luzes+' / 6';
-     const titulo=selecionada.parentElement?.querySelector?.('small');
-     if(titulo)titulo.textContent='EVENTOS NO CICLO';
+    if(operadorAberto){
+     // Contrato anterior do operador permanece independente do placar cliente.
+     if(giros&&valido){
+      giros.textContent=String(movimentosRelogio);
+      const descricao=giros.parentElement?.querySelector?.('span');
+      if(descricao)descricao.textContent='Relógio: '+ciclosRelogio+
+       ' ciclos de 6 · sem pagamento';
+     }
+     if(selecionada&&valido){
+      selecionada.textContent=estado.luzes+' / 6';
+      const titulo=selecionada.parentElement?.querySelector?.('small');
+      if(titulo)titulo.textContent='EVENTOS NO CICLO';
+     }
+    }else{
+     const hora=agendaVisorCatraca?.girosReaisHora;
+     if(giros)giros.textContent=Number.isSafeInteger(hora)&&hora>=0?
+      String(hora):'—';
+     const luzesHora=$('loop03LuzesHoraIntegrado');
+     if(luzesHora)luzesHora.textContent=valido?
+      String(estado.luzesHora):'0';
     }
    }
-   const giroReal=agendaVisorCatraca?.girosReaisHoje;
-   const ciclosReais=agendaVisorCatraca?.ciclosReaisConcluidos;
-   if(resumo&&compartilhado&&Number.isSafeInteger(giroReal)&&
-      Number.isSafeInteger(ciclosReais)&&
-      (operadorAberto||!/^#\d+$/.test(selecionada?.textContent||''))){
-    resumo.textContent=valido?
-     'Relógio: '+movimentosRelogio+'/'+estado.total+' luzes · '+
-      ciclosRelogio+' ciclos completos · Sem pagamento real':
-     'Relógio fora do turno · Sem pagamento real';
+   if(resumo&&compartilhado&&operadorAberto&&valido){
+    const giroReal=agendaVisorCatraca?.girosReaisHoje;
+    const ciclosReais=agendaVisorCatraca?.ciclosReaisConcluidos;
+    if(Number.isSafeInteger(giroReal)&&Number.isSafeInteger(ciclosReais))
+     resumo.textContent='Relógio: '+movimentosRelogio+'/'+estado.total+
+      ' luzes · '+ciclosRelogio+' ciclos completos · Sem pagamento real';
    }
    const contador=$('motorContadorEventos');
    if(contador&&compartilhado){

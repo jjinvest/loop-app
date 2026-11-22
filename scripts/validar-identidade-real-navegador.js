@@ -695,7 +695,7 @@ async function main(){
    await page.locator('#opcoesPosicoesResumo button').first().click();
    assert.equal(await page.locator('#conteudoFinanceiro').isVisible(),true,
     'seletor superior não muda de aba');
-   assert.equal(await page.locator('#loop03NumeroIntegrado').innerText(),'#1');
+   assert.equal(await page.locator('#loop03NumeroIntegrado').innerText(),'1ª posição');
    assert.equal(await page.locator('#seletorPosicoesResumo').isHidden(),true);
    await page.locator('#finEscolherPosicoes').click();
    assert.equal(await page.locator('#finEscolherPosicoes').getAttribute('aria-pressed'),'true');

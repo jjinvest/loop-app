@@ -96,6 +96,7 @@
  let posicaoSelecionada='';
  let nickResumoReal='';
  let posicoesResumoReal=[],popupPosicoesRealAberto=false;
+ let posicaoResumoEscolhidaManualmente=false;
  let sequenciaLeituraFilas=0;
  let filaSelecionada=null;
  const carregarPaginaFila={A:null,B:null};
@@ -646,7 +647,7 @@
   const indicadores=document.querySelector('.loop03-indicadores');
   if(indicadores)indicadores.hidden=false;
   // Abre somente a aba operacional existente; nao concede identidade de cliente.
-  posicoesResumoReal=[];posicaoSelecionada='';
+  posicoesResumoReal=[];posicaoSelecionada='';posicaoResumoEscolhidaManualmente=false;
   $('posicoesPainel').replaceChildren();
   prepararAbasMotor();
   for(const tab of document.querySelectorAll('#loop03SidebarIntegrado [role=tab]')){
@@ -692,8 +693,16 @@
   sincronizarFotoRodapeReal();
   void atualizarFotoPerfilReal();
   nickResumoReal=s.nick;
+  // Os títulos são restaurados ao voltar do perfil administrativo sem
+  // redesenhar ou apagar nenhuma das três molduras aprovadas.
+  const indicadoresCliente=document.querySelectorAll('.loop03-indicadores .loop03-indicador');
+  if(indicadoresCliente.length===3){
+   indicadoresCliente[0].querySelector('small').textContent='MINHAS POSIÇÕES';
+   indicadoresCliente[1].querySelector('small').textContent='GIROS / HORA';
+   indicadoresCliente[2].querySelector('small').textContent='POSIÇÃO SELECIONADA';
+  }
   $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
-  posicoesResumoReal=[];posicaoSelecionada='';
+  posicoesResumoReal=[];posicaoSelecionada='';posicaoResumoEscolhidaManualmente=false;
   atualizarSituacaoRodapeReal();
   $('perfilCliente').textContent='Nick: '+nickVisivel(s.nick)+
    (s.emailVerificado?' · E-mail confirmado':' · Confirme seu e-mail');
@@ -1126,11 +1135,12 @@
  function atualizarTopoPosicaoReal(){
   const i=posicoesResumoReal.findIndex(p=>String(p.numero)===posicaoSelecionada);
   const p=i<0?null:posicoesResumoReal[i];
-  $('loop03NumeroIntegrado').textContent=p?'#'+(i+1):'—';
+  $('loop03NumeroIntegrado').textContent=p?(i+1)+'ª posição':'—';
   $('loop03StatusPosicao').textContent=p?
-   ('@'+nickVisivel(nickResumoReal)+' · Fila '+(p.fila==='A'||p.fila==='B'?p.fila:'não definida')+
-    ' · Indicações: '+(p.indicacoesVinculadas||0)+
-    ' · '+(p.local||'Em acompanhamento')+' · ID #'+p.numero):'';
+   '@'+nickVisivel(nickResumoReal)+'\n'+
+   (p.fila==='A'||p.fila==='B'?'Fila '+p.fila:
+    /^VAGA_[1-6]$/.test(p.local||'')||p.local==='CENTRO'?
+     'No tabuleiro':'Fila aguardando definição'):'';
   atualizarSituacaoRodapeReal();
  }
  function preencherPopupReal(){
@@ -1146,6 +1156,7 @@
    botao.setAttribute('aria-pressed',String(String(p.numero)===posicaoSelecionada));
    botao.addEventListener('click',()=>{
     posicaoSelecionada=String(p.numero);
+    posicaoResumoEscolhidaManualmente=true;
     fecharPopupReal();
     atualizarTopoPosicaoReal();
     void carregarMotor();
@@ -1262,13 +1273,56 @@
   }catch{resposta.textContent='Saque indisponível. Nenhum Pix foi enviado.';}
   finally{botao.disabled=false;}
  }
+
+ // Atualização leve do placar em TODAS as abas, sem reconstruir os cartões,
+ // apagar formulários, perder o scroll ou reabrir a aba do Tabuleiro.
+ let placarClienteConsultando=false;
+ async function atualizarPlacarCliente(){
+  if(placarClienteConsultando||modoOperadorAtual||
+     $('painelConta')?.hidden!==false)return;
+  placarClienteConsultando=true;
+  try{
+   const r=await fetch('/api/loop/estado',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)return;
+   const d=await r.json();
+   if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
+      d.somenteLeitura!==true||d.financeiroReal!==false||
+      !Array.isArray(d.minhasPosicoes)||
+      d.agenda?.origem!=='CATRACA_REAL_MESMO_SQLITE'||
+      d.agenda?.luzesDoRelogioCompartilhado!==true)return;
+   if(modoOperadorAtual||$('painelConta')?.hidden!==false)return;
+   posicoesResumoReal=d.minhasPosicoes.filter(p=>Number.isSafeInteger(p.numero))
+    .sort((a,b)=>a.numero-b.numero);
+   if(!posicoesResumoReal.some(p=>String(p.numero)===posicaoSelecionada)){
+    posicaoResumoEscolhidaManualmente=false;
+    posicaoSelecionada=posicoesResumoReal.length?
+     String(posicoesResumoReal[0].numero):'';
+   }
+   $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
+    ' / '+String(d.limitePosicoesAtivas);
+   atualizarTopoPosicaoReal();
+   if(popupPosicoesRealAberto)preencherPopupReal();
+   visorCatraca.registrarAgenda(d.agenda);
+  }catch{
+   // Uma leitura indisponível não altera cartões, posições ou contas.
+  }finally{placarClienteConsultando=false;}
+ }
+
  function prepararAbasMotor(){
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
   visorCatraca.iniciar();
+  // Sem reproduzir os cartões ao atualizar o placar nas outras abas.
+  // O operador mantém seu fluxo de atualização somente no Tabuleiro.
   window.setInterval(()=>{
-   if(!document.hidden&&$('conteudoTabuleiro')?.hidden===false)
+   if(document.hidden)return;
+   if($('conteudoTabuleiro')?.hidden===false){
     void carregarMotor();
+   }else if(!modoOperadorAtual&&$('painelConta')?.hidden===false){
+    void atualizarPlacarCliente();
+   }
   },15000);
     for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
    $(id)?.addEventListener('click',()=>{
@@ -1303,6 +1357,7 @@
   const seletor=$('seletorPosicaoMotor');
   if(seletor)seletor.addEventListener('change',()=>{
    posicaoSelecionada=seletor.value;
+   posicaoResumoEscolhidaManualmente=!!seletor.value;
    void carregarMotor();
   });
  }
@@ -2069,10 +2124,11 @@
     ' de 6 eventos neste ciclo';
    $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
     ' / '+String(d.limitePosicoesAtivas);
-   // So exibir giros das ultimas 24h quando a fonte realmente os informar.
-   const giros24h=d.catraca?.giros24h;
+   // Os cartões usam o livro de giros por HORA; a projeção das
+   // luzes da mesma HORA é desenhada pelo visor, sem inventar eventos.
+   const girosHora=d.agenda?.girosReaisHora;
    $('loop03Giros24Integrado').textContent=
-    Number.isSafeInteger(giros24h)&&giros24h>=0?String(giros24h):'—';
+    Number.isSafeInteger(girosHora)&&girosHora>=0?String(girosHora):'—';
    const seletor=$('seletorPosicaoMotor');
    const seletorRotulo=$('rotuloSeletorPosicaoMotor');
    if(seletor){
@@ -2080,7 +2136,11 @@
      Number.isSafeInteger(p.numero)).sort((a,b)=>a.numero-b.numero);
     if(popupPosicoesRealAberto)preencherPopupReal();
     const opcoes=d.minhasPosicoes.map(p=>String(p.numero));
-    if(!opcoes.includes(posicaoSelecionada))posicaoSelecionada='';
+    if(!opcoes.includes(posicaoSelecionada)){
+     posicaoResumoEscolhidaManualmente=false;
+     posicaoSelecionada=posicoesResumoReal.length?
+      String(posicoesResumoReal[0].numero):'';
+    }
     atualizarSituacaoRodapeReal(posicoesResumoReal);
     seletor.replaceChildren();
     const geral=document.createElement('option');
@@ -2093,18 +2153,7 @@
     }
     seletor.value=posicaoSelecionada;
     if(seletorRotulo)seletorRotulo.hidden=opcoes.length===0;
-    const selecionadaResumo=d.minhasPosicoes.find(p=>
-     String(p.numero)===posicaoSelecionada);
-    $('loop03NumeroIntegrado').textContent=
-     selecionadaResumo?'#'+posicaoSelecionada:'—';
-    $('loop03StatusPosicao').textContent=selecionadaResumo?
-     ('@'+nickVisivel(nickResumoReal)+
-      ' · Fila '+(selecionadaResumo.fila==='A'||selecionadaResumo.fila==='B'?
-       selecionadaResumo.fila:'não definida')+
-      ' · Indicações: '+(selecionadaResumo.indicacoesVinculadas||0)+
-      ' · '+(selecionadaResumo.local||'Em acompanhamento')+
-      ' · ID #'+selecionadaResumo.numero):
-     '';
+    atualizarTopoPosicaoReal();
     // Restaurar o placar do relógio após carregar os números do motor.
     visorCatraca.registrarAgenda(d.agenda);
    }
@@ -2126,8 +2175,9 @@
    // Só mostrar um cartão quando o titular selecionar sua posição;
    // na visão geral renderizar todos os espaços disponíveis até o limite.
    const slots=somentePosicoesPeloQuadrado?ordenadas:
-    posicaoSelecionada?ordenadas.filter(p=>String(p.numero)===posicaoSelecionada):
-    Array.from({length:capacidade},(_,i)=>ordenadas[i]||null);
+    posicaoResumoEscolhidaManualmente&&posicaoSelecionada?
+     ordenadas.filter(p=>String(p.numero)===posicaoSelecionada):
+     Array.from({length:capacidade},(_,i)=>ordenadas[i]||null);
    const criarLinhaDetalhe=(pai,rotulo,valor)=>{
     const linha=document.createElement('div');
     linha.className='loop03-posicao-detalhe-linha';
@@ -2155,8 +2205,9 @@
     const cabecalho=document.createElement('div');
     cabecalho.className='loop03-posicao-cabecalho';
     const rotulo=document.createElement('strong');
-    const vaga=somentePosicoesPeloQuadrado||posicaoSelecionada?
-     ordenadas.findIndex(p=>p.numero===pos.numero)+1:i+1;
+    const vaga=somentePosicoesPeloQuadrado||
+     (posicaoResumoEscolhidaManualmente&&posicaoSelecionada)?
+      ordenadas.findIndex(p=>p.numero===pos.numero)+1:i+1;
     rotulo.textContent='Posição '+vaga;
     const luz=document.createElement('span');
     luz.className='loop03-posicao-luz '+(!pos?'loop03-posicao-luz-inativa':
