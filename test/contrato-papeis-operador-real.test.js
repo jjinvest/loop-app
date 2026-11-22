@@ -89,7 +89,7 @@ test('OPERADOR configura relogio pelo controle original, sem rota paralela',()=>
  const apiCliente=codigo('src/producao/servidor-identidade-loop.js');
  assert.match(js,/visorCatraca\.registrarAgenda\(controle\.agenda\)/);
  assert.match(js,/visorCatraca\.registrarAgenda\(d\.agenda\)/);
- assert.match(js,/controle\.agenda\.origem!=='CATRACA_REAL_MESMO_SQLITE'/);
+ assert.match(js,/controle\.agenda\?\.origem!=='CATRACA_REAL_MESMO_SQLITE'/);
  assert.match(agenda,/agoraServidorMs:estado\.agoraServidorMs/);
  assert.match(agenda,/proximaLuzPrevistaEmMs:estado\.proximaLuzPrevistaEmMs/);
  assert.match(agenda,/intervaloLuzSegundos:estado\.intervaloLuzSegundos/);
