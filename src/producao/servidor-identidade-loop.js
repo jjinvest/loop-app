@@ -187,7 +187,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)
   montarGatewayAdminComercial(app,{...adminComercial,origemHttps,
-   posicoesVitrine,anunciosManuais,entregaLocal,motorLoop});
+   posicoesVitrine,anunciosManuais,entregaLocal,motorLoop,contas});
  const mutation=(req,res,next)=>{
   if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
   if(!req.is('application/json'))
