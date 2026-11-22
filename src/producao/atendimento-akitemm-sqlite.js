@@ -33,7 +33,7 @@ class AtendimentoAkitemmSQLite {
    'resposta_iv TEXT,resposta_ct TEXT,resposta_tag TEXT,',
    'criado_em INTEGER NOT NULL,respondido_em INTEGER,',
    'CHECK((estado=\'ABERTO\' AND resposta_iv IS NULL AND resposta_ct IS NULL AND resposta_tag IS NULL AND respondido_em IS NULL) OR',
-   '(estado=\'RESPONDIDO\' AND resposta_iv IS NOT NULL AND resposta_ct IS NOT NULL AND resposta_tag IS NOT NULL AND respondido_em IS NOT NULL)));',
+   '(estado=\'RESPONDIDO\' AND resposta_iv IS NOT NULL AND resposta_ct IS NOT NULL AND resposta_tag IS NOT NULL AND respondido_em IS NOT NULL));',
    'CREATE INDEX IF NOT EXISTS loja_real_atendimentos_titular',
    'ON loja_real_atendimentos(titular_id,criado_em);',
    'CREATE INDEX IF NOT EXISTS loja_real_atendimentos_estado',
