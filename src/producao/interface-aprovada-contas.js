@@ -150,21 +150,28 @@
    e.status=res.status;throw e;}
   return dados;
  }
- // O input da foto vive originalmente em Minha Conta. Como essa aba e
- // protegida no perfil OPERADOR, no Android o seletor de arquivo nao abre
- // quando o input permanece dentro de um ancestral display:none.
- // Deslocar o MESMO input (mantendo listeners) para fora da aba durante a
- // sessao administrativa e devolve-lo ao formulario no modo cliente.
+ // O seletor da foto serve somente aos acessos aprovados: foto do topo
+ // e Minha Conta. Para abrir no Android quando a aba está recolhida,
+ // o MESMO input deve permanecer fora do ancestral display:none. Ele NÃO
+ // pode aparecer como terceiro campo solto no rodapé da página de login.
  function posicionarCampoFotoPerfil(foraDaAba){
   const input=$('arquivoFotoPerfil'),form=$('formFotoPerfil');
-  // Android bloqueia o seletor de arquivos quando o input pertence a
-  // um painel oculto. A mesma solução vale para cliente e operador.
   if(foraDaAba||$('conteudoConta')?.hidden){
    if(input.parentElement!==document.body)document.body.append(input);
+   // Invisível visualmente, mas com layout e DOM suficientes para .click()
+   // abrir a galeria por gesto real no Android; não usar display:none.
+   input.style.cssText='position:fixed!important;left:-9999px!important;'+
+    'top:0!important;width:1px!important;height:1px!important;'+
+    'opacity:0!important;overflow:hidden!important;'+
+    'pointer-events:none!important;clip-path:inset(50%)!important;'+
+    'padding:0!important;margin:0!important;z-index:-1!important';
    input.tabIndex=-1;
+   input.setAttribute('aria-hidden','true');
   }else{
    if(input.parentElement!==form)form.insertBefore(input,$('avisoFotoPerfil'));
+   input.removeAttribute('style');
    input.removeAttribute('tabindex');
+   input.removeAttribute('aria-hidden');
   }
  }
  function mostrarLogin(t){
