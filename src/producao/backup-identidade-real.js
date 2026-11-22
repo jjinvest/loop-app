@@ -72,7 +72,8 @@ const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_rascunhos_cadastro',
  'loja_real_canais_fornecedor',
  'loja_real_entrega_local_produto',
- 'loja_real_avaliacoes_verificadas'
+ 'loja_real_avaliacoes_verificadas',
+ 'loja_real_banners_akitemm'
 ]);
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function conferir({origem,destino,chaveBackup,autorizado,restaurar=false}){
@@ -122,6 +123,23 @@ function validarIdentidade(arquivo){
    ...TABELAS_OUTBOX_COMPRA,TABELA_FOTO_OPERADOR_REAL];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
+  // O backup do banco REAL inclui as quatro imagens da AKITEMM.
+  // Backups anteriores à criação da tabela continuam restauráveis.
+  if(lista.includes('loja_real_banners_akitemm')){
+   const col=b.prepare('PRAGMA table_info(loja_real_banners_akitemm)')
+    .all().map(x=>x.name);
+   if(['slot','mime','imagem','enquadramento','revisao','atualizado_em']
+    .some(x=>!col.includes(x)))
+    falha('BACKUP_BANNERS_AKITEMM_ESQUEMA_INVALIDO');
+   const invalido=b.prepare([
+    'SELECT slot FROM loja_real_banners_akitemm',
+    'WHERE slot<1 OR slot>4 OR revisao<0 OR atualizado_em<0',
+    'OR (imagem IS NULL AND mime IS NOT NULL)',
+    'OR (imagem IS NOT NULL AND (mime IS NULL OR length(imagem)>4194304))',
+    'LIMIT 1'
+   ].join(' ')).get();
+   if(invalido)falha('BACKUP_BANNERS_AKITEMM_INVALIDOS');
+  }
   // A escolha de destino imutável também integra a mesma cópia cifrada.
   // Backups históricos sem essa tabela continuam recuperáveis.
   if(lista.includes('loop_real_destinos_indicacao')){
