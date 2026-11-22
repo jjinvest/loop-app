@@ -798,23 +798,30 @@ async function main(){
    assert.equal(await page.locator('#cadastroNick').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#login').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#conteudoResumo').isVisible(),true);
-   // Mesmo sem fotos personalizadas, manter os quatro banners originais.
-   // A presença de apenas duas fotos não pode reduzir o carrossel a dois.
-   await page.waitForFunction(()=>{
-    const pista=document.getElementById('loop03PistaBanners');
-    if(!pista||pista.dataset.carrosselDinamico!=='true')return false;
-    const originais=[...pista.querySelectorAll('.loop03-banner-item')]
-     .filter(x=>Number(x.dataset.bannerSlot)>=1&&
-      Number(x.dataset.bannerSlot)<=4);
-    return originais.length===4&&originais.every(x=>
-     !x.hidden&&getComputedStyle(x).display!=='none');
+   // No operador sempre existem quatro espaços base; o cliente não recebe
+   // espaços vazios: vê apenas a quantidade de banners completos publicados.
+   await page.waitForFunction(()=>
+    document.getElementById('loop03PistaBanners')?.dataset.carrosselDinamico==='true');
+   const estadoBanners=await page.evaluate(async()=>{
+    const r=await fetch('/api/loop/banners',{credentials:'same-origin'});
+    if(!r.ok)throw Error('BANNER_ESTADO_INDISPONIVEL');
+    return r.json();
    });
-   assert.equal(await page.locator('#loop03PistaBanners .loop03-banner-item[data-banner-slot]:visible').count(),4,
-    'os quatro banners de origem devem permanecer visíveis para o cliente');
+   assert.deepEqual(estadoBanners.slots.slice(0,4).map(x=>x.slot),[1,2,3,4],
+    'quatro posições originais continuam guardadas para o operador');
+   const publicados=estadoBanners.slots.filter(x=>x.publicado).length;
+   await page.waitForFunction(esperados=>{
+    const pista=document.getElementById('loop03PistaBanners');
+    const visiveis=[...pista.querySelectorAll('.loop03-banner-item[data-banner-slot]')]
+      .filter(x=>getComputedStyle(x).display!=='none');
+    return visiveis.length===esperados;
+   },publicados);
+   assert.equal(await page.locator('#loop03PistaBanners .loop03-banner-item[data-banner-slot]:visible').count(),publicados,
+    'o cliente vê exatamente os banners com fotos completas');
    assert.equal(await page.locator('#loop03BannerMaisReal').isHidden(),true,
     'o cliente não pode criar banners');
-   assert.equal(await page.locator('.loop03-banners-pontos button').count(),4,
-    'o cliente deve ter quatro posições navegáveis no carrossel');
+   assert.equal(await page.locator('.loop03-banners-pontos button').count(),publicados,
+    'os pontos do carrossel seguem o total de fotos publicadas');
 
    // Cliente troca a foto clicando no retrato do LOOP com Minha Conta fechada.
    // A imagem deve ser salva automaticamente no SQLite real.
