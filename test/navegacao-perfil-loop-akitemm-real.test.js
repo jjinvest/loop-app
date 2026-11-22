@@ -24,7 +24,6 @@ test('Meus Pedidos e banners seguem a mesma visao entre LOOP e AKITEMM',()=>{
  const direcionar=vm.runInNewContext(codigo+'; direcionarAcessosAkitemm',{
   document:{querySelectorAll(s){seletor=s;return links;}}
  });
- assert.match(seletor=/placeholder/,/placeholder/);
  direcionar('cliente');
  assert.ok(links.every(a=>a.href==='/loja?visao=cliente'));
  assert.match(seletor,/\.loop03-pedidos-atalhos/);
