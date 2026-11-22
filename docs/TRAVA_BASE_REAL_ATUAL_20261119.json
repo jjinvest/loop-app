@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "83c6ec781e8fecf67fe9b45987720428f171d8e2"
+      "sha": "1324325d603e312d5df59c4d41054a5e1c133d14"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -4809,6 +4809,13 @@
       "antes": null,
       "depois": "491e1150f4fb8d244262ffcd25a846ee2c48c42b",
       "objetivo": "Pedido direto: na aba Minhas Posições do operador, mostrar Fila A e Fila B juntas em quadro próprio e Eventos no ciclo e Centros concluídos em outro quadro, layout responsivo arredondado. Fontes e permissões do motor preservadas; validações PC/celular, sem modificar dados, pagamentos ou quadros superiores."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "83c6ec781e8fecf67fe9b45987720428f171d8e2",
+      "depois": "1324325d603e312d5df59c4d41054a5e1c133d14",
+      "objetivo": "Corrigir exclusivamente o teste PC/celular dos quadros de posições: aguardar atualização autenticada antes de contar os dois quadros; sem alteração de dados, UI, motor ou proteção."
     }
   ]
 }
