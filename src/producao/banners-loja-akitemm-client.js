@@ -156,7 +156,7 @@
   modo.value=Number(colunas.value)>1?'PREENCHER':'INTEIRA';
   fotosEditor.pintar();
  });
- let leitorFoto=0;
+
  function abrirFormulario(pos=0){
   if(!operador||bloqueio||!slots)return;
   const atual=current();if(!atual)return;
@@ -511,23 +511,6 @@
    bloqueio=false;renderizar();rodar();
   }
  }
- escolher.addEventListener('change',()=>{
-  const f=escolher.files?.[0];
-  if(!f){previa.hidden=true;return;}
-  if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
-     f.size<40||f.size>16*1024*1024){
-   estado.textContent='Escolha JPG, PNG ou WebP com até 16 MB.';
-   escolher.value='';previa.hidden=true;return;
-  }
-  estado.textContent='Imagem pronta para salvar.';
-  const atual=++leitorFoto,leitor=new FileReader();
-  leitor.onload=()=>{
-   if(atual!==leitorFoto)return;
-   previa.src=String(leitor.result);previa.hidden=false;
-  };
-  leitor.onerror=()=>{estado.textContent='Não foi possível abrir a imagem.';};
-  leitor.readAsDataURL(f);
- });
  controles.addEventListener('click',e=>{
   const botao=e.target.closest('button[data-acao]');
   if(!botao||!operador||bloqueio)return;
