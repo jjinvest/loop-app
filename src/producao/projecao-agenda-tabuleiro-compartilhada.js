@@ -18,6 +18,10 @@ function projetarAgendaTabuleiroCompartilhada(estado){
     estado.ciclosConcluidos<0||
     !Number.isSafeInteger(estado.girosHoje)||estado.girosHoje<0||
     !Number.isSafeInteger(estado.giros24h)||estado.giros24h<0||
+    (estado.luzesRelogio24h!==undefined&&
+     (!Number.isSafeInteger(estado.luzesRelogio24h)||estado.luzesRelogio24h<0))||
+    (estado.ciclosRelogio24h!==undefined&&
+     (!Number.isSafeInteger(estado.ciclosRelogio24h)||estado.ciclosRelogio24h<0))||
     (estado.girosHora!==undefined&&
      (!Number.isSafeInteger(estado.girosHora)||estado.girosHora<0))||
     (estado.metaDataAlvo!==null&&estado.metaDataAlvo!==undefined&&
@@ -39,6 +43,10 @@ function projetarAgendaTabuleiroCompartilhada(estado){
   ciclosReaisConcluidos:estado.ciclosConcluidos,
   girosReaisHoje:estado.girosHoje,girosReais24h:estado.giros24h,
   girosReaisHora:estado.girosHora??null,
+  // Contadores visuais de 24h calculados pelo historico do MESMO SQLite.
+  // Independentes de giros e pagamentos reais (contagem separada).
+  luzesRelogio24h:estado.luzesRelogio24h??null,
+  ciclosRelogio24h:estado.ciclosRelogio24h??null,
   metaLotes:estado.metaCentrosDia>0?{
    ativa:true,quantidade:estado.metaCentrosDia,
    dataAlvo:estado.metaDataAlvo??null,
