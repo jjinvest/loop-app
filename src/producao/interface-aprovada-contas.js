@@ -509,7 +509,8 @@
    conteudoPosicoes:[
     '<h2>Posições e filas · Operador</h2>',
     '<div id="adminResumoPosicoes" class="loop03-resumo-duplo" role="status" aria-live="polite">Consultando filas do servidor…</div>',
-    '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarPosicoes">Atualizar posições</button><a href="/administrador">Gerenciar na Central</a></div>'
+    '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarPosicoes">Atualizar posições</button><a href="/administrador">Gerenciar na Central</a></div>',
+    '<div id="adminResumoComercial" class="loop03-resumo-duplo loop03-resumo-comercial" role="status" aria-live="polite">Consultando clientes e produtos vendidos…</div>'
    ],
    conteudoEquipe:[
     '<h2>Cadastros · Operador</h2>',
@@ -518,6 +519,7 @@
     '<input id="adminNickBusca" name="nick" maxlength="12" pattern="[A-Za-z]{1,12}" required>',
     '<div class="loop03-admin-acoes"><button type="submit">Localizar cadastro</button></div></form>',
     '<div id="adminCadastroEstado" class="loop03-admin-dado" role="status" aria-live="polite">Digite o nick para consultar.</div>',
+    '<section id="adminComprasCliente" class="loop03-admin-compras" hidden><h3>Produtos comprados</h3><div id="adminComprasClienteLista"></div><button type="button" id="adminMaisComprasCliente" hidden>Ver mais compras</button></section>',
     '<form id="adminCorrigeCadastro" class="loop03-admin-campos" hidden>',
     '<label for="adminNomeCadastro">Nome</label><input id="adminNomeCadastro" maxlength="90" required>',
     '<label for="adminTelefoneCadastro">Telefone</label><input id="adminTelefoneCadastro" inputmode="tel" maxlength="24">',
@@ -557,11 +559,80 @@
   $('adminAtualizarFinanceiro')?.addEventListener('click',()=>void carregarAbaOperador('abaFinanceiro'));
   $('adminAtualizarPedidos')?.addEventListener('click',()=>void carregarAbaOperador('abaMeusPedidos'));
   let nickCadastroConsultado=null;
+  let historicoCadastroNick=null,historicoCadastroOffset=0;
+  const comprasPainel=$('adminComprasCliente');
+  function limparHistoricoCadastro(){
+   historicoCadastroNick=null;historicoCadastroOffset=0;
+   if(comprasPainel)comprasPainel.hidden=true;
+   $('adminComprasClienteLista')?.replaceChildren();
+   if($('adminMaisComprasCliente'))$('adminMaisComprasCliente').hidden=true;
+  }
+  async function carregarComprasCadastro(nick,{mais=false}={}){
+   if(!modoOperadorAtual||!comprasPainel)return;
+   const lista=$('adminComprasClienteLista'),botao=$('adminMaisComprasCliente');
+   const pagina=mais?historicoCadastroOffset:0;
+   if(!mais){historicoCadastroNick=nick;historicoCadastroOffset=0;
+    lista.replaceChildren();}
+   comprasPainel.hidden=false;botao.hidden=true;
+   const aviso=document.createElement('p');
+   aviso.className='loop03-compras-aviso';
+   aviso.textContent='Consultando compras aprovadas…';
+   lista.appendChild(aviso);
+   try{
+    const url='/api/admin/contas/compras?nick='+encodeURIComponent(nick)+
+     '&offset='+pagina;
+    const r=await fetch(url,{credentials:'same-origin',cache:'no-store'});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.fonte!=='SQLITE_COMERCIAL_REAL'||!Array.isArray(d.itens)||
+       !Number.isSafeInteger(d.totalUnidades)||d.totalUnidades<0||
+       !Number.isSafeInteger(d.totalLinhas)||d.totalLinhas<0)
+     throw Error(d.erro||'HISTORICO_COMERCIAL_NAO_CONFIAVEL');
+    if(historicoCadastroNick!==nick||!modoOperadorAtual)return;
+    aviso.remove();
+    if(!mais&&d.itens.length===0){
+     const vazio=document.createElement('p');
+     vazio.className='loop03-compras-aviso';
+     vazio.textContent='Nenhuma compra aprovada registrada.';
+     lista.appendChild(vazio);
+    }
+    for(const item of d.itens){
+     if(!Number.isSafeInteger(item.quantidade)||item.quantidade<1||
+        !Number.isSafeInteger(item.precoUnitCentavos)||item.precoUnitCentavos<1)
+      throw Error('ITEM_COMERCIAL_INVALIDO');
+     const linha=document.createElement('article');
+     linha.className='loop03-compra-item';
+     const titulo=document.createElement('strong');
+     titulo.textContent=item.titulo||item.produtoId||('SKU '+item.sku);
+     const detalhes=document.createElement('span');
+     const data=new Date(item.criadoEm);
+     detalhes.textContent=item.quantidade+' unidade(s) · '+(Number.isFinite(data.getTime())?
+      data.toLocaleDateString('pt-BR'):'Data não informada')+
+      ' · '+new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'})
+       .format(item.precoUnitCentavos/100)+' cada';
+     linha.append(titulo,detalhes);lista.appendChild(linha);
+    }
+    historicoCadastroOffset=pagina+d.itens.length;
+    botao.hidden=!d.temMais;
+    if(!mais){
+     const total=document.createElement('p');
+     total.className='loop03-compras-total';
+     total.textContent='Unidades compradas e aprovadas: '+d.totalUnidades;
+     lista.prepend(total);
+    }
+   }catch(e){
+    if(historicoCadastroNick!==nick||!modoOperadorAtual)return;
+    aviso.textContent='Compras indisponíveis nesta consulta. '+e.message;
+   }
+  }
+  $('adminMaisComprasCliente')?.addEventListener('click',()=>{
+   if(historicoCadastroNick)void carregarComprasCadastro(historicoCadastroNick,{mais:true});
+  });
   $('adminBuscaCadastro')?.addEventListener('submit',async e=>{
    e.preventDefault();
    const nick=$('adminNickBusca').value.trim(),estado=$('adminCadastroEstado');
    const form=$('adminCorrigeCadastro');
    form.hidden=true;nickCadastroConsultado=null;
+   limparHistoricoCadastro();
    estado.textContent='Consultando cadastro…';
    try{
     if(!/^[A-Za-z]{1,12}$/.test(nick))throw Error('Nick inválido.');
@@ -580,6 +651,7 @@
     $('adminTelefoneCadastro').value=x.telefone||'';
     $('adminMotivoCadastro').value='';
     form.hidden=false;
+    void carregarComprasCadastro(x.nick);
    }catch(err){estado.textContent='Consulta não realizada: '+err.message;}
   });
   $('adminCorrigeCadastro')?.addEventListener('submit',async e=>{
@@ -646,8 +718,45 @@
    ],'tabuleiro')
   );
  }
+ function mostrarResumoComercialOperador(destino,d){
+  if(!Number.isSafeInteger(d?.totalClientes)||d.totalClientes<0||
+     !Number.isSafeInteger(d?.totalProdutosVendidos)||d.totalProdutosVendidos<0||
+     d.fonte!=='SQLITE_COMERCIAL_REAL')
+   throw Error('INDICADORES_COMERCIAIS_INVALIDOS');
+  const cartao=(nome,valor)=>{
+   const quadro=document.createElement('section');
+   quadro.className='loop03-resumo-quadro loop03-resumo-contador';
+   const titulo=document.createElement('h3');titulo.textContent=nome;
+   const numero=document.createElement('strong');
+   numero.className='loop03-comercial-numero';
+   numero.textContent=Number(valor).toLocaleString('pt-BR');
+   quadro.append(titulo,numero);
+   return quadro;
+  };
+  destino.replaceChildren(
+   cartao('TOTAL DE CLIENTES',d.totalClientes),
+   cartao('PRODUTOS VENDIDOS',d.totalProdutosVendidos)
+  );
+ }
+ async function carregarIndicadoresComerciaisOperador(){
+  if(!modoOperadorAtual)return;
+  const alvo=$('adminResumoComercial');if(!alvo)return;
+  alvo.textContent='Atualizando clientes e produtos do banco real…';
+  try{
+   const r=await fetch('/api/admin/loop/indicadores-comerciais',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(d.erro||'INDICADORES_COMERCIAIS_INDISPONIVEIS');
+   if(modoOperadorAtual)mostrarResumoComercialOperador(alvo,d);
+  }catch(e){
+   if(modoOperadorAtual)alvo.textContent=
+    'Contadores comerciais indisponíveis: '+e.message;
+  }
+ }
  async function carregarAbaOperador(id){
   if(!modoOperadorAtual)return;
+  if(id==='abaPosicoes')void carregarIndicadoresComerciaisOperador();
   const rotas={
    abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
    abaFinanceiro:['/api/admin/loop/controle','adminResumoFinanceiro'],
