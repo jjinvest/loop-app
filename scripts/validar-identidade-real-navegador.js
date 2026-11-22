@@ -258,6 +258,47 @@ async function main(){
    assert.equal(await operadorPage.locator('#loop03NickIntegrado').innerText(),
     'OPERADOR');
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
+   // Aba Minhas Posições do OPERADOR: duas molduras independentes,
+   // ambas preenchidas pelo mesmo endpoint autenticado do motor.
+   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
+   await operadorPage.locator('#abaPosicoes').click();
+   await operadorPage.locator('#adminResumoPosicoes .loop03-resumo-quadro')
+    .first().waitFor({state:'visible'});
+   assert.equal(await operadorPage.locator(
+    '#adminResumoPosicoes .loop03-resumo-quadro').count(),2);
+   const quadros=await operadorPage.locator('#adminResumoPosicoes')
+    .evaluate(area=>{
+     const elementos=[...area.querySelectorAll(':scope > .loop03-resumo-quadro')];
+     const rect=area.getBoundingClientRect();
+     return {display:getComputedStyle(area).display,
+      titulos:elementos.map(x=>x.querySelector('h3')?.textContent),
+      rotulos:elementos.map(x=>[...x.querySelectorAll(
+       '.loop03-resumo-indicador > span')].map(y=>y.textContent)),
+      valores:elementos.map(x=>[...x.querySelectorAll(
+       '.loop03-resumo-indicador > strong')].map(y=>y.textContent)),
+      contidos:elementos.every(x=>{
+       const r=x.getBoundingClientRect();
+       return r.left>=rect.left-2&&r.right<=rect.right+2;
+      })};
+    });
+   assert.equal(quadros.display,'grid');
+   assert.deepEqual(quadros.titulos,['FILAS','TABULEIRO']);
+   assert.deepEqual(quadros.rotulos,[
+    ['Fila A','Fila B'],['Eventos no ciclo','Centros concluídos']
+   ]);
+   assert.match(quadros.valores[0][0],/^\d+$/);
+   assert.match(quadros.valores[0][1],/^\d+$/);
+   assert.match(quadros.valores[1][0],/^\d+ \/ 6$/);
+   assert.match(quadros.valores[1][1],/^\d+$/);
+   assert.equal(quadros.contidos,true,
+    'cartões não podem fugir das molduras no celular');
+   await operadorPage.locator('#adminAtualizarPosicoes').click();
+   await operadorPage.locator('#adminResumoPosicoes .loop03-resumo-quadro')
+    .first().waitFor({state:'visible'});
+   assert.equal(await operadorPage.locator(
+    '#adminResumoPosicoes .loop03-resumo-quadro').count(),2);
+   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
+   await operadorPage.locator('#abaResumo').click();
    // As fotos do usuário exigem o MESMO quadro central no operador:
    // CICLOS/24H acima, linha divisória, LUZES/24H abaixo.
    // As pontas continuam com os rótulos exclusivamente administrativos.

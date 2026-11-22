@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "24656088d615161854fe63d85722aade60b66b60"
+      "sha": "1324325d603e312d5df59c4d41054a5e1c133d14"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "d7ab921263bb532711681e8353c20e720f21db77"
+      "sha": "bfd2f2aa2d74a69b5f3050d4071058d09bdf229e"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1468,7 +1468,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "7d9c283ffe5088a486ce345f6452ddb27fcfccfc"
+      "sha": "9475f71d0e7b7911d31201fd9e2e505fccd799f8"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1832,7 +1832,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "0bbf4eefeb61e175947de2ac3c9a64913b853420"
+      "sha": "f32590ec5a2258f11c45bf1cb08cedb59fa593bb"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2312,7 +2312,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "775b9df9c3e09127f29ed323ce4cc8e0bc2ac46b"
+      "sha": "246379bd730239c025da3ef003804b97c7e3e9b7"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
@@ -3156,11 +3156,11 @@
     },
     {
       "path": "test/placar-cliente-hora-real-escritorio.test.js",
-      "sha": "2314e8e44682aa09a3658755f7bdc8a9042a6896"
+      "sha": "0de436a7ae0518a58ba3dc324b856a9ed74952ca"
     },
     {
       "path": "test/placar-compartilhado-cliente-operador-20261122.test.js",
-      "sha": "e79dde0e3aa5b10058d3deb905397609bcc7155d"
+      "sha": "7beb78afbdeb4c9e331c316cfa099b532f21d50b"
     },
     {
       "path": "test/planejamento-vendas-fisicas-demo.test.js",
@@ -3209,6 +3209,10 @@
     {
       "path": "test/portas-financeiras-modulares.test.js",
       "sha": "2cc3d4ed9e2c159e25bc5c24cd2b32672e58149e"
+    },
+    {
+      "path": "test/posicoes-operador-quadros-20261122.test.js",
+      "sha": "491e1150f4fb8d244262ffcd25a846ee2c48c42b"
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
@@ -4749,6 +4753,69 @@
       "antes": "ad9a3705140f710929b8b4facac115dd2e043e3c",
       "depois": "e79dde0e3aa5b10058d3deb905397609bcc7155d",
       "objetivo": "Correção autorizada após foto do proprietário: CICLOS/24H só quando a catraca concluiu giro efetivo; LUZES/24H exibem apenas o turno atual do mesmo relógio, sem acumular 621 luzes de programações antigas; cartão direito mantém somente 45 / 60 luzes e 3 / 6; sem mexer em caixa, filas, pagamentos ou visual aprovado."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/shared/visor-catraca.js",
+      "antes": "0bbf4eefeb61e175947de2ac3c9a64913b853420",
+      "depois": "f32590ec5a2258f11c45bf1cb08cedb59fa593bb",
+      "objetivo": "Pedido do proprietário em 22/11/2026: durante ensaio pré-lançamento, ciclos do quadro central representam grupos completos de seis luzes da programação atual (48/60=8 ciclos demonstrativos), usando o mesmo visor em cliente e operador; não registrar contemplação, giro bancário ou pagamentos, não recontar luzes antigas nem mudar apresentação, filas, motor ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
+      "antes": "775b9df9c3e09127f29ed323ce4cc8e0bc2ac46b",
+      "depois": "246379bd730239c025da3ef003804b97c7e3e9b7",
+      "objetivo": "Pedido do proprietário em 22/11/2026: durante ensaio pré-lançamento, ciclos do quadro central representam grupos completos de seis luzes da programação atual (48/60=8 ciclos demonstrativos), usando o mesmo visor em cliente e operador; não registrar contemplação, giro bancário ou pagamentos, não recontar luzes antigas nem mudar apresentação, filas, motor ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/placar-cliente-hora-real-escritorio.test.js",
+      "antes": "2314e8e44682aa09a3658755f7bdc8a9042a6896",
+      "depois": "0de436a7ae0518a58ba3dc324b856a9ed74952ca",
+      "objetivo": "Pedido do proprietário em 22/11/2026: durante ensaio pré-lançamento, ciclos do quadro central representam grupos completos de seis luzes da programação atual (48/60=8 ciclos demonstrativos), usando o mesmo visor em cliente e operador; não registrar contemplação, giro bancário ou pagamentos, não recontar luzes antigas nem mudar apresentação, filas, motor ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/placar-compartilhado-cliente-operador-20261122.test.js",
+      "antes": "e79dde0e3aa5b10058d3deb905397609bcc7155d",
+      "depois": "7beb78afbdeb4c9e331c316cfa099b532f21d50b",
+      "objetivo": "Pedido do proprietário em 22/11/2026: durante ensaio pré-lançamento, ciclos do quadro central representam grupos completos de seis luzes da programação atual (48/60=8 ciclos demonstrativos), usando o mesmo visor em cliente e operador; não registrar contemplação, giro bancário ou pagamentos, não recontar luzes antigas nem mudar apresentação, filas, motor ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "24656088d615161854fe63d85722aade60b66b60",
+      "depois": "83c6ec781e8fecf67fe9b45987720428f171d8e2",
+      "objetivo": "Pedido direto: na aba Minhas Posições do operador, mostrar Fila A e Fila B juntas em quadro próprio e Eventos no ciclo e Centros concluídos em outro quadro, layout responsivo arredondado. Fontes e permissões do motor preservadas; validações PC/celular, sem modificar dados, pagamentos ou quadros superiores."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/acabamento-botoes-real.css",
+      "antes": "d7ab921263bb532711681e8353c20e720f21db77",
+      "depois": "bfd2f2aa2d74a69b5f3050d4071058d09bdf229e",
+      "objetivo": "Pedido direto: na aba Minhas Posições do operador, mostrar Fila A e Fila B juntas em quadro próprio e Eventos no ciclo e Centros concluídos em outro quadro, layout responsivo arredondado. Fontes e permissões do motor preservadas; validações PC/celular, sem modificar dados, pagamentos ou quadros superiores."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "7d9c283ffe5088a486ce345f6452ddb27fcfccfc",
+      "depois": "9475f71d0e7b7911d31201fd9e2e505fccd799f8",
+      "objetivo": "Pedido direto: na aba Minhas Posições do operador, mostrar Fila A e Fila B juntas em quadro próprio e Eventos no ciclo e Centros concluídos em outro quadro, layout responsivo arredondado. Fontes e permissões do motor preservadas; validações PC/celular, sem modificar dados, pagamentos ou quadros superiores."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/posicoes-operador-quadros-20261122.test.js",
+      "antes": null,
+      "depois": "491e1150f4fb8d244262ffcd25a846ee2c48c42b",
+      "objetivo": "Pedido direto: na aba Minhas Posições do operador, mostrar Fila A e Fila B juntas em quadro próprio e Eventos no ciclo e Centros concluídos em outro quadro, layout responsivo arredondado. Fontes e permissões do motor preservadas; validações PC/celular, sem modificar dados, pagamentos ou quadros superiores."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "83c6ec781e8fecf67fe9b45987720428f171d8e2",
+      "depois": "1324325d603e312d5df59c4d41054a5e1c133d14",
+      "objetivo": "Corrigir exclusivamente o teste PC/celular dos quadros de posições: aguardar atualização autenticada antes de contar os dois quadros; sem alteração de dados, UI, motor ou proteção."
     }
   ]
 }

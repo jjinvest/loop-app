@@ -101,16 +101,15 @@
     }
    }
    ultimaJanelaVisual=chave;
-   // O quadro do meio pertence aos dois perfis: ciclos efetivamente
-   // concluidos no livro de giros e luzes da programacao VIGENTE do relogio.
-   // Nao misturar luzes de turnos antigos, metas diferentes ou ciclos visuais.
+   // Contador representativo de ciclos do turno, escolhido para o
+   // ensaio interno. Uma volta visual completa exige 6 luzes do relogio.
+   // Nunca creditar contemplacao, giro financeiro, posicao ou pagamento.
    const resumo=$('loop03StatusPosicao'),selecionada=$('loop03NumeroIntegrado');
    const operadorAberto=document.body?.classList?.contains?.('loop03-modo-operador')===true;
    if(compartilhado){
     const ciclos=$('loop03Giros24Integrado');
-    const concluidos=agendaVisorCatraca?.girosReais24h;
-    if(ciclos)ciclos.textContent=Number.isSafeInteger(concluidos)&&
-     concluidos>=0?String(concluidos):'—';
+    if(ciclos)ciclos.textContent=valido?
+     String(Math.floor(estado.passadas/6)):'—';
     const luzes24h=$('loop03LuzesHoraIntegrado');
     // Usa exatamente o progresso mostrado no proprio relogio do tabuleiro:
     // 45/60 aqui continua 45, mesmo com 621 pulsos de historicos anteriores.
