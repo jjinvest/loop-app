@@ -187,6 +187,29 @@ test('indicada escolhe destino 1..10 uma vez, com autenticação, titularidade e
  assert.equal((await post(loginA,{numeroCadastro:1,posicao:2.5})).status,400);
  assert.equal((await post(loginA,{numeroCadastro:1,posicao:7,extra:true})).status,400);
  assert.equal((await post(loginD,target)).status,404);
+ // Registro pelo link não cria indicação válida nem reserva uma posição.
+ const semCpf=await post(loginA,target);
+ assert.equal(semCpf.status,409);
+ assert.equal((await semCpf.json()).erro,'INDICACAO_AGUARDA_CONFIRMACAO');
+ // Confirmação do CPF isoladamente também não basta.
+ x.banco.prepare([
+  'INSERT INTO loop_real_confirmacoes_cadastro',
+  '(titular_id,cpf_hmac,termos_versao,termos_hash,confirmado_em)',
+  'VALUES(?,?,?,?,?)'
+ ].join(' ')).run(b.titularId,randomBytes(32).toString('hex'),
+  x.docs.termos.versao,x.docs.termos.hash,1700000000000);
+ const semCompra=await post(loginA,target);
+ assert.equal(semCompra.status,409);
+ assert.equal((await semCompra.json()).erro,'INDICACAO_AGUARDA_QUALIFICACAO');
+ // Somente o ensaio de integração injeta uma prova conciliada no SQLite
+ // de memória; não há endpoint público que grave esta tabela.
+ x.banco.prepare([
+  'INSERT INTO loop_real_indicacoes_validas_financeiro',
+  '(indicado_id,indicador_id,pedido_id,pagamento_id,comprovante_bancario_id,',
+  'valor_qualificado_centavos,tipo,confirmado_em)',
+  "VALUES(?,?,?,?,?,25000,'COMPRA_250',?)"
+ ].join(' ')).run(b.titularId,a.titularId,'pedido_prova',
+  'pagamento_prova','comprovante_bancario_prova',1700000000001);
  const response=await post(loginA,target);
  assert.equal(response.status,200);
  assert.deepEqual(await response.json(),{
