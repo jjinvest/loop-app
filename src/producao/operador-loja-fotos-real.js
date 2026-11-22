@@ -25,17 +25,28 @@
  }
  function sincronizarEditorOfertas(){
   const id='akitemmGerenciarOfertasReal';
+  const csvId='akitemmImportarFornecedorCsvReal';
   const atual=document.getElementById(id);
-  if(!operador){atual?.remove();return;}
-  if(atual)return;
+  const importar=document.getElementById(csvId);
+  if(!operador){atual?.remove();importar?.remove();return;}
   const filtro=document.getElementById('akitemmFiltroOfertas');
   if(!filtro)return;
-  const botao=document.createElement('button');
-  botao.type='button';botao.id=id;botao.className='akitemm-chip';
-  botao.textContent='Gerenciar ofertas';
-  botao.setAttribute('aria-label','Cadastrar ofertas na AKITEMM como operador');
-  botao.addEventListener('click',()=>void abrirEditorOfertas());
-  filtro.insertAdjacentElement('afterend',botao);
+  if(!atual){
+   const botao=document.createElement('button');
+   botao.type='button';botao.id=id;botao.className='akitemm-chip';
+   botao.textContent='Gerenciar ofertas';
+   botao.setAttribute('aria-label','Cadastrar ofertas na AKITEMM como operador');
+   botao.addEventListener('click',()=>void abrirEditorOfertas());
+   filtro.insertAdjacentElement('afterend',botao);
+  }
+  if(!importar){
+   const botao=document.createElement('button');
+   botao.type='button';botao.id=csvId;botao.className='akitemm-chip';
+   botao.textContent='Importar CSV';
+   botao.setAttribute('aria-label','Importar catálogo de fornecedor por planilha CSV');
+   botao.addEventListener('click',()=>void abrirImportacaoFornecedorCsv());
+   (document.getElementById(id)||filtro).insertAdjacentElement('afterend',botao);
+  }
  }
  function modal(titulo){
   if(!dialogo){
@@ -161,6 +172,106 @@
   }catch(e){estado.textContent='Cadastro de ofertas indisponível: '+e.message;}
  }
 
+
+ // Importação funcional por arquivo. Só altera PREÇO ANUNCIADO e quantidade
+ // INFORMADA em produtos já cadastrados; nunca ativa checkout nem PSP.
+ async function abrirImportacaoFornecedorCsv(){
+  if(!operador)return;
+  const {corpo,estado}=modal('Fornecedor por planilha CSV');
+  corpo.append(linha('Atualize produtos já cadastrados. A planilha usa o código exato do produto na AKITEMM. '+
+   'Preço de vitrine não é preço de custo; quantidade informada não equivale a estoque confirmado.'));
+  const modelo=document.createElement('a');
+  modelo.href='/api/admin/catalogo-midia/fornecedores/csv/modelo';
+  modelo.textContent='Baixar modelo CSV (ponto e vírgula)';
+  corpo.append(modelo);
+  const label=document.createElement('label');
+  label.textContent='Escolher arquivo CSV do fornecedor';
+  const arquivo=document.createElement('input');
+  arquivo.type='file';arquivo.accept='.csv,text/csv';arquivo.required=true;
+  label.append(arquivo);corpo.append(label);
+  const conferir=document.createElement('button');
+  conferir.type='button';conferir.textContent='Conferir alterações';
+  corpo.append(conferir);
+  const confirmar=document.createElement('button');
+  confirmar.type='button';confirmar.textContent='Confirmar importação no catálogo';
+  confirmar.hidden=true;corpo.append(confirmar);
+  let texto=null,previa=null;
+  arquivo.addEventListener('change',()=>{
+   texto=null;previa=null;confirmar.hidden=true;
+   estado.textContent='Arquivo selecionado. Confira antes de importar.';
+  });
+  try{
+   const sessao=await fetchJson('/api/admin/comercial/sessao');
+   const csrf=sessao.csrfToken;
+   if(typeof csrf!=='string'||csrf.length<24)
+    throw Error('SESSAO_ADMIN_INDISPONIVEL');
+   const enviar=async(rota,body,extra={})=>{
+    return fetchJson('/api/admin/catalogo-midia/fornecedores/csv/'+rota,{
+     method:'POST',headers:{'Content-Type':'text/csv',
+      'X-Loop-Admin-Csrf':csrf,...extra},body
+    });
+   };
+   conferir.addEventListener('click',async()=>{
+    const selecionado=arquivo.files?.[0];
+    if(!selecionado){estado.textContent='Selecione um arquivo .csv.';return;}
+    if(selecionado.size>131072||selecionado.size<25){
+     estado.textContent='CSV inválido ou acima de 128 KB.';return;
+    }
+    conferir.disabled=true;confirmar.hidden=true;
+    try{
+     const carregado=await selecionado.text();
+     const resultado=await enviar('previa',carregado);
+     if(resultado.gravou!==false||!Array.isArray(resultado.itens)||
+        !resultado.itens.length)throw Error('PREVIA_INCONSISTENTE');
+     texto=carregado;previa=resultado;
+     estado.textContent='Prévia: '+resultado.total+
+      ' produto(s) existente(s). Nenhum dado foi alterado. '+
+      'Confira códigos, preços de vitrine e quantidades na sua planilha. '+
+      'A confirmação irá atualizar esses campos no SQLite real.';
+     const detalhes=document.createElement('details');
+     const resumo=document.createElement('summary');
+     resumo.textContent='Ver itens que serão alterados';
+     const lista=document.createElement('ul');
+     for(const item of resultado.itens){
+      const li=document.createElement('li');
+      li.textContent=item.produtoId+' · '+item.fornecedor+
+       ' · R$ '+(item.precoCentavos/100).toFixed(2).replace('.',',')+
+       ' · '+item.quantidade+' unidade(s)';
+      lista.append(li);
+     }
+     detalhes.append(resumo,lista);
+     const anterior=corpo.querySelector('#akitemmPreviaCsv');
+     anterior?.remove();
+     detalhes.id='akitemmPreviaCsv';corpo.append(detalhes);
+     confirmar.hidden=false;
+    }catch(err){
+     previa=null;texto=null;
+     estado.textContent='Planilha não validada: '+err.message;
+    }finally{conferir.disabled=false;}
+   });
+   confirmar.addEventListener('click',async()=>{
+    if(!previa||texto===null)return;
+    confirmar.disabled=true;
+    try{
+     const r=await enviar('importar',texto,{
+      'X-Loop-Planilha-Hash':previa.hash,
+      'X-Loop-Planilha-Versoes':JSON.stringify(
+       previa.itens.map(x=>[x.revisaoAnuncio,x.revisaoCanal]))
+     });
+     if(r.gravou!==true||r.total!==previa.total)
+      throw Error('IMPORTACAO_SEM_CONFIRMACAO');
+     estado.textContent=r.total+' produto(s) atualizados no catálogo real. '+
+      'Preços e quantidades são dados informados; compra e frete continuam protegidos.';
+     confirmar.hidden=true;previa=null;texto=null;
+     atualizarLoja();
+    }catch(err){estado.textContent='Importação não concluída: '+err.message;}
+    finally{confirmar.disabled=false;}
+   });
+  }catch(e){
+   conferir.disabled=true;
+   estado.textContent='Importação indisponível: '+e.message;
+  }
+ }
  const campoTexto=(form,titulo,{tipo='text',maxLength=150,placeholder='',valor=''}={})=>{
   const label=document.createElement('label');label.textContent=titulo;
   const entrada=document.createElement(tipo==='textarea'?'textarea':'input');
@@ -177,11 +288,42 @@
  // Formularios usuais de e-commerce. Preco digitado nunca e convertido
  // automaticamente em cobranca: e apenas a etiqueta da vitrine.
  function camposAnuncio(form){
-  const origem=select('Origem do produto',[
+  const origem=select('Origem e abastecimento',[
    ['PROPRIO','Meu produto — cadastro manual'],
-   ['API','Fornecedor / API — integrar depois']
+   ['FORNECEDOR_MANUAL','Fornecedor sem API — controle manual'],
+   ['PLANILHA_CSV','Planilha CSV — importação de catálogo'],
+   ['API_PENDENTE','API direta — requer autorização'],
+   ['ERP_PENDENTE','ERP ou hub — requer conexão'],
+   ['MARKETPLACE_PENDENTE','Mercado Livre / Shopee — requer integração']
   ]);
+  // Sem provedor credenciado, os canais automáticos não fingem funcionar.
+  for(const op of origem.s.options){
+   if(['API_PENDENTE','ERP_PENDENTE','MARKETPLACE_PENDENTE'].includes(op.value))
+    op.disabled=true;
+  }
+  // CSV passa pelo importador real (botão no topo), não por escolher texto.
+  origem.s.querySelector('option[value="PLANILHA_CSV"]').disabled=true;
   form.append(origem.label);
+  const fornecedorNome=campoTexto(form,'Nome do fornecedor',{
+   maxLength:90,placeholder:'Razão social ou nome comercial'
+  });
+  const fornecedorSku=campoTexto(form,'SKU no fornecedor',{
+   maxLength:80,placeholder:'Código do produto na tabela do fornecedor'
+  });
+  const fornecedorContato=campoTexto(form,'Contato do fornecedor (e-mail ou telefone)',{
+   maxLength:160,placeholder:'Canal combinado para enviar pedidos'
+  });
+  const avisoOrigem=linha('Somente cadastro próprio e controle manual estão disponíveis aqui. '+
+   'A planilha CSV é importada pelo botão Importar CSV. API, ERP e marketplaces exigem credenciais e autorização do parceiro; ainda não estão conectados.');
+  form.append(avisoOrigem);
+  const sincronizarOrigem=()=>{
+   const externo=['FORNECEDOR_MANUAL','PLANILHA_CSV'].includes(origem.s.value);
+   for(const campo of [fornecedorNome,fornecedorSku,fornecedorContato])
+    campo.parentElement.hidden=!externo;
+  };
+  origem.s.addEventListener('change',sincronizarOrigem);
+  sincronizarOrigem();
+  let revisaoCanal=0;
   const categoria=campoTexto(form,'Categoria (opcional)',{
    maxLength:70,placeholder:'Ex.: Calçados, roupas, acessórios'
   });
@@ -220,7 +362,14 @@
   return {
    preencher(d){
     if(!d)return;
-    origem.s.value=d.origem||'PROPRIO';
+    const canal=d.canalFornecedor;
+    origem.s.value=canal?.revisao>0?canal.canal:
+     d.origem==='API'?'API_PENDENTE':'PROPRIO';
+    revisaoCanal=canal?.revisao??0;
+    fornecedorNome.value=canal?.fornecedorNome||'';
+    fornecedorSku.value=canal?.fornecedorSku||'';
+    fornecedorContato.value=canal?.fornecedorContato||'';
+    sincronizarOrigem();
     categoria.value=d.categoria||'';
     marca.value=d.marca||'';
     normal.value=deReais(d.precoCentavos??null);
@@ -231,25 +380,51 @@
     const precoCentavos=cents(normal.value);
     const promocaoCentavos=cents(promo.value);
     const qtd=estoque.value.trim(),quantidade=qtd===''?null:Number(qtd);
-    if(!['PROPRIO','API'].includes(origem.s.value)||
+    if(!['PROPRIO','FORNECEDOR_MANUAL','PLANILHA_CSV'].includes(origem.s.value)||
       (promocaoCentavos!==null&&
         (precoCentavos===null||promocaoCentavos>=precoCentavos))||
       (quantidade!==null&&
        (!Number.isSafeInteger(quantidade)||quantidade<0||quantidade>1000000)))
       throw Error('CONFIRA_PRECO_PROMOCIONAL_OU_ESTOQUE');
-    return {origem:origem.s.value,categoria:categoria.value.trim(),
-     marca:marca.value.trim(),precoCentavos,promocaoCentavos,
-     quantidade};
+    const modo=origem.s.value;
+    if(modo!=='PROPRIO'&&(!fornecedorNome.value.trim()||
+       !fornecedorSku.value.trim()||
+       (modo==='FORNECEDOR_MANUAL'&&!fornecedorContato.value.trim())))
+     throw Error('INFORME_DADOS_DO_FORNECEDOR');
+    if(fornecedorSku.value.trim()&&
+       !ID.test(fornecedorSku.value.trim()))
+     throw Error('SKU_DO_FORNECEDOR_INVALIDO');
+    return {origem:modo==='PROPRIO'?'PROPRIO':'API',
+     categoria:categoria.value.trim(),marca:marca.value.trim(),
+     precoCentavos,promocaoCentavos,quantidade,
+     canal:{canal:modo,fornecedorNome:fornecedorNome.value.trim(),
+      fornecedorSku:fornecedorSku.value.trim(),
+      fornecedorContato:fornecedorContato.value.trim(),
+      revisaoEsperada:revisaoCanal}};
+   },
+   canalGravado(revisao){revisaoCanal=revisao;}
    }
   };
  }
  async function salvarAnuncio(id,csrf,campos,revisaoEsperada){
-  const anuncio=campos.obter();
-  return fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio',{
+  const {canal,...anuncio}=campos.obter();
+  const salvo=await fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio',{
    method:'POST',headers:{'Content-Type':'application/json',
     'X-Loop-Admin-Csrf':csrf},
    body:JSON.stringify({...anuncio,revisaoEsperada})
   });
+  // O registro de fornecedor é independente da origem técnica legada.
+  // Nunca informa "conectado" sem confirmação externa.
+  const fornecedor=await fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/canal',{
+   method:'POST',headers:{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':csrf},
+   body:JSON.stringify(canal)
+  });
+  if(!Number.isSafeInteger(fornecedor.revisao)||
+     fornecedor.integracaoAutomatica!==false)
+   throw Error('CANAL_NAO_CONFIRMADO');
+  campos.canalGravado(fornecedor.revisao);
+  return salvo;
  }
  // O operador configura o alcance da ENTREGA, sem mudar o anuncio visto pelo cliente.
  function camposEntrega(form){
