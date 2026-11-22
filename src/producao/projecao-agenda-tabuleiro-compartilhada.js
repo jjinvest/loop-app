@@ -18,6 +18,8 @@ function projetarAgendaTabuleiroCompartilhada(estado){
     estado.ciclosConcluidos<0||
     !Number.isSafeInteger(estado.girosHoje)||estado.girosHoje<0||
     !Number.isSafeInteger(estado.giros24h)||estado.giros24h<0||
+    (estado.girosHora!==undefined&&
+     (!Number.isSafeInteger(estado.girosHora)||estado.girosHora<0))||
     (estado.metaDataAlvo!==null&&estado.metaDataAlvo!==undefined&&
      !DATA.test(estado.metaDataAlvo)))
   falha('TABULEIRO_AGENDA_PUBLICA_INVALIDA');
@@ -36,6 +38,7 @@ function projetarAgendaTabuleiroCompartilhada(estado){
   eventosReaisNoCiclo:estado.eventosNoCiclo,
   ciclosReaisConcluidos:estado.ciclosConcluidos,
   girosReaisHoje:estado.girosHoje,girosReais24h:estado.giros24h,
+  girosReaisHora:estado.girosHora??null,
   metaLotes:estado.metaCentrosDia>0?{
    ativa:true,quantidade:estado.metaCentrosDia,
    dataAlvo:estado.metaDataAlvo??null,

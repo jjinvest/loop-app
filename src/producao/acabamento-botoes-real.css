@@ -672,3 +672,73 @@ body.loop03-modo-operador .loop03-admin-section .loop03-admin-dado{
  border:1px solid #967b51;border-radius:14px;
  background:#171a27;padding:12px;white-space:pre-line;line-height:1.5;
 }
+
+/* Placar universal do CLIENTE: presente em todas as abas do mesmo escritório.
+   Só posicionamento; as fontes são motor e relógio autenticados do servidor. */
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-indicadores .loop03-indicador{
+ min-width:0;box-sizing:border-box;overflow:hidden;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado #loop03IrPosicoesIntegrado{
+ display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:flex-start;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado #loop03IrPosicoesIntegrado>small{
+ width:100%;text-align:center;align-self:center;overflow-wrap:normal;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado #loop03IrPosicoesIntegrado>strong{
+ margin:auto 0;text-align:center;width:100%;font-variant-numeric:tabular-nums;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado #loop03IrPosicoesIntegrado>span{
+ display:block;margin-top:auto;align-self:stretch;width:100%;text-align:center;
+ font-size:clamp(.55rem,1.7vw,.73rem);line-height:1.2;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-placar-hora{
+ gap:0!important;display:flex;flex-direction:column;justify-content:stretch;align-items:stretch;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-placar-metade{
+ display:flex;flex:1;min-height:0;flex-direction:column;align-items:center;
+ justify-content:center;text-align:center;gap:2px;min-width:0;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-placar-metade+ .loop03-placar-metade{
+ border-top:1px solid #a98755;padding-top:5px;margin-top:5px;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-placar-metade small{
+ font-size:clamp(.56rem,1.6vw,.72rem);line-height:1.15;letter-spacing:0;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-placar-metade strong{
+ font-size:clamp(1.06rem,3.5vw,1.55rem);font-variant-numeric:tabular-nums;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-placar-posicao{
+ display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-placar-posicao>small{
+ width:100%;font-size:clamp(.56rem,1.6vw,.71rem);line-height:1.16;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-placar-posicao>strong{
+ margin:auto 0 2px;width:100%;font-size:clamp(.84rem,2.5vw,1.35rem);
+ overflow-wrap:anywhere;
+}
+body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado #loop03StatusPosicao{
+ margin:0 0 auto;display:block;white-space:pre-line;overflow-wrap:anywhere;
+ text-align:center;width:100%;font-size:clamp(.55rem,1.5vw,.71rem);line-height:1.28;
+}
+body.loop03-modo-operador .cliente-integrado .loop03-placar-luzes{display:none!important}
+body.loop03-modo-operador .cliente-integrado .loop03-placar-giros{
+ display:flex;flex-direction:column;gap:5px;width:100%;align-items:flex-start;
+}
+body.loop03-modo-operador .cliente-integrado .loop03-placar-giros strong{font-size:1.5rem}
+@media(max-width:600px){
+ body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-indicadores{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;
+ }
+ body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-indicadores .loop03-indicador{
+  min-height:120px!important;padding:8px 5px!important;
+ }
+}
+@media(max-width:350px){
+ body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-indicadores{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;
+ }
+ body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-indicadores .loop03-indicador{
+  min-height:125px!important;padding:6px 3px!important;
+ }
+}

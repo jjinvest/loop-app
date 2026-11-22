@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "e6072db52c63fc39843e2fbdbe60232e72410cb0"
+      "sha": "e049e7da26df64d34df436c152714eee1d5b03ca"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1452,7 +1452,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "86e775bb5ca35d6c279c8cd3fd92a51ec2447a5b"
+      "sha": "f191ac898c1d2c0357d07adf7d0bb29b3c70d209"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1460,7 +1460,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "8e8c2d4a0e9fdafe7f24c83c292eee43d4a0882c"
+      "sha": "43e995265f08df4ac63b3a5637706b9200a9a347"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -1504,7 +1504,7 @@
     },
     {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
-      "sha": "bbbc5da394a817f4801888c64b77fcff4da8e831"
+      "sha": "2005ce4c48bf9f9f01fa208da3d991428cc56ab5"
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
@@ -1544,7 +1544,7 @@
     },
     {
       "path": "src/producao/projecao-agenda-tabuleiro-compartilhada.js",
-      "sha": "3ec2d29cd79d2a21b5b1ee050258e1fcff8e72d0"
+      "sha": "03404dcdef6c905415720d1f1b569853e179fa05"
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
@@ -1808,7 +1808,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "c504f8837615d727f49941dc4ac7d0ccb0c57d54"
+      "sha": "7f46e6858698ddfb6b97bde450610aaa3ad22132"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -3111,6 +3111,10 @@
       "sha": "f3d85f6eebd2243b0455c466f3b9d0f1be6bddb1"
     },
     {
+      "path": "test/placar-cliente-hora-real-escritorio.test.js",
+      "sha": "af0c1e582c5b7ec6ea7517b4f09b9f7752fd3427"
+    },
+    {
       "path": "test/planejamento-vendas-fisicas-demo.test.js",
       "sha": "66970c1477999758bce6a93e3abf72dbb7d91796"
     },
@@ -3846,6 +3850,48 @@
       "antes": null,
       "depois": "9f683f56d378d566361e786d078085d96477e88d",
       "objetivo": "Autorização de 22/11/2026: indicar campos pendentes ao cadastrar produto/distribuidor na AKITEMM real, validar entrega antes da criação e preservar os visuais e o motor."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loop.js",
+      "antes": "8e8c2d4a0e9fdafe7f24c83c292eee43d4a0882c",
+      "depois": "43e995265f08df4ac63b3a5637706b9200a9a347",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: 3 cartões do escritório de TODOS os clientes com placar ao vivo por hora (giros SQLite e luzes relógio), seleção de primeira posição, alinhamento, sem alterar o motor ou a visão do operador."
+    },
+    {
+      "path": "src/producao/acabamento-botoes-real.css",
+      "antes": "e6072db52c63fc39843e2fbdbe60232e72410cb0",
+      "depois": "e049e7da26df64d34df436c152714eee1d5b03ca",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: 3 cartões do escritório de TODOS os clientes com placar ao vivo por hora (giros SQLite e luzes relógio), seleção de primeira posição, alinhamento, sem alterar o motor ou a visão do operador."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "86e775bb5ca35d6c279c8cd3fd92a51ec2447a5b",
+      "depois": "f191ac898c1d2c0357d07adf7d0bb29b3c70d209",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: 3 cartões do escritório de TODOS os clientes com placar ao vivo por hora (giros SQLite e luzes relógio), seleção de primeira posição, alinhamento, sem alterar o motor ou a visão do operador."
+    },
+    {
+      "path": "src/shared/visor-catraca.js",
+      "antes": "c504f8837615d727f49941dc4ac7d0ccb0c57d54",
+      "depois": "7f46e6858698ddfb6b97bde450610aaa3ad22132",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: 3 cartões do escritório de TODOS os clientes com placar ao vivo por hora (giros SQLite e luzes relógio), seleção de primeira posição, alinhamento, sem alterar o motor ou a visão do operador."
+    },
+    {
+      "path": "src/producao/operacao-catraca-admin-sqlite.js",
+      "antes": "bbbc5da394a817f4801888c64b77fcff4da8e831",
+      "depois": "2005ce4c48bf9f9f01fa208da3d991428cc56ab5",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: 3 cartões do escritório de TODOS os clientes com placar ao vivo por hora (giros SQLite e luzes relógio), seleção de primeira posição, alinhamento, sem alterar o motor ou a visão do operador."
+    },
+    {
+      "path": "src/producao/projecao-agenda-tabuleiro-compartilhada.js",
+      "antes": "3ec2d29cd79d2a21b5b1ee050258e1fcff8e72d0",
+      "depois": "03404dcdef6c905415720d1f1b569853e179fa05",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: 3 cartões do escritório de TODOS os clientes com placar ao vivo por hora (giros SQLite e luzes relógio), seleção de primeira posição, alinhamento, sem alterar o motor ou a visão do operador."
+    },
+    {
+      "path": "test/placar-cliente-hora-real-escritorio.test.js",
+      "antes": null,
+      "depois": "af0c1e582c5b7ec6ea7517b4f09b9f7752fd3427",
+      "objetivo": "Solicitação do proprietário em 22/11/2026: 3 cartões do escritório de TODOS os clientes com placar ao vivo por hora (giros SQLite e luzes relógio), seleção de primeira posição, alinhamento, sem alterar o motor ou a visão do operador."
     }
   ]
 }

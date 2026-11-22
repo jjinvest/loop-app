@@ -692,6 +692,14 @@
   sincronizarFotoRodapeReal();
   void atualizarFotoPerfilReal();
   nickResumoReal=s.nick;
+  // Os títulos são restaurados ao voltar do perfil administrativo sem
+  // redesenhar ou apagar nenhuma das três molduras aprovadas.
+  const indicadoresCliente=document.querySelectorAll('.loop03-indicadores .loop03-indicador');
+  if(indicadoresCliente.length===3){
+   indicadoresCliente[0].querySelector('small').textContent='MINHAS POSIÇÕES';
+   indicadoresCliente[1].querySelector('small').textContent='GIROS / HORA';
+   indicadoresCliente[2].querySelector('small').textContent='POSIÇÃO SELECIONADA';
+  }
   $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
   posicoesResumoReal=[];posicaoSelecionada='';
   atualizarSituacaoRodapeReal();
@@ -1126,11 +1134,12 @@
  function atualizarTopoPosicaoReal(){
   const i=posicoesResumoReal.findIndex(p=>String(p.numero)===posicaoSelecionada);
   const p=i<0?null:posicoesResumoReal[i];
-  $('loop03NumeroIntegrado').textContent=p?'#'+(i+1):'—';
+  $('loop03NumeroIntegrado').textContent=p?(i+1)+'ª posição':'—';
   $('loop03StatusPosicao').textContent=p?
-   ('@'+nickVisivel(nickResumoReal)+' · Fila '+(p.fila==='A'||p.fila==='B'?p.fila:'não definida')+
-    ' · Indicações: '+(p.indicacoesVinculadas||0)+
-    ' · '+(p.local||'Em acompanhamento')+' · ID #'+p.numero):'';
+   '@'+nickVisivel(nickResumoReal)+'\n'+
+   (p.fila==='A'||p.fila==='B'?'Fila '+p.fila:
+    /^VAGA_[1-6]$/.test(p.local||'')||p.local==='CENTRO'?
+     'No tabuleiro':'Fila aguardando definição'):'';
   atualizarSituacaoRodapeReal();
  }
  function preencherPopupReal(){
@@ -1266,8 +1275,10 @@
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
   visorCatraca.iniciar();
+  // O placar aparece em TODAS as abas: leitura periódica autenticada
+  // do mesmo estado, mesmo quando o Tabuleiro está recolhido.
   window.setInterval(()=>{
-   if(!document.hidden&&$('conteudoTabuleiro')?.hidden===false)
+   if(!document.hidden&&$('painelConta')?.hidden===false)
     void carregarMotor();
   },15000);
     for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
@@ -2069,10 +2080,11 @@
     ' de 6 eventos neste ciclo';
    $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
     ' / '+String(d.limitePosicoesAtivas);
-   // So exibir giros das ultimas 24h quando a fonte realmente os informar.
-   const giros24h=d.catraca?.giros24h;
+   // Os cartões usam o livro de giros por HORA; a projeção das
+   // luzes da mesma HORA é desenhada pelo visor, sem inventar eventos.
+   const girosHora=d.agenda?.girosReaisHora;
    $('loop03Giros24Integrado').textContent=
-    Number.isSafeInteger(giros24h)&&giros24h>=0?String(giros24h):'—';
+    Number.isSafeInteger(girosHora)&&girosHora>=0?String(girosHora):'—';
    const seletor=$('seletorPosicaoMotor');
    const seletorRotulo=$('rotuloSeletorPosicaoMotor');
    if(seletor){
@@ -2080,7 +2092,8 @@
      Number.isSafeInteger(p.numero)).sort((a,b)=>a.numero-b.numero);
     if(popupPosicoesRealAberto)preencherPopupReal();
     const opcoes=d.minhasPosicoes.map(p=>String(p.numero));
-    if(!opcoes.includes(posicaoSelecionada))posicaoSelecionada='';
+    if(!opcoes.includes(posicaoSelecionada))posicaoSelecionada=
+     posicoesResumoReal.length?String(posicoesResumoReal[0].numero):'';
     atualizarSituacaoRodapeReal(posicoesResumoReal);
     seletor.replaceChildren();
     const geral=document.createElement('option');
@@ -2093,18 +2106,7 @@
     }
     seletor.value=posicaoSelecionada;
     if(seletorRotulo)seletorRotulo.hidden=opcoes.length===0;
-    const selecionadaResumo=d.minhasPosicoes.find(p=>
-     String(p.numero)===posicaoSelecionada);
-    $('loop03NumeroIntegrado').textContent=
-     selecionadaResumo?'#'+posicaoSelecionada:'—';
-    $('loop03StatusPosicao').textContent=selecionadaResumo?
-     ('@'+nickVisivel(nickResumoReal)+
-      ' · Fila '+(selecionadaResumo.fila==='A'||selecionadaResumo.fila==='B'?
-       selecionadaResumo.fila:'não definida')+
-      ' · Indicações: '+(selecionadaResumo.indicacoesVinculadas||0)+
-      ' · '+(selecionadaResumo.local||'Em acompanhamento')+
-      ' · ID #'+selecionadaResumo.numero):
-     '';
+    atualizarTopoPosicaoReal();
     // Restaurar o placar do relógio após carregar os números do motor.
     visorCatraca.registrarAgenda(d.agenda);
    }
