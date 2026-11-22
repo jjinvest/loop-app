@@ -1344,7 +1344,7 @@
     },
     {
       "path": "src/producao/catalogo-multidistribuidores-sqlite.js",
-      "sha": "8500c11c4717eabefdea894dea8ead199964ccab"
+      "sha": "501aeeb85126c54dbf1135de76fca89eaf98c220"
     },
     {
       "path": "src/producao/classificacao-comercial-loop-sqlite.js",
