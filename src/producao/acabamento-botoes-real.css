@@ -896,3 +896,69 @@ body.loop03-modo-operador #adminResumoPosicoes .loop03-resumo-indicador strong{
   grid-template-columns:1fr;
  }
 }
+
+
+/* Operador: contadores comerciais independentes sob as ações de posições.
+   Não mexe nas duas molduras de fila e tabuleiro nem na visão do cliente. */
+body.loop03-modo-operador #adminResumoComercial.loop03-resumo-comercial{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:clamp(9px,2.3vw,17px);min-width:0;margin:13px 0 5px;
+ white-space:normal;
+}
+body.loop03-modo-operador #adminResumoComercial .loop03-resumo-contador{
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ gap:12px;min-width:0;min-height:115px;
+ padding:clamp(12px,2.6vw,20px);
+ border:1px solid #b79a61;border-radius:20px;
+ background:linear-gradient(160deg,#1d1d31,#121a20);
+ box-shadow:inset 0 1px 0 #ffffff1b,0 8px 18px #0005;
+ text-align:center;box-sizing:border-box;
+}
+body.loop03-modo-operador #adminResumoComercial .loop03-resumo-contador h3{
+ font-size:clamp(.78rem,2.5vw,1.03rem);line-height:1.3;
+ letter-spacing:.045em;color:#f3d28f;margin:0;
+ overflow-wrap:anywhere;
+}
+body.loop03-modo-operador #adminResumoComercial .loop03-comercial-numero{
+ color:#f8f8ff;font-size:clamp(1.5rem,4.4vw,2.2rem);
+ font-variant-numeric:tabular-nums;line-height:1.2;
+}
+body.loop03-modo-operador #adminComprasCliente.loop03-admin-compras{
+ min-width:0;margin:14px 0;padding:clamp(11px,2.4vw,17px);
+ border:1px solid #b79a6180;border-radius:17px;
+ background:linear-gradient(165deg,#211b2f,#101b23);
+ color:#f8f2e8;
+}
+body.loop03-modo-operador #adminComprasCliente[hidden]{display:none!important}
+body.loop03-modo-operador #adminComprasCliente h3{
+ color:#f3d28f;margin:0 0 10px;font-size:1.03rem;
+}
+body.loop03-modo-operador #adminComprasClienteLista{
+ display:grid;gap:8px;min-width:0;
+}
+body.loop03-modo-operador #adminComprasCliente .loop03-compra-item{
+ display:flex;flex-direction:column;gap:4px;
+ min-width:0;padding:10px 12px;border:1px solid #b79a6155;
+ border-radius:12px;background:#ffffff08;
+ overflow-wrap:anywhere;
+}
+body.loop03-modo-operador #adminComprasCliente .loop03-compra-item strong{
+ color:#f7e1b6;font-size:.91rem;
+}
+body.loop03-modo-operador #adminComprasCliente .loop03-compra-item span{
+ color:#e6e8ee;font-size:.81rem;line-height:1.4;
+}
+body.loop03-modo-operador #adminComprasCliente .loop03-compras-aviso,
+body.loop03-modo-operador #adminComprasCliente .loop03-compras-total{
+ margin:3px 0 7px;font-size:.88rem;line-height:1.4;
+}
+body.loop03-modo-operador #adminMaisComprasCliente{
+ margin-top:10px;min-height:39px;padding:8px 13px;
+ border:1px solid #d5b67c;border-radius:10px;
+ background:#272b40;color:#f6e6c2;cursor:pointer;
+}
+@media(max-width:340px){
+ body.loop03-modo-operador #adminResumoComercial.loop03-resumo-comercial{
+  grid-template-columns:1fr;
+ }
+}
