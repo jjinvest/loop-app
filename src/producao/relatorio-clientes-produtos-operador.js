@@ -4,8 +4,7 @@
 function falhar(codigo){const erro=new Error(codigo);erro.codigo=codigo;throw erro;}
 function criarRelatorioClientesProdutosOperador({banco}={}){
  if(typeof banco?.prepare!=='function')falhar('RELATORIO_COMERCIAL_BANCO_INVALIDO');
- const obrigatorias=['loop_real_contas','loja_real_pedidos',
-  'loja_real_custos_pedido','loja_real_produtos'];
+ const obrigatorias=['loja_real_pedidos','loja_real_custos_pedido'];
  const existente=banco.prepare(
   "SELECT 1 AS ok FROM sqlite_master WHERE type='table' AND name=?");
  function verificar(){
@@ -36,8 +35,16 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
   if(pedidosSemItens().get().n!==0)falhar('RELATORIO_COMERCIAL_PEDIDO_INCOMPLETO');
  }
  function indicadores(){
-  verificar();consistencia();
   const clientes=totalClientes().get().total;
+  if(!Number.isSafeInteger(clientes)||clientes<0)
+   falhar('RELATORIO_COMERCIAL_CONTAGEM_INCONSISTENTE');
+  if(!obrigatorias.every(nome=>!!existente.get(nome)))
+   return {fonte:'SQLITE_COMERCIAL_REAL',totalClientes:clientes,
+    totalProdutosVendidos:null,totalPedidosAprovados:null,
+    totalClientesCompradores:null,registroComercialDisponivel:false,
+    criterio:'UNIDADES_DE_PEDIDOS_COM_PAGAMENTO_APROVADO',
+    contabilizaPosicoesComoProduto:false,somenteLeitura:true};
+  consistencia();
   const s=sumario().get();
   if(![clientes,s.pedidos,s.unidades,s.compradores,pedidosAprovados().get().n]
    .every(x=>Number.isSafeInteger(x)&&x>=0)||
@@ -46,6 +53,7 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
   return {fonte:'SQLITE_COMERCIAL_REAL',totalClientes:clientes,
    totalProdutosVendidos:s.unidades,totalPedidosAprovados:s.pedidos,
    totalClientesCompradores:s.compradores,
+   registroComercialDisponivel:true,
    criterio:'UNIDADES_DE_PEDIDOS_COM_PAGAMENTO_APROVADO',
    contabilizaPosicoesComoProduto:false,somenteLeitura:true};
  }
@@ -60,10 +68,12 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
   'SELECT p.pedido_id AS pedidoId,p.criado_em AS criadoEm,',
   's.produto_id AS produtoId,s.sku AS sku,s.fornecedor_id AS fornecedorId,',
   's.quantidade AS quantidade,s.preco_unit_centavos AS precoUnitCentavos,',
-  'pr.titulo AS titulo',
+  existente.get('loja_real_produtos')?'pr.titulo AS titulo':'NULL AS titulo',
   'FROM loja_real_pedidos p',
   'JOIN loja_real_custos_pedido s ON s.pedido_id=p.pedido_id',
-  'LEFT JOIN loja_real_produtos pr ON pr.produto_id=s.produto_id',
+  ...(existente.get('loja_real_produtos')?[
+   'LEFT JOIN loja_real_produtos pr ON pr.produto_id=s.produto_id'
+  ]:[]),
   'WHERE p.titular_id=? AND '+aprovados,
   'ORDER BY p.criado_em DESC,p.pedido_id DESC,s.fornecedor_id,s.sku',
   'LIMIT ? OFFSET ?'
