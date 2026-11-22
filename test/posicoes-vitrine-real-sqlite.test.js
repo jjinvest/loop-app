@@ -9,7 +9,9 @@ test('espacos antigos permanecem gravados, mas vitrine organiza sem lacunas pela
  const db=new DatabaseSync(':memory:');
  try{
   const v=new PosicoesVitrineRealSQLite({banco:db});
-  assert.deepEqual(TABELAS_POSICOES_VITRINE,['loja_real_vitrine_posicoes']);
+  assert.deepEqual(TABELAS_POSICOES_VITRINE,[
+   'loja_real_vitrine_posicoes','loja_real_vitrine_layout_vazios'
+  ]);
   assert.deepEqual(v.listar(),[]);
   const a=v.atribuir({posicao:161,produtoId:'tenis-preto',
    revisaoEsperada:0,produtoExiste:()=>true});
@@ -134,5 +136,66 @@ test('mover um produto preserva demais slots antigos e não duplica',()=>{
   assert.throws(()=>v.mover({produtoId:'terceiro',novaPosicao:0,revisaoEsperada:2}),
    /VITRINE_REAL_MOVIMENTO_INVALIDO/);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{db.close();}
+});
+
+
+test('a próxima vaga segue a ordem 1 a 11 sem depender de onde abriu o cadastro',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const v=new PosicoesVitrineRealSQLite({banco:db});
+  for(let i=1;i<=10;i++){
+   const resultado=v.atribuirProximo({
+    produtoId:'produto-'+i,produtoExiste:()=>true
+   });
+   assert.equal(resultado.posicao,i);
+   assert.equal(resultado.automatico,true);
+  }
+  assert.equal(v.listar().length,10);
+  // O usuário poderia ter tocado no espaço 250; o backend não recebe 250.
+  const proximo=v.atribuirProximo({
+   produtoId:'produto-11',produtoExiste:()=>true
+  });
+  assert.equal(proximo.posicao,11);
+  assert.equal(v.atribuirProximo({
+   produtoId:'produto-11',produtoExiste:()=>true
+  }).jaVinculado,true);
+  assert.deepEqual(v.listar().map(x=>x.posicao),
+   Array.from({length:11},(_,i)=>i+1));
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{db.close();}
+});
+
+test('molduras vazias trocam de cor sem criar produto nem mexer em posição',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const v=new PosicoesVitrineRealSQLite({banco:db});
+  const original=v.consultarLayoutVazio();
+  assert.equal(original.cores.length,400);
+  assert.equal(original.cores[0],'ROXO');
+  assert.equal(original.cores[1],'DOURADO');
+  assert.equal(original.cores.filter(x=>x==='ROXO').length,100);
+  const trocada=v.trocarEspacosVazios({
+   origem:1,destino:2,revisaoEsperada:original.revisao
+  });
+  assert.equal(trocada.confirmado,true);
+  assert.equal(trocada.checkoutReal,false);
+  assert.equal(trocada.financeiroReal,false);
+  const reiniciado=new PosicoesVitrineRealSQLite({banco:db});
+  assert.equal(reiniciado.consultarLayoutVazio().cores[0],'DOURADO');
+  assert.equal(reiniciado.consultarLayoutVazio().cores[1],'ROXO');
+  assert.deepEqual(reiniciado.listar(),[]);
+  assert.throws(()=>v.trocarEspacosVazios({
+   origem:1,destino:3,revisaoEsperada:original.revisao
+  }),/REVISAO_CONCORRENTE/);
+  const item=v.atribuirProximo({
+   produtoId:'produto-primeiro',produtoExiste:()=>true
+  });
+  assert.equal(item.posicao,1);
+  assert.throws(()=>v.trocarEspacosVazios({
+   origem:1,destino:2,revisaoEsperada:reiniciado.consultarLayoutVazio().revisao
+  }),/PRODUTO_OCUPA_SLOT/);
+  assert.equal(v.listar().length,1);
+  assert.equal(db.prepare('PRAGMA foreign_key_check').all().length,0);
  }finally{db.close();}
 });
