@@ -1320,7 +1320,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "6a350f58b4a8fc7e9df53053437690035123072c"
+      "sha": "9e6f57fd18509e5545a7b2a438a8c729fcccb1b2"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -4176,6 +4176,12 @@
       "antes": "78cb5577e32ab2b3ac4bded3512cdde806721a50",
       "depois": "0233fb146fe5082680ad639398d5831576ee8066",
       "objetivo": "Após entrar sem recarregar, sessão cliente mostra banner publicado e operador tem +; revalidar papel com controle de acesso real, sem mudar design."
+    },
+    {
+      "path": "src/producao/backup-identidade-real.js",
+      "antes": "6a350f58b4a8fc7e9df53053437690035123072c",
+      "depois": "9e6f57fd18509e5545a7b2a438a8c729fcccb1b2",
+      "objetivo": "Proteção indispensável: os 4 banners LOOP no SQLite real devem entrar no backup cifrado completo, com verificação de esquema e bytes, sem perder tabelas preexistentes nem arquivos AKITEMM."
     }
   ]
 }

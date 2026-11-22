@@ -75,6 +75,8 @@ const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_avaliacoes_verificadas',
  'loja_real_banners_akitemm'
 ]);
+// Quatro banners exclusivos do Escritório LOOP real.
+const TABELAS_BANNERS_LOOP=Object.freeze(['loop_banner_escritorio_manual']);
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function conferir({origem,destino,chaveBackup,autorizado,restaurar=false}){
  if(autorizado!==true||!Buffer.isBuffer(chaveBackup)||
@@ -117,6 +119,7 @@ function validarIdentidade(arquivo){
   const todos=[...TABELAS,...TABELAS_CONTATO,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
    ...TABELAS_MOTOR,...TABELAS_PROJECAO,...TABELAS_HISTORICO,...TABELAS_CATRACA_ADMIN,...TABELAS_CATRACA_CAIXA,
    ...TABELAS_POSICOES_VITRINE,...TABELAS_CATALOGO_OPERADOR,
+   ...TABELAS_BANNERS_LOOP,
    ...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
    ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO,...TABELAS_LIVRO,
@@ -139,6 +142,24 @@ function validarIdentidade(arquivo){
     'LIMIT 1'
    ].join(' ')).get();
    if(invalido)falha('BACKUP_BANNERS_AKITEMM_INVALIDOS');
+  }
+  // Backup cifrado da identidade também inclui os quatro banners do LOOP.
+  // Cada arte é independente das quatro imagens da AKITEMM.
+  if(lista.includes('loop_banner_escritorio_manual')){
+   const col=b.prepare('PRAGMA table_info(loop_banner_escritorio_manual)')
+    .all().map(x=>x.name);
+   if(['slot','mime','imagem','revisao','atualizado_em','enquadramento']
+    .some(x=>!col.includes(x)))
+    falha('BACKUP_BANNERS_LOOP_ESQUEMA_INVALIDO');
+   const invalido=b.prepare([
+    'SELECT slot FROM loop_banner_escritorio_manual',
+    'WHERE slot<1 OR slot>4 OR revisao<0 OR atualizado_em<0',
+    "OR enquadramento NOT IN ('INTEIRA','PREENCHER')",
+    'OR (imagem IS NULL AND mime IS NOT NULL)',
+    'OR (imagem IS NOT NULL AND (mime IS NULL OR length(imagem)>4194304))',
+    'LIMIT 1'
+   ].join(' ')).get();
+   if(invalido)falha('BACKUP_BANNERS_LOOP_INVALIDOS');
   }
   // A escolha de destino imutável também integra a mesma cópia cifrada.
   // Backups históricos sem essa tabela continuam recuperáveis.
