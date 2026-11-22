@@ -118,6 +118,7 @@ function montarRotasCatalogoMidiaOperador({
       produtoId:req.params.produtoId
      }))return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
      return res.json({...anunciosManuais.consultar(req.params.produtoId),
+      canalFornecedor:anunciosManuais.canais.consultar(req.params.produtoId),
       checkoutReal:false});
     }catch{return res.status(503).json({erro:'ANUNCIO_INDISPONIVEL'});}
    });
@@ -141,6 +142,68 @@ function montarRotasCatalogoMidiaOperador({
       codigo.includes('INVALIDO')||codigo.includes('INVALIDOS')?400:503)
       .json({erro:codigo});
     }
+   });
+ }
+ // Canal não é credencial externa: apenas os modos com função implementada
+ // são graváveis. API, ERP e marketplaces exigirão autorização independente.
+ if(anunciosManuais?.canais){
+  const canais=anunciosManuais.canais;
+  app.post('/api/admin/catalogo-midia/produtos/:produtoId/canal',
+   autorizarOperador,validarCsrf,verificarId,(req,res)=>{
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).sort().join(',')!==
+       'canal,fornecedorContato,fornecedorNome,fornecedorSku,revisaoEsperada')
+     return res.status(400).json({erro:'CANAL_CAMPOS_INVALIDOS'});
+    try{return res.json({...canais.configurar({
+     produtoId:req.params.produtoId,...b
+    }),checkoutReal:false,integracaoAutomatica:false});}
+    catch(e){
+     const codigo=e?.codigo||'CANAL_SALVAMENTO_INDISPONIVEL';
+     return res.status(codigo.includes('CONCORRENTE')?409:
+      codigo.includes('NAO_ENCONTRADO')?404:
+      codigo.includes('INVALIDO')||codigo.includes('INCOMPLETO')||
+      codigo.includes('OBRIGATORIO')||codigo.includes('PENDENTE')?400:503)
+      .json({erro:codigo});
+    }
+   });
+  const lerCsv=express.text({type:'text/csv',limit:'128kb',inflate:false});
+  // Mesma credencial de operador e token CSRF usados para fotos e produtos.
+  app.post('/api/admin/catalogo-midia/fornecedores/csv/previa',
+   autorizarOperador,validarCsrf,lerCsv,(req,res)=>{
+    if(!req.is('text/csv')||typeof req.body!=='string')
+     return res.status(415).json({erro:'PLANILHA_CSV_OBRIGATORIO'});
+    try{return res.json(canais.preverCsv(req.body));}
+    catch(e){return res.status(400).json({
+     erro:e?.codigo||'PLANILHA_PREVIA_INVALIDA'
+    });}
+   });
+  app.post('/api/admin/catalogo-midia/fornecedores/csv/importar',
+   autorizarOperador,validarCsrf,lerCsv,(req,res)=>{
+    if(!req.is('text/csv')||typeof req.body!=='string')
+     return res.status(415).json({erro:'PLANILHA_CSV_OBRIGATORIO'});
+    const hash=req.get('x-loop-planilha-hash')||'';
+    const versoesRaw=req.get('x-loop-planilha-versoes')||'';
+    if(versoesRaw.length>4096)return res.status(400).json({
+     erro:'PLANILHA_PREVIA_INVALIDA'
+    });
+    let revisoes;
+    try{revisoes=JSON.parse(versoesRaw);}
+    catch{return res.status(400).json({erro:'PLANILHA_PREVIA_INVALIDA'});}
+    try{return res.json(canais.importarCsv(req.body,{hash,revisoes}));}
+    catch(e){
+     const codigo=e?.codigo||'PLANILHA_IMPORTACAO_INDISPONIVEL';
+     return res.status(codigo.includes('DESATUALIZADA')?409:
+      codigo.startsWith('PLANILHA_')?400:503).json({erro:codigo});
+    }
+   });
+  app.get('/api/admin/catalogo-midia/fornecedores/csv/modelo',
+   autorizarOperador,(_req,res)=>{
+    res.set('Cache-Control','private, no-store');
+    res.set('Content-Disposition','attachment; filename="akitemm-modelo-fornecedor.csv"');
+    return res.type('text/csv').send('\uFEFF'+
+     'produto_id;fornecedor;sku_fornecedor;preco_vitrine;quantidade\r\n'+
+     'produto-existente;Fornecedor Exemplo;SKU-EXEMPLO;197,90;12\r\n');
    });
  }
  // Apenas o operador configura municipio e taxa de entrega propria.
