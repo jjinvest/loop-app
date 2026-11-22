@@ -300,9 +300,10 @@ async function main(){
    assert.equal(avatarOperador.pronto,true);
    assert.match(avatarOperador.fonte,/^\/api\/admin\/operador\/foto-perfil/);
    await operadorPage.goto(base+'/loja?visao=cliente');
-   await operadorPage.locator('#akitemmFotoTitular').waitFor({state:'visible'});
-   assert.match(await operadorPage.locator('#akitemmFotoTitular')
-    .getAttribute('src'),/^\/api\/admin\/operador\/foto-perfil/);
+   await operadorPage.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+   assert.equal(await operadorPage.locator('#akitemmFotoTitular').isHidden(),true,
+    'visão pública não deve revelar imagem administrativa sem login pessoal');
+   assert.equal(await operadorPage.locator('#akitemmFotoTitular').getAttribute('src'),null);
    await operadorPage.goto(base+'/escritorio?visao=operador');
    await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
