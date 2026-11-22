@@ -2079,9 +2079,6 @@
      String(p.numero)===posicaoSelecionada);
     $('loop03NumeroIntegrado').textContent=
      selecionadaResumo?'#'+posicaoSelecionada:'—';
-    const tituloPosicao=$('loop03NumeroIntegrado')?.parentElement?.querySelector('small');
-    if(tituloPosicao)tituloPosicao.textContent=selecionadaResumo?
-     'POSIÇÃO SELECIONADA':'EVENTOS NO CICLO';
     $('loop03StatusPosicao').textContent=selecionadaResumo?
      ('@'+nickVisivel(nickResumoReal)+
       ' · Fila '+(selecionadaResumo.fila==='A'||selecionadaResumo.fila==='B'?
