@@ -13,6 +13,8 @@
   (indicadorNick?'&ref='+encodeURIComponent(indicadorNick):'');
  const solicitarCadastro=()=>location.assign(destinoCadastro());
  let visitante=true,operadorAtivo=false,clienteNick=null,csrfLoja=null;
+ const visaoClienteLoja=new URLSearchParams(location.search)
+  .get('visao')==='cliente';
  // A foto do cabeçalho da loja é a mesma imagem privada da conta LOOP.
  // Nunca usar o retrato do cliente numa sessão de operador ou vice-versa.
  const fotoTitular=$('akitemmFotoTitular');
@@ -22,7 +24,7 @@
   const consulta=++consultaFotoLoja;
   fotoTitular.hidden=true;
   fotoTitular.removeAttribute('src');
-  if(visitante&&!operadorAtivo)return;
+  if((visitante&&!operadorAtivo)||(operadorAtivo&&visaoClienteLoja))return;
   const caminho=operadorAtivo?
    '/api/admin/operador/foto-perfil':'/api/contas/foto-perfil';
   try{
@@ -73,7 +75,9 @@
  async function dadosConta(){
   const alvo=$('akitemmDadosContaConteudo');
   if(operadorAtivo){
-   alvo.textContent='Sessão do operador; os dados dos clientes estão protegidos.';
+   alvo.textContent=visaoClienteLoja?
+    'Visualização do cliente. Dados pessoais de clientes não são exibidos.':
+    'Sessão do operador; os dados dos clientes estão protegidos.';
    $('akitemmEditarConta').href='/administrador';
    $('akitemmEditarConta').textContent='Central do operador';
    return;
@@ -96,7 +100,9 @@
  async function avisosDaConta(){
   const alvo=$('akitemmNotificacoesConteudo');
   if(operadorAtivo){
-   alvo.textContent='Avisos administrativos: consulte a central do operador.';
+   alvo.textContent=visaoClienteLoja?
+    'Visualização de cliente: avisos individuais não são exibidos.':
+    'Avisos administrativos: consulte a central do operador.';
    return;
   }
   if(visitante){
@@ -385,8 +391,9 @@
   if(!linkRodape)return;
   const exibir=permitido=>{
    operadorAtivo=permitido;
-   linkRodape.hidden=!permitido;
-   linkRodape.style.display=permitido?'inline-flex':'none';
+   linkRodape.hidden=!permitido||visaoClienteLoja;
+   linkRodape.style.display=permitido&&!visaoClienteLoja?
+    'inline-flex':'none';
   };
   try{
    const r=await fetch('/api/operador/estado',{
@@ -1096,6 +1103,16 @@
  // Aproveita a seção "Meus Pedidos" já aprovada. Somente dados reais do
  // titular; sem backend comercial conectado não mostra pedidos fictícios.
  async function atualizarPedidos(){
+  if(operadorAtivo){
+   const pedidos=$('pedidosLojaLoop');
+   if(pedidos){
+    pedidos.replaceChildren();
+    const aviso=document.createElement('li');
+    aviso.textContent='Pedidos individuais não são exibidos na visualização do cliente.';
+    pedidos.append(aviso);
+   }
+   return;
+  }
   if(visitante){solicitarCadastro();return;}
   const lista=$('pedidosLojaLoop');
   if(!lista)return;
@@ -1155,7 +1172,8 @@
    visitante=!operadorAtivo;clienteNick=null;csrfLoja=null;
    prepararLinkPessoal();
    if($('akitemmNomeTitular'))
-    $('akitemmNomeTitular').textContent=visitante?'Visitante':'OPERADOR';
+    $('akitemmNomeTitular').textContent=visitante?'Visitante':
+     visaoClienteLoja?'VISÃO DO CLIENTE':'OPERADOR';
    if(visitante){
     informar('AKITEMM · vitrine aberta'+
      (indicadorNick?' · convite de @'+nickVisivel(indicadorNick):'')+
@@ -1164,7 +1182,9 @@
     if(conta)conta.href=destinoCadastro();
     const voltar=document.querySelector('.akitemm-voltar');
     if(voltar)voltar.href=destinoCadastro();
-   }else informar('AKITEMM: catálogo do operador. Pagamentos e pedidos de clientes bloqueados.');
+   }else informar(visaoClienteLoja?
+    'AKITEMM · visualização pública da loja. Nenhuma conta pessoal foi acessada.':
+    'AKITEMM: catálogo do operador. Pagamentos e pedidos de clientes bloqueados.');
   }else{
    visitante=false;
    if(!res.ok)throw Error('IDENTIDADE_INDISPONIVEL');
