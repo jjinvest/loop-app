@@ -1336,11 +1336,11 @@
     },
     {
       "path": "src/producao/banners-editor-real.css",
-      "sha": "1f108ed1377044f49a51dfb3a23eb58ef52e264e"
+      "sha": "be5e88f2a1e6cecb4a61dff7548e8884e39ab514"
     },
     {
       "path": "src/producao/banners-escritorio-real-client.js",
-      "sha": "531a38438f89658a3bdbe989737f3a240dea8c5c"
+      "sha": "2009538c74271a0234e455a85b7c3614e3ae0ad8"
     },
     {
       "path": "src/producao/banners-escritorio-real.js",
@@ -1348,7 +1348,7 @@
     },
     {
       "path": "src/producao/banners-loja-akitemm-client.js",
-      "sha": "1a283d09d64e4085aff2b97a48762186ce7a0fa7"
+      "sha": "aca0fc1932a8aaea3a12a9d05c8dae9bd338e25e"
     },
     {
       "path": "src/producao/banners-loja-akitemm-real-sqlite.js",
@@ -2173,6 +2173,10 @@
     {
       "path": "test/backup-verificado-sqlite-lab.test.js",
       "sha": "2a10228b0afcad55f769dcbebf4bcef318a7fb36"
+    },
+    {
+      "path": "test/banners-ajuste-direto-fotos.test.js",
+      "sha": "2622fb0cbae328045233083098ea1686fd058661"
     },
     {
       "path": "test/banners-dinamicos-composicao-real.test.js",
