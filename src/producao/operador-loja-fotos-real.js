@@ -908,6 +908,9 @@
   p.className='akitemm-exclusao-aviso';
   p.setAttribute('role','status');
   p.setAttribute('aria-live','polite');
+  p.style.cssText='padding:9px 12px;border:1px solid #bf8c77;'+
+   'border-radius:10px;color:#ffe7cf;background:#502c3e;'+
+   'overflow-wrap:anywhere;font-weight:650;';
   p.hidden=true;
   return p;
  };
