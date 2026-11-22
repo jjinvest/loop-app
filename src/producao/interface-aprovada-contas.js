@@ -1652,7 +1652,14 @@
  function textoAgendaOperador(d){
   if(!d||!Number.isSafeInteger(d.metaCentrosDia))return 'Agenda não disponível.';
   const n=d.metaCentrosDia,futura=!!d.metaDataAlvo&&d.metaDataAlvo>d.hoje;
-  const anterior=!!d.metaDataAlvo&&d.metaDataAlvo<d.hoje;
+  // O turno que começou ontem pode continuar ativo após meia-noite.
+  const ontem=/^\d{4}-\d{2}-\d{2}$/.test(d.hoje||'')?
+   new Date(Date.parse(d.hoje+'T12:00:00Z')-86400000)
+    .toISOString().slice(0,10):null;
+  const continuaOntem=d.metaDataAlvo===ontem&&
+   d.janelaInicio>d.janelaFim&&d.horarioPermitido===true&&
+   typeof d.horaLocal==='string'&&d.horaLocal<=d.janelaFim;
+  const anterior=!!d.metaDataAlvo&&d.metaDataAlvo<d.hoje&&!continuaOntem;
   const situacao=d.modo==='PAUSADA'?'PAUSADA':
    d.modo==='MANUAL'?'MODO MANUAL':n===0?'SEM META':
    anterior?'DATA ENCERRADA':futura?'AGENDADA — AGUARDANDO DATA':
@@ -1975,6 +1982,8 @@
    $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
    $('loop03Giros24Integrado').textContent=String(controle.girosHoje);
    $('loop03NumeroIntegrado').textContent=d.tabuleiro.eventosNoCiclo+' / 6';
+   // Atualizar os 3 quadros APÓS a leitura financeira para não voltar a zero.
+   visorCatraca.registrarAgenda(controle.agenda);
    void carregarAbaOperador('abaPosicoes');
    $('loop03StatusPosicao').textContent='';
    $('seletorPosicaoMotor').replaceChildren();
@@ -2078,6 +2087,8 @@
       ' · '+(selecionadaResumo.local||'Em acompanhamento')+
       ' · ID #'+selecionadaResumo.numero):
      '';
+    // Restaurar o placar do relógio após carregar os números do motor.
+    visorCatraca.registrarAgenda(d.agenda);
    }
    // A quantidade de cartões deriva do MESMO limite enviado pelo motor;
    // não esconder vagas vazias nem fabricar posições/pedidos.

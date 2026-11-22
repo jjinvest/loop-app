@@ -46,14 +46,16 @@
    const duracaoMs=duracaoMin*60000;
    const decorrido=((atual-inicio+1440)%1440)*60000+
     Number(partes.second)*1000+(agoraMs%1000);
-   if(decorrido>=duracaoMs)return null;
+   // A projeção visual permanece consultável após o fechamento do turno.
+   // Ela não cria movimentação de dinheiro ou registros do motor.
+   const finalizado=decorrido>=duracaoMs;
    const total=meta.quantidade*6;
    const passadas=Math.min(total,Math.floor(decorrido*total/duracaoMs));
    const luzes=passadas===0?0:(passadas-1)%6+1;
-   const proxima=passadas<total?
+   const proxima=!finalizado&&passadas<total?
     agoraMs+Math.max(0,Math.ceil((passadas+1)*duracaoMs/total-decorrido)):
     null;
-   return {luzes,passadas,total,proxima,diaTurno,
+   return {luzes,passadas,total,proxima,diaTurno,finalizado,
     intervalo:Math.max(1,Math.round(duracaoMs/total/1000))};
   }
   function sincronizarLuzesVisuais(estado){
@@ -69,8 +71,9 @@
    for(let i=1;i<=6;i++){
     const bola=$('motorBolinha'+i);
     if(!bola)continue;
-    const ligada=compartilhado&&valido&&i<=estado.luzes;
-    const lampadaAtual=ligada&&estado.luzes>0&&i===estado.luzes;
+    // Ao encerrar, apagar LEDs, preservando os totais no placar.
+    const ligada=compartilhado&&valido&&!estado.finalizado&&i<=estado.luzes;
+    const lampadaAtual=ligada&&!estado.finalizado&&estado.luzes>0&&i===estado.luzes;
     bola.classList.toggle('loop03-relogio-luz-visual',ligada);
     // A lâmpada alcançada pelo próximo marco do relógio pulsa enquanto
     // o turno está ativo. As anteriores permanecem acesas; a próxima
@@ -78,7 +81,7 @@
     bola.classList.toggle('loop03-relogio-luz-atual',lampadaAtual);
     if(compartilhado)bola.classList.toggle('loop03-marcador-aceso',
      ligada||i<=eventos);
-    if(ligada&&chave!==ultimaJanelaVisual&&
+    if(ligada&&!estado.finalizado&&chave!==ultimaJanelaVisual&&
        i===estado.luzes&&ultimaJanelaVisual!==null&&
        !document.hidden&&$('conteudoTabuleiro')?.hidden===false){
      bola.classList.remove('loop03-pulso-luz');
@@ -88,21 +91,39 @@
     }
    }
    ultimaJanelaVisual=chave;
-   // A evolução visual não é contabilizada como giro/ciclo comprovado.
-   // Os números fortes dos 3 indicadores continuam vindos do livro real.
+   // Contador visível do RELÓGIO: um avanço por luz e um ciclo por seis.
+   // A contagem financeira segue independente, sem crédito bancário.
    const resumo=$('loop03StatusPosicao'),selecionada=$('loop03NumeroIntegrado');
    const operadorAberto=document.body?.classList?.contains?.('loop03-modo-operador')===true;
+   const movimentosRelogio=valido?estado.passadas:0;
+   const ciclosRelogio=Math.floor(movimentosRelogio/6);
+   if(compartilhado&&valido){
+    const giros=$('loop03Giros24Integrado');
+    if(giros){
+     giros.textContent=String(movimentosRelogio);
+     // Não renomear GIROS NAS ÚLTIMAS 24H do cliente: os três cartões
+     // têm papéis distintos, apesar de consultarem a mesma agenda.
+     const descricao=giros.parentElement?.querySelector?.('span');
+     if(descricao)descricao.textContent='Relógio: '+ciclosRelogio+
+      ' ciclos de 6 · sem pagamento';
+    }
+    // EVENTOS NO CICLO pertence somente ao quadro administrativo.
+    // A terceira caixa do cliente continua sendo POSIÇÃO SELECIONADA.
+    if(selecionada&&operadorAberto){
+     selecionada.textContent=estado.luzes+' / 6';
+     const titulo=selecionada.parentElement?.querySelector?.('small');
+     if(titulo)titulo.textContent='EVENTOS NO CICLO';
+    }
+   }
    const giroReal=agendaVisorCatraca?.girosReaisHoje;
    const ciclosReais=agendaVisorCatraca?.ciclosReaisConcluidos;
    if(resumo&&compartilhado&&Number.isSafeInteger(giroReal)&&
       Number.isSafeInteger(ciclosReais)&&
-      (operadorAberto||selecionada?.textContent==='—')){
+      (operadorAberto||!/^#\d+$/.test(selecionada?.textContent||''))){
     resumo.textContent=valido?
-     'Relógio visual: '+estado.passadas+'/'+estado.total+
-      ' luzes previstas · Ciclos reais: '+ciclosReais+
-      ' · Giros reais hoje: '+giroReal:
-     'Relógio fora do turno · Ciclos reais: '+ciclosReais+
-      ' · Giros reais hoje: '+giroReal;
+     'Relógio: '+movimentosRelogio+'/'+estado.total+' luzes · '+
+      ciclosRelogio+' ciclos completos · Sem pagamento real':
+     'Relógio fora do turno · Sem pagamento real';
    }
    const contador=$('motorContadorEventos');
    if(contador&&compartilhado){
@@ -129,7 +150,10 @@
       agenda?.luzesDoRelogioOperador===true){
     if(visual){
      const proxima=visual.proxima;
-     if(proxima!==null){
+     if(visual.finalizado){
+      visor.textContent='00:00';
+      titulo.textContent='TURNO ENCERRADO';
+     }else if(proxima!==null){
       const segundos=Math.max(0,Math.ceil((proxima-agoraServidor)/1000));
       visor.textContent=String(Math.floor(segundos/60)).padStart(2,'0')+
        ':'+String(segundos%60).padStart(2,'0');
