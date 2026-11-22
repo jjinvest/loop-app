@@ -267,7 +267,7 @@ class CatalogoMultiDistribuidoresSQLite{
    ).get(produtoId))erro('PRODUTO_COM_PEDIDOS_NAO_EXCLUIR');
    const vinculo=existeTabela('loja_real_vitrine_posicoes')?
     this.db.prepare(
-     'SELECT posicao,revisao FROM loja_real_vitrine_posicoes WHERE produto_id=?'
+     'SELECT posicao FROM loja_real_vitrine_posicoes WHERE produto_id=?'
     ).get(produtoId):null;
    if(vinculo&&(!desvincularVitrine||!this.auditoria))
     erro('PRODUTO_JA_VINCULADO_NAO_EXCLUIR');
@@ -275,15 +275,14 @@ class CatalogoMultiDistribuidoresSQLite{
    // transação de arquivamento; não deixa quadrinho ocupado por produto excluído.
    if(vinculo){
     const retirado=this.db.prepare(
-     'DELETE FROM loja_real_vitrine_posicoes WHERE produto_id=? AND revisao=?'
-    ).run(produtoId,vinculo.revisao);
+     'DELETE FROM loja_real_vitrine_posicoes WHERE produto_id=? AND posicao=?'
+    ).run(produtoId,vinculo.posicao);
     if(retirado.changes!==1)erro('RASCUNHO_CONFLITO_REVISAO');
     this.auditoria.registrar({
      acao:'VITRINE_RASCUNHO_DESVINCULADO',ator:'ADMIN_COMERCIAL',
      entidade:'PRODUTO_'+produtoId,
      antes:{posicao:vinculo.posicao,produtoId},
-     depois:{posicao:null,produtoId},
-     revisaoAnterior:vinculo.revisao
+     depois:{posicao:null,produtoId}
     });
    }
    const data=Math.max(this.agora(),anterior.atualizado_em+1);
