@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "6023c582166d352f26f9a059341d610c433bad62"
+      "sha": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -2284,7 +2284,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "554898bc7044950fbb396ce66dbc1016f8d4ecad"
+      "sha": "2993eb6ad5e8cc5b27ee86133eae13d36e0819a8"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
@@ -3916,6 +3916,18 @@
       "antes": "af0c1e582c5b7ec6ea7517b4f09b9f7752fd3427",
       "depois": "5c965fef8911cde78bb0210ebdbe27b4db443e1e",
       "objetivo": "Resguardo de todos os cartões e formulários em 22/11/2026: placar leve em todas abas, atualização total somente no tabuleiro."
+    },
+    {
+      "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
+      "antes": "554898bc7044950fbb396ce66dbc1016f8d4ecad",
+      "depois": "2993eb6ad5e8cc5b27ee86133eae13d36e0819a8",
+      "objetivo": "Atualização autorizada em 22/11/2026 dos testes de navegador e relógio para novo placar real por hora: detalhes exclusivos no Tabuleiro, posição selecionada sem relógio."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "6023c582166d352f26f9a059341d610c433bad62",
+      "depois": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b",
+      "objetivo": "Atualização autorizada em 22/11/2026 dos testes de navegador e relógio para novo placar real por hora: detalhes exclusivos no Tabuleiro, posição selecionada sem relógio."
     }
   ]
 }
