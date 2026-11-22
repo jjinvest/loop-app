@@ -745,6 +745,7 @@
   label.textContent='Escolher foto do celular';
   const input=document.createElement('input');
   input.type='file';input.accept='image/jpeg,image/png,image/webp';
+  input.dataset.recorteNativo='sim';
   label.append(input);caixa.append(label);
   const aviso=linha('JPEG, PNG ou WebP. Você pode ajustar o enquadramento antes de salvar.');
   caixa.append(aviso);
@@ -752,6 +753,11 @@
   previa.width=640;previa.height=640;
   previa.className='akitemm-foto-previa';previa.hidden=true;
   caixa.append(previa);
+  const recorteLabel=document.createElement('label');
+  recorteLabel.className='akitemm-recorte-opcional';
+  const recortar=document.createElement('input');recortar.type='checkbox';
+  recorteLabel.append(recortar,document.createTextNode(' Recortar foto, se precisar'));
+  caixa.append(recorteLabel);
   const ajustes=document.createElement('div');
   ajustes.className='akitemm-foto-ajustes';ajustes.hidden=true;
   const controles=[];
@@ -769,18 +775,28 @@
   let imagem=null,carregando=null;
   const redesenhar=()=>{
    if(!imagem)return;
+   const contexto=previa.getContext('2d');
+   if(!contexto)throw Error('EDICAO_FOTO_INDISPONIVEL');
+   contexto.fillStyle='#ffffff';contexto.fillRect(0,0,640,640);
+   if(!recortar.checked){
+    // Padrao: imagem inteira dentro da moldura, sem cortar o produto.
+    const escala=Math.min(640/imagem.naturalWidth,640/imagem.naturalHeight);
+    const largura=imagem.naturalWidth*escala,altura=imagem.naturalHeight*escala;
+    contexto.drawImage(imagem,(640-largura)/2,(640-altura)/2,largura,altura);
+    return;
+   }
    const zoom=Number(controles[0].value);
    const lado=Math.min(imagem.naturalWidth,imagem.naturalHeight)/zoom;
    const x=(imagem.naturalWidth-lado)*Number(controles[1].value)/100;
    const y=(imagem.naturalHeight-lado)*Number(controles[2].value)/100;
-   const contexto=previa.getContext('2d');
-   if(!contexto)throw Error('EDICAO_FOTO_INDISPONIVEL');
-   contexto.fillStyle='#ffffff';contexto.fillRect(0,0,640,640);
    contexto.drawImage(imagem,x,y,lado,lado,0,0,640,640);
   };
+  recortar.addEventListener('change',()=>{
+   ajustes.hidden=!recortar.checked||!imagem;redesenhar();
+  });
   for(const x of controles)x.addEventListener('input',redesenhar);
   input.addEventListener('change',()=>{
-   imagem=null;previa.hidden=true;ajustes.hidden=true;
+   imagem=null;previa.hidden=true;ajustes.hidden=true;recortar.checked=false;
    const foto=input.files?.[0];
    if(!foto)return;
    if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||
@@ -797,8 +813,8 @@
      if(img.naturalWidth<50||img.naturalHeight<50){
       reject(Error('FOTO_RESOLUCAO_BAIXA'));return;
      }
-     imagem=img;previa.hidden=false;ajustes.hidden=false;
-     redesenhar();aviso.textContent='Ajuste o enquadramento. A foto será cortada, sem alterar as cores.';
+     imagem=img;previa.hidden=false;ajustes.hidden=true;
+     redesenhar();aviso.textContent='Imagem inteira. Para cortar, marque Recortar foto.';
      resolve();
     };
     img.onerror=()=>reject(Error('FOTO_NAO_ABRIU'));
