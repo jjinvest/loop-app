@@ -100,15 +100,15 @@
     const giros=$('loop03Giros24Integrado');
     if(giros){
      giros.textContent=String(movimentosRelogio);
-     const tituloGiros=giros.parentElement?.querySelector?.('small');
-     if(tituloGiros&&!operadorAberto)tituloGiros.textContent='GIROS DO TURNO';
+     // Não renomear GIROS NAS ÚLTIMAS 24H do cliente: os três cartões
+     // têm papéis distintos, apesar de consultarem a mesma agenda.
      const descricao=giros.parentElement?.querySelector?.('span');
      if(descricao)descricao.textContent='Relógio: '+ciclosRelogio+
       ' ciclos de 6 · sem pagamento';
     }
-    // Preservar o número de uma posição individual quando selecionada.
-    if(selecionada&&(operadorAberto||
-       /^(?:\d+ \/ 6|—)$/.test(selecionada.textContent))){
+    // EVENTOS NO CICLO pertence somente ao quadro administrativo.
+    // A terceira caixa do cliente continua sendo POSIÇÃO SELECIONADA.
+    if(selecionada&&operadorAberto){
      selecionada.textContent=estado.luzes+' / 6';
      const titulo=selecionada.parentElement?.querySelector?.('small');
      if(titulo)titulo.textContent='EVENTOS NO CICLO';
