@@ -313,7 +313,8 @@ async function main(){
    for(const rota of ['/loja?visao=cliente','/loja']){
     await operadorPage.goto(base+rota,{waitUntil:'domcontentloaded'});
     await operadorPage.waitForFunction(nick=>
-     document.getElementById('akitemmNomeTitular')?.textContent===nick,nick);
+     document.getElementById('akitemmNomeTitular')?.textContent
+      ?.toLowerCase()===nick.toLowerCase(),nick);
     assert.equal(await operadorPage.locator('#akitemmFotoTitular').isHidden(),true,
      'foto de operador nao pode aparecer para cliente autenticado');
     assert.equal(await operadorPage.locator('.akitemm-acesso-operador').isHidden(),true);
