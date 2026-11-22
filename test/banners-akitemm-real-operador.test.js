@@ -70,8 +70,8 @@ test('público consulta somente quatro banners publicados; upload exige sessão 
  const contas=new IdentidadeClienteLoopReal({
   banco:db,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32),
-  termos:{versao:'BANNER-REAL-2026',texto:TERM.repeat(3)},
-  privacidade:{versao:'BANNER-PRIV-2026',texto:TERM.repeat(3)},
+  termos:{versao:'LOOP-BANNER-REAL-2026',texto:TERM.repeat(3)},
+  privacidade:{versao:'LOOP-BANNER-PRIV-2026',texto:TERM.repeat(3)},
   enviarEmail:async()=>true
  });
  const app=criarAppIdentidadeLoop({
