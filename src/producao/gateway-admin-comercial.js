@@ -4,6 +4,8 @@ const {createHash}=require('node:crypto');
 const {validar:validarFotoOperador}=require('../domain/akitemm-midia-avaliacoes-demo');
 const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
 const {OperacaoCatracaAdminSQLite}=require('./operacao-catraca-admin-sqlite');
+const {projetarAgendaTabuleiroCompartilhada}=
+ require('./projecao-agenda-tabuleiro-compartilhada');
 const {diagnosticarCadeiaPedidosFilas}=
  require('./diagnostico-cadeia-pedidos-filas');
 const {analisarQualificacaoPedidosReal}=
@@ -342,8 +344,12 @@ function montarGatewayAdminComercial(app,{
  // Nunca recebem titularId, pedidoId nem eventos inventados do navegador.
  app.get('/api/admin/loop/controle',proteger,(_req,res)=>{
   if(!catraca)return res.status(503).json({erro:'CATRACA_MOTOR_INDISPONIVEL'});
-  try{return res.json(catraca.consultar());}
-  catch{return res.status(503).json({erro:'CATRACA_CONSULTA_INDISPONIVEL'});}
+  try{
+   const controle=catraca.consultar();
+   return res.set('Cache-Control','private, no-store').json({
+    ...controle,agenda:projetarAgendaTabuleiroCompartilhada(controle)
+   });
+  }catch{return res.status(503).json({erro:'CATRACA_CONSULTA_INDISPONIVEL'});}
  });
  app.post('/api/admin/loop/controle',proteger,validarCsrf,(req,res)=>{
   if(!catraca)return res.status(503).json({erro:'CATRACA_MOTOR_INDISPONIVEL'});
