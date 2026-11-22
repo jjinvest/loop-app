@@ -5,6 +5,8 @@
  if(!pista)return;
  const molduras=[...pista.querySelectorAll('.loop03-banner-item')];
  if(molduras.length!==4)return;
+ // O carrossel original e o dinâmico não devem acionar relógios de rolagem simultâneos.
+ pista.dataset.carrosselDinamico='true';
  const area=pista.closest('.loop03-banners-resumo');
  if(!area)return;
  let dados=null,operador=false,gravando=false,slotEditor=1;
@@ -48,7 +50,8 @@
   '<p id="loop03BannerEditorStatus" role="status"></p>'+
   '<div class="banner-real-acoes">'+
   '<button type="button" id="loop03BannerSalvarReal" class="banner-real-salvar">Salvar banner</button>'+
-  '<button type="button" id="loop03BannerExcluirReal" class="banner-real-excluir">Excluir foto</button></div>'+
+  '<button type="button" id="loop03BannerExcluirReal" class="banner-real-excluir">Excluir foto</button>'+
+  '<button type="button" id="loop03BannerDescartarEspacoReal" class="banner-real-descartar" hidden>🗑 Descartar espaço</button></div>'+
   '</form>';
  document.body.append(dialogo);
  const arquivo=dialogo.querySelector('#loop03BannerArquivoReal');
@@ -56,6 +59,7 @@
  const status=dialogo.querySelector('#loop03BannerEditorStatus');
  const salvarBotao=dialogo.querySelector('#loop03BannerSalvarReal');
  const excluirBotao=dialogo.querySelector('#loop03BannerExcluirReal');
+ const descartarBotao=dialogo.querySelector('#loop03BannerDescartarEspacoReal');
  const colunas=dialogo.querySelector('#loop03BannerColunasReal');
  const modo=dialogo.querySelector('#loop03BannerModoReal');
  const extras=[2,3].map(n=>dialogo.querySelector('#loop03BannerArquivo'+n));
@@ -139,7 +143,12 @@
  function renderizar(){
   if(!dados?.slots)return;
   const editavel=podeEditar();
-  const publicados=dados.slots.filter(x=>x.publicado);
+  // Os espaços descartados não devem deixar cartões fantasmas no carrossel.
+  const slotsAtuais=new Set(dados.slots.map(x=>x.slot));
+  for(let i=molduras.length-1;i>=0;i--){
+   const m=molduras[i],n=Number(m.dataset.bannerSlot);
+   if(n>4&&!slotsAtuais.has(n)){m.remove();molduras.splice(i,1);}
+  }
   for(const slot of dados.slots){
    let moldura=molduras.find(x=>Number(x.dataset.bannerSlot)===slot.slot);
    if(!moldura){
@@ -156,13 +165,31 @@
     }
     moldura.dataset.bannerSlot=String(slot.slot);
    }
+   if(slot.slot>4){
+    let lixeira=moldura.querySelector('.loop03-banner-lixeira');
+    if(!lixeira){
+     lixeira=document.createElement('button');
+     lixeira.type='button';lixeira.className='loop03-banner-lixeira';
+     lixeira.innerHTML='<span aria-hidden="true">🗑</span>';
+     lixeira.title='Descartar espaço do banner '+slot.slot;
+     lixeira.setAttribute('aria-label','Descartar espaço do banner '+slot.slot);
+     lixeira.addEventListener('click',e=>{
+      e.preventDefault();e.stopPropagation();
+      void descartarEspaco(slot.slot);
+     });
+     moldura.append(lixeira);
+    }
+    lixeira.hidden=!editavel;
+    lixeira.style.display=editavel?'grid':'none';
+   }
    const img=moldura.querySelector('[data-banner-imagem]');
-   const mostrar=editavel||slot.publicado||(!publicados.length&&slot.slot===1);
+   // Operador edita todos os espaços; cliente só vê banners publicados.
+   const mostrar=editavel||slot.publicado;
    moldura.hidden=!mostrar;
    moldura.style.display=mostrar?'block':'none';
    moldura.querySelector('.banner-mosaico')?.remove();
    const quadros=Number(slot.colunas)||1;
-   if(quadros>1){
+   if(quadros>1&&(editavel||slot.publicado)){
     img.hidden=true;img.removeAttribute('src');
     const grade=document.createElement('div');
     grade.className='banner-mosaico';
@@ -183,7 +210,8 @@
      grade.append(quadro);
     }
     moldura.append(grade);
-   }else if(!slot.temImagem){
+   }else if(!slot.temImagem||(!editavel&&!slot.publicado)){
+    // Cliente nunca recebe espaços vazios ou mosaicos incompletos.
     img.hidden=true;img.removeAttribute('src');
    }else{
     img.setAttribute('data-enquadramento',slot.modo||'INTEIRA');
@@ -247,8 +275,47 @@
   mostrarCampos();
   status.textContent='';
   excluirBotao.disabled=!dados?.slots?.find(x=>x.slot===slotEditor)?.temImagem;
+  descartarBotao.hidden=slotEditor<=4;
+  descartarBotao.style.display=slotEditor<=4?'none':'inline-flex';
+  descartarBotao.disabled=slotEditor<=4;
   if(!dialogo.open)dialogo.showModal();
  }
+ async function descartarEspaco(numero){
+  if(!podeEditar()||gravando||!Number.isSafeInteger(numero)||numero<=4)return;
+  const item=dados?.slots?.find(x=>x.slot===numero);
+  if(!item)return;
+  if(!window.confirm(
+   'Descartar o espaço '+numero+' do LOOP? As fotos e o formato dele '+
+   'também serão excluídos. Os quatro banners originais serão preservados.'
+  ))return;
+  gravando=true;
+  if(dialogo.open)descartarBotao.disabled=true;
+  try{
+   const sessao=await solicitar('/api/admin/comercial/sessao');
+   if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<20)
+    throw Error('SESSAO_OPERADOR_INVALIDA');
+   const r=await solicitar('/api/admin/loop/banners/'+numero,{
+    method:'DELETE',
+    headers:{
+     'X-Loop-Admin-Csrf':sessao.csrfToken,
+     'X-Banner-Revisao-Esperada':String(item.revisao)
+    }
+   });
+   if(!Array.isArray(r.slots)||r.slots.some(x=>x.slot===numero))
+    throw Error('BANNER_ESPACO_NAO_EXCLUIDO');
+   dados=r;
+   if(dialogo.open)dialogo.close();
+   indice=Math.max(0,indice-1);
+   renderizar();
+  }catch(e){
+   window.alert('Não foi possível descartar o espaço: '+e.message);
+   await carregar();
+  }finally{
+   gravando=false;
+   descartarBotao.disabled=false;
+  }
+ }
+ descartarBotao.addEventListener('click',()=>void descartarEspaco(slotEditor));
  async function adicionar(){
   if(!podeEditar()||gravando)return;
   gravando=true;
@@ -272,7 +339,8 @@
  botao.addEventListener('click',e=>{e.preventDefault();void adicionar();});
  pista.addEventListener('click',e=>{
   const item=e.target.closest('.loop03-banner-item');
-  if(!item||item===botao||!podeEditar()||Date.now()<bloquearCliqueAte)return;
+  if(!item||item===botao||e.target.closest('.loop03-banner-lixeira')||
+     !podeEditar()||Date.now()<bloquearCliqueAte)return;
   e.preventDefault();abrir(Number(item.dataset.bannerSlot));
  });
  pista.addEventListener('scroll',()=>{

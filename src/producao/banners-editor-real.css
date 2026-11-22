@@ -205,3 +205,34 @@ body.loop03-modo-operador #conteudoResumo .loop03-banner-item:not(.loop03-banner
 }
 
 #conteudoResumo .loop03-banner-item .loop03-banner-foto-manual[data-enquadramento="PREENCHER"]:not([hidden]){object-fit:cover}
+
+
+/* Lixeira dos espaços extras: apenas no modo operador, sem afetar os 4 originais. */
+#conteudoResumo .loop03-banner-item>.loop03-banner-lixeira{
+ position:absolute;top:12px;right:12px;z-index:30;
+ display:grid;place-items:center;width:45px;height:45px;
+ border:1px solid #e3b6a4;border-radius:50%;
+ background:linear-gradient(140deg,#4c1728,#251722);
+ color:#fff4e7;box-shadow:0 3px 12px #0009;
+ font-size:1.3rem;cursor:pointer;
+}
+#conteudoResumo .loop03-banner-item>.loop03-banner-lixeira:hover,
+#conteudoResumo .loop03-banner-item>.loop03-banner-lixeira:focus-visible{
+ background:#713045;outline:2px solid #f2cd83;outline-offset:2px;
+}
+#conteudoResumo .loop03-banner-item>.loop03-banner-lixeira[hidden]{
+ display:none!important;
+}
+.banner-real-formulario .banner-real-acoes>.banner-real-descartar{
+ border:1px solid #c99392;border-radius:12px;
+ color:#ffe9e4;background:#4d192c;font-weight:750;
+ padding:11px 13px;cursor:pointer;
+}
+.banner-real-formulario .banner-real-acoes>.banner-real-descartar[hidden]{
+ display:none!important;
+}
+@media(max-width:600px){
+ #conteudoResumo .loop03-banner-item>.loop03-banner-lixeira{
+  width:42px;height:42px;right:10px;top:10px;
+ }
+}

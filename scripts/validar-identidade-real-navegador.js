@@ -798,6 +798,31 @@ async function main(){
    assert.equal(await page.locator('#cadastroNick').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#login').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#conteudoResumo').isVisible(),true);
+   // No operador sempre existem quatro espaços base; o cliente não recebe
+   // espaços vazios: vê apenas a quantidade de banners completos publicados.
+   await page.waitForFunction(()=>
+    document.getElementById('loop03PistaBanners')?.dataset.carrosselDinamico==='true');
+   const estadoBanners=await page.evaluate(async()=>{
+    const r=await fetch('/api/loop/banners',{credentials:'same-origin'});
+    if(!r.ok)throw Error('BANNER_ESTADO_INDISPONIVEL');
+    return r.json();
+   });
+   assert.deepEqual(estadoBanners.slots.slice(0,4).map(x=>x.slot),[1,2,3,4],
+    'quatro posições originais continuam guardadas para o operador');
+   const publicados=estadoBanners.slots.filter(x=>x.publicado).length;
+   await page.waitForFunction(esperados=>{
+    const pista=document.getElementById('loop03PistaBanners');
+    const visiveis=[...pista.querySelectorAll('.loop03-banner-item[data-banner-slot]')]
+      .filter(x=>getComputedStyle(x).display!=='none');
+    return visiveis.length===esperados;
+   },publicados);
+   assert.equal(await page.locator('#loop03PistaBanners .loop03-banner-item[data-banner-slot]:visible').count(),publicados,
+    'o cliente vê exatamente os banners com fotos completas');
+   assert.equal(await page.locator('#loop03BannerMaisReal').isHidden(),true,
+    'o cliente não pode criar banners');
+   assert.equal(await page.locator('.loop03-banners-pontos button').count(),publicados,
+    'os pontos do carrossel seguem o total de fotos publicadas');
+
    // Cliente troca a foto clicando no retrato do LOOP com Minha Conta fechada.
    // A imagem deve ser salva automaticamente no SQLite real.
    const escolhaFoto=page.waitForEvent('filechooser',{timeout:12000});
@@ -1079,6 +1104,27 @@ async function main(){
    await page.locator('#akitemmNomeTitular').filter({
     hasText:nick.toLowerCase()
    }).waitFor({state:'visible'});
+   // Mesmo acabamento de marca entre as duas interfaces: LOOP e aro
+   // dourados, versão 3.0 prateada (sem branco integral na loja).
+   const identidadeMarca=await page.locator('.akitemm-marca-loop')
+    .evaluate(el=>{
+     const versao=el.querySelector('em')||el.querySelector('span:last-child');
+     const aro=el.querySelector('.akitemm-anel');
+     return {
+      html:el.outerHTML.slice(0,1100),
+      loop:getComputedStyle(el).color,
+      versao:versao?getComputedStyle(versao).color:null,
+      aro:aro?getComputedStyle(aro,'::before').color:null
+     };
+    });
+   console.log('E2E_MARCA_LOJA='+JSON.stringify(identidadeMarca));
+   assert.equal(identidadeMarca.loop,'rgb(247, 195, 93)',
+    'LOOP no cabeçalho da loja deve ser dourado');
+   assert.equal(identidadeMarca.versao,'rgb(229, 233, 241)',
+    '3.0 deve permanecer prateado: '+identidadeMarca.html);
+   if(identidadeMarca.aro!==null)
+    assert.equal(identidadeMarca.aro,'rgb(247, 195, 93)',
+     'símbolo do LOOP deve ser dourado');
    await page.locator('#akitemmFotoTitular').waitFor({state:'visible'});
    const imagemLoja=await page.locator('#akitemmFotoTitular').evaluate(
     img=>({ok:img.complete&&img.naturalWidth>0,src:img.getAttribute('src')})

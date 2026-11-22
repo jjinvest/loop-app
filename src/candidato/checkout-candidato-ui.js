@@ -1716,7 +1716,8 @@ function iniciarCarrosselResumo(){
  pista.addEventListener('focusout',()=>{emInteracao=false;});
  pista.addEventListener('pointerleave',()=>{emInteracao=false;});
  window.setInterval(()=>{
-  if(document.hidden||aba!=='conteudoResumo'||emInteracao||reduz())return;
+  if(pista.dataset.carrosselDinamico==='true'||document.hidden||
+     aba!=='conteudoResumo'||emInteracao||reduz())return;
   mover((atual+1)%pontos.length);
  },6500);
  window.addEventListener('resize',()=>pista.scrollTo({

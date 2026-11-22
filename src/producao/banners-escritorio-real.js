@@ -25,7 +25,8 @@ function montarBannersEscritorioReal(app,{
  };
  const erro=(res,e)=>{
   const codigo=e?.codigo||'BANNER_LOOP_INDISPONIVEL';
-  return res.status(codigo.includes('CONFLITO_REVISAO')?409:
+  return res.status(codigo==='BANNER_ESPACO_BASE_PROTEGIDO'?403:
+   codigo.includes('CONFLITO_REVISAO')?409:
    codigo.includes('SEM_IMAGEM')?404:
    codigo==='BANNER_ARQUIVO_INVALIDO'||codigo==='BANNER_REVISAO_INVALIDA'||
    codigo==='BANNER_SLOT_INVALIDO'||codigo.includes('_INVALIDO')?400:503).json({erro:codigo});
@@ -70,6 +71,18 @@ function montarBannersEscritorioReal(app,{
     return res.set('Cache-Control','no-store').json(resultado);
    }catch(e){return erro(res,e);}
   });
+ // Excluir apenas espaços extras; o operador precisa confirmar no cliente
+ // e informar a revisão atual para impedir remoção concorrente.
+ app.delete('/api/admin/loop/banners/:slot',protegerOperador,(req,res)=>{
+  const n=slot(req);
+  if(n===null)return res.status(404).json({erro:'BANNER_SLOT_INVALIDO'});
+  try{
+   const resultado=banners.excluirEspaco({
+    slot:n,revisaoEsperada:Number(req.get('x-banner-revisao-esperada'))
+   });
+   return res.set('Cache-Control','no-store').json(resultado);
+  }catch(e){return erro(res,e);}
+ });
  app.delete('/api/admin/loop/banners/:slot/imagem',
   protegerOperador,(req,res)=>{
    if(slot(req)===null)return res.status(404).json({erro:'BANNER_SLOT_INVALIDO'});
