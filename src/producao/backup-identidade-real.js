@@ -68,6 +68,7 @@ const TABELAS_ADMIN=Object.freeze([
 // Tabelas de anúncios, regiões e avaliações da loja REAL.
 const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_anuncios_operador',
+ 'loja_real_canais_fornecedor',
  'loja_real_entrega_local_produto',
  'loja_real_avaliacoes_verificadas'
 ]);
@@ -384,6 +385,10 @@ function validarIdentidade(arquivo){
    ver('loja_real_anuncios_operador',[
     'produto_id','origem','categoria','marca','preco_centavos',
     'promocao_centavos','quantidade','revisao']);
+  if(lista.includes('loja_real_canais_fornecedor'))
+   ver('loja_real_canais_fornecedor',[
+    'produto_id','canal','fornecedor_nome','fornecedor_sku',
+    'fornecedor_contato','revisao','atualizado_em']);
   if(lista.includes('loja_real_entrega_local_produto'))
    ver('loja_real_entrega_local_produto',[
     'produto_id','modo','uf','municipios_json','taxa_centavos','revisao']);
