@@ -28,7 +28,8 @@
   const csvId='akitemmImportarFornecedorCsvReal';
   const atual=document.getElementById(id);
   const importar=document.getElementById(csvId);
-  if(!operador){atual?.remove();importar?.remove();return;}
+  const dica=document.getElementById('akitemmInstrucaoArrastar');
+  if(!operador){atual?.remove();importar?.remove();dica?.remove();return;}
   const filtro=document.getElementById('akitemmFiltroOfertas');
   if(!filtro)return;
   if(!atual){
@@ -46,6 +47,14 @@
    botao.setAttribute('aria-label','Importar catálogo de fornecedor por planilha CSV');
    botao.addEventListener('click',()=>void abrirImportacaoFornecedorCsv());
    (document.getElementById(id)||filtro).insertAdjacentElement('afterend',botao);
+  }
+  if(!document.getElementById('akitemmInstrucaoArrastar')){
+   const instrucao=document.createElement('p');
+   instrucao.id='akitemmInstrucaoArrastar';
+   instrucao.className='akitemm-instrucao-arrastar';
+   instrucao.textContent='Organizar produtos: no computador, arraste um cartão. No celular, segure a alça ⠿ ou mantenha o dedo sobre o produto e arraste. Para posição exata, toque na alça e use o campo “Ordem na vitrine”.';
+   (document.getElementById(csvId)||document.getElementById(id)||filtro)
+    .insertAdjacentElement('afterend',instrucao);
   }
  }
  function modal(titulo){
@@ -370,12 +379,11 @@
    ['FORNECEDOR_MANUAL','Fornecedor sem API — cadastro e contato'],
    ['PLANILHA_CSV','Planilha CSV — importação de catálogo'],
    ['API_PENDENTE','API direta — requer autorização'],
-   ['ERP_PENDENTE','ERP ou hub — requer conexão'],
-   ['MARKETPLACE_PENDENTE','Outros canais externos — não conectados']
+   ['ERP_PENDENTE','ERP ou hub — requer conexão']
   ]);
   // Sem provedor credenciado, os canais automáticos não fingem funcionar.
   for(const op of origem.s.options){
-   if(['API_PENDENTE','ERP_PENDENTE','MARKETPLACE_PENDENTE'].includes(op.value))
+   if(['API_PENDENTE','ERP_PENDENTE'].includes(op.value))
     op.disabled=true;
   }
   // CSV passa pelo importador real (botão no topo), não por escolher texto.
@@ -768,8 +776,8 @@
  async function escolherProduto(indice){
   if(!Number.isSafeInteger(indice)||indice<1||indice>400)return;
   const {corpo,estado}=modal('Cadastrar produto · AKITEMM');
-  corpo.append(linha('Cadastro manual. Foto, nome e cor no mesmo lugar. '+
-   'Distribuidor e SKU não são obrigatórios.'));
+  corpo.append(linha('Cadastro na AKITEMM. Cada campo com erro será marcado e terá um atalho para correção. '+
+   'Distribuidor e SKU só são necessários ao escolher fornecedor externo.'));
   const form=document.createElement('form');form.autocomplete='off';
   const guia=criarGuiaPendencias(form,estado);
   const nome=campoTexto(form,'Nome do produto',{placeholder:'Ex.: Camiseta preta'});
@@ -1021,7 +1029,7 @@
      if(!imagem){estado.textContent='Selecione uma foto antes de publicar. O botão de foto está no formulário.';
       const campo=form.querySelector('.akitemm-escolher-foto');
       campo?.scrollIntoView({block:'center',behavior:'smooth'});
-      campo?.focus();return;
+      campo?.focus();throw Error('ESCOLHA_UMA_FOTO');
      }
      const posicaoFoto=Number(galeriaFotos.s.value);
      await salvarFoto(id,csrf,imagem,posicaoFoto);
