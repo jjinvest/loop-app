@@ -648,7 +648,7 @@
     (categoria==='novidades'&&p.novidade===true)||
     (categoria==='mais-vendidos'&&p.unidadesConfirmadas>0))&&
    (!cor||p.cor===cor)&&
-   (!termo||normal(p.titulo+' '+p.descricao).includes(normal(termo)))
+   (!termo||normal(p.titulo+' '+p.descricao+' '+(p.corDescricao||'')).includes(normal(termo)))
   ).sort((a,b)=>categoria==='mais-vendidos'?
    b.unidadesConfirmadas-a.unidadesConfirmadas||
     a.titulo.localeCompare(b.titulo,'pt-BR'):
@@ -797,6 +797,11 @@
     const marca=document.createElement('small');
     marca.textContent='Marca: '+p.marcaVitrine;
     painelPreco.append(marca);
+   }
+   if(typeof p.corDescricao==='string'&&p.corDescricao){
+    const corFisica=document.createElement('small');
+    corFisica.textContent='Cor do produto: '+p.corDescricao;
+    painelPreco.append(corFisica);
    }
    const descricao=document.createElement('p');
    descricao.className='akitemm-descricao';
