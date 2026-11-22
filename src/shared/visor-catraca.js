@@ -100,14 +100,19 @@
     const giros=$('loop03Giros24Integrado');
     if(giros){
      giros.textContent=String(movimentosRelogio);
+     const tituloGiros=giros.parentElement?.querySelector?.('small');
+     if(tituloGiros&&!operadorAberto)tituloGiros.textContent='GIROS DO TURNO';
      const descricao=giros.parentElement?.querySelector?.('span');
      if(descricao)descricao.textContent='Relógio: '+ciclosRelogio+
       ' ciclos de 6 · sem pagamento';
     }
     // Preservar o número de uma posição individual quando selecionada.
     if(selecionada&&(operadorAberto||
-       /^(?:\d+ \/ 6|—)$/.test(selecionada.textContent)))
+       /^(?:\d+ \/ 6|—)$/.test(selecionada.textContent))){
      selecionada.textContent=estado.luzes+' / 6';
+     const titulo=selecionada.parentElement?.querySelector?.('small');
+     if(titulo)titulo.textContent='EVENTOS NO CICLO';
+    }
    }
    const giroReal=agendaVisorCatraca?.girosReaisHoje;
    const ciclosReais=agendaVisorCatraca?.ciclosReaisConcluidos;
