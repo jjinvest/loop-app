@@ -353,6 +353,10 @@ async function main(){
    await operadorPage.reload();
    await operadorPage.locator('[data-banner-imagem="1"]')
     .waitFor({state:'visible',timeout:12000});
+   await operadorPage.waitForFunction(()=>{
+    const img=document.querySelector('[data-banner-imagem="1"]');
+    return img?.complete===true&&img.naturalWidth>0&&!img.hidden;
+   },null,{timeout:12000});
    const bannerPersistido=await operadorPage.evaluate(async()=>{
     const r=await fetch('/api/loop/banners',{credentials:'same-origin'});
     const d=await r.json();return {status:r.status,slot:d.slots?.[0]};
