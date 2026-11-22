@@ -294,10 +294,16 @@ async function main(){
    // bytes extras após o marcador JPEG: a prévia aparece, mas o arquivo
    // original é rejeitado pelo validador binário. A normalização deve
    // gerar JPEG canônico, salvar, permitir GET e sobreviver a um reload.
+   const jpegBase64=await operadorPage.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=440;c.height=740;
+    const x=c.getContext('2d');x.fillStyle='#221b27';x.fillRect(0,0,440,740);
+    x.fillStyle='#e2b659';x.fillRect(40,95,360,510);
+    x.fillStyle='#222';x.font='bold 34px sans-serif';
+    x.fillText('LOOP',148,370);
+    return c.toDataURL('image/jpeg',0.90).split(',')[1];
+   });
    const jpegAndroid=Buffer.concat([
-    Buffer.from(
-     '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAjABgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD56trTpxWnbWnTirdtadOK07a06cV01sURluM2KltadOKK37a06cUV5k8Vqfb4fGe4Vra06cVp21p04q3bWnTitO2tOnFcFbFH47luM2KttadOKK3ra06cUV5k8Vqfb4fGe4Z9sq8cCtO2VeOKKKisz8sy17GpbKvHFFFFeZN6n2+Hb5D/2Q==',
-     'base64'),
+    Buffer.from(jpegBase64,'base64'),
     Buffer.from('ANDROID-TRAILING-METADATA')
    ]);
    const botaoBanner=operadorPage.locator('#loop03BannerMaisReal');
@@ -325,6 +331,22 @@ async function main(){
    assert.equal(bannerSalvo.mime,'image/jpeg');
    assert.deepEqual(bannerSalvo.inicio,[255,216,255]);
    assert.deepEqual(bannerSalvo.fim,[255,217]);
+   // Segunda passagem: o recorte e opcional e aplicado ANTES de salvar,
+   // usando a mesma interface nos banners e produtos do operador.
+   await operadorPage.locator('#loop03BannerArquivoReal').setInputFiles({
+    name:'1001177708.jpg',mimeType:'image/jpeg',buffer:jpegAndroid
+   });
+   await operadorPage.locator('#loop03BannerFormularioReal .loop-recorte-botao')
+    .click();
+   const cortar=operadorPage.locator('#loopRecorteFotoOpcional');
+   await cortar.waitFor({state:'visible'});
+   await cortar.locator('select').selectOption('16/9');
+   await cortar.locator('input[type=range]').first().fill('1.20');
+   await cortar.getByRole('button',{name:'Usar esta foto'}).click();
+   await cortar.waitFor({state:'hidden'});
+   await operadorPage.locator('#loop03BannerSalvarReal').click();
+   await operadorPage.locator('#loop03BannerEditorStatus')
+    .filter({hasText:'Foto salva no LOOP.'}).waitFor({state:'visible'});
    await operadorPage.locator('#loop03BannerFormularioReal .banner-real-fechar').click();
    await operadorPage.reload();
    await operadorPage.locator('[data-banner-imagem="1"]')
@@ -335,7 +357,7 @@ async function main(){
    });
    assert.equal(bannerPersistido.status,200);
    assert.equal(bannerPersistido.slot.temImagem,true);
-   assert.equal(bannerPersistido.slot.revisao,1);
+   assert.equal(bannerPersistido.slot.revisao,2);
    // Limpeza deste ensaio: a tela dos proximos testes volta ao estado inicial.
    const limpezaBanner=await operadorPage.evaluate(async()=>{
     const sessao=await fetch('/api/admin/comercial/sessao',{
@@ -344,7 +366,7 @@ async function main(){
     return fetch('/api/admin/loop/banners/1/imagem',{
      method:'DELETE',credentials:'same-origin',
      headers:{'X-Loop-Admin-Csrf':sessao.csrfToken,
-      'X-Banner-Revisao-Esperada':'1'}
+      'X-Banner-Revisao-Esperada':'2'}
     }).then(r=>r.status);
    });
    assert.equal(limpezaBanner,200);
