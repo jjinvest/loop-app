@@ -225,6 +225,38 @@ async function principal(){
   assert.deepEqual(depoisVazios.cores.slice().sort(),
    vazioOriginal.cores.slice().sort());
   await page.waitForTimeout(750);
+  // Produto ainda não criado: salvar formulário incompleto no SQLite.
+  await page.locator('#catalogoLojaLoop [data-akitemm-slot="1"]').click();
+  const d0=page.locator('#akitemmOperadorFotosReal');
+  await d0.getByRole('heading',{name:'Cadastrar produto · AKITEMM'}).waitFor();
+  await d0.getByRole('textbox',{name:'Nome do produto'}).fill('Rascunho não publicado');
+  await d0.getByLabel('Cor física do produto (escreva livremente)')
+   .fill('Colorido, verde e azul');
+  await d0.getByLabel('Preço normal (R$)').fill('350');
+  await d0.getByRole('button',{
+   name:'Salvar rascunho e continuar depois'
+  }).click();
+  await d0.getByRole('heading',{
+   name:'Produtos não publicados · AKITEMM'
+  }).waitFor();
+  await d0.getByText('Rascunho não publicado').waitFor();
+  assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
+  await d0.locator('.akitemm-modal-fechar').click();
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.getByRole('button',{name:'Produtos não publicados'}).click();
+  await d0.getByText('Rascunho não publicado').waitFor();
+  await d0.getByRole('button',{name:'Continuar cadastro'}).click();
+  assert.equal(await d0.getByRole('textbox',{name:'Nome do produto'}).inputValue(),
+   'Rascunho não publicado');
+  assert.equal(await d0.getByLabel('Cor física do produto (escreva livremente)')
+   .inputValue(),'Colorido, verde e azul');
+  assert.equal(await d0.getByLabel('Preço normal (R$)').inputValue(),'350');
+  await d0.locator('.akitemm-modal-fechar').click();
+  await page.getByRole('button',{name:'Produtos não publicados'}).click();
+  page.once('dialog',d=>void d.accept());
+  await d0.getByRole('button',{name:'Descartar este rascunho'}).click();
+  await d0.getByText('Rascunho descartado.').waitFor();
+  await d0.locator('.akitemm-modal-fechar').click();
   // Cadastro manual direto no quadradinho, com foto e cor no mesmo painel.
   const m=page.locator('#akitemmOperadorFotosReal');
   const criarProduto=async({slot,codigo,nome,cor})=>{
