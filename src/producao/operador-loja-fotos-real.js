@@ -660,6 +660,19 @@
      taxa.value=(d.taxaCentavos/100).toFixed(2).replace('.',',');
     }
    },
+   rascunho(){
+    return {entregaModo:modo.s.value,entregaUf:uf.s.value,
+     entregaMunicipios:cidades.value,entregaTaxa:taxa.value};
+   },
+   restaurarRascunho(d){
+    if(!d)return;
+    if(['NACIONAL','VOLTA_REDONDA','MUNICIPIOS'].includes(d.entregaModo))
+     modo.s.value=d.entregaModo;
+    sincronizar();
+    if(typeof d.entregaUf==='string'&&d.entregaUf)uf.s.value=d.entregaUf;
+    if(typeof d.entregaMunicipios==='string')cidades.value=d.entregaMunicipios;
+    if(typeof d.entregaTaxa==='string')taxa.value=d.entregaTaxa;
+   },
    obter(){
     if(modo.s.value==='NACIONAL')return {
      modo:'NACIONAL',uf:'',municipios:[],taxaCentavos:null};
@@ -909,6 +922,82 @@
   const criar=document.createElement('button');
   criar.type='submit';criar.textContent='Salvar produto e colocar na vitrine';
   form.append(criar);corpo.append(form);
+  // Salvar rascunho mesmo com campos incompletos. Nunca publica.
+  let rascunhoId=rascunhoInicial?.id||null;
+  let revisaoRascunho=rascunhoInicial?.revisao||0;
+  let salvarEmCurso=Promise.resolve(),temporizadorRascunho=null;
+  let formularioFinalizado=false;
+  const avisoRascunho=linha('Os campos digitados são salvos como rascunho. '+
+   'A foto ainda não enviada precisa ser selecionada novamente.');
+  avisoRascunho.className='akitemm-estado-rascunho';
+  avisoRascunho.setAttribute('role','status');
+  form.append(avisoRascunho);
+  const capturarRascunho=()=>({
+   titulo:nome.value,descricao:desc.value,codigo:codigo.value,
+   classificacao:cor.s.value,...anuncio.rascunho(),
+   ...entrega.rascunho()
+  });
+  const salvarRascunho=()=>{
+   if(formularioFinalizado)return Promise.resolve();
+   clearTimeout(temporizadorRascunho);
+   const campos=capturarRascunho();
+   const tarefa=async()=>{
+    const sessao=await fetchJson('/api/admin/comercial/sessao');
+    if(typeof sessao.csrfToken!=='string')
+     throw Error('OPERADOR_SESSAO_INVALIDA');
+    const salvo=await fetchJson(
+     '/api/admin/catalogo-midia/rascunhos-formulario',{
+      method:'POST',headers:{'Content-Type':'application/json',
+       'X-Loop-Admin-Csrf':sessao.csrfToken},
+      body:JSON.stringify({id:rascunhoId,
+       revisaoEsperada:revisaoRascunho,campos})
+     });
+    if(!salvo.id||!Number.isSafeInteger(salvo.revisao))
+     throw Error('RASCUNHO_NAO_CONFIRMADO');
+    rascunhoId=salvo.id;revisaoRascunho=salvo.revisao;
+    avisoRascunho.textContent='Rascunho guardado na AKITEMM. '+
+     'Você pode retomá-lo em Produtos não publicados.';
+   };
+   salvarEmCurso=salvarEmCurso.catch(()=>{}).then(tarefa);
+   return salvarEmCurso;
+  };
+  const falhaRascunho=e=>{
+   avisoRascunho.textContent='Rascunho não salvo: '+e.message+
+    '. Use “Salvar rascunho” para tentar novamente.';
+  };
+  const agendarRascunho=()=>{
+   if(formularioFinalizado)return;
+   clearTimeout(temporizadorRascunho);
+   avisoRascunho.textContent='Alterações ainda não salvas...';
+   temporizadorRascunho=setTimeout(()=>{
+    void salvarRascunho().catch(falhaRascunho);
+   },750);
+  };
+  form.addEventListener('input',agendarRascunho);
+  form.addEventListener('change',agendarRascunho);
+  const salvarParcial=document.createElement('button');
+  salvarParcial.type='button';salvarParcial.className='akitemm-editor-secundario';
+  salvarParcial.textContent='Salvar rascunho e continuar depois';
+  salvarParcial.addEventListener('click',async()=>{
+   salvarParcial.disabled=true;
+   try{
+    await salvarRascunho();
+    dialogo.close();void abrirRascunhosNaoPublicados();
+   }catch(e){falhaRascunho(e);}
+   finally{salvarParcial.disabled=false;}
+  });
+  form.append(salvarParcial);
+  if(rascunhoInicial?.campos){
+   const dados=rascunhoInicial.campos;
+   nome.value=dados.titulo||'';desc.value=dados.descricao||'';
+   codigo.value=dados.codigo||'';
+   anuncio.restaurarRascunho(dados);
+   entrega.restaurarRascunho(dados);
+   if(['CINZA','VERDE','DOURADO','ROXO'].includes(dados.classificacao))
+    cor.s.value=dados.classificacao;
+   avisoRascunho.textContent='Rascunho recuperado. Confira os campos e '+
+    'selecione a foto novamente antes de publicar.';
+  }
   const vinculo=document.createElement('details');
   const resumoExistente=document.createElement('summary');
   resumoExistente.textContent='Usar um produto que já cadastrei';
@@ -956,6 +1045,9 @@
   form.addEventListener('submit',async ev=>{
    ev.preventDefault();
    if(aberto)return;
+   // Mesmo quando há erro de validação, conservar o que foi digitado.
+   try{await salvarRascunho();}
+   catch(e){falhaRascunho(e);return;}
    const titulo=nome.value.trim();
    const informado=codigo.value.trim(),id=informado||slugManual();
    const erros=[];
@@ -994,6 +1086,20 @@
     }else{
      estado.textContent='Produto salvo sem foto, como rascunho. Selecione uma imagem para publicar.';
      criar.textContent='Produto salvo';
+    }
+    // Produto agora existe no cadastro real (PUBLICADO ou RASCUNHO).
+    // Retirar apenas o formulário temporário, para não duplicar entradas.
+    formularioFinalizado=true;
+    clearTimeout(temporizadorRascunho);
+    if(rascunhoId){
+     try{
+      await fetchJson('/api/admin/catalogo-midia/rascunhos-formulario/'+
+       rascunhoId+'/excluir',{
+       method:'POST',headers:{'Content-Type':'application/json',
+        'X-Loop-Admin-Csrf':csrf},body:'{}'
+      });
+     }catch(e){avisoRascunho.textContent=
+      'Produto salvo, mas o rascunho anterior ainda precisa ser descartado: '+e.message;}
     }
     criar.disabled=true;
     const editar=document.createElement('button');
