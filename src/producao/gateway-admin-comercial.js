@@ -71,8 +71,7 @@ function montarGatewayAdminComercial(app,{
  // Relatorios do operador apenas sobre o mesmo banco e a leitura comercial
  // ja autorizada. Nao instanciam checkout nem manipulam posicoes.
  const relatorioComercial=contas&&motorLoop&&
-  contas.banco===motorLoop.banco&&pedidosComerciais&&
-  typeof pedidosComerciais.listarDoTitular==='function'?
+  contas.banco===motorLoop.banco?
   criarRelatorioClientesProdutosOperador({banco:contas.banco}):null;
  const cookieValor=req=>{
   const raw=req.get('cookie')||'';
