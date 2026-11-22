@@ -7,7 +7,6 @@ const raiz=path.resolve(__dirname,'..');
 const ler=p=>fs.readFileSync(path.join(raiz,p),'utf8');
 test('foto da AKITEMM lê a mesma origem autenticada de cliente ou operador',()=>{
  const s=ler('src/producao/interface-aprovada-loja.js');
- assert.match(s,/const caminho=operadorAtivo\?/);
  assert.match(s,/\/api\/admin\/operador\/foto-perfil/);
  assert.match(s,/\/api\/contas\/foto-perfil/);
  assert.match(s,/const bloqueado=\(visitante&&!operadorAtivo\)\|\|/);

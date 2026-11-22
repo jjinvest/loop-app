@@ -2616,7 +2616,7 @@
     },
     {
       "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
-      "sha": "380428654e5d6579333ec1ee2cd3ecee7b6d93d8"
+      "sha": "4f44cfcea8563f8108f4cb7be69d902ec28acfe8"
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
@@ -3992,6 +3992,12 @@
       "antes": "b87f920af324803842eb3428da0912c0ca25a267",
       "depois": "380428654e5d6579333ec1ee2cd3ecee7b6d93d8",
       "objetivo": "Isolamento entre foto privada do cliente real e foto do operador, inclusive quando operador escolhe visão pública; regressão visual AKITEMM sem alterar o motor."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "380428654e5d6579333ec1ee2cd3ecee7b6d93d8",
+      "depois": "4f44cfcea8563f8108f4cb7be69d902ec28acfe8",
+      "objetivo": "Assegurar que o avatar na loja pertence ao cliente autenticado ou ao operador, não à visualização pública administrativa."
     }
   ]
 }
