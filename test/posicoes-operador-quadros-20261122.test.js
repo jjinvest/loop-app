@@ -48,7 +48,7 @@ test('filas A e B: esquerda mostra primeiro clicável, direita mostra total',()=
  assert.equal(filas.className,'loop03-resumo-quadro loop03-resumo-filas');
  assert.equal(tabuleiro.className,'loop03-resumo-quadro loop03-resumo-tabuleiro');
  assert.equal(filas.children[0].textContent,'FILAS');
- assert.equal(tabuleiro.children[0].textContent,'TABULEIRO');
+ assert.equal(tabuleiro.children[0].textContent,'TABULEIRO / RELÓGIO DO TEMPO');
  assert.deepEqual(valores(filas.children[1]),
   [['Primeiro da fila A','#101'],['Total da fila A','6']]);
  assert.deepEqual(valores(filas.children[3]),
@@ -61,10 +61,10 @@ test('filas A e B: esquerda mostra primeiro clicável, direita mostra total',()=
 test('relógio: ciclo atual à esquerda, acumulado à direita, dia separado',()=>{
  const d=executar(estado());
  const tabuleiro=d.children[1];
- assert.equal(tabuleiro.children[1].textContent,'RELÓGIO DO TEMPO');
- assert.deepEqual(valores(tabuleiro.children[2]),[
+ assert.equal(tabuleiro.children[0].textContent,'TABULEIRO / RELÓGIO DO TEMPO');
+ assert.deepEqual(valores(tabuleiro.children[1]),[
   ['Eventos no ciclo','4 / 6'],['Eventos acumulados','736']]);
- assert.deepEqual(valores(tabuleiro.children[3]),[
+ assert.deepEqual(valores(tabuleiro.children[2]),[
   ['Centros concluídos hoje','2'],
   ['Ciclos concluídos no total','122']]);
  assert.equal(JSON.stringify(d).includes('SEM GIRO FINANCEIRO'),false);
@@ -77,9 +77,9 @@ test('sem configuração ou fila vazia, não inventa pagamentos nem posição',(
   ['Primeiro da fila A','—'],['Total da fila A','0']]);
  assert.deepEqual(valores(d.children[0].children[3]),[
   ['Primeiro da fila B','—'],['Total da fila B','0']]);
- assert.deepEqual(valores(d.children[1].children[2]),[
+ assert.deepEqual(valores(d.children[1].children[1]),[
   ['Eventos no ciclo','0 / 6'],['Eventos acumulados','—']]);
- assert.deepEqual(valores(d.children[1].children[3]),[
+ assert.deepEqual(valores(d.children[1].children[2]),[
   ['Centros concluídos hoje','—'],
   ['Ciclos concluídos no total','—']]);
 });
