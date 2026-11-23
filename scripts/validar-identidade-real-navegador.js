@@ -435,8 +435,8 @@ async function main(){
    assert.equal(placarOperador.total,3);
    assert.deepEqual(placarOperador.pontas,
     ['POSIÇÕES NAS FILAS','EVENTOS NO CICLO']);
-   assert.equal(placarOperador.topo,'CICLOS / 24H');
-   assert.equal(placarOperador.baixo,'LUZES / 24H');
+   assert.equal(placarOperador.topo,'CICLOS DE HOJE');
+   assert.equal(placarOperador.baixo,'LUZES DE HOJE');
    assert.equal(placarOperador.topoId,'loop03Giros24Integrado');
    assert.equal(placarOperador.baixoId,'loop03LuzesHoraIntegrado');
    assert.equal(placarOperador.visivel,true);

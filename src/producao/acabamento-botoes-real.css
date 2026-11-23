@@ -1161,3 +1161,48 @@ body.loop03-modo-operador #adminResumoPosicoes .loop03-fila-lista-operador butto
 body:not(.loop03-modo-operador) #loop03TotalFilaBRodape{
  display:none!important;
 }
+
+
+/* Painel de douradas pertence apenas ao escritório OPERADOR, nunca ao cliente. */
+body.loop03-modo-operador #conteudoPosicoes .loop03-douradas-painel{
+ display:block;margin:14px 0;padding:14px;border:1px solid #a8906299;
+ border-radius:15px;background:linear-gradient(150deg,#1d242c,#121d2b);
+ color:#eee4ce;box-sizing:border-box;min-width:0;max-width:100%;
+}
+body:not(.loop03-modo-operador) #adminDouradasOperador{display:none!important}
+body.loop03-modo-operador #adminDouradasOperador h3{
+ margin:0 0 10px;text-align:center;color:#eed69f;font-size:clamp(.9rem,2.2vw,1.1rem);
+}
+body.loop03-modo-operador #adminDouradasOperador .loop03-douradas-duplo{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+ min-width:0;align-items:stretch;
+}
+body.loop03-modo-operador #adminDouradasOperador .loop03-douradas-lado{
+ padding:10px;min-width:0;max-width:100%;overflow-wrap:anywhere;
+ border:1px solid #ad96654f;border-radius:11px;background:#192432;
+ display:flex;flex-direction:column;gap:7px;align-items:stretch;
+}
+body.loop03-modo-operador #adminDouradasOperador h4{
+ margin:2px 0 5px;color:#e9d498;font-size:clamp(.68rem,1.7vw,.92rem);
+}
+body.loop03-modo-operador #adminDouradasOperador label,
+body.loop03-modo-operador #adminDouradasOperador p,
+body.loop03-modo-operador #adminDouradasOperador small{
+ margin:0;line-height:1.4;font-size:clamp(.66rem,1.8vw,.83rem);
+}
+body.loop03-modo-operador #adminDouradasOperador input{
+ box-sizing:border-box;min-width:0;width:100%;padding:10px 8px;
+ background:#131a25;color:#f9e8bb;border:1px solid #a99863;border-radius:9px;
+}
+body.loop03-modo-operador #adminDouradasOperador button{
+ cursor:pointer;box-sizing:border-box;min-width:0;width:100%;
+ min-height:39px;padding:8px 5px;color:#fff0c2;background:#354036;
+ border:1px solid #cbb67c;border-radius:9px;font:inherit;
+ font-size:clamp(.67rem,1.8vw,.84rem);
+}
+body.loop03-modo-operador #adminDouradasOperador button:disabled{
+ opacity:.6;cursor:wait;
+}
+body.loop03-modo-operador #adminDouradasOperador strong{
+ color:#f6dda8;font-variant-numeric:tabular-nums;font-size:1.05em;
+}

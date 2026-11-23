@@ -9,8 +9,8 @@ test('os tres quadros pertencem ao shell comum de todas as abas do cliente',()=>
  const html=source('src/producao/interface-aprovada-loop.js');
  const css=source('src/producao/acabamento-botoes-real.css');
  const js=source('src/producao/interface-aprovada-contas.js');
- assert.match(html,/CICLOS \/ 24H/);
- assert.match(html,/LUZES \/ 24H/);
+ assert.match(html,/CICLOS DE HOJE/);
+ assert.match(html,/LUZES DE HOJE/);
  assert.match(html,/loop03LuzesHoraIntegrado/);
  assert.match(css,/#loop03IrPosicoesIntegrado>span/);
  assert.match(css,/#loop03StatusPosicao/);
@@ -31,7 +31,7 @@ test('contadores separados de giros persistidos e luzes no relógio',()=>{
  assert.match(visor,/const luzesHora=emTurno&&!finalizado/);
  assert.match(visor,/const luzes24h=\$\('loop03LuzesHoraIntegrado'\)/);
  assert.match(visor,/if\(resumo&&compartilhado&&operadorAberto\)/);
- assert.match(visor,/String\(Math\.floor\(estado\.passadas\/6\)\)/);
+ assert.match(visor,/const centrosDia=fonteDia\?Math\.floor\(hoje\/6\)/);
  assert.doesNotMatch(visor,/Nao renomear GIROS NAS ULTIMAS 24H/);
 });
 
@@ -39,7 +39,7 @@ test('moldura central do operador usa ciclos confirmados e luzes do turno do cli
  const vm=require('node:vm');
  const js=source('src/producao/interface-aprovada-contas.js');
  const visor=source('src/shared/visor-catraca.js');
- assert.match(js,/caixas\[1\]\.querySelector\('small'\)\.textContent='CICLOS \/ 24H'/);
+ assert.match(js,/caixas\[1\]\.querySelector\('small'\)\.textContent='CICLOS DE HOJE'/);
  assert.match(js,/controle\.agenda\.ciclosRelogio24h!==controle\.ciclosRelogio24h/);
  assert.doesNotMatch(visor,/giros\.textContent=String\(movimentosRelogio\)/);
  function executar(operador){

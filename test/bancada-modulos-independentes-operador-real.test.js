@@ -184,13 +184,17 @@ test('a fila conectada cruza a porteira da catraca somente por abertura expressa
  assert.equal(c.teste.consultar().catraca.porteiraAberta,false);
  assert.equal(c.teste.consultar().catraca.tabuleiro.eventosNoCiclo,0);
 });
-test('operador oferece comandos do fluxo mecanico sem chamar de compra real',()=>{
- const browser=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+test('Central oferece os comandos isolados; escritório do operador fica sem bancada',()=>{
+ const page=fs.readFileSync('src/producao/interface-admin-comercial-aprovada.js','utf8');
+ const client=fs.readFileSync('src/producao/interface-admin-comercial-client.js','utf8');
+ const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
  for(const id of ['adminTesteFormCatracaFila','adminTesteNomeCatraca',
   'adminTestePromoverCatracaFila','adminTesteAbrirPorteiraCatraca',
   'adminTesteFecharPorteiraCatraca'])
-  assert.ok(browser.includes(id),'controle ausente: '+id);
- assert.match(browser,/CATRACA_ENTRAR/);
- assert.match(browser,/CATRACA_PROMOVER/);
- assert.match(browser,/não são compras da AKITEMM/);
+  assert.ok(page.includes(id),'controle nao movido para a Central: '+id);
+ assert.match(page,/TESTES OPERACIONAIS · FILAS E CATRACA/);
+ assert.match(page,/não criam dinheiro, posições de clientes nem giros financeiros/);
+ assert.match(client,/CATRACA_ENTRAR/);
+ assert.match(client,/CATRACA_PROMOVER/);
+ assert.doesNotMatch(office,/'<section id="adminTesteModulos"/);
 });

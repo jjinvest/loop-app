@@ -520,49 +520,29 @@
     '<div id="adminResumoPosicoes" class="loop03-resumo-duplo" role="status" aria-live="polite">Consultando filas do servidor…</div>',
     '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarPosicoes">Atualizar posições</button><a href="/administrador">Gerenciar na Central</a></div>',
     '<div id="adminResumoComercial" class="loop03-resumo-duplo loop03-resumo-comercial" role="status" aria-live="polite">Consultando clientes e produtos vendidos…</div>',
-    '<section id="adminTesteModulos" aria-label="Testes operacionais de filas e catraca">',
-    '<h3>TESTES OPERACIONAIS · FILA E CATRACA</h3>',
-    '<p>Execute cada mecanismo de forma independente. A porteira da catraca fica fechada durante o giro; o relógio usa a programação do operador.</p>',
-    '<div class="loop03-admin-acoes">',
-    '<button type="button" id="adminTesteCarregarCatraca">Carregar 7 posições no tabuleiro</button>',
-    '<button type="button" id="adminTesteIniciarCatraca">Iniciar catraca</button>',
-    '<button type="button" id="adminTestePausarCatraca">Pausar catraca</button>',
-    '<button type="button" id="adminTestePulsoCatraca">Executar uma luz (manual)</button>',
-    '<button type="button" id="adminTesteReiniciarCatraca">Reiniciar teste da catraca</button>',
-    '<button type="button" id="adminTesteVerCatraca">Ver catraca no tabuleiro</button>',
-    '</div>',
-    '<div id="adminTesteEstadoCatraca" class="loop03-admin-dado" role="status" aria-live="polite">Consultando movimentos do motor…</div>',
-    '<h4>Integração mecânica · fila conectada à catraca</h4>',
-    '<p>Somente posições de ensaio: não são compras da AKITEMM nem envolvem dinheiro ou clientes. A porteira continua fechada por padrão.</p>',
-    '<form id="adminTesteFormCatracaFila" class="loop03-admin-campos">',
-    '<label for="adminTesteNomeCatraca">Nome da posição de ensaio</label>',
-    '<input id="adminTesteNomeCatraca" type="text" minlength="2" maxlength="70" required placeholder="Ex.: Maria">',
-    '<div class="loop03-admin-acoes"><button type="submit">Adicionar à fila conectada</button></div></form>',
-    '<div class="loop03-admin-acoes">',
-    '<label for="adminTestePosicaoCatraca">Posição para indicação de ensaio</label>',
-    '<input id="adminTestePosicaoCatraca" type="number" min="1" step="1" inputmode="numeric">',
-    '<button type="button" id="adminTestePromoverCatracaFila">Promover posição para A</button>',
-    '<button type="button" id="adminTesteAbrirPorteiraCatraca">Abrir porteira da catraca</button>',
-    '<button type="button" id="adminTesteFecharPorteiraCatraca">Fechar porteira da catraca</button>',
-    '</div>',
-    '<form id="adminTesteFormFila" class="loop03-admin-campos">',
-    '<label for="adminTesteNomeFila">Nome da posição para testar a fila</label>',
-    '<input id="adminTesteNomeFila" type="text" minlength="2" maxlength="70" required placeholder="Ex.: Maria">',
-    '<div class="loop03-admin-acoes"><button type="submit">Inserir posição na fila B</button></div></form>',
-    '<div class="loop03-admin-acoes">',
-    '<label for="adminTestePosicaoPromover">Número da posição</label>',
-    '<input id="adminTestePosicaoPromover" type="number" min="1" step="1" inputmode="numeric">',
-    '<button type="button" id="adminTestePromoverFila">Testar promoção para A</button>',
-    '<button type="button" id="adminTesteAbrirPorteira">Abrir porteira da fila</button>',
-    '<button type="button" id="adminTesteFecharPorteira">Fechar porteira da fila</button>',
-    '<button type="button" id="adminTestePreencherFila">Abastecer tabuleiro sem giro</button>',
-    '<button type="button" id="adminTesteReiniciarFila">Reiniciar teste das filas</button>',
-    '<button type="button" id="adminTesteVerFilas">Ver filas no tabuleiro</button>',
-    '<button type="button" id="adminTesteVerOriginal">Ver tabuleiro normal</button>',
-    '</div>',
-    '<div id="adminTesteEstadoFila" class="loop03-admin-dado" role="status" aria-live="polite">Consultando sequência da fila…</div>',
-    '<p id="adminTesteMensagem" class="loop03-admin-dado" role="status" aria-live="polite"></p>',
-    '</section>'
+    '<section id="adminDouradasOperador" class="loop03-douradas-painel" aria-label="Posições douradas e azuis">',
+    '<h3>CONTROLE DE BOLAS DOURADAS</h3>',
+    '<div class="loop03-douradas-duplo">',
+    '<form id="adminDouradasCriar" class="loop03-douradas-lado">',
+    '<h4>CRIAR BOLA DOURADA</h4>',
+    '<label for="adminDouradasMotivo">Motivo da criação (auditado)</label>',
+    '<input id="adminDouradasMotivo" minlength="8" maxlength="200" required placeholder="Ex.: reserva empresarial autorizada">',
+    '<button type="submit" id="adminDouradasBotao">Criar posição dourada</button>',
+    '<p id="adminDouradasMensagem" role="status" aria-live="polite">Criação operacional: não debita caixa e não faz pagamento.</p>',
+    '</form>',
+    '<div class="loop03-douradas-lado" aria-live="polite">',
+    '<h4>DOURADAS E AZUIS</h4>',
+    '<p>Douradas no motor: <strong id="adminDouradasTotal">—</strong></p>',
+    '<p>Geradas manualmente: <strong id="adminDouradasManuais">—</strong></p>',
+    '<p>Azuis convertidas: <strong id="adminDouradasConvertidas">—</strong></p>',
+    '<p>Desistências: <strong id="adminDouradasDesistentes">—</strong></p>',
+    '<p>Azuis aguardando confirmação: <strong id="adminAzuisPendentes">—</strong></p>',
+    '<h4>COFRE DAS DOURADAS</h4>',
+    '<p>Posições destinadas: <strong id="adminCofreDouradasPosicoes">—</strong></p>',
+    '<p>Saldo bancário: <strong id="adminCofreDouradasSaldo">—</strong></p>',
+    '<small id="adminCofreDouradasEstado">Aguardando conciliação bancária</small>',
+    '<button id="adminDouradasAtualizar" type="button">Atualizar contagem</button>',
+    '</div></div></section>'
    ],
    conteudoEquipe:[
     '<h2>Cadastros · Operador</h2>',
@@ -626,6 +606,86 @@
   const cofres=$('loop03CofresOperador');
   const comercial=$('adminResumoComercial');
   if(cofres&&comercial)comercial.after(cofres);
+  let douradasBusy=false,ultimaLeituraDouradas=0,operacaoDouradaPendente=null;
+  async function lerDouradas({forcar=false}={}){
+   if(!modoOperadorAtual||!$('adminDouradasOperador')||douradasBusy||
+      (!forcar&&Date.now()-ultimaLeituraDouradas<12000))return;
+   douradasBusy=true;
+   try{
+    const r=await fetch('/api/admin/loop/douradas',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    if(!r.ok)throw Error('CONTAGEM_DOURADAS_INDISPONIVEL');
+    const d=await r.json();
+    const campos=['douradasTotal','douradasManuais',
+     'douradasConvertidasAzuis','douradasPorDesistencia','azuisPendentes'];
+    if(d.fonte!=='SNAPSHOT_E_REGISTROS_AUDITADOS_MESMO_SQLITE'||
+       d.somenteLeitura!==true||d.financeiroReal!==false||
+       d.nenhumaMovimentacaoFinanceiraExecutada!==true||
+       campos.some(k=>!Number.isSafeInteger(d[k])||d[k]<0)||
+       d.douradasTotal!==d.douradasManuais+d.douradasConvertidasAzuis+
+        d.douradasPorDesistencia||
+       d.cofreDouradas?.posicoesRegistradas!==d.douradasTotal||
+       d.cofreDouradas?.saldoCentavos!==null)
+     throw Error('DOURADAS_FONTE_INCONSISTENTE');
+    for(const [id,k] of [['adminDouradasTotal','douradasTotal'],
+     ['adminDouradasManuais','douradasManuais'],
+     ['adminDouradasConvertidas','douradasConvertidasAzuis'],
+     ['adminDouradasDesistentes','douradasPorDesistencia'],
+     ['adminAzuisPendentes','azuisPendentes']])
+     $(id).textContent=String(d[k]);
+    $('adminCofreDouradasPosicoes').textContent=String(d.douradasTotal);
+    $('adminCofreDouradasSaldo').textContent='—';
+    $('adminCofreDouradasEstado').textContent=
+     'Todas as douradas destinadas ao cofre · valor aguardando prova bancária';
+    ultimaLeituraDouradas=Date.now();
+   }catch{
+    for(const id of ['adminDouradasTotal','adminDouradasManuais',
+     'adminDouradasConvertidas','adminDouradasDesistentes',
+     'adminAzuisPendentes','adminCofreDouradasPosicoes',
+     'adminCofreDouradasSaldo'])if($(id))$(id).textContent='—';
+    $('adminCofreDouradasEstado').textContent=
+     'Contagem indisponível; sem saldo bancário presumido.';
+   }finally{douradasBusy=false;}
+  }
+  $('adminDouradasAtualizar')?.addEventListener('click',()=>
+   void lerDouradas({forcar:true}));
+  $('adminDouradasCriar')?.addEventListener('submit',async e=>{
+   e.preventDefault();
+   if(!modoOperadorAtual)return;
+   const motivo=$('adminDouradasMotivo').value.trim();
+   const botao=$('adminDouradasBotao'),estado=$('adminDouradasMensagem');
+   if(motivo.length<8||motivo.length>200){
+    estado.textContent='Informe motivo entre 8 e 200 caracteres.';return;
+   }
+   botao.disabled=true;
+   if(!operacaoDouradaPendente)operacaoDouradaPendente=crypto.randomUUID();
+   try{
+    const token=await obterCsrfOperadorReal();
+    const r=await fetch('/api/admin/loop/douradas',{
+     method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+     body:JSON.stringify({idOperacao:operacaoDouradaPendente,motivo})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!Number.isSafeInteger(d.numero)||d.numero<1)
+     throw Error(d.erro||'POSICAO_DOURADA_NAO_CONFIRMADA');
+    estado.textContent='Bola dourada #'+d.numero+
+     (d.repetida?' já registrada':' criada e auditada')+
+     '. Nenhum dinheiro movimentado.';
+    operacaoDouradaPendente=null;
+    $('adminDouradasMotivo').value='';
+    await lerDouradas({forcar:true});
+   }catch(err){
+    estado.textContent='Sem confirmação: '+err.message+
+     '. Tente novamente sem duplicar a operação.';
+   }finally{botao.disabled=false;}
+  });
+  setInterval(()=>{
+   if(modoOperadorAtual&&$('conteudoPosicoes')?.hidden===false)
+    void lerDouradas();
+  },15000);
+  void lerDouradas({forcar:true});
   // Testes operacionais separados das posicoes dos clientes: somente
   // sessao do operador; cada botao aciona uma transicao transacional.
   async function carregarBancadaOperador(){
@@ -1190,12 +1250,17 @@
   const tabuleiro=criar('section','loop03-resumo-quadro loop03-resumo-tabuleiro');
   tabuleiro.setAttribute('aria-label','Contadores visuais do relógio do tempo');
   tabuleiro.append(criar('h3','','TABULEIRO / RELÓGIO DO TEMPO'));
-  const luzesContinuas=relogio?.luzesRelogioAcumuladas??null;
+  // O dia de Brasília (00h-23h59) é a única referência de progresso.
+  // Após completar seis luzes, 6/6 permanece até a primeira luz seguinte.
+  const luzesDia=relogio?.luzesRelogioHoje??null;
+  const progressoDia=luzesDia===null?eventos:
+   (luzesDia===0?0:((luzesDia-1)%6)+1);
   tabuleiro.append(linha(
-   metade('Eventos no ciclo',luzesContinuas===null?
-    eventos+' / 6':(luzesContinuas%6)+' / 6'),
+   metade('Eventos no ciclo',progressoDia+' / 6'),
    metade('Eventos acumulados',relogio?
     relogio.luzesRelogioAcumuladas:'—')));
+  if(relogio)tabuleiro.append(criar('small','loop03-luzes-hoje',
+   'Luzes acesas hoje: '+luzesDia));
   tabuleiro.append(linha(
    metade('Centros concluídos hoje',relogio?
     relogio.ciclosRelogioHoje:'—'),
@@ -1514,7 +1579,7 @@
   if(caixas.length===3){
    caixas[0].querySelector('small').textContent='POSIÇÕES NAS FILAS';
    caixas[0].querySelector('span').textContent='Ver posições e filas';
-   caixas[1].querySelector('small').textContent='CICLOS / 24H';
+   caixas[1].querySelector('small').textContent='CICLOS DE HOJE';
    caixas[2].querySelector('small').textContent='EVENTOS NO CICLO';
   }
   void carregarTabuleiroOperador();
@@ -1551,7 +1616,7 @@
   const indicadoresCliente=document.querySelectorAll('.loop03-indicadores .loop03-indicador');
   if(indicadoresCliente.length===3){
    indicadoresCliente[0].querySelector('small').textContent='MINHAS POSIÇÕES';
-   indicadoresCliente[1].querySelector('small').textContent='CICLOS / 24H';
+   indicadoresCliente[1].querySelector('small').textContent='CICLOS DE HOJE';
    indicadoresCliente[2].querySelector('small').textContent='POSIÇÃO SELECIONADA';
   }
   $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
@@ -2316,7 +2381,7 @@
    mostrarTotaisFilasRodape(d.filaA,d.filaB,false);
    atualizarTopoPosicaoReal();
    if(popupPosicoesRealAberto)preencherPopupReal();
-   // O visor central usa somente o mesmo resumo de 24h nos dois perfis.
+   // O visor central usa o mesmo dia civil de Brasília nos dois perfis.
    visorCatraca.registrarAgenda(d.agenda);
   }catch{
    // Uma leitura indisponível não altera cartões, posições ou contas.
@@ -3273,7 +3338,7 @@
 
    $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
     ' / '+String(d.limitePosicoesAtivas);
-   // O visor central usa a mesma contagem visual de 24 horas.
+   // O visor central usa a mesma contagem visual por dia de Brasília.
    const seletor=$('seletorPosicaoMotor');
    const seletorRotulo=$('rotuloSeletorPosicaoMotor');
    if(seletor){

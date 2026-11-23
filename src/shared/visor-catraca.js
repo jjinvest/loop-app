@@ -107,16 +107,25 @@
    const resumo=$('loop03StatusPosicao'),selecionada=$('loop03NumeroIntegrado');
    const operadorAberto=document.body?.classList?.contains?.('loop03-modo-operador')===true;
    if(compartilhado){
+    // Contagem CANÔNICA: o servidor conta do 00h ao 23h59 em Brasília.
+    // A janela móvel de 24h e a projeção local da agenda NÃO substituem
+    // os registros do dia; o cronômetro local só estima a próxima luz.
+    const hoje=agendaVisorCatraca?.luzesRelogioHoje;
+    const fonteDia=Number.isSafeInteger(hoje)&&hoje>=0;
+    const luzesDia=fonteDia?hoje:(valido?estado.passadas:null);
+    const centrosDia=fonteDia?Math.floor(hoje/6):
+     (valido?Math.floor(estado.passadas/6):null);
+    const pulsosMeta=agendaVisorCatraca?.metaLotes?.quantidade;
+    const totalMeta=Number.isSafeInteger(pulsosMeta)&&pulsosMeta>=0?
+     pulsosMeta*6:(valido?estado.total:null);
     const ciclos=$('loop03Giros24Integrado');
-    if(ciclos)ciclos.textContent=valido?
-     String(Math.floor(estado.passadas/6)):'—';
+    if(ciclos)ciclos.textContent=centrosDia===null?'—':
+     String(centrosDia);
     const luzes24h=$('loop03LuzesHoraIntegrado');
-    // Exibe o progresso do turno no mesmo cartão em ambos os perfis.
-    // Ex.: 12/60, depois 60/60, sem somar pulsos históricos ou giros.
-    if(luzes24h)luzes24h.textContent=valido?
-     estado.passadas+' / '+estado.total:'—';
-    if(operadorAberto&&selecionada&&valido){
-     selecionada.textContent=estado.luzes+' / 6';
+    if(luzes24h)luzes24h.textContent=luzesDia===null?'—':
+     luzesDia+' / '+(totalMeta===null?'—':totalMeta);
+    if(operadorAberto&&selecionada&&luzesDia!==null){
+     selecionada.textContent=(luzesDia===0?0:((luzesDia-1)%6)+1)+' / 6';
      const titulo=selecionada.parentElement?.querySelector?.('small');
      if(titulo)titulo.textContent='EVENTOS NO CICLO';
     }
