@@ -1181,3 +1181,27 @@ body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-
  color:#ffe9ac!important;opacity:1!important;
  box-shadow:0 0 0 1px #eac47855 inset;
 }
+
+
+/* Filas reais A/B: altura para dez posições, com rolagem da lista.
+   Somente o Tabuleiro; mantém roda, largura, cores e motor aprovados. */
+.cliente-integrado #conteudoTabuleiro .loop03-mapa-grade{
+ align-items:stretch;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+ box-sizing:border-box;display:flex;flex-direction:column;
+ align-self:stretch;min-width:0;min-height:clamp(490px,39vw,560px);
+ overflow:hidden;
+}
+.cliente-integrado #conteudoTabuleiro #motorFilaA,
+.cliente-integrado #conteudoTabuleiro #motorFilaB{
+ box-sizing:border-box;flex:1 1 auto;min-height:0;
+ overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;
+ -webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;scrollbar-color:#cba861 #172037;
+}
+@media(max-width:600px){
+ .cliente-integrado #conteudoTabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+  min-height:355px;
+ }
+}

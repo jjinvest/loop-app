@@ -730,7 +730,8 @@ test('Tabuleiro preserva a contagem junto da roda e remove duplicacao do rodape'
  assert.match(html,/id="motorContadorEventos"/);
  assert.match(html,/<p id="estadoTabuleiroIntegrado" role="alert" hidden><\/p>/);
  assert.match(html,/id="tabuleiroVerPosicoesIntegrado">Ver minhas posições<\/button>/);
- assert.match(cliente,/\$\('motorContadorEventos'\)\.textContent=motor\.tabuleiro\.eventosNoCiclo\+/);
+ assert.doesNotMatch(cliente,/\$\('motorContadorEventos'\)\.textContent=motor\.tabuleiro\.eventosNoCiclo\+/);
+ assert.match(cliente,/visorCatraca\.registrarAgenda\(motor\.agenda\)/);
  assert.doesNotMatch(cliente,/estado\.textContent=motor\.tabuleiro\.eventosNoCiclo\+/);
  assert.match(cliente,/estado\.textContent='';\s*estado\.hidden=true/);
  assert.match(cliente,/estado\.hidden=false/);

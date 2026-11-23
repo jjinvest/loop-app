@@ -686,8 +686,9 @@ async function atualizarTabuleiroIntegrado(){
   motor.tabuleiro.vagas.forEach((p,i)=>
    visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),p));
   visualTabuleiro.preencherLuzes(motor.tabuleiro.eventosNoCiclo);
-  $('motorContadorEventos').textContent=motor.tabuleiro.eventosNoCiclo+
-   ' de 6 eventos neste ciclo';
+  // Mensagem da catraca é atualizada pelo visor compartilhado;
+  // o evento do motor continua disponível sem texto duplicado.
+
   // Nao copiar contagens de ensaio para o indicador da catraca real.
   $('loop03Giros24Integrado').textContent='—';
   visorCatraca.registrarAgenda(motor.agenda);

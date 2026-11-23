@@ -69,9 +69,9 @@ test('operador e cliente recebem o mesmo cronômetro e ciclos representativos se
  assert.equal(cliente.loop03Giros24Integrado.textContent,
   String(Math.floor(Number(cliente.loop03LuzesHoraIntegrado.textContent.split(' / ')[0])/6)));
  assert.match(cliente.loop03LuzesHoraIntegrado.textContent,/^\d+ \/ 600$/);
- assert.equal(cliente.motorContadorEventos.textContent.match(
-  /Eventos confirmados: 0 de 6/)?.[0],
-  'Eventos confirmados: 0 de 6');
+ assert.equal(cliente.motorContadorEventos.textContent,
+  'RELÓGIO DE PARTICIPAÇÃO DE LUCRO — EM ANDAMENTO');
+ assert.equal(mesmaAgenda.eventosReaisNoCiclo,0);
  // Mesma luz visível nunca é contabilizada como giro real.
  assert.equal(mesmaAgenda.girosReaisHoje,0);
 });
