@@ -61,7 +61,7 @@ test('a expansão usa a caixa aprovada e controla páginas no cliente real',()=>
  const css=fs.readFileSync(path.join(__dirname,'../src/candidato/escritorio-cliente-integrado.css'),'utf8');
  assert.match(ui,/atualizarFilasAncoradas/);
  assert.match(ui,/desdeInicio=1/);
- assert.match(ui,/d\.janela\.length>10/);
+ assert.match(ui,/d\.janela\.length>20/);
  assert.match(ui,/d\.pagina\.length>30/);
  assert.match(ui,/Carregar mais posições/);
  assert.match(css,/\.loop03-fila-paginada/);
@@ -82,11 +82,11 @@ test('quadros A/B clicáveis e acessíveis mesmo quando estão vazios',()=>{
  assert.match(js,/filaSelecionada===fila/);
 });
 
-test('exibicao global tem 10 no painel e 30 por pagina desde 1, sem reordenar o motor',()=>{
+test('exibicao global tem 20 no PC e 10 no celular, com 30 por pagina, sem reordenar o motor',()=>{
  const {motor,titular}=montar();
  const primeira=motor.consultarFilaPaginada({titularId:titular,fila:'A',desdeInicio:true});
  assert.equal(primeira.total,95);
- assert.deepEqual(primeira.janela.map(p=>p.ordem),Array.from({length:10},(_,i)=>i+1));
+ assert.deepEqual(primeira.janela.map(p=>p.ordem),Array.from({length:20},(_,i)=>i+1));
  assert.equal(primeira.pagina.length,30);
  assert.deepEqual(primeira.pagina.map(p=>p.ordem),Array.from({length:30},(_,i)=>i+1));
  assert.equal(primeira.pagina[0].numero,1);
@@ -112,7 +112,7 @@ test('mil lugares permitem 34 paginas sem mudar o ID unico',()=>{
  }));
  motor._sim=()=>({filas:{filaA:fila,filaB:[]}});
  const primeira=motor.consultarFilaPaginada({titularId:titular,fila:'A',desdeInicio:true});
- assert.deepEqual(primeira.janela.map(p=>p.ordem),[1,2,3,4,5,6,7,8,9,10]);
+ assert.deepEqual(primeira.janela.map(p=>p.ordem),Array.from({length:20},(_,i)=>i+1));
  assert.equal(primeira.janela[0].numero,15000);
  const ultima=motor.consultarFilaPaginada({titularId:titular,fila:'A',pagina:33,desdeInicio:true});
  assert.equal(ultima.pagina.length,10);
@@ -121,4 +121,23 @@ test('mil lugares permitem 34 paginas sem mudar o ID unico',()=>{
  assert.equal(ultima.pagina[9].numero,24990);
  assert.equal(ultima.proximaPagina,null);
  assert.equal(fila[999].id,24990);
+});
+
+test('operador: página protegida mostra primeiro, total e somente números',()=>{
+ const {motor}=montar();
+ const r=motor.consultarFilaOperador({fila:'A'});
+ assert.equal(r.total,95);
+ assert.deepEqual(r.primeiro,{numero:1,ordem:1});
+ assert.equal(r.pagina.length,30);
+ assert.equal(r.proximaPagina,1);
+ assert.equal(r.somenteLeitura,true);
+ assert.equal(JSON.stringify(r).includes('titular-bbbbbbbb'),false);
+ const b=motor.consultarFilaOperador({fila:'B'});
+ assert.equal(b.total,3);
+ assert.equal(b.primeiro.numero,201);
+ assert.equal(b.pagina.length,3);
+ assert.deepEqual(Object.keys(b.pagina[0]).sort(),
+  ['dourada','numero','ordem','pendente']);
+ assert.throws(()=>motor.consultarFilaOperador({fila:'X'}),/FILA_OPERADOR_PARAMETROS_INVALIDOS/);
+ assert.throws(()=>motor.consultarFilaOperador({fila:'A',pagina:-1}),/FILA_OPERADOR_PARAMETROS_INVALIDOS/);
 });
