@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "12ca6747f60cc07926dbc3371828e5d9f1261a4b"
+      "sha": "ca2f377563f054fe6051cf5cfc54b47db6373047"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "848962ac8be5d6717fbddf42769ebd03b8033cb0"
+      "sha": "8bd9d9bb76d638ff271cc40561a4d3001b6884d4"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -3288,7 +3288,7 @@
     },
     {
       "path": "test/posicoes-operador-quadros-20261122.test.js",
-      "sha": "da0d5f7b56fb87457c938f2df40438462a8161ca"
+      "sha": "3ca3ea803418850ce47dfb082139a997dc154d90"
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
