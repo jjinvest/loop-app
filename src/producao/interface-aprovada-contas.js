@@ -101,7 +101,7 @@
  }
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
- let modoOperadorAtual=false;
+ let modoOperadorAtual=false,visualTesteModulo=null;
  let captchaCadastroId=null,captchaObrigatorio=false;
  let captchaLoginAtivo=false,captchaLoginId=null;
  const parametrosEntrada=new URLSearchParams(location.search);
@@ -520,6 +520,7 @@
     '<button type="button" id="adminTestePausarCatraca">Pausar catraca</button>',
     '<button type="button" id="adminTestePulsoCatraca">Executar uma luz (manual)</button>',
     '<button type="button" id="adminTesteReiniciarCatraca">Reiniciar teste da catraca</button>',
+    '<button type="button" id="adminTesteVerCatraca">Ver catraca no tabuleiro</button>',
     '</div>',
     '<div id="adminTesteEstadoCatraca" class="loop03-admin-dado" role="status" aria-live="polite">Consultando movimentos do motor…</div>',
     '<form id="adminTesteFormFila" class="loop03-admin-campos">',
@@ -534,6 +535,8 @@
     '<button type="button" id="adminTesteFecharPorteira">Fechar porteira da fila</button>',
     '<button type="button" id="adminTestePreencherFila">Abastecer tabuleiro sem giro</button>',
     '<button type="button" id="adminTesteReiniciarFila">Reiniciar teste das filas</button>',
+    '<button type="button" id="adminTesteVerFilas">Ver filas no tabuleiro</button>',
+    '<button type="button" id="adminTesteVerOriginal">Ver tabuleiro normal</button>',
     '</div>',
     '<div id="adminTesteEstadoFila" class="loop03-admin-dado" role="status" aria-live="polite">Consultando sequência da fila…</div>',
     '<p id="adminTesteMensagem" class="loop03-admin-dado" role="status" aria-live="polite"></p>',
@@ -672,6 +675,17 @@
    ['adminTestePreencherFila','FILA_PREENCHER_TABULEIRO'],
    ['adminTesteReiniciarFila','FILA_REINICIAR']])
    $(botao)?.addEventListener('click',()=>void comandarBancadaOperador(acao));
+  // Exibir a mesma tela aprovada com origem TESTE explicitamente marcada.
+  // Nenhum dado do ensaio e apresentado como posicao de cliente.
+  for(const [id,tipo] of [
+   ['adminTesteVerCatraca','CATRACA'],
+   ['adminTesteVerFilas','FILA'],
+   ['adminTesteVerOriginal',null]])
+   $(id)?.addEventListener('click',()=>{
+    visualTesteModulo=tipo;
+    $('abaTabuleiro')?.click();
+    void carregarTabuleiroOperador();
+   });
   $('adminTesteFormFila')?.addEventListener('submit',e=>{
    e.preventDefault();
    void comandarBancadaOperador('FILA_ENTRAR',{
@@ -2794,7 +2808,63 @@
    });
   }catch(e){status.textContent='Não foi possível abrir: '+e.message;}
  }
+ async function carregarTabuleiroTesteOperador(){
+  try{
+   const [rt,rc]=await Promise.all([
+    fetch('/api/admin/loop/testes-modulos',{
+     credentials:'same-origin',cache:'no-store'}),
+    fetch('/api/admin/loop/controle',{
+     credentials:'same-origin',cache:'no-store'})
+   ]);
+   if(!rt.ok||!rc.ok)throw Error('TESTE_MOTOR_INDISPONIVEL');
+   const [d,controle]=await Promise.all([rt.json(),rc.json()]);
+   if(!modoOperadorAtual||!visualTesteModulo)return;
+   if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
+      d.testandoModulosSeparados!==true||
+      !['FILA','CATRACA'].includes(visualTesteModulo))
+    throw Error('ORIGEM_DO_TESTE_INVALIDA');
+   const x=d[visualTesteModulo.toLowerCase()];
+   if(!x||!Array.isArray(x.filaA)||!Array.isArray(x.filaB)||
+      !Array.isArray(x.tabuleiro?.vagasPosicoes)||
+      x.tabuleiro.vagasPosicoes.length!==6||
+      !Number.isSafeInteger(x.tabuleiro.eventosNoCiclo)||
+      x.tabuleiro.eventosNoCiclo<0||x.tabuleiro.eventosNoCiclo>6||
+      !Number.isSafeInteger(x.tabuleiro.giros))
+    throw Error('SNAPSHOT_TESTE_INVALIDO');
+   visualTabuleiro.preencherFila('motorFilaA',x.filaA,'A',
+    {exibirNomesTeste:true});
+   visualTabuleiro.preencherFila('motorFilaB',x.filaB,'B',
+    {exibirNomesTeste:true});
+   visualTabuleiro.preencherVaga('tabuleiroMotorCentro',
+    x.tabuleiro.centroPosicao,true);
+   for(let i=0;i<6;i++)
+    visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),
+     x.tabuleiro.vagasPosicoes[i]);
+   // Com a bancada selecionada, as lampadas exibem eventos realmente
+   // contabilizados pelo motor, e NAO os marcos previstos do relogio.
+   visualTabuleiro.preencherLuzes(x.tabuleiro.eventosNoCiclo);
+   mostrarAgendaOperador(controle);
+   const agenda={...controle.agenda,luzesDoRelogioCompartilhado:false,
+    luzesDoRelogioOperador:false};
+   visorCatraca.registrarAgenda(agenda);
+   visorCatraca.observar(x.tabuleiro.giros,x.tabuleiro.eventosNoCiclo);
+   $('loop03TotalIntegrado').textContent=String(x.filaA.length+x.filaB.length);
+   $('loop03NumeroIntegrado').textContent=x.tabuleiro.eventosNoCiclo+' / 6';
+   $('estadoTabuleiroIntegrado').textContent='TESTE OPERACIONAL · '+
+    (visualTesteModulo==='FILA'?'FILAS A/B':'CATRACA')+
+    ' · '+(x.porteiraAberta?'PORTEIRA ABERTA':'PORTEIRA FECHADA')+
+    ' · '+x.tabuleiro.giros+' giros executados no motor';
+   $('estadoTabuleiroIntegrado').hidden=false;
+   void carregarAbaOperador('abaPosicoes');
+  }catch(e){
+   if(!modoOperadorAtual)return;
+   $('estadoTabuleiroIntegrado').textContent=
+    'Leitura do teste indisponível: '+e.message;
+   $('estadoTabuleiroIntegrado').hidden=false;
+  }
+ }
  async function carregarTabuleiroOperador(){
+  if(visualTesteModulo)return carregarTabuleiroTesteOperador();
   void carregarCofresOperador();
   try{
    // Reutiliza as rotas existentes da mesma sessao administrativa e motor real.
