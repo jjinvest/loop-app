@@ -141,7 +141,15 @@ class BancadaModulosLoopSQLite{
     filaA:sim.filas.filaA.map(p=>({id:p.id,nome:p.nome,titular:p.participanteId})),
     filaB:sim.filas.filaB.map(p=>({id:p.id,nome:p.nome,titular:p.participanteId})),
     tabuleiro:{centro:sim.tabuleiro.centro?.nome||null,
+     centroPosicao:sim.tabuleiro.centro?{
+      numero:sim.tabuleiro.centro.id,
+      nickVisual:/^[A-Za-z]{1,12}$/.test(sim.tabuleiro.centro.nome)?
+       sim.tabuleiro.centro.nome:null,
+      nome:sim.tabuleiro.centro.nome}:null,
      vagas:sim.tabuleiro.vagas.map(p=>p?.nome||null),
+     vagasPosicoes:sim.tabuleiro.vagas.map(p=>p?{
+      numero:p.id,nickVisual:/^[A-Za-z]{1,12}$/.test(p.nome)?p.nome:null,
+      nome:p.nome}:null),
      eventosNoCiclo:sim.tabuleiro.vendasDoCiclo.length,
      centrosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
      giros:sim.giros},
