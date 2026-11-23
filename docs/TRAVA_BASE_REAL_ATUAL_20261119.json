@@ -132,7 +132,7 @@
     },
     {
       "path": ".github/workflows/prova-movimento-modulos-20261123.yml",
-      "sha": "8c28bd815d51dbbefe5975df972f02bb3b32b440"
+      "sha": "da4cf1ab5b22f3eaf83c70ecda12c0f9ce603d5e"
     },
     {
       "path": ".github/workflows/prova-operador-akitemm.yml",
@@ -5637,6 +5637,13 @@
       "antes": "b5f7279af8ff43babbf59a018b38d0f83ecadcfb",
       "depois": "379ef45f8209d2e36ec902d4832010ccf42ff981",
       "objetivo": "Conservar testes isolados do placar sem binding de modo teste; proteger modo de teste no navegador real."
+    },
+    {
+      "data": "2026-11-23",
+      "path": ".github/workflows/prova-movimento-modulos-20261123.yml",
+      "antes": "8c28bd815d51dbbefe5975df972f02bb3b32b440",
+      "depois": "da4cf1ab5b22f3eaf83c70ecda12c0f9ce603d5e",
+      "objetivo": "Gate rapido inclui teste de regressao do placar compartihado, alem dos movimentos de fila/catraca."
     }
   ]
 }
