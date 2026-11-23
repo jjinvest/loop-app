@@ -477,6 +477,21 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    .json({erro:e?.codigo==='REDE_CURSOR_INVALIDO'?
     'PAGINACAO_INVALIDA':'REDE_INDISPONIVEL'});}
  });
+ // Sugestoes privadas: SEMPRE usa o titular da sessao; o navegador
+ // nao informa o dono da rede e nao recebe contatos de outras redes.
+ app.post('/api/contas/minha-rede/pesquisar',protegido,mutation,csrf,
+ (req,res)=>{
+  const b=req.body;
+  if(!b||Array.isArray(b)||Object.keys(b).join(',')!=='termo'||
+     typeof b.termo!=='string')
+   return res.status(400).json({erro:'BUSCA_REDE_INVALIDA'});
+  if(!limite(res,'carrinho',req.conta.titularId+':BUSCA_REDE'))return;
+  try{
+   return res.set('Cache-Control','private, no-store').json(
+    contas.pesquisarIndicados({titularId:req.conta.titularId,termo:b.termo}));
+  }catch(e){return res.status(e?.codigo==='BUSCA_REDE_INVALIDA'?400:503)
+   .json({erro:e?.codigo||'BUSCA_REDE_INDISPONIVEL'});}
+ });
  // Convite público definitivo com os mesmos links curtos do LOOP.
  // Não habilita cadastro nem benefício sem os gates oficiais do serviço.
  app.post('/api/contas/minha-rede/destino',protegido,mutation,csrf,
