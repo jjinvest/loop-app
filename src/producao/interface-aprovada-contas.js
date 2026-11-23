@@ -1127,58 +1127,149 @@
   });
  }
  function mostrarResumoPosicoesOperador(destino,d){
-  // Dois grupos visuais, uma única fonte autenticada do motor.
-  // Nenhum contador é inventado, e nenhuma operação financeira é executada.
   const totalA=d?.filaA,totalB=d?.filaB;
   const eventos=d?.tabuleiro?.eventosNoCiclo;
   const centros=d?.tabuleiro?.ciclosConcluidos;
   const relogio=d?.relogio??null;
-  if(relogio&&(!Number.isSafeInteger(relogio.luzesRelogio24h)||
-      relogio.luzesRelogio24h<0||
-      !Number.isSafeInteger(relogio.ciclosRelogio24h)||
-      relogio.ciclosRelogio24h!==Math.floor(relogio.luzesRelogio24h/6)))
-   throw Error('RESUMO_POSICOES_RELOGIO_INVALIDO');
-  const eventosVisiveis=relogio?relogio.luzesRelogio24h%6:eventos;
-  const centrosVisiveis=relogio?relogio.ciclosRelogio24h:centros;
   if(![totalA,totalB,eventos,centros].every(x=>
-     Number.isSafeInteger(x)&&x>=0)||eventos>6)
+      Number.isSafeInteger(x)&&x>=0)||eventos>6)
    throw Error('RESUMO_POSICOES_MOTOR_INVALIDO');
-  const cartao=(titulo,rotulo,pares,tipo)=>{
-   const quadro=document.createElement('section');
-   quadro.className='loop03-resumo-quadro loop03-resumo-'+tipo;
-   quadro.setAttribute('aria-label',rotulo);
-   const cabecalho=document.createElement('h3');
-   cabecalho.textContent=titulo;
-   quadro.appendChild(cabecalho);
-   if(tipo==='tabuleiro'&&d?.relogio){
-    const aviso=document.createElement('small');
-    aviso.className='loop03-resumo-origem-relogio';
-    aviso.textContent='RELÓGIO VISUAL · SEM GIRO FINANCEIRO';
-    quadro.appendChild(aviso);
-   }
-   for(const [nome,valor] of pares){
-    const indicador=document.createElement('div');
-    indicador.className='loop03-resumo-indicador';
-    const etiqueta=document.createElement('span');
-    etiqueta.textContent=nome;
-    const quantidade=document.createElement('strong');
-    quantidade.textContent=String(valor);
-    indicador.append(etiqueta,quantidade);
-    quadro.appendChild(indicador);
-   }
-   return quadro;
+  if(relogio&&[
+    'luzesRelogio24h','ciclosRelogio24h','luzesRelogioHoje',
+    'ciclosRelogioHoje','luzesRelogioAcumuladas',
+    'ciclosRelogioAcumulados'
+   ].some(k=>!Number.isSafeInteger(relogio[k])||relogio[k]<0))
+   throw Error('RESUMO_POSICOES_RELOGIO_INVALIDO');
+  if(relogio&&(relogio.ciclosRelogio24h!==
+       Math.floor(relogio.luzesRelogio24h/6)||
+       relogio.ciclosRelogioHoje!==Math.floor(relogio.luzesRelogioHoje/6)||
+       relogio.ciclosRelogioAcumulados!==
+        Math.floor(relogio.luzesRelogioAcumuladas/6)))
+   throw Error('RESUMO_POSICOES_RELOGIO_INVALIDO');
+  const criar=(tag,classe,valor)=>{
+   const el=document.createElement(tag);
+   if(classe)el.className=classe;
+   if(valor!==undefined)el.textContent=String(valor);
+   return el;
   };
-  destino.replaceChildren(
-   cartao('FILAS','Posições das filas A e B',[
-    ['Fila A',totalA],['Fila B',totalB]
-   ],'filas'),
-   cartao('TABULEIRO',relogio?
-    'Eventos e centros visuais do relógio, sem confirmar giro ou pagamento':
-    'Eventos e centros concluídos pelo motor',[
-    ['Eventos no ciclo',eventosVisiveis+' / 6'],
-    ['Centros concluídos',centrosVisiveis]
-   ],'tabuleiro')
-  );
+  const metade=(rotulo,valor,clicavel=false,fila=null)=>{
+   const el=criar(clicavel?'button':'div',
+    'loop03-resumo-metade'+(clicavel?' loop03-fila-abrir':''));
+   if(clicavel){
+    el.type='button';
+    el.setAttribute('data-admin-fila',fila);
+    el.setAttribute('aria-expanded','false');
+    el.setAttribute('aria-controls','adminDetalhesFila'+fila);
+   }
+   el.append(criar('span','',rotulo),criar('strong','',valor));
+   return el;
+  };
+  const linha=(esquerda,direita)=>{
+   const div=criar('div','loop03-resumo-indicador loop03-resumo-partido');
+   div.append(esquerda,direita);return div;
+  };
+  const filas=criar('section','loop03-resumo-quadro loop03-resumo-filas');
+  filas.setAttribute('aria-label','Primeiros lugares e totais das filas');
+  filas.append(criar('h3','','FILAS'));
+  for(const [fila,total] of [['A',totalA],['B',totalB]]){
+   const info=d?.filasResumo?.[fila];
+   if(info&&(!Number.isSafeInteger(info.total)||info.total!==total||
+      (info.primeiro!==null&&
+       (!Number.isSafeInteger(info.primeiro?.numero)||
+        info.primeiro.numero<1))))
+    throw Error('RESUMO_FILA_OPERADOR_DIVERGENTE');
+   const numero=info?.primeiro?.numero??null;
+   filas.append(linha(
+    metade('Primeiro da fila '+fila,numero===null?'—':'#'+numero,true,fila),
+    metade('Total da fila '+fila,total)));
+   const detalhes=criar('div','loop03-fila-lista-operador');
+   detalhes.id='adminDetalhesFila'+fila;
+   detalhes.hidden=true;
+   filas.append(detalhes);
+  }
+  const tabuleiro=criar('section','loop03-resumo-quadro loop03-resumo-tabuleiro');
+  tabuleiro.setAttribute('aria-label','Contadores visuais do relógio do tempo');
+  tabuleiro.append(criar('h3','','TABULEIRO / RELÓGIO DO TEMPO'));
+  const luzesContinuas=relogio?.luzesRelogioAcumuladas??null;
+  tabuleiro.append(linha(
+   metade('Eventos no ciclo',luzesContinuas===null?
+    eventos+' / 6':(luzesContinuas%6)+' / 6'),
+   metade('Eventos acumulados',relogio?
+    relogio.luzesRelogioAcumuladas:'—')));
+  tabuleiro.append(linha(
+   metade('Centros concluídos hoje',relogio?
+    relogio.ciclosRelogioHoje:'—'),
+   metade('Ciclos concluídos no total',relogio?
+    relogio.ciclosRelogioAcumulados:'—')));
+  destino.replaceChildren(filas,tabuleiro);
+ }
+ async function consultarFilaOperador(fila,pagina=0){
+  const r=await fetch('/api/admin/loop/filas?fila='+fila+'&pagina='+pagina,{
+   credentials:'same-origin',cache:'no-store'
+  });
+  if(!r.ok)throw Error('FILA_OPERADOR_INDISPONIVEL');
+  const d=await r.json();
+  if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
+     d.somenteLeitura!==true||d.fila!==fila||
+     !Number.isSafeInteger(d.total)||d.total<0||
+     !Array.isArray(d.pagina)||d.pagina.length>30||
+     d.pagina.some((p,i)=>p.ordem!==pagina*30+i+1||
+      !Number.isSafeInteger(p.numero)||p.numero<1))
+   throw Error('FILA_OPERADOR_RESPOSTA_INVALIDA');
+  return d;
+ }
+ async function expandirFilaOperador(fila){
+  const painel=$('adminDetalhesFila'+fila);
+  const botao=document.querySelector('[data-admin-fila="'+fila+'"]');
+  if(!modoOperadorAtual||visualTesteModulo!==null||!painel||!botao)return;
+  const abrir=painel.hidden;
+  for(const tipo of ['A','B']){
+   const area=$('adminDetalhesFila'+tipo);
+   const btn=document.querySelector('[data-admin-fila="'+tipo+'"]');
+   if(area)area.hidden=true;
+   if(btn)btn.setAttribute('aria-expanded','false');
+  }
+  if(!abrir)return;
+  painel.hidden=false;botao.setAttribute('aria-expanded','true');
+  painel.textContent='Consultando a ordem da fila '+fila+'…';
+  const tamanho=window.innerWidth<=680?10:20;
+  let itens=[],mostrados=0,proxima=0;
+  const carregar=async()=>{
+   try{
+    if(mostrados>=itens.length&&proxima!==null){
+     const paginaAtual=proxima;
+     const d=await consultarFilaOperador(fila,paginaAtual);
+     itens=itens.concat(d.pagina);
+     proxima=d.proximaPagina;
+    }
+    mostrados=Math.min(mostrados+tamanho,itens.length);
+    if(painel.hidden)return;
+    painel.replaceChildren();
+    const lista=document.createElement('ol');
+    lista.className='loop03-fila-operador-lista';
+    for(const pos of itens.slice(0,mostrados)){
+     const item=document.createElement('li');
+     item.textContent=pos.ordem+'º · posição #'+pos.numero+
+      (pos.dourada?' · Empresa':'');
+     lista.append(item);
+    }
+    painel.append(lista);
+    if(mostrados<itens.length||proxima!==null){
+     const mais=document.createElement('button');
+     mais.type='button';mais.textContent='Ver mais posições';
+     mais.addEventListener('click',()=>void carregar());
+     painel.append(mais);
+    }
+    if(!itens.length)painel.textContent='Fila vazia.';
+   }catch{painel.textContent='Lista indisponível. Consulte novamente.';}
+  };
+  await carregar();
+ }
+ function prepararExpansaoFilasOperador(){
+  for(const fila of ['A','B']){
+   const botao=document.querySelector('[data-admin-fila="'+fila+'"]');
+   botao?.addEventListener('click',()=>void expandirFilaOperador(fila));
+  }
  }
  function mostrarResumoComercialOperador(destino,d){
   if(!Number.isSafeInteger(d?.totalClientes)||d.totalClientes<0||
@@ -1270,10 +1361,15 @@
         a.luzesRelogio24h!==c.luzesRelogio24h||
         a.ciclosRelogio24h!==c.ciclosRelogio24h)
       throw Error('RELOGIO_MOTOR_DIVERGENTE');
+     const [filaA,filaB]=await Promise.all([
+      consultarFilaOperador('A'),consultarFilaOperador('B')
+     ]);
+     if(filaA.total!==d.filaA||filaB.total!==d.filaB)
+      throw Error('FILA_OPERADOR_TOTAL_DIVERGENTE');
      mostrarResumoPosicoesOperador(destino,{
-      ...d,relogio:{luzesRelogio24h:a.luzesRelogio24h,
-       ciclosRelogio24h:a.ciclosRelogio24h}
+      ...d,filasResumo:{A:filaA,B:filaB},relogio:a
      });
+     prepararExpansaoFilasOperador();
     }
    }else if(id==='abaFinanceiro'){
     destino.textContent='Modo da catraca: '+d.modo+
@@ -1381,6 +1477,7 @@
   $('loop03NickIntegrado').textContent='OPERADOR';
   $('loop03RodapeFilaIntegrado').hidden=true;
   $('loop03RodapeCoroaIntegrado').hidden=true;
+  mostrarTotaisFilasRodape(null,null,true);
   $('loop03AbrirPerfil').disabled=true;
   fecharDadosRodapeReal();
   // O operador tem seu proprio retrato; nao copia foto de titular.
@@ -2007,6 +2104,17 @@
   $('seletorPosicoesResumo').hidden=true;
   $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded','false');
  }
+ // Dois indicadores exclusivamente de posições nas filas:
+ // Cliente vê só A; operador vê A e B. Não é número de clientes distintos.
+ function mostrarTotaisFilasRodape(totalA,totalB,operador){
+  const a=$('loop03TotalFilaARodape'),b=$('loop03TotalFilaBRodape');
+  if(!a||!b)return;
+  const valido=x=>Number.isSafeInteger(x)&&x>=0;
+  a.hidden=!valido(totalA);
+  a.textContent=valido(totalA)?'Fila A · '+totalA:'';
+  b.hidden=!operador||!valido(totalB);
+  b.textContent=operador&&valido(totalB)?'Fila B · '+totalB:'';
+ }
  // Rodapé da mesma tela: nick e localização da posição selecionada
  // (ou a primeira ativa), sem transferir ID/indicações do placar superior.
  function atualizarSituacaoRodapeReal(posicoes=posicoesResumoReal){
@@ -2205,6 +2313,7 @@
    }
    $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
     ' / '+String(d.limitePosicoesAtivas);
+   mostrarTotaisFilasRodape(d.filaA,d.filaB,false);
    atualizarTopoPosicaoReal();
    if(popupPosicoesRealAberto)preencherPopupReal();
    // O visor central usa somente o mesmo resumo de 24h nos dois perfis.
@@ -2255,17 +2364,23 @@
       controle.girosTotais!==d.catraca.giros||
       controle.filaA!==d.filaA||controle.filaB!==d.filaB)return;
    $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
+   mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    $('loop03NumeroIntegrado').textContent=
     d.tabuleiro.eventosNoCiclo+' / 6';
    // A aba Posições acompanha a agenda a cada 15s, ainda que o
    // operador esteja fora do Tabuleiro. Não modifica eventos reais.
    if($('conteudoPosicoes')?.hidden===false&&
-      $('adminResumoPosicoes')&&
-      (typeof visualTesteModulo==='undefined'||visualTesteModulo===null)){
+      $('adminResumoPosicoes')&&visualTesteModulo===null&&
+      $('adminDetalhesFilaA')?.hidden!==false&&
+      $('adminDetalhesFilaB')?.hidden!==false){
+    const [filaA,filaB]=await Promise.all([
+     consultarFilaOperador('A'),consultarFilaOperador('B')
+    ]);
+    if(filaA.total!==d.filaA||filaB.total!==d.filaB)return;
     mostrarResumoPosicoesOperador($('adminResumoPosicoes'),{
-     ...d,relogio:{luzesRelogio24h:agenda.luzesRelogio24h,
-      ciclosRelogio24h:agenda.ciclosRelogio24h}
+     ...d,filasResumo:{A:filaA,B:filaB},relogio:agenda
     });
+    prepararExpansaoFilasOperador();
    }
    visorCatraca.registrarAgenda(agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
@@ -2549,7 +2664,7 @@
     const d=await r.json();
     if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||d.fila!==fila||
        !Number.isSafeInteger(d.total)||d.total<0||
-       !Array.isArray(d.janela)||d.janela.length>10||
+       !Array.isArray(d.janela)||d.janela.length>20||
        !Array.isArray(d.pagina)||d.pagina.length>30||
        d.janela.some((p,i)=>p.ordem!==i+1)||
        d.pagina.some((p,i)=>p.ordem!==pagina*30+i+1))
@@ -2559,7 +2674,8 @@
    try{
     const visao=await consultar(0);
     if(sequencia!==sequenciaLeituraFilas)return;
-    visualTabuleiro.preencherFila(id,visao.janela,fila);
+    visualTabuleiro.preencherFila(id,visao.janela.slice(
+     0,window.innerWidth<=680?10:20),fila);
     if(visao.total===0){
      const vazio=document.createElement('p');
      vazio.className='subtexto';vazio.textContent='Fila vazia.';
@@ -2567,8 +2683,9 @@
     }
     const situacao=document.createElement('p');
     situacao.className='loop03-fila-ordem-propria';
-    situacao.textContent='Primeiros '+Math.min(10,visao.total)+
-     ' lugares · total '+visao.total+' na Fila '+fila;
+    const limiteVisivel=window.innerWidth<=680?10:20;
+    situacao.textContent='Primeiros '+Math.min(limiteVisivel,visao.total)+
+     ' lugares'+(fila==='A'?' · total '+visao.total+' na Fila A':'');
     area.append(situacao);
     const titulo=document.createElement('p');
     titulo.className='subtexto';
@@ -3057,6 +3174,7 @@
     throw Error('TABULEIRO_ADMIN_FONTE_INVALIDA');
    visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
    visualTabuleiro.preencherFila('motorFilaB',d.filaB,'B');
+   mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
    for(let i=0;i<6;i++)
     visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),d.tabuleiro.vagas[i]);
@@ -3122,6 +3240,7 @@
    // O backend definitivo expõe somente contagens de terceiros.
    visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
    visualTabuleiro.preencherFila('motorFilaB',d.filaB,'B');
+   mostrarTotaisFilasRodape(d.filaA,d.filaB,false);
    const titularPorNumero=new Map(
     d.minhasPosicoes.map(p=>[p.numero,p])
    );

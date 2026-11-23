@@ -535,6 +535,23 @@ function montarGatewayAdminComercial(app,{
   }));}
   catch{return res.status(503).json({erro:'CADEIA_COMERCIAL_CONSULTA_INDISPONIVEL'});}
  });
+ // A lista da fila é EXCLUSIVA do operador e limitada a números públicos
+ // das posições: nunca inclui CPF, nick, telefone ou vínculo de titular.
+ app.get('/api/admin/loop/filas',proteger,(req,res)=>{
+  res.set('Cache-Control','private, no-store');
+  const keys=Object.keys(req.query);
+  const fila=req.query.fila,pagina=req.query.pagina??'0';
+  if(keys.some(k=>!['fila','pagina'].includes(k))||
+     !['A','B'].includes(fila)||
+     typeof pagina!=='string'||!/^(0|[1-9][0-9]*)$/.test(pagina)||
+     !Number.isSafeInteger(Number(pagina))||Number(pagina)>1000000)
+   return res.status(400).json({erro:'PARAMETROS_FILA_INVALIDOS'});
+  if(!motorLoop)return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});
+  try{return res.json(motorLoop.consultarFilaOperador({
+   fila,pagina:Number(pagina)
+  }));}
+  catch{return res.status(503).json({erro:'FILA_OPERADOR_INDISPONIVEL'});}
+ });
  // Qualificação de compras no banco REAL. O operador consulta a pendência,
  // mas esta API nunca transforma pedido em posição ou saldo.
  app.get('/api/admin/loop/qualificacao-pedidos',proteger,(_req,res)=>{

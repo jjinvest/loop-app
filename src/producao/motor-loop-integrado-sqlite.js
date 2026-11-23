@@ -356,6 +356,26 @@ class MotorLoopIntegradoSQLite{
     semMovimento:true,financeiroReal:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+ // Visor administrativo: posição e ordem da fila, SEM nome, CPF ou titular.
+ // A sessão do operador é conferida exclusivamente no gateway.
+ consultarFilaOperador({fila,pagina=0}={}){
+  if(!['A','B'].includes(fila)||
+     !Number.isSafeInteger(pagina)||pagina<0||pagina>1000000)
+   falha('FILA_OPERADOR_PARAMETROS_INVALIDOS');
+  const sim=this._sim();
+  const pessoas=(fila==='A'?sim.filas.filaA:sim.filas.filaB)
+   .filter(p=>p.statusAdesao!=='REVISAR_PSP');
+  const inicio=pagina*30;
+  const linhas=pessoas.slice(inicio,inicio+30).map((p,i)=>({
+   numero:p.id,ordem:inicio+i+1,
+   dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE'
+  }));
+  return {fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',
+   somenteLeitura:true,fila,total:pessoas.length,
+   primeiro:pessoas.length?{numero:pessoas[0].id,ordem:1}:null,
+   pagina:linhas,proximaPagina:inicio+linhas.length<pessoas.length?
+    pagina+1:null};
+ }
  // Visor somente-leitura: âncora pertence obrigatoriamente à sessão.
  // Responde com cinco vizinhos e no máximo 30 entradas por página.
  consultarFilaPaginada({titularId,fila,posicaoId=null,pagina=0,desdeInicio=false}={}){
@@ -388,7 +408,7 @@ class MotorLoopIntegradoSQLite{
   return {
    fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',fila,total:pessoas.length,
    ancora:indice<0?null:{numero:alvo,ordem:indice+1},
-   janela:desdeInicio?pessoas.slice(0,10).map(linha):
+   janela:desdeInicio?pessoas.slice(0,20).map(linha):
     indice<0?[]:pessoas.slice(janelaInicio,indice+3)
     .map((p,i)=>linha(p,janelaInicio+i)),
    pagina:itens.map((p,i)=>linha(p,inicio+i)),

@@ -45,6 +45,7 @@ function cenario(){
   posicoesResumoReal:[],posicaoSelecionada:'',
   posicaoResumoEscolhidaManualmente:false,
   '$':id=>elementos[id],
+  mostrarTotaisFilasRodape:()=>{},
   atualizarTopoPosicaoReal:()=>{},
   preencherPopupReal:()=>{},
   fetch:async url=>{

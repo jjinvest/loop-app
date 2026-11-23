@@ -379,23 +379,29 @@ async function main(){
      return {display:getComputedStyle(area).display,
       titulos:elementos.map(x=>x.querySelector('h3')?.textContent),
       rotulos:elementos.map(x=>[...x.querySelectorAll(
-       '.loop03-resumo-indicador > span')].map(y=>y.textContent)),
+       '.loop03-resumo-metade > span')].map(y=>y.textContent)),
       valores:elementos.map(x=>[...x.querySelectorAll(
-       '.loop03-resumo-indicador > strong')].map(y=>y.textContent)),
+       '.loop03-resumo-metade > strong')].map(y=>y.textContent)),
       contidos:elementos.every(x=>{
        const r=x.getBoundingClientRect();
        return r.left>=rect.left-2&&r.right<=rect.right+2;
       })};
     });
    assert.equal(quadros.display,'grid');
-   assert.deepEqual(quadros.titulos,['FILAS','TABULEIRO']);
+   assert.deepEqual(quadros.titulos,['FILAS','TABULEIRO / RELÓGIO DO TEMPO']);
    assert.deepEqual(quadros.rotulos,[
-    ['Fila A','Fila B'],['Eventos no ciclo','Centros concluídos']
+    ['Primeiro da fila A','Total da fila A',
+     'Primeiro da fila B','Total da fila B'],
+    ['Eventos no ciclo','Eventos acumulados',
+     'Centros concluídos hoje','Ciclos concluídos no total']
    ]);
-   assert.match(quadros.valores[0][0],/^\d+$/);
+   assert.match(quadros.valores[0][0],/^(—|#\d+)$/);
    assert.match(quadros.valores[0][1],/^\d+$/);
+   assert.match(quadros.valores[0][2],/^(—|#\d+)$/);
+   assert.match(quadros.valores[0][3],/^\d+$/);
    assert.match(quadros.valores[1][0],/^\d+ \/ 6$/);
-   assert.match(quadros.valores[1][1],/^\d+$/);
+   for(let i=1;i<4;i++)assert.match(quadros.valores[1][i],/^\d+$/);
+
    assert.equal(quadros.contidos,true,
     'cartões não podem fugir das molduras no celular');
    await operadorPage.locator('#adminAtualizarPosicoes').click();
