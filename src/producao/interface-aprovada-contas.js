@@ -3560,7 +3560,8 @@
  $('login').addEventListener('input',normalizarOperadorNoLogin);
  $('login').addEventListener('change',normalizarOperadorNoLogin);
  onForm('formLogin',async()=>{
-  if(normalizarOperadorNoLogin()){
+  normalizarOperadorNoLogin();
+  if($('login').value.trim().toLowerCase()==='operador'){
    await autenticarOperadorFormulario('OPERADOR',$('senha').value);
    $('senha').value='';
    abrirPainelOperador();
