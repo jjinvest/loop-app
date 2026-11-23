@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "b2899a7aa466d64c07883ed7747bea5b9457a7c3"
+      "sha": "485085233a37c84600e487e5cdf28c162b4f484a"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -476,11 +476,11 @@
     },
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "7a6d39b32f1b7c6e869dbbc1f8bd66fce4028aa6"
+      "sha": "20bebda731b2387b11ee97b0d8de26a43584c73b"
     },
     {
       "path": "src/candidato/checkout-candidato-ui.js",
-      "sha": "732de01783e88f97c03f254b3bb54ea94bbc817f"
+      "sha": "fe28380da2b7b47dfc78f014d379dbb0e2119a89"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -496,7 +496,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "79f6b8f97238ae8a81e8a340fdf4234521d82491"
+      "sha": "a0aef135ca0ab1347b9b1fa8167218e3816c4637"
     },
     {
       "path": "src/candidato/operador-em-tela.js",
@@ -1472,7 +1472,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "cff88cfad35a4db60bab5fcb7492ce686e1de428"
+      "sha": "ec94bfea6aaff3787373147f450fbdd08dae4e74"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1840,7 +1840,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "72d446f2436d11ff4c76b772cc8f0e88e2efbd45"
+      "sha": "85e23c663056b158f93e75a462ee128745d7e641"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -3517,6 +3517,10 @@
     {
       "path": "test/tabuleiro-loop.test.js",
       "sha": "29adeba919880ea8a0d1406ae0d7e23d4b953e43"
+    },
+    {
+      "path": "test/tabuleiro-participacao-lucro-filais-e-mensagem.test.js",
+      "sha": "1b0c70015fd5d98c7c13cfedc6659acd9f587bee"
     },
     {
       "path": "test/tabuleiro-visual-unico.test.js",
