@@ -1363,6 +1363,10 @@
       "sha": "1eb019ba46f70a4d1a6f4a00fa6fd45ec6606650"
     },
     {
+      "path": "src/producao/canais-digitais-akitemm-real.js",
+      "sha": "f4b236431d07a5cfc6a9583f369ad48a11fa5ba4"
+    },
+    {
       "path": "src/producao/canais-fornecedor-akitemm-sqlite.js",
       "sha": "b1800df368b03249e4c3d7d877f38d97d52cc5e6"
     },
@@ -2261,6 +2265,10 @@
     {
       "path": "test/callback-asaas-fila-integrada-lab.test.js",
       "sha": "094bfb7f007df95153c651b9dfe3dadb8bb27845"
+    },
+    {
+      "path": "test/canais-digitais-akitemm-real.test.js",
+      "sha": "77f5b533ba2540b7c26c4390abcbfe3ff85d2fc1"
     },
     {
       "path": "test/canais-fornecedor-akitemm-sqlite.test.js",
@@ -5819,6 +5827,20 @@
       "antes": "71dbf65e4eb26bbc918399bb13f7d8a713b3314b",
       "depois": "f9a3bf44c48b537ad1715db091ebcd5cd8dbd95b",
       "objetivo": "Prova de PDF proprio com capa antes de publicacao; historico e arquivo de versoes preservados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/canais-digitais-akitemm-real.js",
+      "antes": "NOVO",
+      "depois": "f4b236431d07a5cfc6a9583f369ad48a11fa5ba4",
+      "objetivo": "Arquivo novo explicitamente autorizado para catálogo digital com provedor plugável, proteção de URLs e testes sem pagamento/posição."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/canais-digitais-akitemm-real.test.js",
+      "antes": "NOVO",
+      "depois": "77f5b533ba2540b7c26c4390abcbfe3ff85d2fc1",
+      "objetivo": "Arquivo novo explicitamente autorizado para catálogo digital com provedor plugável, proteção de URLs e testes sem pagamento/posição."
     }
   ]
 }
