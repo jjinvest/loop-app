@@ -1,45 +1,69 @@
 {
-  "dataUTC": "2026-11-22T12:10:57Z",
+  "dataUTC": "2026-11-23T12:12:45Z",
   "construcao": {
     "branch": "feature/unificar-escritorio-real-20261105",
-    "sha": "8a0ed83812d9714bf0428697a350f7d7c39ecd21"
+    "sha": "664593d5578824e19404c91d4beb64cd0ecc9b43",
+    "arquivos": 1719
   },
   "railway": {
     "projeto": "8c1ab327-16f0-409a-90ac-8f02a3f5eae0",
     "ambiente": "e5c30d7f-086f-4845-93ad-7d1a5ca5e31b",
     "servico": "ac28edec-50ad-4187-99e2-8f7014735b63",
-    "deployment": "2026-11-22T11:38:01.015Z",
+    "deploymentId": "",
+    "deployment": "2026-11-23T12:08:56.139Z",
     "status": "SUCCESS",
-    "sha": "8a0ed83812d9714bf0428697a350f7d7c39ecd21",
-    "observacao": "SUCCESS confirma deployment, nao prova equivalencia visual, transacoes bancarias ou comportamento em navegador"
+    "sha": "664593d5578824e19404c91d4beb64cd0ecc9b43",
+    "observacao": "SUCCESS comprova o deployment declarado pelo Railway, nao certifica equivalencia visual, login no dispositivo, liquidação, caixa, ou desempenho sob carga."
   },
   "base": {
     "branch": "base-limpa/loop-3-0-marco-zero-v0-20261121",
-    "shaAntes": "553f89d39c256bb81a4fa4daf5b083061afe7e0f",
-    "ciAnterior": "success",
-    "arquivosManifestados": 147
+    "shaAntes": "aaae8901bbab47ff244fe8ee738dc483a7fb2fce",
+    "arquivos": 153,
+    "ci": {
+      "runId": 45021001498,
+      "conclusao": "success",
+      "revisao": "aaae8901bbab47ff244fe8ee738dc483a7fb2fce",
+      "url": "https://github.com/jjinvest/loop-app/actions/runs/45021001498"
+    },
+    "manifestoFonteCongelada": "e88a14601b3b20475098f489d44fac01acedf2c9",
+    "observacao": "Manifesto e hashes dos 147 arquivos permanecem congelados, sem promocao nao comprovada."
   },
   "comparacao": {
-    "divergencia": "branches diverged; diff entre pontas 57 arquivos; 129 commits a frente e 4 atras na comparacao GitHub",
-    "novosModulosExemplos": [
-      "banners-loja-akitemm-real-sqlite.js",
-      "avaliador-qualificacao-pedidos-real.js",
-      "diagnostico-cadeia-pedidos-filas.js"
+    "metodo": "Comparacao exata de paths e SHA Git dos blobs em arvores recursivas dos dois commits",
+    "arquivosComuns": 149,
+    "hashesIdenticos": 112,
+    "hashesDiferentes": 37,
+    "arquivosExclusivosConstrucao": 1570,
+    "arquivosExclusivosBase": 4,
+    "exclusivosBase": [
+      ".github/workflows/base-limpa-verificar.yml",
+      "AUDITORIA_ORIGEM_ATUAL.json",
+      "MANIFESTO_BASE_LIMPA.json",
+      "scripts/verificar-base-limpa.js"
     ],
     "promocaoAutomatica": false,
-    "motivo": "faltam verificacao de imports transitivos, equivalencia visual real e testes dirigidos da revisao publicada; manter base congelada"
+    "motivo": "37 arquivos comuns mudaram; novos modulos, imports transitivos e telas ainda nao possuem prova de equivalencia visual e funcional independente na copia. Nao copiar arquivos avulsos nem supor que CI da construcao prova equivalencia da base."
+  },
+  "verificacoes": {
+    "hashes": "112 blobs comuns identicos; 37 divergentes mantidos pendentes; manifesto da base validado pelo workflow verde da propria base",
+    "imports": "verificador da base inspeciona requires locais estaticos; imports dinamicos e novos modulos nao foram certificados",
+    "testes": "CI da base aaae8901 success (npm ci, npm run verificar, npm test); CI de construcao 664593d teve workflows verdes mas a prova de telas PC/celular estava em andamento na consulta",
+    "equivalenciaVisual": "NAO_COMPROVADA_PARA_MUDANCAS_RECENTES",
+    "financeiro": "NAO_HOMOLOGADO",
+    "escala100k": "NAO_CERTIFICADA"
   },
   "pendencias": [
-    "provar equivalencia visual no site real das alteracoes recentes",
-    "verificar cadeia completa de imports dos novos modulos",
-    "executar testes dirigidos e confirmar CI apos eventual incorporacao",
-    "confirmar PSP, split, liquidacao, fornecedor, reservas e saques reais",
-    "provar escala de 100 mil usuarios por teste especifico de carga, concorrencia e p95/p99"
+    "Confirmar workflow de telas reais PC e celular da revisao publicada e comparar capturas de tela aprovadas em diferentes viewports",
+    "Auditar imports transitivos e assets das 37 divergencias e modulos novos realmente invocados antes de copiar",
+    "Executar testes dirigidos de equivalencia, regressao, upload e navegacao na copia isolada",
+    "Comprovar PSP, split, liquidacao, fornecedor, reservas, saques e conciliacao bancaria reais sem creditar valores ficticios",
+    "Comprovar escala de 100 mil usuarios com testes reais especificos de carga, concorrencia, durabilidade e latencias p95/p99; simulacoes de mil usuarios nao certificam 100 mil"
   ],
   "garantias": {
     "dadosReaisCopiados": false,
     "operacoesFinanceirasLiberadas": false,
     "servicoPublicadoAlterado": false,
-    "versoesAnterioresPreservadas": true
+    "versoesAnterioresPreservadas": true,
+    "copiaFinal": false
   }
 }
