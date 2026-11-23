@@ -2,6 +2,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {DatabaseSync}=require('node:sqlite');
+const fs=require('node:fs');
 const {BancadaModulosLoopSQLite}=
  require('../src/producao/bancada-modulos-loop-sqlite');
 function contexto(modo='MANUAL'){
@@ -130,4 +131,22 @@ test('relogio programado provoca movimentos persistidos sem abrir a porteira',t=
  c.mudarTempo(inicio+90*60000);
  assert.equal(c.teste.processarRelogio().processado,true);
  assert.equal(c.teste.consultar().catraca.tabuleiro.eventosNoCiclo,1);
+});
+
+test('visao do operador usa movimentos da bancada; cliente preserva privacidade',()=>{
+ const browser=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+ const visual=fs.readFileSync('src/shared/tabuleiro-visual-loop.js','utf8');
+ const server=fs.readFileSync('scripts/iniciar-identidade-real-loop.js','utf8');
+ const gateway=fs.readFileSync('src/producao/gateway-admin-comercial.js','utf8');
+ assert.match(browser,/async function carregarTabuleiroTesteOperador\(\)/);
+ assert.match(browser,/visualTabuleiro\.preencherLuzes\(x\.tabuleiro\.eventosNoCiclo\)/);
+ assert.match(browser,/exibirNomesTeste:true/);
+ assert.match(browser,/TESTE OPERACIONAL/);
+ assert.match(visual,/exibirNomesTeste=false/);
+ assert.match(visual,/nomeTeste=exibirNomesTeste===true/);
+ assert.match(server,/new DatabaseSync\('\/dados-reais\/testes-modulos\.sqlite'\)/);
+ assert.match(gateway,/app\.get\('\/api\/admin\/loop\/testes-modulos',proteger/);
+ assert.match(gateway,/app\.post\('\/api\/admin\/loop\/testes-modulos',proteger,validarCsrf/);
+ const guard=fs.readFileSync('src/producao/backup-identidade-real.js','utf8');
+ assert.match(guard,/BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS/);
 });
