@@ -223,8 +223,8 @@ test('API autenticada liga ativacao ao Financeiro, sem saldo sacavel ou vazament
  const contas=new IdentidadeClienteLoopReal({
   banco:db,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32),enviarEmail:async()=>true,
-  termos:{versao:'TERMOS-TESTE-BONUS',texto},
-  privacidade:{versao:'PRIV-TESTE-BONUS',texto}
+  termos:{versao:'LOOP-TERMOS-TESTE-BONUS',texto},
+  privacidade:{versao:'LOOP-PRIV-TESTE-BONUS',texto}
  });
  const docs=contas.documentos();
  const cadastrar=(nick,indicadorNick=null)=>contas.cadastrar({
