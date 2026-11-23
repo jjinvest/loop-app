@@ -3252,7 +3252,7 @@
     },
     {
       "path": "test/ponte-catalogo-real-preview.test.js",
-      "sha": "3ae9bb20b5a96ee8886803acbb0ae68c030c595d"
+      "sha": "872d085da7471334b4c4614733444ca8d737fbbe"
     },
     {
       "path": "test/ponte-compras-convites-demo.test.js",
@@ -5841,6 +5841,13 @@
       "antes": "NOVO",
       "depois": "77f5b533ba2540b7c26c4390abcbfe3ff85d2fc1",
       "objetivo": "Arquivo novo explicitamente autorizado para catálogo digital com provedor plugável, proteção de URLs e testes sem pagamento/posição."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/ponte-catalogo-real-preview.test.js",
+      "antes": "3ae9bb20b5a96ee8886803acbb0ae68c030c595d",
+      "depois": "872d085da7471334b4c4614733444ca8d737fbbe",
+      "objetivo": "Ajusta prova de integração histórica para exigir capa de PDF antes de publicação, sem liberar compra ou downloads."
     }
   ]
 }
