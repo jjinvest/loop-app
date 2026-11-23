@@ -90,22 +90,36 @@ test('canais reais: PDF, curso próprio e afiliado, capas privadas e nenhuma ven
   referencia:'afiliacao-autorizada',urlDestino:'https://hotmart.com/pt-br?ap=abc'};
  assert.equal((await pedir('/produtos/'+afiliado.id+'/canal-digital',{
   method:'PUT',body:{config:confAfiliado,revisaoEsperada:0}})).status,201);
+ const semCapaAfiliado=await pedir('/produtos/'+afiliado.id,{method:'PATCH',
+  body:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}});
+ assert.equal(semCapaAfiliado.status,409);
+ assert.equal(semCapaAfiliado.data.erro,'PUBLICACAO_EXIGE_CAPA');
+ assert.equal((await pedir('/produtos/'+afiliado.id+'/fotos/1',{
+  method:'POST',body:foto,mime:'image/png',versao:0})).status,201);
+ assert.equal((await pedir('/produtos/'+afiliado.id,{method:'PATCH',
+  body:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}})).status,200);
  const material=criarMaterialPDFTeste();
  assert.equal((await pedir('/produtos/'+pdf.id+'/pdf',{
   method:'POST',body:material,mime:'application/pdf',versao:0})).status,201);
+ const pdfSemCapa=await pedir('/produtos/'+pdf.id,{method:'PATCH',
+  body:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}});
+ assert.equal(pdfSemCapa.status,409);
+ assert.equal(pdfSemCapa.data.erro,'PUBLICACAO_EXIGE_CAPA');
+ assert.equal((await pedir('/produtos/'+pdf.id+'/fotos/1',{
+  method:'POST',body:foto,mime:'image/png',versao:0})).status,201);
  assert.equal((await pedir('/produtos/'+pdf.id,{method:'PATCH',
   body:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}})).status,200);
  const pub=await pedir('/vitrine');
  assert.equal(pub.status,200);
  assert.equal(pub.data.checkoutReal,false);
  assert.equal(pub.data.pagamentosReais,false);
- assert.equal(pub.data.produtos.length,2);
+ assert.equal(pub.data.produtos.length,3);
  assert.ok(pub.data.produtos.some(p=>p.tipo==='CURSO'));
  assert.ok(pub.data.produtos.some(p=>p.tipo==='PDF'));
  assert.ok(!JSON.stringify(pub.data).includes('hotmart.com'));
  assert.ok(!JSON.stringify(pub.data).includes('afiliacao-autorizada'));
  const lista=ctx.listarVitrinePreparacao();
- assert.equal(lista.length,2);
+ assert.equal(lista.length,3);
  assert.ok(lista.every(p=>p.compravel===false&&p.checkoutReal===false));
  assert.ok(lista.some(p=>p.tipo==='CURSO'&&p.fotos[0].url===
   '/api/loja/produtos/aulas-online/foto/1'));
@@ -118,5 +132,5 @@ test('canais reais: PDF, curso próprio e afiliado, capas privadas e nenhuma ven
  assert.equal((await pedir(rota)).data.revisao,1);
  assert.equal((await pedir(rota)).data.urlDestino,cursoConfig.urlDestino);
  assert.equal((await pedir('/status')).data.canaisDigitaisConfigurados,2);
- assert.equal((await pedir('/vitrine')).data.produtos.length,2);
+ assert.equal((await pedir('/vitrine')).data.produtos.length,3);
 });
