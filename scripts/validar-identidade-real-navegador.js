@@ -729,7 +729,7 @@ async function main(){
     .nth(1).waitFor({state:'visible'});
    await operadorPage.locator('#adminResumoComercial .loop03-resumo-contador')
     .nth(1).waitFor({state:'visible'});
-   const quadros=await operadorPage.evaluate(()=>{
+   const quadrosPosicoesOperador=await operadorPage.evaluate(()=>{
     const ler=seletor=>[...document.querySelectorAll(seletor)].map(el=>({
      left:el.getBoundingClientRect().left,top:el.getBoundingClientRect().top,
      right:el.getBoundingClientRect().right
@@ -739,7 +739,8 @@ async function main(){
      comercial:ler('#adminResumoComercial .loop03-resumo-contador')
     };
    });
-   for(const grupo of [quadros.filas,quadros.comercial]){
+   for(const grupo of [quadrosPosicoesOperador.filas,
+    quadrosPosicoesOperador.comercial]){
     assert.equal(grupo.length,2);
     assert.ok(Math.abs(grupo[0].top-grupo[1].top)<3,
      'os dois cartões devem estar lado a lado e não empilhados');
