@@ -83,12 +83,16 @@ test('rodape exclusivo nao cria 4º cofre, nao invade cliente e usa route proteg
   assert.ok(html.includes('id="'+id+'"'),id);
  assert.equal((html.match(/class="loop03-cofre loop03-cofre-/g)||[]).length,3);
  assert.equal((html.match(/id="loop03CofresOperador"/g)||[]).length,1);
+ assert.doesNotMatch(html,/class="loop03-cofre-fisico"/,
+  'sem desenho ornamental: os cofres são saldos e estados reais');
  const css=fonte('src/producao/acabamento-botoes-real.css');
- assert.match(css,/body\.loop03-modo-operador \.cliente-integrado #conteudoTabuleiro \.loop03-cofres-rodape/);
+ assert.match(css,/body\.loop03-modo-operador \.cliente-integrado #conteudoPosicoes \.loop03-admin-section \.loop03-cofres-rodape/);
  assert.match(css,/#loop03CofresOperador\[hidden\]\{display:none!important\}/);
  const client=fonte('src/producao/interface-aprovada-contas.js');
  assert.match(client,/fetch\('\/api\/admin\/loop\/cofres'/);
  assert.match(client,/revelarCofresOperador\(false\)/);
+ assert.match(client,/comercial\.after\(cofres\)/);
+ assert.match(client,/ancora\.after\(cofres\)/);
  const gate=fonte('src/producao/gateway-admin-comercial.js');
  assert.match(gate,/app\.get\('\/api\/admin\/loop\/cofres',proteger/);
  assert.doesNotMatch(gate,/app\.post\('\/api\/admin\/loop\/cofres'/);
