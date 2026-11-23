@@ -2,12 +2,14 @@
 
 // Catalogo demonstrativo, somente leitura. Nenhum item representa mercadoria
 // em estoque, preco ofertado ou compra habilitada.
-const TIPOS = Object.freeze(['FISICO', 'PDF']);
+const TIPOS = Object.freeze(['FISICO', 'PDF', 'CURSO', 'AFILIADO']);
 const ESTADOS = Object.freeze(['RASCUNHO', 'PUBLICADO', 'DEMONSTRACAO']);
 // Mercadoria fisica e expedida pelo parceiro, nao pelo escritorio LOOP.
 const TIPOS_ENTREGA = Object.freeze({
   FISICO: 'FORNECEDOR_INTEGRADO',
-  PDF: 'DOWNLOAD_APOS_CONFIRMACAO'
+  PDF: 'DOWNLOAD_APOS_CONFIRMACAO',
+  CURSO: 'ACESSO_CURSO_HOSPEDADO',
+  AFILIADO: 'COMPRA_PLATAFORMA_PARCEIRA'
 });
 
 function validarProduto(produto) {
