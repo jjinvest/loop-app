@@ -26,6 +26,7 @@ const ARQUIVOS=Object.freeze({
  '/identidade/assets/recorte-foto-real.js':'./recorte-foto-compartilhado.js',
  '/identidade/assets/recorte-foto-real.css':'./recorte-foto-compartilhado.css',
  '/identidade/assets/vitrine-horizontal.css':'../candidato/vitrine-horizontal.css',
+ '/identidade/assets/harmonia-toque-real.css':'./harmonia-toque-real.css',
  '/identidade/assets/acabamento-loop.js':'../shared/acabamento-visual-loop.js'
 });
 function trocarExato(texto,antes,depois){
@@ -52,7 +53,8 @@ function renderizarInterfaceAprovada(){
   html=trocarExato(html,antes,depois);
  }
  html=trocarExato(html,'</head>',
-  '<link rel="stylesheet" href="/identidade/assets/botoes-real.css"></head>');
+  '<link rel="stylesheet" href="/identidade/assets/botoes-real.css">'+
+  '<link rel="stylesheet" href="/identidade/assets/harmonia-toque-real.css"></head>');
  // O + da tela aprovada vai à administração protegida original,
  // nunca a um segundo Escritório nem ao serviço de homologação.
  html=trocarExato(html,
@@ -183,6 +185,7 @@ function renderizarLojaAprovada(){
  // e conecta somente o comportamento de toque do operador real.
  html=trocarExato(html,'</head>',
   '<link rel="stylesheet" href="/identidade/assets/vitrine-horizontal.css">'+
+  '<link rel="stylesheet" href="/identidade/assets/harmonia-toque-real.css">'+
   recursoRecorteFoto()+
   '<script src="/identidade/assets/acabamento-loop.js" defer></script>'+
   '<script src="/identidade/assets/operador-fotos.js" defer></script>'+ 

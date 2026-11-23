@@ -1,0 +1,14 @@
+/* Harmonia de toque: preserva formas, dimensoes, cores e regras aprovadas.
+   Folha externa compativel com style-src 'self' do LOOP/AKITEMM. */
+:where(.akitemm-loja,.cliente-integrado,#painelLogin,#painelCadastro,#painelRecuperacao)
+ :is(button,a,summary,[role="button"],input[type="button"],input[type="submit"]){
+ -webkit-tap-highlight-color:transparent;
+}
+/* O toque nao recebe contorno quadrado. Foco de teclado continua visivel
+   pelas regras :focus-visible ja aprovadas. */
+@media (hover:none) and (pointer:coarse){
+ :where(.akitemm-loja,.cliente-integrado,#painelLogin,#painelCadastro,#painelRecuperacao)
+  :is(button,a,summary,[role="button"],input[type="button"],input[type="submit"]):focus:not(:focus-visible){
+  outline:none;
+ }
+}

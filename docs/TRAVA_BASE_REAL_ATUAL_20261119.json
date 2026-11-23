@@ -1459,6 +1459,10 @@
       "sha": "e6cc7dd7f25d98f7346d0eebd2bfdc65ab786daf"
     },
     {
+      "path": "src/producao/harmonia-toque-real.css",
+      "sha": "ce21d5aa82718da01df0b5a0c7c205abf9e39fec"
+    },
+    {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
       "sha": "f68a49523374712d5aba5ba089f4de2febdfa1ee"
     },
@@ -1488,7 +1492,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "6042daf424a35df74bd455fbcad0ab5e5b269935"
+      "sha": "4a882a8a73094ffed67721d495f510b2fe1f3492"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -2721,6 +2725,10 @@
     {
       "path": "test/guia-cadastro-produtos-operador-real.test.js",
       "sha": "7a2616de5f759417bc2c6545d0562df5d66f738b"
+    },
+    {
+      "path": "test/harmonia-toque-real.test.js",
+      "sha": "1b4f1552c0a5dfc08ea1435f785cdd7e2bacc99b"
     },
     {
       "path": "test/historico-ciclos-relacional-sqlite.test.js",
@@ -5791,6 +5799,32 @@
       "antes": "5de42c4320a103a82c924ec2d5250b7313dafc22",
       "depois": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
       "objetivo": "Cadastro de produto real com detalhes de pendências, capa obrigatória para publicação, ajuste opcional de corte sem checkbox, e prova automatizada PC/Android; não mexer na identidade do cliente."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/harmonia-toque-real.css",
+      "depois": "ce21d5aa82718da01df0b5a0c7c205abf9e39fec",
+      "objetivo": "Harmonizacao do destaque quadrado de toque Android por CSS externo em LOOP e AKITEMM; nenhuma alteracao de geometria, cores, caracteristicas, regras ou financeiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/harmonia-toque-real.test.js",
+      "depois": "9c0456365fd0540607c940b7f84b25292ee38ea8",
+      "objetivo": "Harmonizacao do destaque quadrado de toque Android por CSS externo em LOOP e AKITEMM; nenhuma alteracao de geometria, cores, caracteristicas, regras ou financeiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-loop.js",
+      "antes": "6042daf424a35df74bd455fbcad0ab5e5b269935",
+      "depois": "4a882a8a73094ffed67721d495f510b2fe1f3492",
+      "objetivo": "Harmonizacao do destaque quadrado de toque Android por CSS externo em LOOP e AKITEMM; nenhuma alteracao de geometria, cores, caracteristicas, regras ou financeiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/harmonia-toque-real.test.js",
+      "antes": "9c0456365fd0540607c940b7f84b25292ee38ea8",
+      "depois": "1b4f1552c0a5dfc08ea1435f785cdd7e2bacc99b",
+      "objetivo": "Ajustar assercao para aceitar exclusivamente -webkit-tap-highlight-color sem permitir modificacao de cor visual ou geometria."
     }
   ]
 }
