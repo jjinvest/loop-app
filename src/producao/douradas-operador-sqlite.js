@@ -87,8 +87,10 @@ class DouradasOperadorSQLite{
    if(p.motivoAssuncao==='DESISTENCIA_EXPRESSA_APOS_VAGA_6'||
       p.statusAdesao==='DESISTENTE')desistentes++;
   }
-  const azuis=[...sim.filas.filaA,...sim.filas.filaB]
-   .filter(x=>x.statusAdesao==='PENDENTE'&&x.empresa!==true).length;
+  const pendentes=[...sim.filas.filaA,...sim.filas.filaB,
+   sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean);
+  const azuis=new Set(pendentes.filter(x=>
+   x.statusAdesao==='PENDENTE'&&x.empresa!==true).map(x=>x.id)).size;
   const total=numerosManuais.length+convertidasAzuis+desistentes;
   if(![total,azuis].every(Number.isSafeInteger))
    erro('DOURADAS_CONTAGEM_INVALIDA');
@@ -100,6 +102,11 @@ class DouradasOperadorSQLite{
    douradasPorDesistencia:desistentes,
    douradasTotal:total,azuisPendentes:azuis,
    destinoFinanceiroDouradas:'COFRE_DOURADAS_100_POR_CENTO',
+   cofreDouradas:{posicoesRegistradas:total,entradaManual:numerosManuais.length,
+    entradaConversaoAzul:convertidasAzuis,
+    entradaDesistencia:desistentes,
+    moeda:'BRL',saldoCentavos:null,estado:'AGUARDANDO_CONCILIACAO_BANCARIA',
+    destino:'100_POR_CENTO_COFRE_DOURADAS'},
    saldoDouradasCentavos:null,saldoDouradasConciliado:false,
    nenhumaMovimentacaoFinanceiraExecutada:true};
  }
