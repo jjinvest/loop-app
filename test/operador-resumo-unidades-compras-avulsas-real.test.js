@@ -97,6 +97,7 @@ test('duas colunas, divisoria responsiva e rota somente do operador',()=>{
  assert.match(css,/body\.loop03-modo-operador #adminComprasCliente \.loop03-compras-colunas/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/@media\(max-width:760px\)/);
+ assert.match(css,/body:not\\(\\.loop03-modo-operador\\) \\.loop03-admin-section/);
  assert.match(gateway,/app\.get\('\/api\/admin\/contas\/compras-avulsas',proteger/);
  assert.doesNotMatch(gateway,/app\.get\('\/api\/contas\/compras-avulsas'/);
  assert.doesNotMatch(gateway,/app\.post\('\/api\/admin\/contas\/compras-avulsas'/);
