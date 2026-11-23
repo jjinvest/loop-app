@@ -50,10 +50,21 @@
    // Ela não cria movimentação de dinheiro ou registros do motor.
    const finalizado=decorrido>=duracaoMs;
    const total=meta.quantidade*6;
-   const passadas=Math.min(total,Math.floor(decorrido*total/duracaoMs));
+   const passadasOriginais=Math.min(total,Math.floor(decorrido*total/duracaoMs));
+   // O placar começa do zero no marco registrado, sem reescrever o turno.
+   // A agenda permanece com a programação original e os LEDs acompanham
+   // apenas os marcos posteriores à limpeza operacional de ensaio.
+   let passadas=passadasOriginais;
+   const marco=agenda.marcoZeramentoVisualMs;
+   if(Number.isSafeInteger(marco)&&marco<=agoraMs){
+    const anterior=horarioVisual({agenda:{...agenda,marcoZeramentoVisualMs:null},
+     agoraMs:marco});
+    if(anterior?.diaTurno===diaTurno)
+     passadas=Math.max(0,passadasOriginais-anterior.passadas);
+   }
    const luzes=passadas===0?0:(passadas-1)%6+1;
-   const proxima=!finalizado&&passadas<total?
-    agoraMs+Math.max(0,Math.ceil((passadas+1)*duracaoMs/total-decorrido)):
+   const proxima=!finalizado&&passadasOriginais<total?
+    agoraMs+Math.max(0,Math.ceil((passadasOriginais+1)*duracaoMs/total-decorrido)):
     null;
    // Quantidade de LUZES desta hora, não giros financeiros nem total do dia.
    // Mantém o mesmo cálculo por intervalos do relógio do tabuleiro.
@@ -64,7 +75,7 @@
    const passadasNoInicioHora=Math.min(total,Math.floor(
     Math.max(0,decorridoAntesHora)*total/duracaoMs));
    const luzesHora=emTurno&&!finalizado?
-    Math.max(0,passadas-passadasNoInicioHora):0;
+    Math.max(0,passadasOriginais-passadasNoInicioHora):0;
    return {luzes,passadas,total,proxima,diaTurno,finalizado,emTurno,luzesHora,
     intervalo:Math.max(1,Math.round(duracaoMs/total/1000))};
   }
