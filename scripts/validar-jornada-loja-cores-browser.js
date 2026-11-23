@@ -164,8 +164,13 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
      segunda:Math.abs(caixas[2].top-caixas[3].top)<2,
      sequencia:caixas[2].top>caixas[0].top};
    });
-   assert.equal(legenda.cols,2);
-   assert.ok(legenda.primeira&&legenda.segunda&&legenda.sequencia);
+   assert.equal(legenda.cols,device.isMobile?2:4,
+    'preservar quatro filtros em linha no PC e duas colunas no celular');
+   assert.ok(legenda.primeira&&legenda.segunda);
+   if(device.isMobile)assert.ok(legenda.sequencia,
+    'no celular as cores ficam em duas linhas');
+   else assert.equal(legenda.sequencia,false,
+    'no computador as quatro cores ficam na mesma linha');
    await page.locator('#akitemmCarregarMais').click();
    assert.equal(await page.locator('#catalogoLojaLoop article.produto-loja-loop').count(),40);
    await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
