@@ -628,7 +628,7 @@
     },
     {
       "path": "src/domain/catalogo.js",
-      "sha": "e1425d8f316bcd1d1bcdde47bc7bbefd07fd4d99"
+      "sha": "460ec19b452d5d69de16a00daf98b1bb0cc64267"
     },
     {
       "path": "src/domain/catraca-asaas-sandbox-lab.js",
@@ -1372,7 +1372,7 @@
     },
     {
       "path": "src/producao/catalogo-mercadorias-real.js",
-      "sha": "e5cd1550f4d029460e12418d0dfb8cb0e32d3706"
+      "sha": "af37ca830617ffdf7438e24a503ad62904197870"
     },
     {
       "path": "src/producao/catalogo-multidistribuidores-sqlite.js",
@@ -5791,6 +5791,20 @@
       "antes": "5de42c4320a103a82c924ec2d5250b7313dafc22",
       "depois": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
       "objetivo": "Cadastro de produto real com detalhes de pendências, capa obrigatória para publicação, ajuste opcional de corte sem checkbox, e prova automatizada PC/Android; não mexer na identidade do cliente."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/domain/catalogo.js",
+      "antes": "e1425d8f316bcd1d1bcdde47bc7bbefd07fd4d99",
+      "depois": "460ec19b452d5d69de16a00daf98b1bb0cc64267",
+      "objetivo": "Amplia acervo digital da AKITEMM com tipos PDF/CURSO/AFILIADO, canais privados auditaveis e fotos de capa; financeiro e acesso de comprador permanecem bloqueados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/catalogo-mercadorias-real.js",
+      "antes": "e5cd1550f4d029460e12418d0dfb8cb0e32d3706",
+      "depois": "af37ca830617ffdf7438e24a503ad62904197870",
+      "objetivo": "Amplia acervo digital da AKITEMM com tipos PDF/CURSO/AFILIADO, canais privados auditaveis e fotos de capa; financeiro e acesso de comprador permanecem bloqueados."
     }
   ]
 }
