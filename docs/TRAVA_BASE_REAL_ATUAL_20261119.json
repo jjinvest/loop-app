@@ -1372,7 +1372,7 @@
     },
     {
       "path": "src/producao/catalogo-mercadorias-real.js",
-      "sha": "af37ca830617ffdf7438e24a503ad62904197870"
+      "sha": "fe9699d98de892bc21f88a8c1688753d939e350a"
     },
     {
       "path": "src/producao/catalogo-multidistribuidores-sqlite.js",
@@ -2300,7 +2300,7 @@
     },
     {
       "path": "test/catalogo-cursos-pdf-real-e2e.test.js",
-      "sha": "71dbf65e4eb26bbc918399bb13f7d8a713b3314b"
+      "sha": "f9a3bf44c48b537ad1715db091ebcd5cd8dbd95b"
     },
     {
       "path": "test/catalogo-mercadorias-real-e2e.test.js",
@@ -5805,6 +5805,20 @@
       "antes": "e5cd1550f4d029460e12418d0dfb8cb0e32d3706",
       "depois": "af37ca830617ffdf7438e24a503ad62904197870",
       "objetivo": "Amplia acervo digital da AKITEMM com tipos PDF/CURSO/AFILIADO, canais privados auditaveis e fotos de capa; financeiro e acesso de comprador permanecem bloqueados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/catalogo-mercadorias-real.js",
+      "antes": "af37ca830617ffdf7438e24a503ad62904197870",
+      "depois": "fe9699d98de892bc21f88a8c1688753d939e350a",
+      "objetivo": "Amplia catalogo digital (PDF, videoaulas e afiliado), exige capa publica, mantem APIs interservico privadas e pagamento/posicao bloqueados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/catalogo-cursos-pdf-real-e2e.test.js",
+      "antes": "71dbf65e4eb26bbc918399bb13f7d8a713b3314b",
+      "depois": "f9a3bf44c48b537ad1715db091ebcd5cd8dbd95b",
+      "objetivo": "Prova de PDF proprio com capa antes de publicacao; historico e arquivo de versoes preservados."
     }
   ]
 }
