@@ -67,48 +67,115 @@ test('sem tabelas de pedido nao inventa habilitacao',t=>{
  assert.equal(consultarDivulgacao({banco:db,titularId:id}).linkLiberado,false);
 });
 
-test('10% de venda confirmada independe de ativar posicao, nunca vira saldo',t=>{
- const x=fixture(t),comprador='titular-123e4567-e89b-12d3-a456-426614174001';
- x.db.exec('CREATE TABLE loop_real_vinculos_indicacao('+
-  'indicado_id TEXT PRIMARY KEY,indicador_id TEXT,registrado_em INTEGER);');
- x.db.prepare('INSERT INTO loop_real_contas VALUES(?,?)')
-  .run(comprador,'Thaisa');
- // Primeiro o titular compra VERDE R$10 e passa a poder divulgar.
- x.inserir('LINK_QUALIF_VERDE','VERDE');
- x.db.prepare('INSERT INTO loop_real_vinculos_indicacao VALUES(?,?,?)')
-  .run(comprador,id,1700000000500);
- // Depois a pessoa indicada compra. A inscricao no LOOP nao existe.
- x.db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
-  .run('PEDIDO_INDICADO',comprador,'APROVADO_PARA_EXPEDICAO',
-   'PSP_INDICADO',1700000001000);
- x.db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)')
-  .run('PEDIDO_INDICADO','VERDE',1);
- x.db.exec('ALTER TABLE loop_real_fotos_regras_pedido ADD COLUMN preco_unit_centavos INTEGER;');
- x.db.exec('ALTER TABLE loop_real_fotos_regras_pedido ADD COLUMN quantidade INTEGER;');
- x.db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=1000,quantidade=1 WHERE pedido_id=?')
-  .run('LINK_QUALIF_VERDE');
- x.db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=25000,quantidade=1 WHERE pedido_id=?')
-  .run('PEDIDO_INDICADO');
- // Produto cinza no pedido misto nao gera nenhum centavo de comissao.
- x.db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?,?,?)')
-  .run('PEDIDO_INDICADO','CINZA',1,5000,1);
- // Compra exclusivamente cinza continua sendo venda, sem bonificacao.
- x.db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
-  .run('PEDIDO_CINZA',comprador,'APROVADO_PARA_EXPEDICAO',
-   'PSP_CINZA',1700000001200);
- x.db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?,?,?)')
-  .run('PEDIDO_CINZA','CINZA',1,10000,1);
- const r=consultarComissoesDivulgacao({banco:x.db,titularId:id});
+test('verde de R$190 habilita link mas compra do indicado sem ativacao nao da bonus',t=>{
+ const x=fixture(t),db=x.db;
+ const indicado='titular-123e4567-e89b-12d3-a456-426614174001';
+ db.exec([
+  'CREATE TABLE loop_real_vinculos_indicacao(',
+  'indicado_id TEXT PRIMARY KEY,indicador_id TEXT,registrado_em INTEGER);',
+  'CREATE TABLE loop_real_confirmacoes_cadastro(',
+  'titular_id TEXT PRIMARY KEY,confirmado_em INTEGER);',
+  'CREATE TABLE loop_real_indicacoes_validas_financeiro(',
+  'indicado_id TEXT PRIMARY KEY,indicador_id TEXT,pedido_id TEXT,',
+  'pagamento_id TEXT,comprovante_bancario_id TEXT,',
+  'valor_qualificado_centavos INTEGER,tipo TEXT,confirmado_em INTEGER);',
+  'CREATE TABLE loop_real_motor_compras(',
+  'pedido_id TEXT PRIMARY KEY,titular_id TEXT,posicao_id INTEGER,',
+  'valor_centavos INTEGER);',
+  'ALTER TABLE loop_real_fotos_regras_pedido',
+  'ADD COLUMN preco_unit_centavos INTEGER DEFAULT 0;'
+ ].join(' '));
+ db.prepare('INSERT INTO loop_real_contas VALUES(?,?)').run(indicado,'Thaisa');
+ x.inserir('LINK_VERDE_190','VERDE');
+ db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=19000').run();
+ assert.equal(x.estado().linkLiberado,true);
+ assert.equal(x.estado().participacaoLoopAtiva,false);
+ db.prepare('INSERT INTO loop_real_vinculos_indicacao VALUES(?,?,?)')
+  .run(indicado,id,1700000000500);
+ const inserirVenda=(pedido,cor,preco,status='APROVADO_PARA_EXPEDICAO')=>{
+  db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
+   .run(pedido,indicado,status,'PSP_'+pedido,1700000001000);
+  db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?,?)')
+   .run(pedido,cor,1,preco);
+ };
+ inserirVenda('COMPRA_INDICADO','VERDE',25000);
+ inserirVenda('VENDA_CINZA','CINZA',15000);
+ inserirVenda('VERDE_INSUFICIENTE','VERDE',10000);
+ const consultar=()=>consultarComissoesDivulgacao({banco:db,titularId:id});
+ assert.equal(consultar().fonteCompleta,true);
+ assert.equal(consultar().comissaoAConferirCentavos,0,
+  'compras sem posicao nao geram bonus nem que ultrapassem R$250');
+ db.prepare('INSERT INTO loop_real_indicacoes_validas_financeiro VALUES(?,?,?,?,?,?,?,?)')
+  .run(indicado,id,'COMPRA_INDICADO','PSP_COMPRA_INDICADO',
+   'COMPROVANTE_1',25000,'COMPRA_250',1700000002000);
+ assert.equal(consultar().comissaoAConferirCentavos,0,
+  'prova da compra sem CPF/termos e sem posicao nao habilita');
+ db.prepare('INSERT INTO loop_real_confirmacoes_cadastro VALUES(?,?)')
+  .run(indicado,1700000001500);
+ assert.equal(consultar().comissaoAConferirCentavos,0,
+  'aceite e compra sem ingresso efetivo na fila nao habilitam bonus');
+ db.prepare('INSERT INTO loop_real_motor_compras VALUES(?,?,?,?)')
+  .run('COMPRA_INDICADO',indicado,1,25000);
+ const r=consultar();
  assert.equal(r.percentual,10);
- assert.equal(r.vendasConfirmadas,1);
+ assert.equal(r.basePorAtivacaoCentavos,25000);
+ assert.equal(r.bonusPorAtivacaoCentavos,2500);
+ assert.equal(r.ativacoesValidas,1);
  assert.equal(r.comissaoAConferirCentavos,2500);
  assert.equal(r.saldoLiberadoCentavos,0);
  assert.equal(r.podeSacar,false);
  assert.equal(r.financeiroReal,false);
- assert.deepEqual(consultarComissoesDivulgacao({banco:x.db,titularId:id}),r);
- x.db.prepare("UPDATE loja_real_pedidos SET status='CANCELADO' WHERE pedido_id=?")
-  .run('PEDIDO_INDICADO');
- const estornado=consultarComissoesDivulgacao({banco:x.db,titularId:id});
- assert.equal(estornado.vendasConfirmadas,0);
- assert.equal(estornado.comissaoAConferirCentavos,0);
+ // Valor elevado ou CINZA adicional nao multiplica bonus.
+ db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=100000 WHERE pedido_id=?')
+  .run('VENDA_CINZA');
+ db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?,?)')
+  .run('COMPRA_INDICADO','CINZA',1,80000);
+ assert.equal(consultar().comissaoAConferirCentavos,2500);
+ db.prepare("UPDATE loja_real_pedidos SET status='CANCELADO' WHERE pedido_id=?")
+  .run('COMPRA_INDICADO');
+ assert.equal(consultar().comissaoAConferirCentavos,0,
+  'estorno bloqueia comissao mesmo mantendo comprovante historico');
+ db.prepare("UPDATE loja_real_pedidos SET status='APROVADO_PARA_EXPEDICAO' WHERE pedido_id=?")
+  .run('COMPRA_INDICADO');
+ assert.equal(consultar().comissaoAConferirCentavos,2500);
+ db.exec('CREATE TABLE loop_real_fin_lancamentos('+
+  'origem TEXT,grupo TEXT,movimento TEXT);');
+ db.prepare('INSERT INTO loop_real_fin_lancamentos VALUES(?,?,?)')
+  .run('bonus:'+indicado,'BONUS','CREDITO');
+ assert.equal(consultar().comissaoAConferirCentavos,0,
+  'credito ja registrado nao deve aparecer de novo como bonus a conferir');
+});
+test('indicacao sem foto qualificada, comprovante ou posicao nao recebe 10%',t=>{
+ const x=fixture(t),db=x.db;
+ const indicado='titular-123e4567-e89b-12d3-a456-426614174002';
+ x.inserir('VERDE_ORIGEM','VERDE');
+ db.exec([
+  'CREATE TABLE loop_real_vinculos_indicacao(',
+  'indicado_id TEXT PRIMARY KEY,indicador_id TEXT,registrado_em INTEGER);',
+  'CREATE TABLE loop_real_confirmacoes_cadastro(',
+  'titular_id TEXT PRIMARY KEY,confirmado_em INTEGER);',
+  'CREATE TABLE loop_real_indicacoes_validas_financeiro(',
+  'indicado_id TEXT PRIMARY KEY,indicador_id TEXT,pedido_id TEXT,',
+  'pagamento_id TEXT,comprovante_bancario_id TEXT,',
+  'valor_qualificado_centavos INTEGER,tipo TEXT,confirmado_em INTEGER);',
+  'CREATE TABLE loop_real_motor_compras(',
+  'pedido_id TEXT PRIMARY KEY,titular_id TEXT,posicao_id INTEGER,',
+  'valor_centavos INTEGER);'
+ ].join(' '));
+ db.prepare('INSERT INTO loop_real_contas VALUES(?,?)').run(indicado,'Bruno');
+ db.prepare('INSERT INTO loop_real_vinculos_indicacao VALUES(?,?,?)')
+  .run(indicado,id,1700000000500);
+ db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
+  .run('COMPRA_CINZA',indicado,'APROVADO_PARA_EXPEDICAO',
+   'PAG_CINZA',1700000000600);
+ db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)')
+  .run('COMPRA_CINZA','CINZA',1);
+ db.prepare('INSERT INTO loop_real_confirmacoes_cadastro VALUES(?,?)')
+  .run(indicado,1700000000700);
+ db.prepare('INSERT INTO loop_real_indicacoes_validas_financeiro VALUES(?,?,?,?,?,?,?,?)')
+  .run(indicado,id,'COMPRA_CINZA','PAG_CINZA',
+   'COMPROVANTE_CINZA',25000,'COMPRA_250',1700000000800);
+ db.prepare('INSERT INTO loop_real_motor_compras VALUES(?,?,?,?)')
+  .run('COMPRA_CINZA',indicado,10,25000);
+ assert.equal(consultarComissoesDivulgacao({banco:db,titularId:id}).comissaoAConferirCentavos,0);
 });
