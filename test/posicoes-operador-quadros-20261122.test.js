@@ -49,6 +49,24 @@ test('dois cartões independentes: Fila A e B, eventos e centros',()=>{
   [['Eventos no ciclo','4 / 6'],['Centros concluídos','2']]);
  assert.ok(!texto(d).includes('Sem pagamento'));
 });
+test('relógio atualiza eventos e centros VISUAIS sem girar o motor real',()=>{
+ const d=executar({filaA:0,filaB:0,
+  tabuleiro:{eventosNoCiclo:0,ciclosConcluidos:0},
+  relogio:{luzesRelogio24h:14,ciclosRelogio24h:2}});
+ const tabuleiro=d.children[1];
+ assert.equal(tabuleiro.children[0].textContent,'TABULEIRO');
+ assert.equal(tabuleiro.children[1].textContent,
+  'RELÓGIO VISUAL · SEM GIRO FINANCEIRO');
+ assert.deepEqual(tabuleiro.children.slice(2).map(x=>
+  [x.children[0].textContent,x.children[1].textContent]),[
+   ['Eventos no ciclo','2 / 6'],['Centros concluídos','2']
+  ]);
+ assert.equal(d.children[0].children[1].children[1].textContent,'0');
+ assert.throws(()=>executar({filaA:0,filaB:0,
+  tabuleiro:{eventosNoCiclo:0,ciclosConcluidos:0},
+  relogio:{luzesRelogio24h:14,ciclosRelogio24h:3}}),
+  /RESUMO_POSICOES_RELOGIO_INVALIDO/);
+});
 test('zero é zero: não fabrica pessoas, posições, eventos ou centros',()=>{
  const d=executar({filaA:0,filaB:0,
   tabuleiro:{eventosNoCiclo:0,ciclosConcluidos:0}});
@@ -72,5 +90,9 @@ test('layout do operador mantém somente duas molduras e evita corte no celular'
  assert.match(css,/body\.loop03-modo-operador #adminResumoPosicoes\.loop03-resumo-duplo\s*\{/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/@media\(max-width:340px\)/);
+ assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/);
+ assert.match(js,/fetch\('\/api\/admin\/loop\/controle'/);
+ assert.match(js,/relogio:\{luzesRelogio24h:a\.luzesRelogio24h/);
+ assert.match(js,/comercial\.after\(cofres\)/);
  assert.doesNotMatch(funcao,/fetch\(|method:\s*'POST'|INSERT|UPDATE|DELETE/);
 });
