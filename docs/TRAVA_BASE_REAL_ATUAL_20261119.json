@@ -48,7 +48,7 @@
     },
     {
       "path": ".github/workflows/auditoria-integral-pilar-interno.yml",
-      "sha": "61ce5949ddfa7f4f155399b8c552591213a37646"
+      "sha": "3fa9a10f4883e7b8a99e371af5aa4661758ae9dd"
     },
     {
       "path": ".github/workflows/bloco-a-nucleo-contas.yml",
@@ -5671,7 +5671,14 @@
       "path": ".github/workflows/auditoria-integral-pilar-interno.yml",
       "antes": "34b05c09c60e49a837f50737beea34ff3564137f",
       "depois": "61ce5949ddfa7f4f155399b8c552591213a37646",
-      "objetivo": "Corrigir falso bloqueio de CI causado por script legado staging com 10 abas/400 espacos; usar navegacao da AKITEMM real em SQL descartavel e cobrir PRs; nao altera telas, rotas reais ou financeiro."
+      "objetivo": "Substituir na auditoria integral o teste legado da rota /staging que falhava na geometria mobile; validar rota da AKITEMM real em banco descartavel, sem alegar quantidade de abas e sem alterar layout ou financeiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": ".github/workflows/auditoria-integral-pilar-interno.yml",
+      "antes": "61ce5949ddfa7f4f155399b8c552591213a37646",
+      "depois": "3fa9a10f4883e7b8a99e371af5aa4661758ae9dd",
+      "objetivo": "Corrigir explicacao do falso bloqueio: a divergencia de geometria no /staging nao deve ser confundida com mudanca na vitrine real; preserva comportamento e cobertura."
     }
   ]
 }
