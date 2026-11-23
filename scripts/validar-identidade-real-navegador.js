@@ -273,8 +273,19 @@ async function main(){
    assert.equal(await operadorPage.locator(
     'script[src^="/identidade/assets/cliente.js?rev="]').count(),1,
     'A entrada precisa solicitar a versao nova do JS de login');
-   await operadorPage.locator('#login').fill('OPERADOR');
+   // PC e Android: minúsculas não podem virar OPERADOR sozinhas.
+   await operadorPage.locator('#login').fill('operador');
+   assert.equal(await operadorPage.locator('#login').inputValue(),'operador');
    await operadorPage.locator('#senha').fill(
+    'CredencialAdministrativaIsolada2026!Teste');
+   await operadorPage.locator('#formLogin button[type=submit]').click();
+   await operadorPage.locator('#erroLogin').filter({
+    hasText:/Digite OPERADOR em letras maiúsculas/
+   }).waitFor({state:'visible'});
+   assert.equal(await operadorPage.locator('#loopOperadorAtalhos').isHidden(),true);
+   await operadorPage.locator('#login').fill('OPERADOR');
+   assert.equal(await operadorPage.locator('#login').inputValue(),'OPERADOR');
+   assert.equal(await operadorPage.locator('#senha').inputValue(),
     'CredencialAdministrativaIsolada2026!Teste');
    const olho=operadorPage.locator('.alternar-visibilidade[data-senha="senha"]');
    const segredoDigitado='CredencialAdministrativaIsolada2026!Teste';
