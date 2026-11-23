@@ -709,9 +709,22 @@ function criarAppIdentidadeLoop({contas,origemHttps,
      (raw!==undefined&&(!/^[1-9][0-9]*$/.test(raw)||
       !Number.isSafeInteger(Number(raw)))))
    return res.status(400).json({erro:'POSICAO_INVALIDA'});
-  try{return res.json(livroFinanceiro.consultar({
-   titularId:req.conta.titularId,posicaoId:raw?Number(raw):null
-  }));}catch(e){return res.status(
+  try{
+   const titularId=req.conta.titularId;
+   const livro=livroFinanceiro.consultar({
+    titularId,posicaoId:raw?Number(raw):null
+   });
+   // O mesmo contrato dos links apura o bonus; nunca soma uma previsao
+   // ao saldo sacavel nem mistura beneficio com posicao do indicador.
+   const bonus=consultarComissoesDivulgacao({banco:contas.banco,titularId});
+   return res.json({...livro,
+    ativacoesIndicadosEmConferencia:bonus.fonteCompleta?
+     bonus.ativacoesValidas:null,
+    bonusIndicacoesAConferirCentavos:bonus.fonteCompleta?
+     bonus.comissaoAConferirCentavos:null,
+    bonusIndicacoesEmConferenciaNaoSacavel:true
+   });
+  }catch(e){return res.status(
     e.codigo==='FIN_POSICAO_NAO_PERTENCE_A_TITULAR'?404:503
    ).json({erro:e.codigo||'LIVRO_FINANCEIRO_INDISPONIVEL'});}
  });
