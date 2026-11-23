@@ -1154,6 +1154,8 @@
   void carregarDados();
  }
  let redePreparada=false;
+ let sugestoesRedeVersao=0,sugestoesRedeTimer=null;
+ let sugestoesRedeLista=null;
  function prepararRede(){
   if(redePreparada)return;
   redePreparada=true;
@@ -1162,7 +1164,46 @@
   $('redeADistribuirEnsaio')?.removeAttribute('aria-label');
   $('atualizarEquipe')?.addEventListener('click',()=>void carregarRede());
   $('maisEquipe').addEventListener('click',()=>void carregarRede({mais:true}));
-  $('buscarEquipe').addEventListener('input',()=>exibirRede());
+  const campoBusca=$('buscarEquipe');
+  campoBusca.setAttribute('spellcheck','true');
+  campoBusca.setAttribute('autocorrect','on');
+  campoBusca.setAttribute('autocapitalize','words');
+  campoBusca.setAttribute('aria-autocomplete','list');
+  campoBusca.setAttribute('aria-expanded','false');
+  campoBusca.setAttribute('aria-controls','sugestoesMinhaRede');
+  campoBusca.placeholder='Nome, nick, telefone ou nº do cadastro';
+  const rotulo=campoBusca.previousElementSibling;
+  if(rotulo?.getAttribute('for')==='buscarEquipe')
+   rotulo.textContent='Encontrar pessoa na minha equipe';
+  sugestoesRedeLista=document.createElement('div');
+  sugestoesRedeLista.id='sugestoesMinhaRede';
+  sugestoesRedeLista.className='loop03-rede-sugestoes';
+  sugestoesRedeLista.setAttribute('role','listbox');
+  sugestoesRedeLista.setAttribute('aria-label','Sugestões da minha rede');
+  sugestoesRedeLista.hidden=true;
+  campoBusca.insertAdjacentElement('afterend',sugestoesRedeLista);
+  campoBusca.addEventListener('input',()=>{
+   exibirRede();
+   agendarSugestoesRede();
+  });
+  campoBusca.addEventListener('keydown',e=>{
+   if(e.key==='Escape'){
+    limparSugestoesRede();
+   }else if(e.key==='ArrowDown'&&!sugestoesRedeLista.hidden){
+    const primeira=sugestoesRedeLista.querySelector('button');
+    if(primeira){e.preventDefault();primeira.focus();}
+   }
+  });
+  sugestoesRedeLista.addEventListener('keydown',e=>{
+   if(!['Escape','ArrowDown','ArrowUp'].includes(e.key))return;
+   e.preventDefault();
+   if(e.key==='Escape'){limparSugestoesRede();campoBusca.focus();return;}
+   const itens=Array.from(sugestoesRedeLista.querySelectorAll('button'));
+   const i=itens.indexOf(document.activeElement);
+   if(e.key==='ArrowDown')itens[Math.min(i+1,itens.length-1)]?.focus();
+   else if(i<=0)campoBusca.focus();
+   else itens[i-1]?.focus();
+  });
   $('equipeVerLinks').addEventListener('click',()=>$('abaLinks').click());
   for(const [botao,campo] of [
    ['copiarLinkEscritorio','linkEscritorio'],
@@ -1180,6 +1221,74 @@
     }
    });
   }
+ }
+ function limparSugestoesRede(){
+  clearTimeout(sugestoesRedeTimer);
+  sugestoesRedeVersao++;
+  if(!sugestoesRedeLista)return;
+  sugestoesRedeLista.hidden=true;
+  sugestoesRedeLista.replaceChildren();
+  $('buscarEquipe')?.setAttribute('aria-expanded','false');
+ }
+ function agendarSugestoesRede(){
+  clearTimeout(sugestoesRedeTimer);
+  const versao=++sugestoesRedeVersao;
+  if(!sugestoesRedeLista)return;
+  sugestoesRedeLista.replaceChildren();
+  sugestoesRedeLista.hidden=true;
+  $('buscarEquipe').setAttribute('aria-expanded','false');
+  const termo=$('buscarEquipe').value.trim();
+  if(!termo)return;
+  sugestoesRedeTimer=setTimeout(async()=>{
+   try{
+    const resposta=await requisitar('/minha-rede/pesquisar',{
+     method:'POST',csrfObrigatorio:true,body:{termo}
+    });
+    if(versao!==sugestoesRedeVersao||!$('buscarEquipe')||
+       $('buscarEquipe').value.trim()!==termo)return;
+    if(resposta.somenteMinhaRede!==true||
+       !Array.isArray(resposta.resultados))throw Error('BUSCA_REDE_INDISPONIVEL');
+    for(const pessoa of resposta.resultados){
+     if(typeof pessoa.nick!=='string'||typeof pessoa.nome!=='string'||
+        !Number.isSafeInteger(pessoa.numeroCadastro))continue;
+     const botao=document.createElement('button');
+     botao.type='button';
+     botao.setAttribute('role','option');
+     botao.textContent=(pessoa.aproximado?'Você quis dizer: ':'')+
+      pessoa.nome+' · @'+pessoa.nick;
+     botao.addEventListener('click',()=>void escolherSugestaoRede(pessoa));
+     sugestoesRedeLista.append(botao);
+    }
+    if(resposta.temMais){
+     const aviso=document.createElement('p');
+     aviso.textContent='Mais resultados: digite mais letras.';
+     sugestoesRedeLista.append(aviso);
+    }
+    sugestoesRedeLista.hidden=sugestoesRedeLista.children.length===0;
+    $('buscarEquipe').setAttribute('aria-expanded',
+     String(!sugestoesRedeLista.hidden));
+   }catch{
+    if(versao===sugestoesRedeVersao)limparSugestoesRede();
+   }
+  },200);
+ }
+ async function escolherSugestaoRede(pessoa){
+  limparSugestoesRede();
+  const campo=$('buscarEquipe');
+  campo.value='@'+pessoa.nick;
+  // Se a indicacao estiver depois da pagina inicial, carregar somente
+  // a ficha dessa MESMA rede com o deslocamento comprovado pelo servidor.
+  if(!titularesIndicados.some(x=>x.nick===pessoa.nick)){
+   try{
+    const d=await requisitar('/minha-rede?offset='+
+     (pessoa.numeroCadastro-1));
+    const encontrado=Array.isArray(d.indicados)?d.indicados.find(x=>
+     x.nick===pessoa.nick&&x.numeroCadastro===pessoa.numeroCadastro):null;
+    if(encontrado)titularesIndicados.push(encontrado);
+   }catch{dizer('Não foi possível consultar a indicação.');}
+  }
+  exibirRede();
+  campo.focus();
  }
  function preencherLinks(nick){
   const endereco=location.origin,identificador=encodeURIComponent(nickVisivel(nick));
