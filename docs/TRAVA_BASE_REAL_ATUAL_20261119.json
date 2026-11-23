@@ -48,7 +48,7 @@
     },
     {
       "path": ".github/workflows/auditoria-integral-pilar-interno.yml",
-      "sha": "34b05c09c60e49a837f50737beea34ff3564137f"
+      "sha": "3fa9a10f4883e7b8a99e371af5aa4661758ae9dd"
     },
     {
       "path": ".github/workflows/bloco-a-nucleo-contas.yml",
@@ -5665,6 +5665,20 @@
       "antes": "379ef45f8209d2e36ec902d4832010ccf42ff981",
       "depois": "b36aff8ef67bd5168fd5fde0aae37a17dece2c93",
       "objetivo": "Integracao mecanica opcional de fila/porteira/catraca, exclusivamente em SQLite de testes do operador; comandos persistidos sem alterar clientes, pedidos ou dinheiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": ".github/workflows/auditoria-integral-pilar-interno.yml",
+      "antes": "34b05c09c60e49a837f50737beea34ff3564137f",
+      "depois": "61ce5949ddfa7f4f155399b8c552591213a37646",
+      "objetivo": "Substituir na auditoria integral o teste legado da rota /staging que falhava na geometria mobile; validar rota da AKITEMM real em banco descartavel, sem alegar quantidade de abas e sem alterar layout ou financeiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": ".github/workflows/auditoria-integral-pilar-interno.yml",
+      "antes": "61ce5949ddfa7f4f155399b8c552591213a37646",
+      "depois": "3fa9a10f4883e7b8a99e371af5aa4661758ae9dd",
+      "objetivo": "Corrigir explicacao do falso bloqueio: a divergencia de geometria no /staging nao deve ser confundida com mudanca na vitrine real; preserva comportamento e cobertura."
     }
   ]
 }

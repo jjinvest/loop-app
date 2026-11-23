@@ -10,7 +10,18 @@ on:
       - 'scripts/validar-identidade-real-navegador.js'
       - 'scripts/validar-conta-unica-candidato-browser.js'
       - 'scripts/validar-filtros-akitemm-pc-celular-browser.js'
+      - 'scripts/validar-operador-primeiro-produto-navegador.js'
       - 'docs/AUDITORIA_INTERNA_FIM_A_FIM_15NOV2026.md'
+  pull_request:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - '.github/workflows/auditoria-integral-pilar-interno.yml'
+      - 'scripts/validar-identidade-real-navegador.js'
+      - 'scripts/validar-operador-primeiro-produto-navegador.js'
+      - 'src/producao/interface-aprovada-loja.js'
+      - 'test/**'
+      - 'src/**'
   workflow_dispatch:
 permissions:
   contents: read
@@ -73,9 +84,11 @@ jobs:
       - name: Fluxo unificado cliente / loja / conta PC e celular
         if: success() || failure()
         run: node scripts/validar-conta-unica-candidato-browser.js
-      - name: Loja / filtros / PDF / administrador / sininho PC e celular
+      # A prova antiga da rota /staging falhava no calculo de geometria
+      # no celular, e nao certifica o fluxo da rota /loja real.
+      - name: AKITEMM real / cadastro de produto / fotos / filtros / PC e celular
         if: success() || failure()
-        run: node scripts/validar-filtros-akitemm-pc-celular-browser.js
+        run: node scripts/validar-operador-primeiro-produto-navegador.js
       - name: Guardar evidencias de navegacao sem dados pessoais
         uses: actions/upload-artifact@v4
         if: always()
