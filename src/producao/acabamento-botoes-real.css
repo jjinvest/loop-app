@@ -680,6 +680,31 @@ body.loop03-modo-operador .loop03-admin-section .loop03-admin-dado{
  background:#171a27;padding:12px;white-space:pre-line;line-height:1.5;
 }
 
+/* Bloco de teste do OPERADOR: acabamento responsivo restrito ao painel
+   novo; nao altera nenhuma moldura ou botoes da visao do cliente. */
+body.loop03-modo-operador #adminTesteModulos{
+ display:grid;gap:12px;min-width:0;max-width:100%;padding-top:14px;
+ border-top:1px solid #786344;
+}
+body.loop03-modo-operador #adminTesteModulos .loop03-admin-acoes{
+ display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;
+}
+body.loop03-modo-operador #adminTesteModulos input{
+ min-width:0;max-width:100%;box-sizing:border-box;
+ border-radius:11px;
+}
+body.loop03-modo-operador #adminTesteModulos .loop03-admin-dado p{
+ margin:5px 0;overflow-wrap:anywhere;
+}
+@media(max-width:480px){
+ body.loop03-modo-operador #adminTesteModulos .loop03-admin-acoes button{
+  flex:1 1 100%;min-width:0;
+ }
+ body.loop03-modo-operador #adminTesteModulos .loop03-admin-acoes input{
+  flex:1 1 100%;
+ }
+}
+
 /* Placar universal do CLIENTE: presente em todas as abas do mesmo escritório.
    Só posicionamento; as fontes são motor e relógio autenticados do servidor. */
 body.loop03-logado:not(.loop03-modo-operador) .cliente-integrado .loop03-indicadores .loop03-indicador{
