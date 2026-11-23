@@ -53,7 +53,7 @@
   const dica=document.getElementById('akitemmInstrucaoArrastar');
   const barraId='akitemmFerramentasOperadorVitrine';
   const barraAtual=document.getElementById(barraId);
-  if(!operador){barraAtual?.remove();atual?.remove();importar?.remove();suporteBotao?.remove();draftsBotao?.remove();dica?.remove();return;}
+  if(!operador){atual?.remove();importar?.remove();suporteBotao?.remove();draftsBotao?.remove();dica?.remove();barraAtual?.remove();return;}
   const filtro=document.getElementById('akitemmFiltroOfertas');
   if(!filtro)return;
   // Ferramentas do operador fora da grade dos filtros: evita esticar a
