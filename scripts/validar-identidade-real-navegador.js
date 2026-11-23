@@ -1301,6 +1301,8 @@ async function main(){
    await detalhes.waitFor({state:'hidden'});
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaLinks').click();
+   await page.waitForFunction(()=>
+    document.getElementById('linkLoja')?.value.includes('/loja/'));
    assert.match(await page.locator('#linkLoja').inputValue(),
     /\/loja\/dozeletrasab/);
    assert.match(await page.locator('#linkEscritorio').inputValue(),

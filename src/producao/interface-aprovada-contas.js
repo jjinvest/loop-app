@@ -204,6 +204,13 @@
   }
  }
  function mostrarLogin(t){
+  // Nenhum link da conta anterior sobrevive à saída/troca de perfil.
+  geracaoPermissaoLinks++;origemLinks=null;
+  for(const [campo,botao] of [['linkLoja','copiarLinkLoja'],
+   ['linkEscritorio','copiarLinkEscritorio']]){
+   if($(campo))$(campo).value='';
+   if($(botao))$(botao).disabled=true;
+  }
   limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   tela=t;modoOperadorAtual=false;

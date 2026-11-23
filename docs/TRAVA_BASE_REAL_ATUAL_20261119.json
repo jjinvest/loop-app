@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "6a62a6be6387af515488a34236fd61eedc933922"
+      "sha": "2ebec56aed9525f6b30a6d2f69badd0e7b94ba8b"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "ca8978f71a688716b963dd986c38cb4964086dc3"
+      "sha": "910a36ceea1ac7bf791037128356cb407f3afa22"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -5990,6 +5990,20 @@
       "antes": "b54a996da873bb9eeafa23db132455a0d2a4df03",
       "depois": "bdb569a8d1a3cad46fb351831ab3270e3683f73e",
       "objetivo": "Executar ALTER TABLE na preparacao SQLite do teste de apuracao de comissao sem creditos."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "ca8978f71a688716b963dd986c38cb4964086dc3",
+      "depois": "910a36ceea1ac7bf791037128356cb407f3afa22",
+      "objetivo": "Escritorio LOOP e Loja AKITEMM obedecem ao MESMO gate de habilitacao do link apos compra verde/roxa/dourada comprovada. Sessao/logout limpa links e teste PC/celular valida resposta."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "6a62a6be6387af515488a34236fd61eedc933922",
+      "depois": "2ebec56aed9525f6b30a6d2f69badd0e7b94ba8b",
+      "objetivo": "Escritorio LOOP e Loja AKITEMM obedecem ao MESMO gate de habilitacao do link apos compra verde/roxa/dourada comprovada. Sessao/logout limpa links e teste PC/celular valida resposta."
     }
   ]
 }
