@@ -514,11 +514,13 @@
    ],
    conteudoEquipe:[
     '<h2>Cadastros · Operador</h2>',
-    '<p>Localize pelo nick. Nome e telefone podem ser corrigidos com motivo e auditoria. E-mail, CPF, senha e vínculos não são alterados aqui.</p>',
-    '<form id="adminBuscaCadastro" class="loop03-admin-campos"><label for="adminNickBusca">Nick do cliente</label>',
-    '<input id="adminNickBusca" name="nick" maxlength="12" pattern="[A-Za-z]{1,12}" required>',
+    '<p>Pesquise por nome, nick, telefone, e-mail ou CPF. Nome e telefone podem ser corrigidos com motivo e auditoria. E-mail, CPF, senha e vínculos não são alterados aqui.</p>',
+    '<form id="adminBuscaCadastro" class="loop03-admin-campos"><label for="adminNickBusca">Localizar cliente</label>',
+    '<input id="adminNickBusca" name="termo" maxlength="90" minlength="2" placeholder="Nome, nick, telefone, e-mail ou CPF" autocomplete="off" required>',
     '<div class="loop03-admin-acoes"><button type="submit">Localizar cadastro</button></div></form>',
-    '<div id="adminCadastroEstado" class="loop03-admin-dado" role="status" aria-live="polite">Digite o nick para consultar.</div>',
+    '<div id="adminCadastroResultados" class="loop03-admin-resultados" hidden></div>',
+    '<div id="adminCadastroEstado" class="loop03-admin-dado" role="status" aria-live="polite">Digite nome, nick, telefone, e-mail ou CPF para consultar.</div>',
+    '<div class="loop03-admin-acoes"><button id="adminVoltarBuscaEquipe" type="button" hidden>← Voltar à busca</button></div>',
     '<section id="adminComprasCliente" class="loop03-admin-compras" hidden><h3>Produtos comprados</h3><div id="adminComprasClienteLista"></div><button type="button" id="adminMaisComprasCliente" hidden>Ver mais compras</button></section>',
     '<form id="adminCorrigeCadastro" class="loop03-admin-campos" hidden>',
     '<label for="adminNomeCadastro">Nome</label><input id="adminNomeCadastro" maxlength="90" required>',
@@ -558,7 +560,7 @@
   $('adminAtualizarPosicoes')?.addEventListener('click',()=>void carregarAbaOperador('abaPosicoes'));
   $('adminAtualizarFinanceiro')?.addEventListener('click',()=>void carregarAbaOperador('abaFinanceiro'));
   $('adminAtualizarPedidos')?.addEventListener('click',()=>void carregarAbaOperador('abaMeusPedidos'));
-  let nickCadastroConsultado=null;
+  let nickCadastroConsultado=null,consultaCadastroVersao=0;
   let historicoCadastroNick=null,historicoCadastroOffset=0;
   const comprasPainel=$('adminComprasCliente');
   function limparHistoricoCadastro(){
@@ -608,7 +610,13 @@
      detalhes.textContent=item.quantidade+' unidade(s) · '+(Number.isFinite(data.getTime())?
       data.toLocaleDateString('pt-BR'):'Data não informada')+
       ' · '+new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'})
-       .format(item.precoUnitCentavos/100)+' cada';
+       .format(item.precoUnitCentavos/100)+' cada'+
+      '\nPagamento: '+(item.statusPagamento==='APROVADO_PARA_EXPEDICAO'?
+       'Aprovado':'Não confirmado')+
+      '\nForma de pagamento: '+(item.formaPagamento||'Não registrada')+
+      '\nPedido: '+(item.pedidoId||'Não informado')+
+      (item.pagamentoId?'\nReferência do pagamento: '+item.pagamentoId:'');
+     detalhes.style.whiteSpace='pre-line';
      linha.append(titulo,detalhes);lista.appendChild(linha);
     }
     historicoCadastroOffset=pagina+d.itens.length;
@@ -627,32 +635,107 @@
   $('adminMaisComprasCliente')?.addEventListener('click',()=>{
    if(historicoCadastroNick)void carregarComprasCadastro(historicoCadastroNick,{mais:true});
   });
-  $('adminBuscaCadastro')?.addEventListener('submit',async e=>{
-   e.preventDefault();
-   const nick=$('adminNickBusca').value.trim(),estado=$('adminCadastroEstado');
-   const form=$('adminCorrigeCadastro');
-   form.hidden=true;nickCadastroConsultado=null;
+  function voltarBuscaEquipe(){
+   consultaCadastroVersao++;
+   nickCadastroConsultado=null;
    limparHistoricoCadastro();
+   $('adminCorrigeCadastro').hidden=true;
+   $('adminBuscaCadastro').hidden=false;
+   $('adminCadastroResultados').hidden=true;
+   $('adminCadastroResultados').replaceChildren();
+   $('adminVoltarBuscaEquipe').hidden=true;
+   $('adminNickBusca').value='';
+   $('adminCadastroEstado').textContent='Digite nome, nick, telefone, e-mail ou CPF para consultar.';
+   $('adminNickBusca').focus();
+  }
+  $('adminVoltarBuscaEquipe')?.addEventListener('click',voltarBuscaEquipe);
+  async function abrirFichaCadastroOperador(nick){
+   const versao=++consultaCadastroVersao,estado=$('adminCadastroEstado');
    estado.textContent='Consultando cadastro…';
+   $('adminCorrigeCadastro').hidden=true;
+   limparHistoricoCadastro();
    try{
-    if(!/^[A-Za-z]{1,12}$/.test(nick))throw Error('Nick inválido.');
     const r=await fetch('/api/admin/contas/cadastro?nick='+encodeURIComponent(nick),{
      credentials:'same-origin',cache:'no-store'
     });
     const d=await r.json().catch(()=>({}));
+    if(versao!==consultaCadastroVersao||!modoOperadorAtual)return;
     if(!r.ok||!d.cadastro)throw Error(d.erro||'Cadastro não localizado.');
     const x=d.cadastro;
     nickCadastroConsultado=x.nick;
-    estado.textContent='Nick: '+x.nick+'\nE-mail: '+x.email+
+    $('adminBuscaCadastro').hidden=true;
+    $('adminCadastroResultados').hidden=true;
+    $('adminVoltarBuscaEquipe').hidden=false;
+    const dataCadastro=new Date(x.registradoEm);
+    estado.textContent='Nome: '+x.nome+'\nNick: '+x.nick+
+     '\nTelefone: '+(x.telefone||'Não informado')+
+     '\nE-mail: '+x.email+
      '\nVerificado: '+(x.emailVerificado?'Sim':'Pendente')+
      '\nCPF: '+(x.cpfExibicao||'Não informado')+
-     '\nCadastro: '+new Date(x.registradoEm).toLocaleDateString('pt-BR');
+     '\nPosições ativas: '+(Number.isSafeInteger(x.posicoesAtivas)?
+      x.posicoesAtivas:'Indisponível')+
+     '\nCadastro: '+(Number.isFinite(dataCadastro.getTime())?
+      dataCadastro.toLocaleDateString('pt-BR'):'Não informado');
     $('adminNomeCadastro').value=x.nome;
     $('adminTelefoneCadastro').value=x.telefone||'';
     $('adminMotivoCadastro').value='';
-    form.hidden=false;
+    $('adminCorrigeCadastro').hidden=false;
     void carregarComprasCadastro(x.nick);
-   }catch(err){estado.textContent='Consulta não realizada: '+err.message;}
+   }catch(err){
+    if(versao!==consultaCadastroVersao)return;
+    estado.textContent='Consulta não realizada: '+err.message;
+    $('adminBuscaCadastro').hidden=false;
+    $('adminVoltarBuscaEquipe').hidden=true;
+   }
+  }
+  $('adminBuscaCadastro')?.addEventListener('submit',async e=>{
+   e.preventDefault();
+   const termo=$('adminNickBusca').value.trim();
+   const estado=$('adminCadastroEstado'),resultados=$('adminCadastroResultados');
+   const versao=++consultaCadastroVersao;
+   nickCadastroConsultado=null;
+   $('adminCorrigeCadastro').hidden=true;
+   $('adminVoltarBuscaEquipe').hidden=true;
+   limparHistoricoCadastro();
+   resultados.replaceChildren();resultados.hidden=true;
+   estado.textContent='Procurando cliente…';
+   try{
+    if(termo.length<2||termo.length>90)throw Error('Informe pelo menos 2 caracteres.');
+    const token=await obterCsrfOperadorReal();
+    if(versao!==consultaCadastroVersao)return;
+    const r=await fetch('/api/admin/contas/pesquisar',{
+     method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+     body:JSON.stringify({termo})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(versao!==consultaCadastroVersao||!modoOperadorAtual)return;
+    if(!r.ok||!Array.isArray(d.resultados))
+     throw Error(d.erro||'Pesquisa indisponível.');
+    if(!d.resultados.length){
+     estado.textContent='Nenhum cadastro encontrado. Confira o nome, nick ou número.';
+     return;
+    }
+    if(d.resultados.length===1){
+     void abrirFichaCadastroOperador(d.resultados[0].nick);
+     return;
+    }
+    estado.textContent=d.resultados.length+' cadastros encontrados'+
+     (d.temMais?' (refine a busca para mostrar mais)':'')+
+     '. Selecione o cliente:';
+    for(const pessoa of d.resultados){
+     const botao=document.createElement('button');
+     botao.type='button';botao.className='loop03-admin-candidato';
+     botao.textContent=pessoa.nome+' · @'+pessoa.nick+
+      (pessoa.telefoneFinal?' · '+pessoa.telefoneFinal:'');
+     botao.addEventListener('click',()=>void abrirFichaCadastroOperador(pessoa.nick));
+     resultados.append(botao);
+    }
+    resultados.hidden=false;
+   }catch(err){
+    if(versao!==consultaCadastroVersao)return;
+    estado.textContent='Pesquisa não realizada: '+err.message;
+   }
   });
   $('adminCorrigeCadastro')?.addEventListener('submit',async e=>{
    e.preventDefault();
