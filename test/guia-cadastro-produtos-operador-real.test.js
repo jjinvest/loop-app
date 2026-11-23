@@ -21,4 +21,14 @@ test('loja valida taxa, cidades e dados do fornecedor antes de criar produto',()
  assert.match(js,/FORNECEDOR_MANUAL','PLANILHA_CSV/);
  assert.match(js,/if\(detalhe\)detalhe\.open=true/);
  assert.match(js,/entrada\.style\.outline='2px solid/);
+ assert.match(js,/validarCampos\(\{paraVitrine=false\}=\{\}\)/);
+ assert.match(js,/anuncio\.validarCampos\(\{paraVitrine:true\}\)/);
+ assert.match(js,/if\(!foto\.temFoto\(\)\)/);
+ assert.match(js,/Escolha uma foto de capa para publicar/);
+ assert.match(js,/Informe o preço normal para exibir o produto na vitrine/);
+ assert.match(js,/Para salvar na vitrine, corrija/);
+ assert.match(js,/Corrigir e concluir este produto/);
+ assert.doesNotMatch(js,/recortar\.type='checkbox'/);
+ assert.match(js,/recortar\.textContent='Ajustar corte da foto \(opcional\)'/);
+ assert.match(js,/recorteAtivo=!recorteAtivo/);
 });

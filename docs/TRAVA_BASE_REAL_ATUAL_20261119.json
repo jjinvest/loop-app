@@ -440,7 +440,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "5de42c4320a103a82c924ec2d5250b7313dafc22"
+      "sha": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -1536,7 +1536,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "4f4295a7aaaae047960c22ae0b50dc1dd9f38e7f"
+      "sha": "1a6dd3130e6a82c093416e705cd023b498e1dfad"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -2720,7 +2720,7 @@
     },
     {
       "path": "test/guia-cadastro-produtos-operador-real.test.js",
-      "sha": "9f683f56d378d566361e786d078085d96477e88d"
+      "sha": "7a2616de5f759417bc2c6545d0562df5d66f738b"
     },
     {
       "path": "test/historico-ciclos-relacional-sqlite.test.js",
@@ -5770,6 +5770,27 @@
       "antes": "f0d2904198f695ebfb74c0375ebe966838800ffe",
       "depois": "5de42c4320a103a82c924ec2d5250b7313dafc22",
       "objetivo": "Teste navegador da AKITEMM com credencial OPERADOR sensível a maiúsculas exigida pelo servidor."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/operador-loja-fotos-real.js",
+      "antes": "4f4295a7aaaae047960c22ae0b50dc1dd9f38e7f",
+      "depois": "1a6dd3130e6a82c093416e705cd023b498e1dfad",
+      "objetivo": "Cadastro de produto real com detalhes de pendências, capa obrigatória para publicação, ajuste opcional de corte sem checkbox, e prova automatizada PC/Android; não mexer na identidade do cliente."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/guia-cadastro-produtos-operador-real.test.js",
+      "antes": "9f683f56d378d566361e786d078085d96477e88d",
+      "depois": "7a2616de5f759417bc2c6545d0562df5d66f738b",
+      "objetivo": "Cadastro de produto real com detalhes de pendências, capa obrigatória para publicação, ajuste opcional de corte sem checkbox, e prova automatizada PC/Android; não mexer na identidade do cliente."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-operador-primeiro-produto-navegador.js",
+      "antes": "5de42c4320a103a82c924ec2d5250b7313dafc22",
+      "depois": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
+      "objetivo": "Cadastro de produto real com detalhes de pendências, capa obrigatória para publicação, ajuste opcional de corte sem checkbox, e prova automatizada PC/Android; não mexer na identidade do cliente."
     }
   ]
 }

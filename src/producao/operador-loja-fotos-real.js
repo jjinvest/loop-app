@@ -409,7 +409,8 @@
     ultimos.push(entrada);
    }
    resumo.hidden=false;
-   estado.textContent='Existem campos marcados. Toque em “Corrigir” para ir ao campo.';
+   estado.textContent='Para salvar na vitrine, corrija: '+
+    erros.map(x=>x.mensagem).join(' ');
    ir(erros[0].entrada);
    return false;
   };
@@ -581,8 +582,10 @@
      if(typeof valor==='string')campo.value=valor;
     sincronizarOrigem();
    },
-   validarCampos(){
+   validarCampos({paraVitrine=false}={}){
     const erros=[],adicionar=(entrada,mensagem)=>erros.push({entrada,mensagem});
+    if(paraVitrine&&!normal.value.trim())
+     adicionar(normal,'Informe o preço normal para exibir o produto na vitrine.');
     const precoValido=v=>!v.trim()||/^(?:0|[1-9][0-9]{0,6})(?:[,.][0-9]{1,2})?$/.test(v.trim());
     if(!['PROPRIO','FORNECEDOR_MANUAL','PLANILHA_CSV'].includes(origem.s.value))
      adicionar(origem.s,'Escolha uma origem disponível e funcional.');
@@ -771,11 +774,13 @@
   previa.width=640;previa.height=640;
   previa.className='akitemm-foto-previa';previa.hidden=true;
   caixa.append(previa);
-  const recorteLabel=document.createElement('label');
-  recorteLabel.className='akitemm-recorte-opcional';
-  const recortar=document.createElement('input');recortar.type='checkbox';
-  recorteLabel.append(recortar,document.createTextNode(' Recortar foto, se precisar'));
-  caixa.append(recorteLabel);
+  // Foto inteira por padrão; só um botão opcional para cortar a capa.
+  // Não exibir quadradinho/checkbox nem opções de saturação e filtros.
+  const recortar=document.createElement('button');
+  recortar.type='button';recortar.className='akitemm-recorte-opcional';
+  recortar.textContent='Ajustar corte da foto (opcional)';
+  recortar.hidden=true;
+  caixa.append(recortar);
   const ajustes=document.createElement('div');
   ajustes.className='akitemm-foto-ajustes';ajustes.hidden=true;
   const controles=[];
@@ -790,13 +795,13 @@
    x.value=valor;l.append(x);ajustes.append(l);controles.push(x);
   }
   caixa.append(ajustes);form.append(caixa);
-  let imagem=null,carregando=null;
+  let imagem=null,carregando=null,recorteAtivo=false;
   const redesenhar=()=>{
    if(!imagem)return;
    const contexto=previa.getContext('2d');
    if(!contexto)throw Error('EDICAO_FOTO_INDISPONIVEL');
    contexto.fillStyle='#ffffff';contexto.fillRect(0,0,640,640);
-   if(!recortar.checked){
+   if(!recorteAtivo){
     // Padrao: imagem inteira dentro da moldura, sem cortar o produto.
     const escala=Math.min(640/imagem.naturalWidth,640/imagem.naturalHeight);
     const largura=imagem.naturalWidth*escala,altura=imagem.naturalHeight*escala;
@@ -809,12 +814,17 @@
    const y=(imagem.naturalHeight-lado)*Number(controles[2].value)/100;
    contexto.drawImage(imagem,x,y,lado,lado,0,0,640,640);
   };
-  recortar.addEventListener('change',()=>{
-   ajustes.hidden=!recortar.checked||!imagem;redesenhar();
+  recortar.addEventListener('click',()=>{
+   if(!imagem)return;
+   recorteAtivo=!recorteAtivo;
+   recortar.textContent=recorteAtivo?'Usar foto inteira':'Ajustar corte da foto (opcional)';
+   ajustes.hidden=!recorteAtivo;
+   redesenhar();
   });
   for(const x of controles)x.addEventListener('input',redesenhar);
   input.addEventListener('change',()=>{
-   imagem=null;previa.hidden=true;ajustes.hidden=true;recortar.checked=false;
+   imagem=null;previa.hidden=true;ajustes.hidden=true;recorteAtivo=false;
+   recortar.hidden=true;recortar.textContent='Ajustar corte da foto (opcional)';
    const foto=input.files?.[0];
    if(!foto)return;
    if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||
@@ -832,7 +842,8 @@
       reject(Error('FOTO_RESOLUCAO_BAIXA'));return;
      }
      imagem=img;previa.hidden=false;ajustes.hidden=true;
-     redesenhar();aviso.textContent='Imagem inteira. Para cortar, marque Recortar foto.';
+     recortar.hidden=false;
+     redesenhar();aviso.textContent='Foto enquadrada automaticamente. Se precisar, use Ajustar corte.';
      resolve();
     };
     img.onerror=()=>reject(Error('FOTO_NAO_ABRIU'));
@@ -843,6 +854,7 @@
    carregando.catch(()=>{aviso.textContent='Não foi possível abrir a imagem. Escolha outra foto.';});
   });
   return {
+   campo:input,
    temFoto:()=>Boolean(input.files?.length),
    obter:async()=>{
     if(carregando)await carregando;
@@ -1214,8 +1226,11 @@
     erros.push({entrada:nome,mensagem:'Digite o nome do produto (2 a 150 caracteres).'});
    if(!ID_NOVO.test(id))
     erros.push({entrada:codigo,mensagem:'Código: use letras minúsculas, números ou hífen (3 a 80 caracteres).'});
-   erros.push(...anuncio.validarCampos());
+   erros.push(...anuncio.validarCampos({paraVitrine:true}));
    erros.push(...entrega.validarCampos());
+   if(!foto.temFoto())
+    erros.push({entrada:foto.campo,mensagem:
+     'Escolha uma foto de capa para publicar; sem foto, salve como rascunho.'});
    if(!guia.mostrar(erros)){
     aberto=false;
     void salvarRascunho().catch(falhaRascunho);
@@ -1275,10 +1290,21 @@
     editar.addEventListener('click',()=>{dialogo.close();void abrirProduto(id);});
     corpo.append(editar);
    }catch(e){
-    estado.textContent=(criado?'Produto criado, mas edição incompleta: ':
-     'Não foi possível salvar: ')+e.message+
-     (criado?' Abra o produto existente para continuar.':'');
-    if(!criado)criar.disabled=false;
+    const codigo=String(e?.message||'ERRO_DESCONHECIDO');
+    const dica=/SESSAO|CSRF|LOGIN|401|403/.test(codigo)?
+     'A sessão administrativa não foi confirmada nesta operação. '+
+     'Reabra o escritório com o perfil OPERADOR; não é erro de campo.':
+     codigo;
+    estado.textContent=(criado?'Produto registrado, mas há etapas pendentes: ':
+     'Não foi possível concluir o cadastro: ')+dica;
+    if(criado){
+     formularioFinalizado=true;
+     const continuar=document.createElement('button');
+     continuar.type='button';continuar.className='akitemm-editor-secundario';
+     continuar.textContent='Corrigir e concluir este produto';
+     continuar.addEventListener('click',()=>{dialogo.close();void abrirProduto(id);});
+     corpo.append(continuar);
+    }else criar.disabled=false;
    }finally{aberto=false;}
   });
  }

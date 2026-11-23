@@ -291,9 +291,22 @@ async function principal(){
    await codigoArea.locator('summary').click();
    await codigoArea.locator('input').fill(codigo);
    await m.getByLabel('Classificação comercial LOOP (não é cor física)').selectOption(cor);
+   // Faltou capa: NÃO criar produto nem redirecionar para login.
+   await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
+   assert.equal(await m.locator('.akitemm-escolher-foto input').getAttribute('aria-invalid'),'true');
+   assert.match(await m.locator('.akitemm-editor-status').textContent(),
+    /Escolha uma foto de capa para publicar/);
+   assert.equal(await m.locator('.akitemm-recorte-opcional input[type=checkbox]').count(),0);
    await m.locator('input[type=file]').setInputFiles({
     name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
    });
+   // Enquadramento automático; recorte só se o operador pedir.
+   const corte=m.getByRole('button',{name:'Ajustar corte da foto (opcional)'});
+   await corte.waitFor({state:'visible'});
+   assert.equal(await m.locator('.akitemm-foto-ajustes').isHidden(),true);
+   await corte.click();
+   await m.getByRole('button',{name:'Usar foto inteira'}).click();
+   assert.equal(await m.locator('.akitemm-foto-ajustes').isHidden(),true);
    await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
    await m.getByText('Produto e foto salvos na posição ',{exact:false}).waitFor({
     timeout:15000
