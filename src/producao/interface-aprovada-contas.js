@@ -621,6 +621,11 @@
    div.innerHTML=linhas.join('');
    destino.prepend(div);
   }
+  // O painel autenticado de cofres fica SOB os dois cartões comerciais,
+  // sem duplicar saldos, sem criar um quarto cofre ou mudar a visão cliente.
+  const cofres=$('loop03CofresOperador');
+  const comercial=$('adminResumoComercial');
+  if(cofres&&comercial)comercial.after(cofres);
   // Testes operacionais separados das posicoes dos clientes: somente
   // sessao do operador; cada botao aciona uma transicao transacional.
   async function carregarBancadaOperador(){
@@ -1127,6 +1132,14 @@
   const totalA=d?.filaA,totalB=d?.filaB;
   const eventos=d?.tabuleiro?.eventosNoCiclo;
   const centros=d?.tabuleiro?.ciclosConcluidos;
+  const relogio=d?.relogio??null;
+  if(relogio&&(!Number.isSafeInteger(relogio.luzesRelogio24h)||
+      relogio.luzesRelogio24h<0||
+      !Number.isSafeInteger(relogio.ciclosRelogio24h)||
+      relogio.ciclosRelogio24h!==Math.floor(relogio.luzesRelogio24h/6)))
+   throw Error('RESUMO_POSICOES_RELOGIO_INVALIDO');
+  const eventosVisiveis=relogio?relogio.luzesRelogio24h%6:eventos;
+  const centrosVisiveis=relogio?relogio.ciclosRelogio24h:centros;
   if(![totalA,totalB,eventos,centros].every(x=>
      Number.isSafeInteger(x)&&x>=0)||eventos>6)
    throw Error('RESUMO_POSICOES_MOTOR_INVALIDO');
@@ -1137,6 +1150,12 @@
    const cabecalho=document.createElement('h3');
    cabecalho.textContent=titulo;
    quadro.appendChild(cabecalho);
+   if(tipo==='tabuleiro'&&d?.relogio){
+    const aviso=document.createElement('small');
+    aviso.className='loop03-resumo-origem-relogio';
+    aviso.textContent='RELÓGIO VISUAL · SEM GIRO FINANCEIRO';
+    quadro.appendChild(aviso);
+   }
    for(const [nome,valor] of pares){
     const indicador=document.createElement('div');
     indicador.className='loop03-resumo-indicador';
@@ -1153,9 +1172,11 @@
    cartao('FILAS','Posições das filas A e B',[
     ['Fila A',totalA],['Fila B',totalB]
    ],'filas'),
-   cartao('TABULEIRO','Eventos e centros concluídos pelo motor',[
-    ['Eventos no ciclo',eventos+' / 6'],
-    ['Centros concluídos',centros]
+   cartao('TABULEIRO',relogio?
+    'Eventos e centros visuais do relógio, sem confirmar giro ou pagamento':
+    'Eventos e centros concluídos pelo motor',[
+    ['Eventos no ciclo',eventosVisiveis+' / 6'],
+    ['Centros concluídos',centrosVisiveis]
    ],'tabuleiro')
   );
  }
@@ -1231,7 +1252,29 @@
      origem.textContent='TESTE OPERACIONAL · '+visualTesteModulo+
       ' · contadores do motor de teste';
      destino.prepend(origem);
-    }else mostrarResumoPosicoesOperador(destino,d);
+    }else{
+     // Os LEDs do relógio não são giros do motor. A leitura do mesmo
+     // controle compartilhado alimenta os eventos/centros VISUAIS.
+     const respostaRelogio=await fetch('/api/admin/loop/controle',{
+      credentials:'same-origin',cache:'no-store'
+     });
+     if(!respostaRelogio.ok)throw Error('RELOGIO_ADMIN_INDISPONIVEL');
+     const c=await respostaRelogio.json();
+     const a=c.agenda;
+     if(a?.origem!=='CATRACA_REAL_MESMO_SQLITE'||
+        a.somenteLeitura!==true||a.luzesDoRelogioCompartilhado!==true||
+        a.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
+        a.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
+        a.girosReaisHoje!==c.girosHoje||
+        a.girosReais24h!==c.giros24h||
+        a.luzesRelogio24h!==c.luzesRelogio24h||
+        a.ciclosRelogio24h!==c.ciclosRelogio24h)
+      throw Error('RELOGIO_MOTOR_DIVERGENTE');
+     mostrarResumoPosicoesOperador(destino,{
+      ...d,relogio:{luzesRelogio24h:a.luzesRelogio24h,
+       ciclosRelogio24h:a.ciclosRelogio24h}
+     });
+    }
    }else if(id==='abaFinanceiro'){
     destino.textContent='Modo da catraca: '+d.modo+
      '\nGiros de hoje: '+d.girosHoje+
@@ -1385,6 +1428,11 @@
   posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
   revelarCofresOperador(false);
+  // Restitui o painel oculto à posição estrutural original ao trocar
+  // para cliente, sem expor cofres administrativos no seu escritório.
+  const cofres=$('loop03CofresOperador');
+  const ancora=$('tabuleiroVerPosicoesIntegrado');
+  if(cofres&&ancora)ancora.after(cofres);
   direcionarAcessosAkitemm('cliente');
   document.body.classList.remove('loop03-modo-operador');
   const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=true;
@@ -2209,6 +2257,16 @@
    $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
    $('loop03NumeroIntegrado').textContent=
     d.tabuleiro.eventosNoCiclo+' / 6';
+   // A aba Posições acompanha a agenda a cada 15s, ainda que o
+   // operador esteja fora do Tabuleiro. Não modifica eventos reais.
+   if($('conteudoPosicoes')?.hidden===false&&
+      $('adminResumoPosicoes')&&
+      (typeof visualTesteModulo==='undefined'||visualTesteModulo===null)){
+    mostrarResumoPosicoesOperador($('adminResumoPosicoes'),{
+     ...d,relogio:{luzesRelogio24h:agenda.luzesRelogio24h,
+      ciclosRelogio24h:agenda.ciclosRelogio24h}
+    });
+   }
    visorCatraca.registrarAgenda(agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
   }catch{
