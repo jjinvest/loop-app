@@ -1189,8 +1189,7 @@
   }
   const tabuleiro=criar('section','loop03-resumo-quadro loop03-resumo-tabuleiro');
   tabuleiro.setAttribute('aria-label','Contadores visuais do relógio do tempo');
-  tabuleiro.append(criar('h3','','TABULEIRO'),
-   criar('p','loop03-titulo-relogio','RELÓGIO DO TEMPO'));
+  tabuleiro.append(criar('h3','','TABULEIRO / RELÓGIO DO TEMPO'));
   const luzesContinuas=relogio?.luzesRelogioAcumuladas??null;
   tabuleiro.append(linha(
    metade('Eventos no ciclo',luzesContinuas===null?
