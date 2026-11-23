@@ -131,6 +131,10 @@
       "sha": "f4399e918b8f4c53b42d74e5f138b2a76a4b85d1"
     },
     {
+      "path": ".github/workflows/prova-movimento-modulos-20261123.yml",
+      "sha": "8c28bd815d51dbbefe5975df972f02bb3b32b440"
+    },
+    {
       "path": ".github/workflows/prova-operador-akitemm.yml",
       "sha": "35aa6e1b0eac5236c52f89300291b5f4ebf48a0b"
     },
@@ -5591,6 +5595,13 @@
       "antes": "c854e51feff2de142a4df3343cfd5a1b57c24d8b",
       "depois": "94d163f807bc22039aeae9511722bc7e253c4aa5",
       "objetivo": "Teste de regressao da visao de operador e comprovacao de motor e SQLite separados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": ".github/workflows/prova-movimento-modulos-20261123.yml",
+      "antes": null,
+      "depois": "8c28bd815d51dbbefe5975df972f02bb3b32b440",
+      "objetivo": "Gate de prova independente no Node 24: seis eventos por giro, fila sem catraca, porteira fechada, idempotencia e recuperacao."
     }
   ]
 }
