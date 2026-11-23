@@ -73,6 +73,9 @@ function consultarComissoesDivulgacao({banco,titularId}={}){
   "AND p.status='APROVADO_PARA_EXPEDICAO'",
   'AND p.pagamento_id IS NOT NULL',
   'AND p.atualizado_em>=v.registrado_em',
+  // CINZA é apenas venda: não entra na base dos 10%.
+  'AND f.revisao>0',
+  "AND f.cor IN ('VERDE','ROXO','DOURADO','LARANJA')",
   'AND EXISTS (',
   'SELECT 1 FROM loja_real_pedidos origem',
   'JOIN loop_real_fotos_regras_pedido f2',
