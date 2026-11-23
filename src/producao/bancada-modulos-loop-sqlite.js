@@ -94,7 +94,7 @@ class BancadaModulosLoopSQLite{
    return {...resultado,repetida:false};
   }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
- _pulso(sim,id){
+ _pulso(sim,id,porteiraAberta=false){
   if(!sim.tabuleiro.centro)falha('BANCADA_CATRACA_SEM_CENTRO');
   const luz=sim.registrarVendaNoCicloSimulada({vendaId:id});
   let giro=null;
@@ -111,7 +111,7 @@ class BancadaModulosLoopSQLite{
    centrosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
    semCentroAposGiro:giro?.girou===true&&!sim.tabuleiro.centro,
    eventosNoCiclo:sim.tabuleiro.vendasDoCiclo.length,
-   porta: 'FECHADA'};
+   porta:porteiraAberta?'ABERTA':'FECHADA'};
  }
  _progresso(agenda,ms){
   if(agenda?.modo!=='AUTOMATICA'||agenda.metaCentrosDia<1||
@@ -175,7 +175,7 @@ class BancadaModulosLoopSQLite{
   const modulo=fila?'FILA':'CATRACA';
   const agenda=catraca?this.consultarAgenda():null;
   return this._transacao(modulo,idOperacao,{acao,nome,posicaoId},({row,sim})=>{
-   if(acao==='FILA_ENTRAR'){
+   if(acao==='FILA_ENTRAR'||acao==='CATRACA_ENTRAR'){
     if(typeof nome!=='string'||nome.trim().length<2||nome.length>70)
      falha('BANCADA_NOME_INVALIDO');
     const chave=nome.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -191,7 +191,7 @@ class BancadaModulosLoopSQLite{
     return {acao,posicaoId:r.posicao.id,nome:r.posicao.nome,
      entrouNaFila:'B',porteiraAberta:row.porteira_aberta===1};
    }
-   if(acao==='FILA_PROMOVER'){
+   if(acao==='FILA_PROMOVER'||acao==='CATRACA_PROMOVER'){
     if(!Number.isSafeInteger(posicaoId)||posicaoId<1)
      falha('BANCADA_POSICAO_INVALIDA');
     const alvo=[...sim.filas.filaA,...sim.filas.filaB]
@@ -202,11 +202,11 @@ class BancadaModulosLoopSQLite{
      posicaoAlvoId:posicaoId,eventoId:'indicacao-'+idOperacao});
     return {acao,posicaoId,promovidas:r.promovidas.map(p=>p.id)};
    }
-   if(acao==='FILA_ABRIR_PORTEIRA'){
+   if(acao==='FILA_ABRIR_PORTEIRA'||acao==='CATRACA_ABRIR_PORTEIRA'){
     row.porteira_aberta=1;
     return {acao,porteiraAberta:true};
    }
-   if(acao==='FILA_FECHAR_PORTEIRA'){
+   if(acao==='FILA_FECHAR_PORTEIRA'||acao==='CATRACA_FECHAR_PORTEIRA'){
     row.porteira_aberta=0;
     return {acao,porteiraAberta:false};
    }
@@ -259,7 +259,7 @@ class BancadaModulosLoopSQLite{
    if(acao==='CATRACA_PULSO'){
     if(!row.catraca_ativa||agenda?.modo!=='MANUAL')
      falha('BANCADA_CATRACA_MANUAL_NAO_AUTORIZADA');
-    const pulso=this._pulso(sim,'pulso-'+idOperacao);
+    const pulso=this._pulso(sim,'pulso-'+idOperacao,row.porteira_aberta===1);
     if(pulso.semCentroAposGiro)row.catraca_ativa=0;
     return {acao,...pulso};
    }
@@ -284,7 +284,7 @@ class BancadaModulosLoopSQLite{
     // Sem rajada de compensacao: um pulso de motor por vencimento
     // observado, inclusive depois de reiniciar o servidor.
     atual.cursor_dia=p.dia;atual.cursor_luz=p.luz;
-    const movimento=this._pulso(sim,'turno-'+p.dia+'-'+p.luz);
+    const movimento=this._pulso(sim,'turno-'+p.dia+'-'+p.luz,atual.porteira_aberta===1);
     if(movimento.semCentroAposGiro)atual.catraca_ativa=0;
     return {processado:true,acao:'CATRACA_EVENTO_RELOGIO',
      marco:p.luz,...movimento};
