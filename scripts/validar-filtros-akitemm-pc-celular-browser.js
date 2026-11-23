@@ -119,7 +119,8 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    assert.equal(await cards().count(),20,'recolher restaura 2 fileiras');
    const legenda=await pagina.locator('.akitemm-legenda-cores').evaluate(e=>
     getComputedStyle(e).gridTemplateColumns.split(' ').length);
-   assert.equal(legenda,2,'filtros em duas colunas nos dois dispositivos');
+   assert.equal(legenda,dispositivo.mobile?2:4,
+    'legenda com quatro cores lado a lado no PC e duas colunas no celular');
 
    for(const cor of ['ROXO','DOURADO','VERDE','CINZA']){
     await pagina.locator('[data-akitemm-cor="'+cor+'"]').click();
