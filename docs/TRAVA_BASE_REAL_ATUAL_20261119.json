@@ -1500,7 +1500,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "2e174b4517af599041fa284a7c277adda9528e86"
+      "sha": "10fb357aaac7a4a35b2f01cf9d9bf40a03b07db8"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
