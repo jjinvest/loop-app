@@ -148,7 +148,10 @@ function renderizarInterfaceAprovada(){
  html=trocarExato(html,
   '   <button type="button" id="tabuleiroVerPosicoesIntegrado">Ver minhas posições</button>',
   '   <button type="button" id="tabuleiroVerPosicoesIntegrado">Ver minhas posições</button>'+
-  cofresRodape);
+  cofresRodape.replaceAll(
+   '<span class="loop03-cofre-fisico" aria-hidden="true"><span class="loop03-cofre-volante"></span></span>',''));
+ // A figura decorativa de cofre foi removida; ficam os três valores e estados
+ // lidos do adaptador financeiro, sem saldo inventado.
  // Cada versão de cliente.js recebe URL distinta na página real.
  // Evita reutilizar JavaScript antigo em navegadores integrados no Android.
  const clienteJs=fs.readFileSync(path.join(__dirname,'interface-aprovada-contas.js'));
