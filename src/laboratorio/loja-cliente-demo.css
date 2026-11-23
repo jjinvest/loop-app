@@ -1013,3 +1013,29 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-loja #akitemmFiltroOfertas[aria-pressed="true"]{
  outline:3px solid #fff1bb!important;outline-offset:3px!important;
 }
+
+
+/* Correcao da faixa de filtros AKITEMM: botoes laterais de tamanho controlado. */
+.akitemm-loja .akitemm-busca-filtros{
+ grid-template-columns:minmax(90px,116px) minmax(0,1fr) minmax(90px,116px);
+ min-width:0;max-width:100%;align-items:stretch;
+}
+.akitemm-loja .akitemm-busca-filtros>.akitemm-chip,
+.akitemm-loja .akitemm-busca-filtros>.akitemm-busca{
+ box-sizing:border-box;min-width:0;max-width:100%;
+}
+.akitemm-loja .akitemm-legenda-cores button{
+ overflow-wrap:anywhere;min-width:0;max-width:100%;
+}
+.akitemm-loja .akitemm-legenda-ressalva{
+ margin:8px 0 15px;clear:both;
+}
+@media(max-width:640px){
+ .akitemm-loja .akitemm-busca-filtros{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+ }
+ .akitemm-loja #akitemmFiltroTodos{grid-column:1;grid-row:1}
+ .akitemm-loja #akitemmFiltroOfertas{grid-column:2;grid-row:1}
+ .akitemm-loja .akitemm-busca{grid-column:1/-1;grid-row:2}
+ .akitemm-loja .akitemm-legenda-cores{grid-column:1/-1;grid-row:3}
+}

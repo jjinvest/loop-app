@@ -51,16 +51,30 @@
   const suporteBotao=document.getElementById(suporteId);
   const draftsBotao=document.getElementById(draftsId);
   const dica=document.getElementById('akitemmInstrucaoArrastar');
-  if(!operador){atual?.remove();importar?.remove();suporteBotao?.remove();draftsBotao?.remove();dica?.remove();return;}
+  const barraId='akitemmFerramentasOperadorVitrine';
+  const barraAtual=document.getElementById(barraId);
+  if(!operador){atual?.remove();importar?.remove();suporteBotao?.remove();draftsBotao?.remove();dica?.remove();barraAtual?.remove();return;}
   const filtro=document.getElementById('akitemmFiltroOfertas');
   if(!filtro)return;
+  // Ferramentas do operador fora da grade dos filtros: evita esticar a
+  // faixa amarela e sobrepor os filtros por cor.
+  const linhaFiltros=filtro.closest('.akitemm-busca-filtros');
+  if(!linhaFiltros)return;
+  let barra=barraAtual;
+  if(!barra){
+   barra=document.createElement('div');
+   barra.id=barraId;
+   barra.className='akitemm-ferramentas-operador-vitrine';
+  }
+  if(barra.previousElementSibling!==linhaFiltros)
+   linhaFiltros.insertAdjacentElement('afterend',barra);
   if(!atual){
    const botao=document.createElement('button');
    botao.type='button';botao.id=id;botao.className='akitemm-chip';
    botao.textContent='Gerenciar ofertas';
    botao.setAttribute('aria-label','Cadastrar ofertas na AKITEMM como operador');
    botao.addEventListener('click',()=>void abrirEditorOfertas());
-   filtro.insertAdjacentElement('afterend',botao);
+   barra.append(botao);
   }
   if(!importar){
    const botao=document.createElement('button');
@@ -68,7 +82,7 @@
    botao.textContent='Importar CSV';
    botao.setAttribute('aria-label','Importar catálogo de fornecedor por planilha CSV');
    botao.addEventListener('click',()=>void abrirImportacaoFornecedorCsv());
-   (document.getElementById(id)||filtro).insertAdjacentElement('afterend',botao);
+   barra.append(botao);
   }
   if(!suporteBotao){
    const btn=document.createElement('button');
@@ -81,7 +95,7 @@
     painel.open=true;
     painel.scrollIntoView({block:'center',behavior:'smooth'});
    });
-   (document.getElementById(csvId)||filtro).insertAdjacentElement('afterend',btn);
+   barra.append(btn);
   }
   if(!draftsBotao){
    const btn=document.createElement('button');
@@ -89,15 +103,19 @@
    btn.textContent='Produtos não publicados';
    btn.setAttribute('aria-label','Ver e retomar produtos não publicados');
    btn.addEventListener('click',()=>void abrirRascunhosNaoPublicados());
-   (document.getElementById(suporteId)||filtro).insertAdjacentElement('afterend',btn);
+   barra.append(btn);
   }
   if(!document.getElementById('akitemmInstrucaoArrastar')){
    const instrucao=document.createElement('p');
    instrucao.id='akitemmInstrucaoArrastar';
    instrucao.className='akitemm-instrucao-arrastar';
    instrucao.textContent='Organizar a vitrine: a alça ⠿ aparece em cada quadrinho, mesmo vazio. Segure e arraste uma moldura vazia sobre outra para trocar suas cores. Produtos já cadastrados podem ser arrastados para qualquer posição livre ou trocados entre si. Produto novo entra automaticamente no primeiro espaço livre: com 10 produtos, o próximo é o 11º, independentemente do quadrinho tocado.';
-   (document.getElementById(csvId)||document.getElementById(id)||filtro)
-    .insertAdjacentElement('afterend',instrucao);
+   barra.append(instrucao);
+  }
+  // Ordem previsivel inclusive quando a visao de operador for reaberta.
+  for(const chave of [id,csvId,suporteId,draftsId,'akitemmInstrucaoArrastar']){
+   const item=document.getElementById(chave);
+   if(item)barra.append(item);
   }
  }
  function modal(titulo){
