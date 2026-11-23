@@ -523,6 +523,19 @@
     '<button type="button" id="adminTesteVerCatraca">Ver catraca no tabuleiro</button>',
     '</div>',
     '<div id="adminTesteEstadoCatraca" class="loop03-admin-dado" role="status" aria-live="polite">Consultando movimentos do motor…</div>',
+    '<h4>Integração mecânica · fila conectada à catraca</h4>',
+    '<p>Somente posições de ensaio: não são compras da AKITEMM nem envolvem dinheiro ou clientes. A porteira continua fechada por padrão.</p>',
+    '<form id="adminTesteFormCatracaFila" class="loop03-admin-campos">',
+    '<label for="adminTesteNomeCatraca">Nome da posição de ensaio</label>',
+    '<input id="adminTesteNomeCatraca" type="text" minlength="2" maxlength="70" required placeholder="Ex.: Maria">',
+    '<div class="loop03-admin-acoes"><button type="submit">Adicionar à fila conectada</button></div></form>',
+    '<div class="loop03-admin-acoes">',
+    '<label for="adminTestePosicaoCatraca">Posição para indicação de ensaio</label>',
+    '<input id="adminTestePosicaoCatraca" type="number" min="1" step="1" inputmode="numeric">',
+    '<button type="button" id="adminTestePromoverCatracaFila">Promover posição para A</button>',
+    '<button type="button" id="adminTesteAbrirPorteiraCatraca">Abrir porteira da catraca</button>',
+    '<button type="button" id="adminTesteFecharPorteiraCatraca">Fechar porteira da catraca</button>',
+    '</div>',
     '<form id="adminTesteFormFila" class="loop03-admin-campos">',
     '<label for="adminTesteNomeFila">Nome da posição para testar a fila</label>',
     '<input id="adminTesteNomeFila" type="text" minlength="2" maxlength="70" required placeholder="Ex.: Maria">',
@@ -618,6 +631,10 @@
      'Centro: '+(catraca.tabuleiro.centro||'vazio'),
      'Vagas 1–6: '+catraca.tabuleiro.vagas.map((p,i)=>
       (i+1)+': '+(p||'vazia')).join(' | '),
+     'Fila conectada A ('+catraca.filaA.length+'): '+
+      (catraca.filaA.map(p=>'#'+p.id+' '+p.nome).join(' · ')||'vazia'),
+     'Fila conectada B ('+catraca.filaB.length+'): '+
+      (catraca.filaB.map(p=>'#'+p.id+' '+p.nome).join(' · ')||'vazia'),
      'Eventos do ciclo: '+catraca.tabuleiro.eventosNoCiclo+'/6',
      'Centros concluídos: '+catraca.tabuleiro.centrosConcluidos,
      'Giros executados: '+catraca.tabuleiro.giros
@@ -662,6 +679,8 @@
      (d.girou?' · giro executado':'')+
      (d.posicaoId?' · posição #'+d.posicaoId:'');
     await carregarBancadaOperador();
+    if(visualTesteModulo&&$('conteudoTabuleiro')?.hidden===false)
+     await carregarTabuleiroOperador();
    }catch(e){msg.textContent='Comando não executado: '+e.message;}
   }
   for(const [botao,acao] of [
@@ -670,6 +689,8 @@
    ['adminTestePausarCatraca','CATRACA_PAUSAR'],
    ['adminTestePulsoCatraca','CATRACA_PULSO'],
    ['adminTesteReiniciarCatraca','CATRACA_REINICIAR'],
+   ['adminTesteAbrirPorteiraCatraca','CATRACA_ABRIR_PORTEIRA'],
+   ['adminTesteFecharPorteiraCatraca','CATRACA_FECHAR_PORTEIRA'],
    ['adminTesteAbrirPorteira','FILA_ABRIR_PORTEIRA'],
    ['adminTesteFecharPorteira','FILA_FECHAR_PORTEIRA'],
    ['adminTestePreencherFila','FILA_PREENCHER_TABULEIRO'],
@@ -686,6 +707,19 @@
     $('abaTabuleiro')?.click();
     void carregarTabuleiroOperador();
    });
+  $('adminTesteFormCatracaFila')?.addEventListener('submit',e=>{
+   e.preventDefault();
+   void comandarBancadaOperador('CATRACA_ENTRAR',{
+    nome:$('adminTesteNomeCatraca').value.trim()
+   });
+  });
+  $('adminTestePromoverCatracaFila')?.addEventListener('click',()=>{
+   const id=Number($('adminTestePosicaoCatraca').value);
+   if(!Number.isSafeInteger(id)||id<1){
+    $('adminTesteMensagem').textContent='Informe o número da posição.';return;
+   }
+   void comandarBancadaOperador('CATRACA_PROMOVER',{posicaoId:id});
+  });
   $('adminTesteFormFila')?.addEventListener('submit',e=>{
    e.preventDefault();
    void comandarBancadaOperador('FILA_ENTRAR',{
