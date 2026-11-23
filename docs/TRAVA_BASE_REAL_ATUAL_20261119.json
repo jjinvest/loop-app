@@ -1927,6 +1927,10 @@
       "sha": "83d0b6bbb54d224f58d0f8dfda2cbe7135ad6859"
     },
     {
+      "path": "test/akitemm-banner-retangulo-zoom.test.js",
+      "sha": "2f67138f03942a34b0e0ad31e6df79417554ae71"
+    },
+    {
       "path": "test/akitemm-config-loja-demo.test.js",
       "sha": "4b74256ab62c064a72f67eeada9d4cd08be8f2bf"
     },
@@ -5819,6 +5823,13 @@
       "antes": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
       "depois": "43ca52af0f4d802c55293620a1099c0e722b36e1",
       "objetivo": "Pedido expresso: banner da loja AKITEMM sempre retangular do tamanho original com ou sem foto; foto centralizada sem corte inicial, zoom reduzivel e ajustavel; testes PC/celular; preservar banners do escritorio e demais telas."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/akitemm-banner-retangulo-zoom.test.js",
+      "antes": null,
+      "depois": "2f67138f03942a34b0e0ad31e6df79417554ae71",
+      "objetivo": "Novo teste contra deformacao e zoom automatico do banner de loja AKITEMM, com altura identica com e sem foto e ajuste de imagem inteira."
     }
   ]
 }
