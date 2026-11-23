@@ -23,4 +23,4 @@ jobs:
         with:
           node-version: '24'
       - name: Executar seis eventos, girar e conferir filas e porteira
-        run: node --test test/bancada-modulos-independentes-operador-real.test.js
+        run: node --test test/bancada-modulos-independentes-operador-real.test.js test/placar-compartilhado-cliente-operador-20261122.test.js

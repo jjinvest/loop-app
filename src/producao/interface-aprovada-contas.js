@@ -2090,7 +2090,10 @@
  // Consulta somente as duas fontes reais que a própria aba já utiliza.
  let placarOperadorConsultando=false;
  async function atualizarPlacarOperador(){
+  // Enquanto o operador confere a bancada, nenhuma consulta do placar
+  // original pode sobrescrever os LEDs e os eventos do motor de teste.
   if(placarOperadorConsultando||!modoOperadorAtual||
+     (typeof visualTesteModulo!=='undefined'&&visualTesteModulo!==null)||
      $('painelConta')?.hidden!==false)return;
   placarOperadorConsultando=true;
   try{
