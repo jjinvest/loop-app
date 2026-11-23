@@ -811,12 +811,13 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 }
 .akitemm-loja #akitemmFiltroTodos,
 .akitemm-loja #akitemmFiltroOfertas{
- width:100%;min-width:0;box-sizing:border-box;
+ width:100%;min-width:0;height:44px;min-height:44px;
+ box-sizing:border-box;align-self:stretch;
 }
 .akitemm-loja #akitemmFiltroTodos{grid-column:1;grid-row:1}
 .akitemm-loja .akitemm-busca{
- grid-column:2;grid-row:1;min-width:0;width:100%;
- max-width:none;box-sizing:border-box;flex:none;
+ grid-column:2;grid-row:1;min-width:0;width:100%;height:44px;
+ max-width:none;box-sizing:border-box;flex:none;align-self:stretch;
 }
 .akitemm-loja #akitemmFiltroOfertas{grid-column:3;grid-row:1}
 .akitemm-loja .akitemm-legenda-cores{
