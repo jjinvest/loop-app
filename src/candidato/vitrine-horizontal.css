@@ -485,3 +485,31 @@ dialog.akitemm-operador-editor .akitemm-card-rascunho
  .akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop
  .akitemm-dados-produto{padding:9px}
 }
+
+
+/* Ferramentas do operador fora dos filtros da vitrine (PC e celular). */
+.akitemm-loja #akitemmFerramentasOperadorVitrine{
+ display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;
+ box-sizing:border-box;width:100%;min-width:0;max-width:100%;
+ margin:5px 0 14px;padding:10px;
+ border:1px solid #53616e;border-radius:14px;
+ background:linear-gradient(135deg,#192d3b,#14222d);
+}
+.akitemm-loja #akitemmFerramentasOperadorVitrine>.akitemm-chip{
+ flex:1 1 160px;min-width:0;max-width:100%;height:auto;min-height:42px;
+ white-space:normal;overflow-wrap:anywhere;text-align:center;
+ padding:9px 12px;line-height:1.3;
+}
+.akitemm-loja #akitemmFerramentasOperadorVitrine>#akitemmInstrucaoArrastar{
+ flex:1 1 100%;box-sizing:border-box;width:100%;max-width:100%;min-width:0;
+ position:static;margin:3px 0 0;padding:9px 12px;
+ border-color:#53616e;background:#11202c;
+ color:#d9e1e8;font-size:12px;line-height:1.45;
+ white-space:normal;overflow-wrap:anywhere;
+}
+@media(max-width:600px){
+ .akitemm-loja #akitemmFerramentasOperadorVitrine{gap:7px;padding:8px}
+ .akitemm-loja #akitemmFerramentasOperadorVitrine>.akitemm-chip{
+  flex-basis:calc(50% - 4px);padding:8px 7px;font-size:12px;
+ }
+}
