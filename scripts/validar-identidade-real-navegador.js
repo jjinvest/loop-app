@@ -195,6 +195,43 @@ async function main(){
   ...basePedidos(),eventosComerciais,classificacaoLoop,
   integradorComercialEnsaio,preflightCapacidade
  });
+ // O convite da prova de navegador deve pertencer a um comprador
+ // HABILITADO. A compra verde de R$10 libera SOMENTE o link, nunca posicao.
+ // O PSP abaixo e ficticio apenas nesta execucao em memoria.
+ catalogo.criarProduto({produtoId:'verdeLinkBrowser',
+  titulo:'Produto verde de habilitacao do link na prova isolada'});
+ catalogo.vincularOferta({
+  produtoId:'verdeLinkBrowser',distribuidorId:'DIST_LINK_BROWSER',
+  sku:'SKU_VERDE_LINK',precoUnitCentavos:1000
+ });
+ classificacaoLoop.configurarProduto({
+  produtoId:'verdeLinkBrowser',cor:'VERDE',autorizado:true
+ });
+ const cotacaoLink='COTACAO_LINK_BROWSER';
+ const enderecoLink={destinatario:'Pessoa de Ensaio',cep:'27250010',
+  logradouro:'Rua de Ensaio',numero:'2',bairro:'Centro',
+  cidade:'Volta Redonda',uf:'RJ',complemento:''};
+ cotacoes.set(cotacaoLink,{
+  cotacaoId:cotacaoLink,titularId:cliente.titularId,
+  cepDestino:enderecoLink.cep,status:'APROVADA',
+  expiraEm:Date.now()+600000,
+  grupos:[{fornecedorId:'DIST_LINK_BROWSER',freteCentavos:0,
+   itens:[{sku:'SKU_VERDE_LINK',precoUnitCentavos:1000,quantidade:1}]}]
+ });
+ const pedidosLink=new PedidosComerciaisSQLite({
+  ...basePedidos(),eventosComerciais,classificacaoLoop
+ });
+ const pedidoLink=await pedidosLink.criarPedido({
+  titularId:cliente.titularId,cotacaoId:cotacaoLink,
+  chaveIdempotencia:'LINK_BROWSER_SEM_POSICAO',
+  enderecoEntrega:enderecoLink
+ });
+ assert.equal((await pedidosLink.confirmarPagamento({
+  pedidoId:pedidoLink.pedidoId
+ })).confirmado,true);
+ assert.equal(motorLoop.consultar({titularId:cliente.titularId})
+  .minhasPosicoes.length,1,'compra verde barata nao insere posicao');
+
  const leituraComercial=criarLeituraComercialSegura({
   banco,pedidos:pedidosComerciais
  });
@@ -1678,7 +1715,7 @@ async function main(){
    await pagina.locator('#pedidosLojaLoop').filter({
     hasText:compra.pedidoId
    }).waitFor({state:'visible'});
-   assert.equal(await pagina.locator('#pedidosLojaLoop li').count(),1);
+   assert.equal(await pagina.locator('#pedidosLojaLoop li').count(),2);
    const loja=pagina.locator('#estadoLojaLoop');
    await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();

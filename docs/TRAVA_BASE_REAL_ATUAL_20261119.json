@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "0854b6f30e96b88988d92c9d5765c7629abb05b3"
+      "sha": "61abdeafa10627668173f9ef490d76dd08bd3b98"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -5941,6 +5941,13 @@
       "antes": null,
       "depois": "5a85841c8d379e42bdd773f7c95b07142f8f8b89",
       "objetivo": "Novo componente de consulta somente leitura comprovada: link apenas apos compra habilitadora verificada. Nao ativa posicao ou dinheiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "0854b6f30e96b88988d92c9d5765c7629abb05b3",
+      "depois": "61abdeafa10627668173f9ef490d76dd08bd3b98",
+      "objetivo": "A prova PC/celular agora exige compra verde efetivamente confirmada em banco descartavel antes de liberar link; cadastro sozinho nao habilita. Teste do pedido barato demonstra que nao cria posicao LOOP."
     }
   ]
 }
