@@ -1039,6 +1039,21 @@ async function main(){
    console.log('LOOP_GEOMETRIA_MENU_'+item.nome+'='+JSON.stringify(geometria));
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaTabuleiro').click();
+   assert.equal(await page.locator('#conteudoTabuleiro>.linha h2').innerText(),
+    'PARTICIPAÇÃO DE LUCRO / LOOP 3.0');
+   const filasAjustadas=await page.locator('#conteudoTabuleiro').evaluate(aba=>{
+    const caixas=['quadroMotorFilaA','quadroMotorFilaB'].map(id=>
+     aba.querySelector('#'+id));
+    return caixas.map(caixa=>({
+     altura:caixa.getBoundingClientRect().height,
+     rolavel:caixa.querySelector('#motorFila'+caixa.id.slice(-1))?
+      getComputedStyle(caixa.querySelector('#motorFila'+caixa.id.slice(-1))).overflowY:null
+    }));
+   });
+   assert.ok(filasAjustadas.every(f=>f.altura>=(item.largura<=600?350:480)),
+    'Filas A/B devem ser maiores e permitir dez posições com rolagem');
+   assert.ok(filasAjustadas.every(f=>f.rolavel==='auto'),
+    'Listas de fila com rolagem independente para dez ou mais posições');
    const relogio=page.locator('#relogioTabuleiroIntegrado');
    await relogio.waitFor({state:'visible'});
    assert.equal(await relogio.innerText(),'--:--',
@@ -1050,7 +1065,8 @@ async function main(){
    assert.equal(await page.locator('#conteudoTabuleiro').getByText(
     'Mesmo motor V6 e mesmo SQLite',{exact:false}).count(),0);
    await page.locator('#motorContadorEventos')
-    .filter({hasText:/0 de 6 eventos neste ciclo/}).waitFor();
+    .filter({hasText:/RELÓGIO DE PARTICIPAÇÃO DE LUCRO — FORA DO TURNO OU PAUSADO/})
+    .waitFor();
    assert.equal(await page.locator('#estadoTabuleiroIntegrado').isHidden(),true,
     'sem mensagens duplicadas no rodapé do tabuleiro');
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'',
@@ -1623,12 +1639,12 @@ async function main(){
    if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
    await pagina.locator('#abaTabuleiro').click();
    await pagina.locator('#motorContadorEventos').filter({
-    hasText:/de 6 eventos neste ciclo/
+    hasText:/RELÓGIO DE PARTICIPAÇÃO DE LUCRO —/
    }).waitFor();
    assert.equal(await pagina.locator('#estadoTabuleiroIntegrado').isHidden(),true,
     'mensagem do rodapé só reaparece diante de erro real');
-   assert.equal(await pagina.locator('#motorContadorEventos').innerText(),
-    motorLoop.consultar().tabuleiro.eventosNoCiclo+' de 6 eventos neste ciclo');
+   assert.doesNotMatch(await pagina.locator('#motorContadorEventos').innerText(),
+    /eventos confirmados|de 6 eventos|0\s*\/\s*6|6\s*\/\s*6|relógio de teste/i);
    const centroPersistido=estadoCliente.tabuleiro?.centro;
    const centroEsperado=centroPersistido?
     (centroPersistido.dourada? 
