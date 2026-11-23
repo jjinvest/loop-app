@@ -280,7 +280,7 @@ async function main(){
     'CredencialAdministrativaIsolada2026!Teste');
    await operadorPage.locator('#formLogin button[type=submit]').click();
    await operadorPage.locator('#erroLogin').filter({
-    hasText:/Digite OPERADOR em letras maiúsculas/
+    hasText:/Nick ou senha incorretos/
    }).waitFor({state:'visible'});
    assert.equal(await operadorPage.locator('#loopOperadorAtalhos').isHidden(),true);
    await operadorPage.locator('#login').fill('OPERADOR');

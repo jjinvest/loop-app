@@ -125,7 +125,7 @@
  let origemLinks=null;
  const codigos={
   CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos. Confira os dados e tente novamente.',
-  NICK_OPERADOR_MAIUSCULO_OBRIGATORIO:'Digite OPERADOR em letras maiúsculas, sem conversão automática.',
+  NICK_OPERADOR_MAIUSCULO_OBRIGATORIO:'Nick ou senha incorretos. Confira os dados e tente novamente.',
   SENHA_ATUAL_INCORRETA:'Senha atual incorreta.',
   CONTA_BLOQUEADA:'Muitas tentativas. Aguarde 15 minutos.',
   ACESSO_TEMPORARIAMENTE_LIMITADO:'Muitos acessos. Aguarde um momento.',

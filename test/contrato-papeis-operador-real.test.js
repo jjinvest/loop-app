@@ -123,7 +123,8 @@ test('link da central aparece no rodape de AMBOS os produtos, so para operador',
  assert.match(back,/req\.body\.nick!=='OPERADOR'/);
  assert.doesNotMatch(login,/normalizarOperadorNoLogin/);
  assert.match(login,/nickDigitado!=='OPERADOR'/);
- assert.match(login,/NICK_OPERADOR_MAIUSCULO_OBRIGATORIO/);
+ assert.match(login,/NICK_OPERADOR_MAIUSCULO_OBRIGATORIO:'Nick ou senha incorretos\./);
+ assert.doesNotMatch(login,/Digite OPERADOR em letras maiúsculas/);
  assert.match(back,/sessoes\.autenticar\(req\.body\.senha\)/);
  assert.match(back,/app\.get\('\/administrador\/entrar'/);
  assert.match(back,/montarAdminComercialAprovado/);
