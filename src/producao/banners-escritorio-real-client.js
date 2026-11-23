@@ -11,6 +11,9 @@
  if(!area)return;
  let dados=null,operador=false,gravando=false,slotEditor=1;
  let indice=0,interagindoAte=0,bloquearCliqueAte=0,inicioGesto=null;
+ // A foto de cada quadro alterna no celular; o desktop segue com o mosaico.
+ let slotFotoCelular=null,indiceFotoCelular=0;
+ const ehCelular=()=>matchMedia('(max-width:600px)').matches;
  const solicitar=async(url,opts={})=>{
   const r=await fetch(url,{credentials:'same-origin',cache:'no-store',...opts});
   const corpo=await r.json().catch(()=>({}));
@@ -163,6 +166,40 @@
   const x=visiveis()[indice];
   return x===botao?null:Number(x?.dataset?.bannerSlot)||1;
  }
+ function quadrosComFotos(item){
+  return [...(item?.querySelectorAll('.banner-mosaico-celula')||[])]
+   .filter(x=>x.querySelector('img'));
+ }
+ function sincronizarFotosCelular(){
+  const atual=visiveis()[indice],slot=atual?.dataset.bannerSlot||null;
+  if(slot!==slotFotoCelular){slotFotoCelular=slot;indiceFotoCelular=0;}
+  const fotosAtuais=quadrosComFotos(atual);
+  if(indiceFotoCelular>=fotosAtuais.length)indiceFotoCelular=0;
+  const celular=ehCelular();
+  for(const item of visiveis()){
+   const lista=quadrosComFotos(item);
+   const selecionada=item===atual?indiceFotoCelular:0;
+   for(const [i,cel] of lista.entries()){
+    const ativa=i===selecionada;
+    cel.classList.toggle('banner-foto-ativa',ativa);
+    if(celular)cel.setAttribute('aria-hidden',String(!ativa));
+    else cel.removeAttribute('aria-hidden');
+   }
+  }
+ }
+ function avancarFotoNoCelular(){
+  const itens=visiveis().filter(x=>x!==botao);
+  const atual=visiveis()[indice],fotos=quadrosComFotos(atual);
+  if(fotos.length>1&&indiceFotoCelular<fotos.length-1){
+   indiceFotoCelular++;
+   sincronizarFotosCelular();
+  }else if(itens.length>1){
+   navegar((Math.max(0,itens.indexOf(atual))+1)%itens.length);
+  }else if(fotos.length>1){
+   indiceFotoCelular=0;
+   sincronizarFotosCelular();
+  }
+ }
  function navegar(i){
   const itens=visiveis();
   if(!itens.length)return;
@@ -171,6 +208,7 @@
    behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
   for(const [n,p] of [...pontos.children].entries())
    p.setAttribute('aria-current',String(n===indice));
+  sincronizarFotosCelular();
  }
  function renderizar(){
   if(!dados?.slots)return;
@@ -396,8 +434,12 @@
  });
  pista.addEventListener('scroll',()=>{
   if(pista.clientWidth>0){
-   indice=Math.min(visiveis().length-1,Math.max(0,
+   const novoIndice=Math.min(visiveis().length-1,Math.max(0,
     Math.round(pista.scrollLeft/pista.clientWidth)));
+   if(novoIndice!==indice){
+    indice=novoIndice;
+    sincronizarFotosCelular();
+   }
    for(const [i,p] of [...pontos.children].entries())
     p.setAttribute('aria-current',String(i===indice));
   }
@@ -410,14 +452,25 @@
  });
  for(const evento of ['pointerdown','focusin','wheel'])
   pista.addEventListener(evento,()=>{interagindoAte=Date.now()+9000;});
+ // Celular: 4,5s por foto da mesma aba, depois avança ao outro banner.
+ // Computador: conserva os 7,5s e as fotos lado a lado.
  setInterval(()=>{
-  if(document.hidden||dialogo.open||area.closest('[hidden]')||
-    Date.now()<interagindoAte||
-    matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  if(!ehCelular()||document.hidden||dialogo.open||
+     area.closest('[hidden]')||Date.now()<interagindoAte||
+     matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  avancarFotoNoCelular();
+ },4500);
+ setInterval(()=>{
+  if(ehCelular()||document.hidden||dialogo.open||
+     area.closest('[hidden]')||Date.now()<interagindoAte||
+     matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   const itens=visiveis().filter(x=>x!==botao);
   if(itens.length>1)navegar((indice+1)%itens.length);
  },7500);
- window.addEventListener('resize',()=>navegar(indice));
+ window.addEventListener('resize',()=>{
+  navegar(indice);
+  sincronizarFotosCelular();
+ });
  // Login de cliente/operador pode acontecer sem recarregar a página.
  // Revalidar a sessão e buscar as quatro fotos após a troca de modo.
  const obs=new MutationObserver(()=>{void checarAcesso();});
