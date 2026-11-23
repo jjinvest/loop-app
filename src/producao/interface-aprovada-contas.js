@@ -1222,7 +1222,7 @@
  async function expandirFilaOperador(fila){
   const painel=$('adminDetalhesFila'+fila);
   const botao=document.querySelector('[data-admin-fila="'+fila+'"]');
-  if(!modoOperadorAtual||!painel||!botao)return;
+  if(!modoOperadorAtual||visualTesteModulo!==null||!painel||!botao)return;
   const abrir=painel.hidden;
   for(const tipo of ['A','B']){
    const area=$('adminDetalhesFila'+tipo);
@@ -1362,10 +1362,15 @@
         a.luzesRelogio24h!==c.luzesRelogio24h||
         a.ciclosRelogio24h!==c.ciclosRelogio24h)
       throw Error('RELOGIO_MOTOR_DIVERGENTE');
+     const [filaA,filaB]=await Promise.all([
+      consultarFilaOperador('A'),consultarFilaOperador('B')
+     ]);
+     if(filaA.total!==d.filaA||filaB.total!==d.filaB)
+      throw Error('FILA_OPERADOR_TOTAL_DIVERGENTE');
      mostrarResumoPosicoesOperador(destino,{
-      ...d,relogio:{luzesRelogio24h:a.luzesRelogio24h,
-       ciclosRelogio24h:a.ciclosRelogio24h}
+      ...d,filasResumo:{A:filaA,B:filaB},relogio:a
      });
+     prepararExpansaoFilasOperador();
     }
    }else if(id==='abaFinanceiro'){
     destino.textContent='Modo da catraca: '+d.modo+
@@ -2352,12 +2357,17 @@
    // A aba Posições acompanha a agenda a cada 15s, ainda que o
    // operador esteja fora do Tabuleiro. Não modifica eventos reais.
    if($('conteudoPosicoes')?.hidden===false&&
-      $('adminResumoPosicoes')&&
-      (typeof visualTesteModulo==='undefined'||visualTesteModulo===null)){
+      $('adminResumoPosicoes')&&visualTesteModulo===null&&
+      $('adminDetalhesFilaA')?.hidden!==false&&
+      $('adminDetalhesFilaB')?.hidden!==false){
+    const [filaA,filaB]=await Promise.all([
+     consultarFilaOperador('A'),consultarFilaOperador('B')
+    ]);
+    if(filaA.total!==d.filaA||filaB.total!==d.filaB)return;
     mostrarResumoPosicoesOperador($('adminResumoPosicoes'),{
-     ...d,relogio:{luzesRelogio24h:agenda.luzesRelogio24h,
-      ciclosRelogio24h:agenda.ciclosRelogio24h}
+     ...d,filasResumo:{A:filaA,B:filaB},relogio:agenda
     });
+    prepararExpansaoFilasOperador();
    }
    visorCatraca.registrarAgenda(agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
@@ -2651,7 +2661,8 @@
    try{
     const visao=await consultar(0);
     if(sequencia!==sequenciaLeituraFilas)return;
-    visualTabuleiro.preencherFila(id,visao.janela,fila);
+    visualTabuleiro.preencherFila(id,visao.janela.slice(
+     0,window.innerWidth<=680?10:20),fila);
     if(visao.total===0){
      const vazio=document.createElement('p');
      vazio.className='subtexto';vazio.textContent='Fila vazia.';
@@ -2659,8 +2670,9 @@
     }
     const situacao=document.createElement('p');
     situacao.className='loop03-fila-ordem-propria';
-    situacao.textContent='Primeiros '+Math.min(10,visao.total)+
-     ' lugares · total '+visao.total+' na Fila '+fila;
+    const limiteVisivel=window.innerWidth<=680?10:20;
+    situacao.textContent='Primeiros '+Math.min(limiteVisivel,visao.total)+
+     ' lugares'+(fila==='A'?' · total '+visao.total+' na Fila A':'');
     area.append(situacao);
     const titulo=document.createElement('p');
     titulo.className='subtexto';
