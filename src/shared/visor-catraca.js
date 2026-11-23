@@ -134,9 +134,10 @@
     const rodando=valido&&estado.emTurno===true&&!estado.finalizado&&
      !pausa;
     const livre=agendaVisorCatraca?.modoExecucao==='NATURAL'&&!pausa;
-    contador.textContent='RELÓGIO DE PARTICIPAÇÃO DE LUCRO — '+
+    const mensagem='RELÓGIO DE PARTICIPAÇÃO DE LUCRO — '+
      (rodando?'EM ANDAMENTO':livre?'MODO LIVRE':
       'FORA DO TURNO OU PAUSADO');
+    if(contador.textContent!==mensagem)contador.textContent=mensagem;
    }
   }
   function atualizarMarcadorCatraca(){
