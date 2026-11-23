@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "921a4c479b3b9455d04814542a13c82e5dd87c5f"
+      "sha": "7bf3fd8c214aa045d069fa3d6e99241ecddf515e"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -5450,6 +5450,13 @@
       "antes": null,
       "depois": "0e2b8a35ea8825edb96c50ec40c99d84983d230f",
       "objetivo": "23/11/2026 autorização explícita: apenas na aba Minha Equipe do operador, dividir o quadro Produtos comprados internamente em duas áreas com divisória responsiva, exibir unidades compradas em pedidos não cancelados e unidades aprovadas separadamente, oferecer painel acionável de compras avulsas/normais identificadas por cor CINZA fotografada no ato da compra, com produto, quantidade, data, status, pedido, referência PSP e forma de pagamento somente se comprovada. Não fingir Pix/cartão quando livro não registra o meio. Somente leitura, sem expor painel ao cliente nem alterar motor, pedidos ou dinheiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/acabamento-botoes-real.css",
+      "antes": "921a4c479b3b9455d04814542a13c82e5dd87c5f",
+      "depois": "7bf3fd8c214aa045d069fa3d6e99241ecddf515e",
+      "objetivo": "Garantia adicional autorizada de exclusividade: ocultar todos os painéis administrativos no modo cliente mesmo que o operador tenha aberto a aba antes; toda consulta continua protegida no servidor."
     }
   ]
 }
