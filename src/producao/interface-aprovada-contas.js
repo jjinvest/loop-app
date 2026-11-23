@@ -606,6 +606,86 @@
   const cofres=$('loop03CofresOperador');
   const comercial=$('adminResumoComercial');
   if(cofres&&comercial)comercial.after(cofres);
+  let douradasBusy=false,ultimaLeituraDouradas=0,operacaoDouradaPendente=null;
+  async function lerDouradas({forcar=false}={}){
+   if(!modoOperadorAtual||!$('adminDouradasOperador')||douradasBusy||
+      (!forcar&&Date.now()-ultimaLeituraDouradas<12000))return;
+   douradasBusy=true;
+   try{
+    const r=await fetch('/api/admin/loop/douradas',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    if(!r.ok)throw Error('CONTAGEM_DOURADAS_INDISPONIVEL');
+    const d=await r.json();
+    const campos=['douradasTotal','douradasManuais',
+     'douradasConvertidasAzuis','douradasPorDesistencia','azuisPendentes'];
+    if(d.fonte!=='SNAPSHOT_E_REGISTROS_AUDITADOS_MESMO_SQLITE'||
+       d.somenteLeitura!==true||d.financeiroReal!==false||
+       d.nenhumaMovimentacaoFinanceiraExecutada!==true||
+       campos.some(k=>!Number.isSafeInteger(d[k])||d[k]<0)||
+       d.douradasTotal!==d.douradasManuais+d.douradasConvertidasAzuis+
+        d.douradasPorDesistencia||
+       d.cofreDouradas?.posicoesRegistradas!==d.douradasTotal||
+       d.cofreDouradas?.saldoCentavos!==null)
+     throw Error('DOURADAS_FONTE_INCONSISTENTE');
+    for(const [id,k] of [['adminDouradasTotal','douradasTotal'],
+     ['adminDouradasManuais','douradasManuais'],
+     ['adminDouradasConvertidas','douradasConvertidasAzuis'],
+     ['adminDouradasDesistentes','douradasPorDesistencia'],
+     ['adminAzuisPendentes','azuisPendentes']])
+     $(id).textContent=String(d[k]);
+    $('adminCofreDouradasPosicoes').textContent=String(d.douradasTotal);
+    $('adminCofreDouradasSaldo').textContent='—';
+    $('adminCofreDouradasEstado').textContent=
+     'Todas as douradas destinadas ao cofre · valor aguardando prova bancária';
+    ultimaLeituraDouradas=Date.now();
+   }catch{
+    for(const id of ['adminDouradasTotal','adminDouradasManuais',
+     'adminDouradasConvertidas','adminDouradasDesistentes',
+     'adminAzuisPendentes','adminCofreDouradasPosicoes',
+     'adminCofreDouradasSaldo'])if($(id))$(id).textContent='—';
+    $('adminCofreDouradasEstado').textContent=
+     'Contagem indisponível; sem saldo bancário presumido.';
+   }finally{douradasBusy=false;}
+  }
+  $('adminDouradasAtualizar')?.addEventListener('click',()=>
+   void lerDouradas({forcar:true}));
+  $('adminDouradasCriar')?.addEventListener('submit',async e=>{
+   e.preventDefault();
+   if(!modoOperadorAtual)return;
+   const motivo=$('adminDouradasMotivo').value.trim();
+   const botao=$('adminDouradasBotao'),estado=$('adminDouradasMensagem');
+   if(motivo.length<8||motivo.length>200){
+    estado.textContent='Informe motivo entre 8 e 200 caracteres.';return;
+   }
+   botao.disabled=true;
+   if(!operacaoDouradaPendente)operacaoDouradaPendente=crypto.randomUUID();
+   try{
+    const token=await obterCsrfOperadorReal();
+    const r=await fetch('/api/admin/loop/douradas',{
+     method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+     body:JSON.stringify({idOperacao:operacaoDouradaPendente,motivo})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!Number.isSafeInteger(d.numero)||d.numero<1)
+     throw Error(d.erro||'POSICAO_DOURADA_NAO_CONFIRMADA');
+    estado.textContent='Bola dourada #'+d.numero+
+     (d.repetida?' já registrada':' criada e auditada')+
+     '. Nenhum dinheiro movimentado.';
+    operacaoDouradaPendente=null;
+    $('adminDouradasMotivo').value='';
+    await lerDouradas({forcar:true});
+   }catch(err){
+    estado.textContent='Sem confirmação: '+err.message+
+     '. Tente novamente sem duplicar a operação.';
+   }finally{botao.disabled=false;}
+  });
+  setInterval(()=>{
+   if(modoOperadorAtual&&$('conteudoPosicoes')?.hidden===false)
+    void lerDouradas();
+  },15000);
+  void lerDouradas({forcar:true});
   // Testes operacionais separados das posicoes dos clientes: somente
   // sessao do operador; cada botao aciona uma transicao transacional.
   async function carregarBancadaOperador(){
