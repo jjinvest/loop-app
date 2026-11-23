@@ -100,7 +100,7 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   'sem login, produto ainda nao publicado continua invisivel');
  const op=await fetch(base+'/api/operador/entrar',{
   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
-  body:JSON.stringify({nick:'operador',senha:SENHA})
+  body:JSON.stringify({nick:'OPERADOR',senha:SENHA})
  });
  assert.equal(op.status,200);
  const cookie=op.headers.get('set-cookie').split(';')[0];
