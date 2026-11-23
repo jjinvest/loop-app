@@ -11,6 +11,8 @@ const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
  require('node:crypto');
 const {TABELAS_OUTBOX_COMPRA}=require('./outbox-compra-loop-sqlite');
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
+const {lerEstadoMotor}=require('./estado-motor-unificado-sqlite');
+const {SimuladorLoop}=require('../domain/simulador-loop');
 const {ProjecaoFilasRelacionalSQLite,TABELAS_PROJECAO}=
  require('./projecao-filas-relacional-sqlite');
 const {HistoricoCiclosRelacionalSQLite,TABELAS_HISTORICO}=
@@ -41,6 +43,7 @@ const {TABELAS_COMERCIAIS,validarRecuperacaoComercial}=
 const {TABELAS_TESOURARIA_ENSAIO,TesourariaModularEnsaioSQLite}=
  require('./tesouraria-modular-ensaio-sqlite');
 const TABELA_FOTO_OPERADOR_REAL='loop_real_operador_foto_perfil';
+const TABELAS_DOURADAS=Object.freeze(['loop_real_douradas_operador']);
 const MAGIC=Buffer.from('LOOPREALBKP1','ascii');
 const HEADER=40,TAG=16;
 const TABELAS=Object.freeze([
@@ -177,9 +180,49 @@ function validarIdentidade(arquivo){
    ...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
    ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO,...TABELAS_LIVRO,
-   ...TABELAS_OUTBOX_COMPRA,TABELA_FOTO_OPERADOR_REAL];
+   ...TABELAS_OUTBOX_COMPRA,...TABELAS_DOURADAS,TABELA_FOTO_OPERADOR_REAL];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
+  // As douradas operacionais entram no MESMO backup de identidade/motor.
+  // Uma linha sem posição dourada no snapshot impede backup e recuperação.
+  if(lista.includes('loop_real_douradas_operador')){
+   if(!lista.includes('loop_real_motor_estado'))
+    falha('BACKUP_DOURADAS_MOTOR_AUSENTE');
+   const colunas=b.prepare('PRAGMA table_info(loop_real_douradas_operador)')
+    .all().map(x=>x.name);
+   if(['id_operacao','numero','origem','motivo','registrada_em']
+    .some(x=>!colunas.includes(x)))
+    falha('BACKUP_DOURADAS_ESQUEMA_INCOMPLETO');
+   try{
+    const row=lerEstadoMotor(b);
+    const sim=row?SimuladorLoop.restaurarSnapshot(
+     JSON.parse(row.snapshot)):new SimuladorLoop();
+    const posicoes=[...sim.filas.filaA,...sim.filas.filaB,
+     sim.tabuleiro.centro,...sim.tabuleiro.vagas,
+     ...sim.tabuleiro.ciclosConcluidos.map(x=>x.centro)]
+     .filter(Boolean);
+    const manuais=new Map(posicoes.filter(p=>
+     p.empresa===true&&p.origemOperacional==='ADMIN_MANUAL_SEM_COMPRA')
+     .map(p=>[p.id,p]));
+    let total=0;
+    for(const d of b.prepare([
+     'SELECT numero,origem,motivo,registrada_em',
+     'FROM loop_real_douradas_operador'
+    ].join(' ')).iterate()){
+     total++;
+     if(!manuais.has(d.numero)||
+        d.origem!=='ADMIN_MANUAL_SEM_COMPRA'||
+        typeof d.motivo!=='string'||d.motivo.trim().length<8||
+        !Number.isSafeInteger(d.registrada_em)||d.registrada_em<=0)
+      falha('BACKUP_DOURADAS_MOTOR_DIVERGENTE');
+    }
+    if(total!==manuais.size)
+     falha('BACKUP_DOURADAS_MOTOR_DIVERGENTE');
+   }catch(e){
+    if(e?.codigo?.startsWith('BACKUP_DOURADAS_'))throw e;
+    falha('BACKUP_DOURADAS_MOTOR_DIVERGENTE');
+   }
+  }
   // O backup do banco REAL inclui as quatro imagens da AKITEMM.
   // Backups anteriores à criação da tabela continuam restauráveis.
   if(lista.includes('loja_real_banners_akitemm')){
