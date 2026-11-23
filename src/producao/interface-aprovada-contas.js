@@ -1283,6 +1283,21 @@
    throw Error('FILA_OPERADOR_RESPOSTA_INVALIDA');
   return d;
  }
+ // Consulta paginada, completa e autenticada: a tela nunca inventa ID.
+ async function consultarFilaTabuleiroOperador(fila,total){
+  if(!Number.isSafeInteger(total)||total<0)throw Error('FILA_TOTAL_INVALIDO');
+  const posicoes=[];
+  for(let pagina=0;posicoes.length<total;pagina++){
+   const d=await consultarFilaOperador(fila,pagina);
+   if(d.total!==total||!d.pagina.length)
+    throw Error('FILA_OPERADOR_TOTAL_DIVERGENTE');
+   posicoes.push(...d.pagina);
+   if(posicoes.length>total||
+      (d.proximaPagina===null&&posicoes.length!==total))
+    throw Error('FILA_OPERADOR_PAGINACAO_DIVERGENTE');
+  }
+  return posicoes;
+ }
  async function expandirFilaOperador(fila){
   const painel=$('adminDetalhesFila'+fila);
   const botao=document.querySelector('[data-admin-fila="'+fila+'"]');
@@ -3237,8 +3252,14 @@
         controle.proximaLuzPrevistaEmMs<=controle.agoraServidorMs))||
       !['PAUSADA','MANUAL','AUTOMATICA'].includes(controle.modo))
     throw Error('TABULEIRO_ADMIN_FONTE_INVALIDA');
-   visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
-   visualTabuleiro.preencherFila('motorFilaB',d.filaB,'B');
+   // IDs reais das posições vêm da lista autenticada, não da ordem.
+   const [filaVisualA,filaVisualB]=await Promise.all([
+    consultarFilaTabuleiroOperador('A',d.filaA),
+    consultarFilaTabuleiroOperador('B',d.filaB)
+   ]);
+   if(!modoOperadorAtual||visualTesteModulo!==null)return;
+   visualTabuleiro.preencherFila('motorFilaA',filaVisualA,'A');
+   visualTabuleiro.preencherFila('motorFilaB',filaVisualB,'B');
    mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
    for(let i=0;i<6;i++)

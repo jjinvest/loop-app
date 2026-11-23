@@ -99,7 +99,9 @@
      (tipo==='A'?'loop03-a':'loop03-b'):
      dourada(p)?'loop03-dourada':pendente(p)?'loop03-azul':
      aceito(p)?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
-    inicial.textContent=String(ordem);
+    // A esfera indica o lugar na porteira, não o ID permanente da bola.
+    // Até 100, ordinal compacto; depois mantém a ordem sem sufixos longos.
+    inicial.textContent=ordem<=100?ordem+'º':String(ordem);
     inicial.classList.toggle('loop03-ordem-longa',ordem>=1000);
     const conteudo=document.createElement('span');
     conteudo.className='loop03-fila-identificacao';
@@ -109,24 +111,47 @@
     // cliente e fila real continuam anonimados por padrao.
     const nomeTeste=exibirNomesTeste===true&&typeof p?.nome==='string'&&
      p.nome.trim().length>0&&p.nome.length<=70?p.nome.trim():null;
-    identificacao.textContent=ordem+'º lugar'+
-     (nomeTeste?' · '+nomeTeste:contagem!==null?' · identidade protegida':'');
+    const numeroPosicao=Number.isSafeInteger(p?.numero)&&p.numero>0?
+     p.numero:null;
+    identificacao.textContent=numeroPosicao===null?
+     'Número não disponível':'Número '+numeroPosicao;
     conteudo.append(identificacao);
+    const nickAutorizado=typeof p?.nickVisual==='string'&&
+     /^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:null;
+    const detalhe=nomeTeste||nickAutorizado;
+    if(detalhe){
+     const identificacaoPessoal=document.createElement('small');
+     identificacaoPessoal.textContent=detalhe;
+     conteudo.append(identificacaoPessoal);
+    }
     if(contagem===null&&p?.minha===true){
      const minha=document.createElement('small');
      minha.textContent='Minha posição nesta ordem';
      conteudo.append(minha);
     }
-    linha.setAttribute('aria-label','Fila '+tipo+' · '+ordem+'º lugar'+
-     (nomeTeste?' · '+nomeTeste:
-      contagem!==null?' · identificação protegida':
-      p?.minha===true?' · meu lugar':''));
+    linha.setAttribute('aria-label','Fila '+tipo+' · '+ordem+'º lugar · '+
+     (numeroPosicao===null?'número indisponível':'número '+numeroPosicao)+
+     (detalhe?' · '+detalhe:p?.minha===true?' · meu lugar':''));
     linha.append(inicial,conteudo);
     area.append(linha);
    };
    if(contagem===null){
-    itens.forEach((p,i)=>adicionar(p,i));
-    return;
+    const LOTE=50;
+    let exibidos=0;
+    const proximo=document.createElement('button');
+    proximo.type='button';
+    proximo.className='alternar-acesso loop03-fila-ver-proximas';
+    const acrescentar=()=>{
+     const fim=Math.min(itens.length,exibidos+LOTE);
+     for(let i=exibidos;i<fim;i++)adicionar(itens[i],i);
+     exibidos=fim;proximo.remove();
+     if(exibidos<itens.length){
+      proximo.textContent='Ver próximas posições ('+(itens.length-exibidos)+' restantes)';
+      area.append(proximo);
+     }
+    };
+    proximo.addEventListener('click',acrescentar);
+    acrescentar();return;
    }
    // Lotes visuais progressivos: nenhum teto de fila escondido,
    // sem congelar o navegador criando milhares de nós em uma operação.

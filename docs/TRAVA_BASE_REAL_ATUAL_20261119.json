@@ -1492,7 +1492,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "116f98a434f2d6b1191509f1b0111ba7039f2475"
+      "sha": "9ebe9cb728e381d2d26cc4a4e1d679d0e445eb8f"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1856,7 +1856,7 @@
     },
     {
       "path": "src/shared/tabuleiro-visual-loop.js",
-      "sha": "3e9cd7f08c791fe7f873908bd4712f7ee27ce5f2"
+      "sha": "8a103c36d7cdfa551a39443232d685d0864d788a"
     },
     {
       "path": "src/shared/visor-catraca.js",
@@ -2701,6 +2701,10 @@
     {
       "path": "test/extrato-creditos-previstos-v6-demo.test.js",
       "sha": "1a5d980a3e2fb9185a815da0c2776221246cd9dd"
+    },
+    {
+      "path": "test/fila-porta-ordinal-e-numero-proprio-20261123.test.js",
+      "sha": "404b22d7489757e14bcdb67e294ad4c3a663a1d1"
     },
     {
       "path": "test/filtros-cor-loja-candidato.test.js",
