@@ -251,6 +251,9 @@ function criarCatalogoMercadoriasReal({
       if(atual.produto.tipo==='PDF'&&!pdf.estado(id).arquivoAnexado){
        responder(res,409,{erro:'PUBLICACAO_EXIGE_PDF'});return true;
       }
+      if(atual.produto.tipo==='PDF'&&!fotos.listar(id).fotos.length){
+       responder(res,409,{erro:'PUBLICACAO_EXIGE_CAPA'});return true;
+      }
       if(atual.produto.tipo==='FISICO'&&!fotos.listar(id).fotos.length){
        responder(res,409,{erro:'PUBLICACAO_EXIGE_FOTO'});return true;
       }
