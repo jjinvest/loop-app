@@ -204,7 +204,7 @@ test('livro real: bonus 10% exige ativacao validada, prova PSP, credito unico e 
    'titular_id TEXT,status TEXT,pagamento_id TEXT,atualizado_em INTEGER);',
    'CREATE TABLE loop_real_fotos_regras_pedido(',
    'pedido_id TEXT,cor TEXT,revisao INTEGER);',
-   'CREATE TABLE loop_real_motor_compras(
+   'CREATE TABLE loop_real_motor_compras(',
    'pedido_id TEXT PRIMARY KEY,titular_id TEXT NOT NULL,',
    'posicao_id INTEGER NOT NULL UNIQUE,valor_centavos INTEGER NOT NULL);',
    'CREATE TABLE loop_real_motor_qualificacoes(',
