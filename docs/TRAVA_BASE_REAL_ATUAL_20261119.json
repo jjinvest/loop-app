@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "2ebec56aed9525f6b30a6d2f69badd0e7b94ba8b"
+      "sha": "967c346995dbd3381c530f4a4ee4575ab732097d"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -6011,6 +6011,13 @@
       "antes": "910a36ceea1ac7bf791037128356cb407f3afa22",
       "depois": "ffb62f442c4e7d4f371939e6b7f96a779cdc14b6",
       "objetivo": "Corrigir integralmente o gate de links do escritorio, preservar a mesma UI e limpar referencia ao sair da sessao."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "2ebec56aed9525f6b30a6d2f69badd0e7b94ba8b",
+      "depois": "967c346995dbd3381c530f4a4ee4575ab732097d",
+      "objetivo": "Atualizar painel de comprovacao do ensaio PC/celular para duas compras efetivamente confirmadas, uma verde barata link e uma dourada de posicao."
     }
   ]
 }

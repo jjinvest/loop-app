@@ -1866,7 +1866,7 @@ async function main(){
    assert.equal(await pagina.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
    await pagina.goto(base+'/administrador');
    const integrado=pagina.locator('#integracaoQualificadaEstado');
-   await integrado.filter({hasText:/Confirmadas: 1/}).waitFor();
+   await integrado.filter({hasText:/Confirmadas: 2/}).waitFor();
    assert.equal(await pagina.locator('#sincronizarComprasLoop').isEnabled(),true);
    await pagina.locator('#sincronizarComprasLoop').click();
    await integrado.filter({hasText:/Sincronizado:/}).waitFor();
