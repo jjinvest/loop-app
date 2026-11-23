@@ -26,6 +26,8 @@ const {criarCatalogoMercadoriasReal}=
  require('../src/producao/catalogo-mercadorias-real');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
+const {BancadaModulosLoopSQLite}=
+ require('../src/producao/bancada-modulos-loop-sqlite');
 const {criarAppIdentidadeLoop}=
  require('../src/producao/servidor-identidade-loop');
 const {criarTransporteEmailVerificacaoResend}=
@@ -151,6 +153,9 @@ async function iniciar(ambiente=process.env,opcoes={}){
   const contas=new IdentidadeClienteLoopReal({...config,banco});
   const motorLoop=new MotorLoopIntegradoSQLite({banco});
   const operacaoCatraca=new OperacaoCatracaAdminSQLite({banco,motor:motorLoop});
+  const bancadaOperacional=new BancadaModulosLoopSQLite({
+   banco,consultarAgenda:()=>operacaoCatraca.consultar()
+  });
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
   // Nenhum fornecedor é homologado automaticamente.
   const auditoria=new AuditoriaOperacionalSQLite({
@@ -315,6 +320,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
     catalogoMidia,classificacaoLoop,operacaoCatraca,recuperacaoReservas,
+    bancadaOperacional,
     // Futuro adaptador bancário, injetado somente pelo servidor.
     consultarSaldosCofres:opcoes.consultarSaldosCofres??null}
   });
@@ -372,7 +378,17 @@ async function iniciar(ambiente=process.env,opcoes={}){
    catch(e){console.error('CATRACA_AGENDA_ENSAIO_FALHOU',e.codigo||'ERRO');}
   },60000);
   timer?.unref?.();
+  // O servidor, nao o navegador, comanda os pulsos da bancada de teste.
+  // Cada marco e aplicado no mesmo motor do LOOP, com idempotencia SQLite.
+  // A porteira permanece independente e fechada por padrao.
+  const timerBancada=setInterval(()=>{
+   try{bancadaOperacional.processarRelogio();}
+   catch(e){console.error('BANCADA_CATRACA_RELOGIO_FALHOU',
+    e.codigo||'ERRO_OPERACIONAL');}
+  },10000);
+  timerBancada.unref?.();
   const encerrar=()=>{
+   clearInterval(timerBancada);
    if(timer)clearInterval(timer);
    server.close(async()=>{
     try{await agendadorMidia?.encerrar();}catch{}
