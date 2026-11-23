@@ -54,3 +54,18 @@ AKITEMM → compra qualificada → posição identificada na fila B → promoç�
 A bancada aqui adicionada efetua transições verdadeiras das classes de domínio, com dados de teste persistidos e rastreáveis. **Não equivale automaticamente a alterar os contadores públicos do tabuleiro em produção.** A integração final (etapa 3), com fonte única para o painel definitivo e ensaio completo por navegador PC/celular, precisa de evidência própria antes de marcar CONCLUÍDO. A aprovação é do proprietário após conferir o sistema publicado.
 
 **Próximo executor:** conferir o HEAD da branch ativa `feature/unificar-escritorio-real-20261105`, o manifesto de proteção de telas `docs/TRAVA_BASE_REAL_ATUAL_20261119.json`, os testes de regressão, o deployment Railway e a URL oficial. Jamais voltar à prévia como fonte de verdade. Nenhum comando de teste deve alterar `loop_real_motor_*`, `loop_real_contas` ou `loja_real_pedidos`.
+
+
+## Regra complementar de divulgação e bônus — 23/11/2026
+
+**Decisão posterior do proprietário, prevalecendo sobre referências antigas à comissão por qualquer venda:**
+
+- **CINZA:** apenas venda. Não libera link, não conta para o piso de R$ 250, não cria posição e não gera comissão.
+- **Habilitação do link:** compra autenticada e confirmada de produto habilitador (VERDE, ROXO, DOURADO; LARANJA com classificação administrativa própria quando disponível). Um VERDE de R$ 190, por exemplo, pode liberar o link mesmo sem atingir R$ 250. O titular não precisa possuir posição no LOOP para divulgar.
+- **Ativação do indicado:** cadastro pelo link, compra comum ou compra confirmada sem adesão voluntária não geram comissão. Exigir compra que qualifique posição, CPF/termos confirmados, prova bancária conciliada, vínculo imutável e **posição efetivamente registrada em nome do indicado**. Sem posição/ativação, R$ 0 de comissão. A situação de pagamento/estorno também precisa permanecer válida.
+- **Valor único:** 10% da base de R$ 250 por ativação válida do indicado = **R$ 25**. Não calcular 10% do preço integral da mercadoria, não remunerar as compras cinza ou as compras verdes insuficientes, nem multiplicar bônus por novas compras do mesmo cadastro que não representam nova ativação elegível. A comissão não é participação de lucro no tabuleiro.
+- **Financeiro do indicador:** esta apuração pertence ao quadro de BÔNUS DE INDICAÇÕES, separado de posições e de saldos de participação. **Saque mínimo R$ 25, taxa de saque 0%**, mas apenas sobre crédito bancariamente confirmado e liberado. A projeção em conferência não é saldo sacável e não cria Pix.
+- **Segurança e estornos:** não provisionar saldo por pedido pendente, comprovação ausente, duplicidade ou devolução/cancelamento. Não apagar crédito já efetivamente pago por simples mudança visual; qualquer reversão posterior exige conciliação e política financeira comprovada. Sem adaptadores produtivos PSP/Pix, manter escritas/saques reais bloqueados.
+- **Categoria LARANJA:** habilitação de link é uma intenção confirmada, mas a configuração de classificação de produtos e a política de posições para LARANJA precisam ser explicitamente estabelecidas no catálogo real. Não mapear LARANJA silenciosamente para outra cor nem atribuir posição automática antes disso.
+
+A fonte técnica atual de consulta é `src/producao/direitos-divulgacao-loop-sqlite.js`; a rota `/api/financeiro/me` mostra bônus **em conferência**, sem somá-los ao saldo; a gravação de bônus no livro `src/producao/livro-financeiro-real-sqlite.js` continua exigindo prova de PSP de produção. As regras de mercado e documentos antigos que descrevem 10% sobre qualquer venda não prevalecem.
