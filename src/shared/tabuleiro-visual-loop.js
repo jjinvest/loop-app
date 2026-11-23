@@ -74,7 +74,7 @@
     ': '+(p?(dourada(p)?'dourada · ':'')+numero(p).replace('\n',' · '):
     'vazio')+(p?.minha?' · minha posição':''));
   }
-  function preencherFila(id,itens,tipo,{inicio=0}={}){
+  function preencherFila(id,itens,tipo,{inicio=0,exibirNomesTeste=false}={}){
    if(!Number.isSafeInteger(inicio)||inicio<0)throw Error('FILA_INICIO_INVALIDO');
    if(tipo!=='A'&&tipo!=='B')throw Error('FILA_INVALIDA');
    const area=$(id);
@@ -105,8 +105,12 @@
     conteudo.className='loop03-fila-identificacao';
     const identificacao=document.createElement('span');
     identificacao.className='loop03-numero-titular';
+    // Somente a bancada do operador pode revelar os NOMES DE TESTE;
+    // cliente e fila real continuam anonimados por padrao.
+    const nomeTeste=exibirNomesTeste===true&&typeof p?.nome==='string'&&
+     p.nome.trim().length>0&&p.nome.length<=70?p.nome.trim():null;
     identificacao.textContent=ordem+'º lugar'+
-     (contagem!==null?' · identidade protegida':'');
+     (nomeTeste?' · '+nomeTeste:contagem!==null?' · identidade protegida':'');
     conteudo.append(identificacao);
     if(contagem===null&&p?.minha===true){
      const minha=document.createElement('small');
@@ -114,7 +118,8 @@
      conteudo.append(minha);
     }
     linha.setAttribute('aria-label','Fila '+tipo+' · '+ordem+'º lugar'+
-     (contagem!==null?' · identificação protegida':
+     (nomeTeste?' · '+nomeTeste:
+      contagem!==null?' · identificação protegida':
       p?.minha===true?' · meu lugar':''));
     linha.append(inicial,conteudo);
     area.append(linha);

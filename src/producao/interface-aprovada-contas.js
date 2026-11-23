@@ -101,7 +101,7 @@
  }
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
- let modoOperadorAtual=false;
+ let modoOperadorAtual=false,visualTesteModulo=null;
  let captchaCadastroId=null,captchaObrigatorio=false;
  let captchaLoginAtivo=false,captchaLoginId=null;
  const parametrosEntrada=new URLSearchParams(location.search);
@@ -510,7 +510,37 @@
     '<h2>Posições e filas · Operador</h2>',
     '<div id="adminResumoPosicoes" class="loop03-resumo-duplo" role="status" aria-live="polite">Consultando filas do servidor…</div>',
     '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarPosicoes">Atualizar posições</button><a href="/administrador">Gerenciar na Central</a></div>',
-    '<div id="adminResumoComercial" class="loop03-resumo-duplo loop03-resumo-comercial" role="status" aria-live="polite">Consultando clientes e produtos vendidos…</div>'
+    '<div id="adminResumoComercial" class="loop03-resumo-duplo loop03-resumo-comercial" role="status" aria-live="polite">Consultando clientes e produtos vendidos…</div>',
+    '<section id="adminTesteModulos" aria-label="Testes operacionais de filas e catraca">',
+    '<h3>TESTES OPERACIONAIS · FILA E CATRACA</h3>',
+    '<p>Execute cada mecanismo de forma independente. A porteira da catraca fica fechada durante o giro; o relógio usa a programação do operador.</p>',
+    '<div class="loop03-admin-acoes">',
+    '<button type="button" id="adminTesteCarregarCatraca">Carregar 7 posições no tabuleiro</button>',
+    '<button type="button" id="adminTesteIniciarCatraca">Iniciar catraca</button>',
+    '<button type="button" id="adminTestePausarCatraca">Pausar catraca</button>',
+    '<button type="button" id="adminTestePulsoCatraca">Executar uma luz (manual)</button>',
+    '<button type="button" id="adminTesteReiniciarCatraca">Reiniciar teste da catraca</button>',
+    '<button type="button" id="adminTesteVerCatraca">Ver catraca no tabuleiro</button>',
+    '</div>',
+    '<div id="adminTesteEstadoCatraca" class="loop03-admin-dado" role="status" aria-live="polite">Consultando movimentos do motor…</div>',
+    '<form id="adminTesteFormFila" class="loop03-admin-campos">',
+    '<label for="adminTesteNomeFila">Nome da posição para testar a fila</label>',
+    '<input id="adminTesteNomeFila" type="text" minlength="2" maxlength="70" required placeholder="Ex.: Maria">',
+    '<div class="loop03-admin-acoes"><button type="submit">Inserir posição na fila B</button></div></form>',
+    '<div class="loop03-admin-acoes">',
+    '<label for="adminTestePosicaoPromover">Número da posição</label>',
+    '<input id="adminTestePosicaoPromover" type="number" min="1" step="1" inputmode="numeric">',
+    '<button type="button" id="adminTestePromoverFila">Testar promoção para A</button>',
+    '<button type="button" id="adminTesteAbrirPorteira">Abrir porteira da fila</button>',
+    '<button type="button" id="adminTesteFecharPorteira">Fechar porteira da fila</button>',
+    '<button type="button" id="adminTestePreencherFila">Abastecer tabuleiro sem giro</button>',
+    '<button type="button" id="adminTesteReiniciarFila">Reiniciar teste das filas</button>',
+    '<button type="button" id="adminTesteVerFilas">Ver filas no tabuleiro</button>',
+    '<button type="button" id="adminTesteVerOriginal">Ver tabuleiro normal</button>',
+    '</div>',
+    '<div id="adminTesteEstadoFila" class="loop03-admin-dado" role="status" aria-live="polite">Consultando sequência da fila…</div>',
+    '<p id="adminTesteMensagem" class="loop03-admin-dado" role="status" aria-live="polite"></p>',
+    '</section>'
    ],
    conteudoEquipe:[
     '<h2>Cadastros · Operador</h2>',
@@ -569,6 +599,111 @@
    div.innerHTML=linhas.join('');
    destino.prepend(div);
   }
+  // Testes operacionais separados das posicoes dos clientes: somente
+  // sessao do operador; cada botao aciona uma transicao transacional.
+  async function carregarBancadaOperador(){
+   if(!modoOperadorAtual||!$('adminTesteModulos'))return;
+   try{
+    const r=await fetch('/api/admin/loop/testes-modulos',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw Error(d.erro||'TESTES_INDISPONIVEIS');
+    const catraca=d.catraca,fila=d.fila;
+    const infosCatraca=[
+     'Estado da catraca: '+(catraca.catracaAtiva?'EM EXECUÇÃO':'PARADA'),
+     'Porteira da catraca: '+(catraca.porteiraAberta?'ABERTA':'FECHADA'),
+     'Relógio: '+catraca.relogio.modo+' · '+catraca.relogio.janelaInicio+
+      '–'+catraca.relogio.janelaFim+' · '+catraca.relogio.metaCentrosDia+' centros/dia',
+     'Centro: '+(catraca.tabuleiro.centro||'vazio'),
+     'Vagas 1–6: '+catraca.tabuleiro.vagas.map((p,i)=>
+      (i+1)+': '+(p||'vazia')).join(' | '),
+     'Eventos do ciclo: '+catraca.tabuleiro.eventosNoCiclo+'/6',
+     'Centros concluídos: '+catraca.tabuleiro.centrosConcluidos,
+     'Giros executados: '+catraca.tabuleiro.giros
+    ];
+    const infosFila=[
+     'Porteira da fila: '+(fila.porteiraAberta?'ABERTA':'FECHADA'),
+     'Fila A ('+fila.filaA.length+'): '+
+      (fila.filaA.map(p=>'#'+p.id+' '+p.nome).join(' · ')||'vazia'),
+     'Fila B ('+fila.filaB.length+'): '+
+      (fila.filaB.map(p=>'#'+p.id+' '+p.nome).join(' · ')||'vazia'),
+     'Centro na prova da fila: '+(fila.tabuleiro.centro||'vazio'),
+     'Abastecimento sem catraca: '+fila.tabuleiro.vagas.map((p,i)=>
+      (i+1)+': '+(p||'vazia')).join(' | '),
+     'Giros da catraca no teste de filas: '+fila.tabuleiro.giros
+    ];
+    for(const [id,linhas] of [
+     ['adminTesteEstadoCatraca',infosCatraca],
+     ['adminTesteEstadoFila',infosFila]]){
+     const alvo=$(id);if(!alvo)continue;
+     const itens=linhas.map(s=>{const p=document.createElement('p');
+      p.textContent=s;return p;});
+     alvo.replaceChildren(...itens);
+    }
+   }catch(e){if($('adminTesteMensagem'))
+    $('adminTesteMensagem').textContent='Consulta: '+e.message;}
+  }
+  async function comandarBancadaOperador(acao,extra={}){
+   if(!modoOperadorAtual)return;
+   const msg=$('adminTesteMensagem');
+   msg.textContent='Executando '+acao+' no motor…';
+   try{
+    const token=await obterCsrfOperadorReal();
+    const idOperacao=crypto.randomUUID();
+    const r=await fetch('/api/admin/loop/testes-modulos',{
+     method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+     body:JSON.stringify({idOperacao,acao,...extra})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw Error(d.erro||'COMANDO_NAO_EXECUTADO');
+    msg.textContent='Confirmado pelo motor: '+acao+
+     (d.girou?' · giro executado':'')+
+     (d.posicaoId?' · posição #'+d.posicaoId:'');
+    await carregarBancadaOperador();
+   }catch(e){msg.textContent='Comando não executado: '+e.message;}
+  }
+  for(const [botao,acao] of [
+   ['adminTesteCarregarCatraca','CATRACA_CARREGAR'],
+   ['adminTesteIniciarCatraca','CATRACA_INICIAR'],
+   ['adminTestePausarCatraca','CATRACA_PAUSAR'],
+   ['adminTestePulsoCatraca','CATRACA_PULSO'],
+   ['adminTesteReiniciarCatraca','CATRACA_REINICIAR'],
+   ['adminTesteAbrirPorteira','FILA_ABRIR_PORTEIRA'],
+   ['adminTesteFecharPorteira','FILA_FECHAR_PORTEIRA'],
+   ['adminTestePreencherFila','FILA_PREENCHER_TABULEIRO'],
+   ['adminTesteReiniciarFila','FILA_REINICIAR']])
+   $(botao)?.addEventListener('click',()=>void comandarBancadaOperador(acao));
+  // Exibir a mesma tela aprovada com origem TESTE explicitamente marcada.
+  // Nenhum dado do ensaio e apresentado como posicao de cliente.
+  for(const [id,tipo] of [
+   ['adminTesteVerCatraca','CATRACA'],
+   ['adminTesteVerFilas','FILA'],
+   ['adminTesteVerOriginal',null]])
+   $(id)?.addEventListener('click',()=>{
+    visualTesteModulo=tipo;
+    $('abaTabuleiro')?.click();
+    void carregarTabuleiroOperador();
+   });
+  $('adminTesteFormFila')?.addEventListener('submit',e=>{
+   e.preventDefault();
+   void comandarBancadaOperador('FILA_ENTRAR',{
+    nome:$('adminTesteNomeFila').value.trim()
+   });
+  });
+  $('adminTestePromoverFila')?.addEventListener('click',()=>{
+   const id=Number($('adminTestePosicaoPromover').value);
+   if(!Number.isSafeInteger(id)||id<1){
+    $('adminTesteMensagem').textContent='Informe o número da posição.';return;
+   }
+   void comandarBancadaOperador('FILA_PROMOVER',{posicaoId:id});
+  });
+  setInterval(()=>{
+   if(modoOperadorAtual&&$('conteudoPosicoes')?.hidden===false)
+    void carregarBancadaOperador();
+  },12000);
+  void carregarBancadaOperador();
   $('adminAtualizarPosicoes')?.addEventListener('click',()=>void carregarAbaOperador('abaPosicoes'));
   $('adminAtualizarFinanceiro')?.addEventListener('click',()=>void carregarAbaOperador('abaFinanceiro'));
   $('adminAtualizarPedidos')?.addEventListener('click',()=>void carregarAbaOperador('abaMeusPedidos'));
@@ -1022,12 +1157,15 @@
  async function carregarAbaOperador(id){
   if(!modoOperadorAtual)return;
   if(id==='abaPosicoes')void carregarIndicadoresComerciaisOperador();
+  const posicoesEmTeste=id==='abaPosicoes'&&visualTesteModulo!==null;
   const rotas={
    abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
    abaFinanceiro:['/api/admin/loop/controle','adminResumoFinanceiro'],
    abaMeusPedidos:['/api/admin/loop/cadeia-comercial','adminResumoPedidos']
   };
-  const info=rotas[id];if(!info)return;
+  const info=posicoesEmTeste?
+   ['/api/admin/loop/testes-modulos','adminResumoPosicoes']:rotas[id];
+  if(!info)return;
   const destino=$(info[1]);if(!destino)return;
   destino.textContent='Atualizando dados reais do servidor…';
   try{
@@ -1036,7 +1174,21 @@
    if(!r.ok)throw Error(d.erro||'Consulta indisponível.');
    if(!modoOperadorAtual)return;
    if(id==='abaPosicoes'){
-    mostrarResumoPosicoesOperador(destino,d);
+    if(posicoesEmTeste){
+     const x=d[visualTesteModulo.toLowerCase()];
+     if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
+        !Array.isArray(x?.filaA)||!Array.isArray(x?.filaB))
+      throw Error('RESUMO_POSICOES_TESTE_INVALIDO');
+     mostrarResumoPosicoesOperador(destino,{
+      filaA:x.filaA.length,filaB:x.filaB.length,
+      tabuleiro:{eventosNoCiclo:x.tabuleiro.eventosNoCiclo,
+       ciclosConcluidos:x.tabuleiro.centrosConcluidos}
+     });
+     const origem=document.createElement('p');
+     origem.textContent='TESTE OPERACIONAL · '+visualTesteModulo+
+      ' · contadores do motor de teste';
+     destino.prepend(origem);
+    }else mostrarResumoPosicoesOperador(destino,d);
    }else if(id==='abaFinanceiro'){
     destino.textContent='Modo da catraca: '+d.modo+
      '\nGiros de hoje: '+d.girosHoje+
@@ -2673,7 +2825,63 @@
    });
   }catch(e){status.textContent='Não foi possível abrir: '+e.message;}
  }
+ async function carregarTabuleiroTesteOperador(){
+  try{
+   const [rt,rc]=await Promise.all([
+    fetch('/api/admin/loop/testes-modulos',{
+     credentials:'same-origin',cache:'no-store'}),
+    fetch('/api/admin/loop/controle',{
+     credentials:'same-origin',cache:'no-store'})
+   ]);
+   if(!rt.ok||!rc.ok)throw Error('TESTE_MOTOR_INDISPONIVEL');
+   const [d,controle]=await Promise.all([rt.json(),rc.json()]);
+   if(!modoOperadorAtual||!visualTesteModulo)return;
+   if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
+      d.testandoModulosSeparados!==true||
+      !['FILA','CATRACA'].includes(visualTesteModulo))
+    throw Error('ORIGEM_DO_TESTE_INVALIDA');
+   const x=d[visualTesteModulo.toLowerCase()];
+   if(!x||!Array.isArray(x.filaA)||!Array.isArray(x.filaB)||
+      !Array.isArray(x.tabuleiro?.vagasPosicoes)||
+      x.tabuleiro.vagasPosicoes.length!==6||
+      !Number.isSafeInteger(x.tabuleiro.eventosNoCiclo)||
+      x.tabuleiro.eventosNoCiclo<0||x.tabuleiro.eventosNoCiclo>6||
+      !Number.isSafeInteger(x.tabuleiro.giros))
+    throw Error('SNAPSHOT_TESTE_INVALIDO');
+   visualTabuleiro.preencherFila('motorFilaA',x.filaA,'A',
+    {exibirNomesTeste:true});
+   visualTabuleiro.preencherFila('motorFilaB',x.filaB,'B',
+    {exibirNomesTeste:true});
+   visualTabuleiro.preencherVaga('tabuleiroMotorCentro',
+    x.tabuleiro.centroPosicao,true);
+   for(let i=0;i<6;i++)
+    visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),
+     x.tabuleiro.vagasPosicoes[i]);
+   // Com a bancada selecionada, as lampadas exibem eventos realmente
+   // contabilizados pelo motor, e NAO os marcos previstos do relogio.
+   visualTabuleiro.preencherLuzes(x.tabuleiro.eventosNoCiclo);
+   mostrarAgendaOperador(controle);
+   const agenda={...controle.agenda,luzesDoRelogioCompartilhado:false,
+    luzesDoRelogioOperador:false};
+   visorCatraca.registrarAgenda(agenda);
+   visorCatraca.observar(x.tabuleiro.giros,x.tabuleiro.eventosNoCiclo);
+   $('loop03TotalIntegrado').textContent=String(x.filaA.length+x.filaB.length);
+   $('loop03NumeroIntegrado').textContent=x.tabuleiro.eventosNoCiclo+' / 6';
+   $('estadoTabuleiroIntegrado').textContent='TESTE OPERACIONAL · '+
+    (visualTesteModulo==='FILA'?'FILAS A/B':'CATRACA')+
+    ' · '+(x.porteiraAberta?'PORTEIRA ABERTA':'PORTEIRA FECHADA')+
+    ' · '+x.tabuleiro.giros+' giros executados no motor';
+   $('estadoTabuleiroIntegrado').hidden=false;
+   void carregarAbaOperador('abaPosicoes');
+  }catch(e){
+   if(!modoOperadorAtual)return;
+   $('estadoTabuleiroIntegrado').textContent=
+    'Leitura do teste indisponível: '+e.message;
+   $('estadoTabuleiroIntegrado').hidden=false;
+  }
+ }
  async function carregarTabuleiroOperador(){
+  if(visualTesteModulo)return carregarTabuleiroTesteOperador();
   void carregarCofresOperador();
   try{
    // Reutiliza as rotas existentes da mesma sessao administrativa e motor real.
