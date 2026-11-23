@@ -105,7 +105,7 @@ async function principal(){
   const token=await page.evaluate(async senha=>{
    const res=await fetch('/api/operador/entrar',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    credentials:'same-origin',body:JSON.stringify({nick:'operador',senha})
+    credentials:'same-origin',body:JSON.stringify({nick:'OPERADOR',senha})
    });
    if(!res.ok)throw Error('LOGIN_OPERADOR_FALHOU_'+res.status);
    return (await res.json()).operador;

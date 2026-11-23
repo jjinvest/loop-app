@@ -89,8 +89,9 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  assert.equal((await loginOperador('operador',SENHA_OPERADOR,
   'https://dominio-externo.invalid')).status,403);
  assert.equal((await loginOperador('cliente',SENHA_OPERADOR)).status,400);
- assert.equal((await loginOperador('operador','errada')).status,401);
- const operadorAutenticado=await loginOperador('Operador',SENHA_OPERADOR);
+ assert.equal((await loginOperador('OPERADOR','errada')).status,401);
+ assert.equal((await loginOperador('Operador',SENHA_OPERADOR)).status,400);
+ const operadorAutenticado=await loginOperador('OPERADOR',SENHA_OPERADOR);
  assert.equal(operadorAutenticado.status,200);
  assert.deepEqual(await operadorAutenticado.json(),{operador:true});
  const cookieOperador=operadorAutenticado.headers.get('set-cookie').split(';')[0];

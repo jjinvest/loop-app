@@ -57,7 +57,7 @@ test('loja real sem cadastro de produtos: zero catalogados e 400 espaços, sem c
  assert.equal((await requisitar('/api/loja/pedidos')).status,401);
  const entrar=await fetch(base+'/api/operador/entrar',{
   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
-  body:JSON.stringify({nick:'operador',senha:CHAVE})
+  body:JSON.stringify({nick:'OPERADOR',senha:CHAVE})
  });
  assert.equal(entrar.status,200);
  const cookie=entrar.headers.get('set-cookie').split(';')[0];

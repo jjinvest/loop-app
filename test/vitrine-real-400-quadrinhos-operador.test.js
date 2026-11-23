@@ -72,7 +72,7 @@ test('400 fixtures tecnicas em banco descartavel, 10 abas x 40 e operador isolad
  assert.equal((await get('/api/contas/me')).status,401);
  const login=await fetch(base+'/api/operador/entrar',{
   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
-  body:JSON.stringify({nick:'operador',senha:SENHA})
+  body:JSON.stringify({nick:'OPERADOR',senha:SENHA})
  });
  assert.equal(login.status,200);
  const cookie=login.headers.get('set-cookie').split(';')[0];

@@ -125,6 +125,7 @@
  let origemLinks=null;
  const codigos={
   CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos. Confira os dados e tente novamente.',
+  NICK_OPERADOR_MAIUSCULO_OBRIGATORIO:'Digite OPERADOR em letras maiúsculas, sem conversão automática.',
   SENHA_ATUAL_INCORRETA:'Senha atual incorreta.',
   CONTA_BLOQUEADA:'Muitas tentativas. Aguarde 15 minutos.',
   ACESSO_TEMPORARIAMENTE_LIMITADO:'Muitos acessos. Aguarde um momento.',
@@ -3549,20 +3550,14 @@
  }
  // Um formulario: nick VILELA entra como cliente e nick OPERADOR
  // usa a sessao administrativa sem nova tela de senha.
- // Ao completar "operador", exibir o nick em MAIUSCULAS na mesma caixa.
- // A senha e os nicks dos clientes permanecem inalterados.
- const normalizarOperadorNoLogin=()=>{
-  const campo=$('login');
-  if(campo.value.trim().toLowerCase()!=='operador')return false;
-  campo.value='OPERADOR';
-  return true;
- };
- $('login').addEventListener('input',normalizarOperadorNoLogin);
- $('login').addEventListener('change',normalizarOperadorNoLogin);
+ // Nick administrativo sensível a maiúsculas: não autocorrigir input.
+ // Só o backend autentica e exige OPERADOR exato + senha administrativa.
  onForm('formLogin',async()=>{
-  normalizarOperadorNoLogin();
-  if($('login').value.trim().toLowerCase()==='operador'){
-   await autenticarOperadorFormulario('OPERADOR',$('senha').value);
+  const nickDigitado=$('login').value;
+  if(nickDigitado.trim().toLowerCase()==='operador'){
+   if(nickDigitado!=='OPERADOR')
+    throw Error('NICK_OPERADOR_MAIUSCULO_OBRIGATORIO');
+   await autenticarOperadorFormulario(nickDigitado,$('senha').value);
    $('senha').value='';
    abrirPainelOperador();
    dizer('Modo OPERADOR ativo. Acesse a AKITEMM ou a central pelo rodapé.');

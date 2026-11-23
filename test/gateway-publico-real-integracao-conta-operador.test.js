@@ -185,7 +185,16 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
   assert.match(resposta.headers['set-cookie'][0],
    /^akitemm_real_admin_v1=[a-f0-9]{64};/);
  }
- const op=await post('/api/operador/entrar',{nick:'operador',senha:ADMIN});
+ // A sessão real só aceita o nick administrativo exato em maiúsculas.
+ // Não existe conversão automática nem atalho que dispense a senha.
+ for(const nick of ['operador','Operador','OpErAdOr',' OPERADOR ']){
+  const recusado=await post('/api/operador/entrar',{nick,senha:ADMIN});
+  assert.equal(recusado.status,400,'Operador não pode entrar com '+JSON.stringify(nick));
+ }
+ assert.equal((await post('/api/operador/entrar',{
+  nick:'OPERADOR',senha:'SenhaIncorreta'
+ })).status,401);
+ const op=await post('/api/operador/entrar',{nick:'OPERADOR',senha:ADMIN});
  assert.equal(op.status,200);
  const cookieOp=op.headers.get('set-cookie').split(';')[0];
  assert.match(cookieOp,/^akitemm_real_admin_v1=[a-f0-9]{64}$/);
