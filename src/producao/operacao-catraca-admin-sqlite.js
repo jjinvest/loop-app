@@ -67,7 +67,12 @@ function contarRelogioNaJanela(politica,deMs,ateMs){
  let luzes=0,ciclos=0;
  // Um turno pode cruzar meia-noite; a janela de 24h abrange no maximo
  // tres datas locais de inicio de turno.
- for(let deslocamento=-1;deslocamento<=1;deslocamento++){
+ // Abrange também períodos longos sem reprogramação: totais históricos
+ // não podem perder dias inteiros por uma janela limitada a 72 horas.
+ const primeiroDia=Math.floor(comeco/86400000)-1;
+ const ultimoDia=Math.floor(fim/86400000)+1;
+ for(let diaIndice=primeiroDia;diaIndice<=ultimoDia;diaIndice++){
+  const deslocamento=diaIndice-Math.floor(comeco/86400000);
   const diaMs=diaBase+deslocamento*86400000;
   const dia=new Date(diaMs).toISOString().slice(0,10);
   if(politica.metaDataAlvo!==null&&politica.metaDataAlvo!==undefined&&
@@ -199,6 +204,35 @@ class OperacaoCatracaAdminSQLite{
   // nessa janela, inclusive com pausas e mudanças de programação.
   return {luzesRelogio24h:luzes,ciclosRelogio24h:Math.floor(luzes/6)};
  }
+ // Totais VISUAIS persistidos na história de configurações. Sem movimentar
+ // livros financeiros, sem presumir pagamento, mesmo em dias sem acessos.
+ _relatorioRelogioAcumulado(agoraMs,hoje){
+  const configuracoes=this.db.prepare([
+   'SELECT detalhes,executado_em AS em FROM loop_real_catraca_admin_historico',
+   "WHERE acao='CONFIGURAR' AND executado_em<=?",
+   'ORDER BY executado_em,id'
+  ].join(' ')).all(agoraMs);
+  const diaLocal=Date.parse(hoje+'T00:00:00Z');
+  const deslocamento=instanteLocalPseudoutc(agoraMs)-agoraMs;
+  const inicioDia=diaLocal-deslocamento;
+  let politica=null,inicio=null,luzes=0,luzesHoje=0;
+  for(const evento of [...configuracoes,{em:agoraMs,detalhes:null}]){
+   if(inicio!==null&&evento.em>inicio){
+    luzes+=contarRelogioNaJanela(politica,inicio,evento.em).luzes;
+    if(evento.em>inicioDia)
+     luzesHoje+=contarRelogioNaJanela(politica,
+      Math.max(inicio,inicioDia),evento.em).luzes;
+   }
+   inicio=evento.em;
+   if(evento.detalhes!==null)politica=JSON.parse(evento.detalhes);
+  }
+  if(!Number.isSafeInteger(luzes)||!Number.isSafeInteger(luzesHoje))
+   falha('CATRACA_RELOGIO_CONTAGEM_EXCEDIDA');
+  return {luzesRelogioHoje:luzesHoje,
+   ciclosRelogioHoje:Math.floor(luzesHoje/6),
+   luzesRelogioAcumuladas:luzes,
+   ciclosRelogioAcumulados:Math.floor(luzes/6)};
+ }
  _log(acao,detalhes,ts){
   this.db.prepare([
    'INSERT INTO loop_real_catraca_admin_historico(acao,detalhes,executado_em)',
@@ -255,6 +289,7 @@ class OperacaoCatracaAdminSQLite{
    girosHoje:girosDia,girosHora:this._girosHora(tempo.ts,tempo.hora),
    giros24h:this._giros24h(tempo.ts),
    ...this._relatorioRelogio24h(tempo.ts),
+   ...this._relatorioRelogioAcumulado(tempo.ts,tempo.dia),
    hoje:tempo.dia,horaLocal:tempo.hora,
    fuso:FUSO,horarioPermitido:dentro,
    limiteNaoAtingido:permitido,
