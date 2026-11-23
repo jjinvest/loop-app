@@ -23,6 +23,7 @@ class BancadaModulosLoopSQLite{
    'snapshot TEXT NOT NULL,porteira_aberta INTEGER NOT NULL DEFAULT 0',
    'CHECK(porteira_aberta IN (0,1)),',
    'catraca_ativa INTEGER NOT NULL DEFAULT 0 CHECK(catraca_ativa IN (0,1)),',
+   'geracao INTEGER NOT NULL DEFAULT 0 CHECK(geracao>=0),',
    'cursor_dia TEXT,cursor_luz INTEGER NOT NULL DEFAULT 0 CHECK(cursor_luz>=0),',
    'atualizado_em INTEGER NOT NULL);',
    'CREATE TABLE IF NOT EXISTS loop_teste_modulos_operacoes(',
@@ -80,11 +81,11 @@ class BancadaModulosLoopSQLite{
     falha('BANCADA_HORARIO_INVALIDO');
    this.db.prepare([
     'UPDATE loop_teste_modulos_estado SET snapshot=?,porteira_aberta=?,',
-    'catraca_ativa=?,cursor_dia=?,cursor_luz=?,atualizado_em=?',
+    'catraca_ativa=?,geracao=?,cursor_dia=?,cursor_luz=?,atualizado_em=?',
     'WHERE modulo=?'
    ].join(' ')).run(JSON.stringify(sim.exportarSnapshot()),
-    row.porteira_aberta,row.catraca_ativa,row.cursor_dia,row.cursor_luz,
-    ts,modulo);
+    row.porteira_aberta,row.catraca_ativa,row.geracao,row.cursor_dia,
+    row.cursor_luz,ts,modulo);
    this.db.prepare([
     'INSERT INTO loop_teste_modulos_operacoes',
     '(id,modulo,payload_hash,resultado,registrado_em) VALUES(?,?,?,?,?)'
@@ -108,6 +109,7 @@ class BancadaModulosLoopSQLite{
    centroConcluido:giro?.centroConcluido?.nome||null,
    novaPosicao6:giro?.novaPosicao6?.nome||null,
    centrosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
+   semCentroAposGiro:giro?.girou===true&&!sim.tabuleiro.centro,
    eventosNoCiclo:sim.tabuleiro.vendasDoCiclo.length,
    porta: 'FECHADA'};
  }
@@ -209,11 +211,10 @@ class BancadaModulosLoopSQLite{
    }
    if(acao==='FILA_REINICIAR'||acao==='CATRACA_REINICIAR'){
     const novo=this._novo();
-    const snap=novo.exportarSnapshot();
     Object.assign(sim,novo);
     // O fechamento e incondicional, inclusive em replays.
     row.porteira_aberta=0;row.catraca_ativa=0;
-    row.cursor_dia=null;row.cursor_luz=0;
+    row.cursor_dia=null;row.cursor_luz=0;row.geracao++;
     sim.tabuleiro.proximoDaFila=()=>null;
     return {acao,reiniciada:true,semAlterarOutrosModulos:true};
    }
@@ -250,21 +251,23 @@ class BancadaModulosLoopSQLite{
    if(acao==='CATRACA_PULSO'){
     if(!row.catraca_ativa||agenda?.modo!=='MANUAL')
      falha('BANCADA_CATRACA_MANUAL_NAO_AUTORIZADA');
-    return {acao,...this._pulso(sim,'pulso-'+idOperacao)};
+    const pulso=this._pulso(sim,'pulso-'+idOperacao);
+    if(pulso.semCentroAposGiro)row.catraca_ativa=0;
+    return {acao,...pulso};
    }
    falha('BANCADA_ACAO_INVALIDA');
   });
  }
  processarRelogio(){
+  const row=this._linha('CATRACA');
+  if(row.catraca_ativa!==1)return {processado:false,motivo:'CATRACA_PARADA'};
   const agenda=this.consultarAgenda(),agora=this.agora();
   const p=this._progresso(agenda,agora);
   if(!p)return {processado:false,motivo:'RELOGIO_SEM_JANELA'};
-  const row=this._linha('CATRACA');
-  if(row.catraca_ativa!==1)return {processado:false,motivo:'CATRACA_PARADA'};
   if(row.cursor_dia===p.dia&&p.luz<=row.cursor_luz)
    return {processado:false,motivo:'AGUARDANDO_INTERVALO'};
   if(p.luz<1)return {processado:false,motivo:'AGUARDANDO_PRIMEIRA_LUZ'};
-  return this._transacao('CATRACA','turno:'+p.dia+':'+p.luz,
+  return this._transacao('CATRACA','turno:'+row.geracao+':'+p.dia+':'+p.luz,
    {acao:'CATRACA_EVENTO_RELOGIO',dia:p.dia,luz:p.luz},({row:atual,sim})=>{
     if(atual.catraca_ativa!==1)
      return {processado:false,motivo:'CATRACA_PARADA'};
@@ -274,6 +277,7 @@ class BancadaModulosLoopSQLite{
     // observado, inclusive depois de reiniciar o servidor.
     atual.cursor_dia=p.dia;atual.cursor_luz=p.luz;
     const movimento=this._pulso(sim,'turno-'+p.dia+'-'+p.luz);
+    if(movimento.semCentroAposGiro)atual.catraca_ativa=0;
     return {processado:true,acao:'CATRACA_EVENTO_RELOGIO',
      marco:p.luz,...movimento};
    });
