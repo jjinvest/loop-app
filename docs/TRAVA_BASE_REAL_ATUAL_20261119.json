@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "5623877edd7725649924d63dc62960e41d45dfd1"
+      "sha": "ca8978f71a688716b963dd986c38cb4964086dc3"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -3677,6 +3677,10 @@
     {
       "path": "test/webhook-sigkill-rollback-sqlite.test.js",
       "sha": "7fbf8c072c69fa208ec975a307d525b642e020db"
+    },
+    {
+      "path": "test/rotulos-modos-catraca-operador-real.test.js",
+      "sha": "16b2b57fb785e8200c2c57a49e2156f690c68115"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
@@ -5860,6 +5864,19 @@
       "antes": "fa87468550b4a0c39cf7be08b433295ca43e64ce",
       "depois": "bb8b75f570a519b1ec284c8375d6a7fcdb9a8a6e",
       "objetivo": "Teste: medir o modal real de foto depois do upload, sem procurar classe inexistente; zero mudanca de producao."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "5623877edd7725649924d63dc62960e41d45dfd1",
+      "depois": "ca8978f71a688716b963dd986c38cb4964086dc3",
+      "objetivo": "Alteracao autorizada estritamente nominal de Manual para Automático no controle da catraca; Parada e Agendada inalteradas; identificadores PAUSADA/MANUAL/AUTOMATICA, horario 09–18, politica, banco, caixa e giro preservados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/rotulos-modos-catraca-operador-real.test.js",
+      "depois": "16b2b57fb785e8200c2c57a49e2156f690c68115",
+      "objetivo": "Alteracao autorizada estritamente nominal de Manual para Automático no controle da catraca; Parada e Agendada inalteradas; identificadores PAUSADA/MANUAL/AUTOMATICA, horario 09–18, politica, banco, caixa e giro preservados."
     }
   ]
 }

@@ -2599,7 +2599,7 @@
    typeof d.horaLocal==='string'&&d.horaLocal<=d.janelaFim;
   const anterior=!!d.metaDataAlvo&&d.metaDataAlvo<d.hoje&&!continuaOntem;
   const situacao=d.modo==='PAUSADA'?'PAUSADA':
-   d.modo==='MANUAL'?'MODO MANUAL':n===0?'SEM META':
+   d.modo==='MANUAL'?'MODO AUTOMÁTICO':n===0?'SEM META':
    anterior?'DATA ENCERRADA':futura?'AGENDADA — AGUARDANDO DATA':
    d.horarioPermitido?'DENTRO DO TURNO':'AGENDADA — AGUARDANDO HORÁRIO';
   return situacao+'\n'+dataAgendaOperador(d.metaDataAlvo)+' · '+
@@ -2739,7 +2739,7 @@
       !['PAUSADA','MANUAL','AUTOMATICA'].includes(d.modo))
     throw Error('Controle administrativo indisponível.');
    const modo=criarCampo('Modo','select',d.modo,[
-    ['PAUSADA','Parada'],['MANUAL','Manual'],
+    ['PAUSADA','Parada'],['MANUAL','Automático'],
     ['AUTOMATICA','Agendada']
    ]);
    const inicio=criarCampoHorarioOperador(form,'Abertura',d.janelaInicio);
@@ -2785,7 +2785,7 @@
     if(modo.value==='PAUSADA'){
      mensagem+='\nCATRACA PARADA — selecione Agendada e salve para iniciar a previsão.';
     }else if(modo.value==='MANUAL'){
-     mensagem+='\nModo Manual: não há contagem automática.';
+     mensagem+='\nModo Automático: sem contagem pela agenda.';
     }else{
      // Só a agenda GRAVADA e ativa fornece uma próxima luz do servidor.
      const original=modo.value===d.modo&&inicio.value===d.janelaInicio&&
