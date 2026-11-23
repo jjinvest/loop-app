@@ -47,6 +47,10 @@ function projetarAgendaTabuleiroCompartilhada(estado){
   // Independentes de giros e pagamentos reais (contagem separada).
   luzesRelogio24h:estado.luzesRelogio24h??null,
   ciclosRelogio24h:estado.ciclosRelogio24h??null,
+  luzesRelogioHoje:estado.luzesRelogioHoje??null,
+  ciclosRelogioHoje:estado.ciclosRelogioHoje??null,
+  luzesRelogioAcumuladas:estado.luzesRelogioAcumuladas??null,
+  ciclosRelogioAcumulados:estado.ciclosRelogioAcumulados??null,
   metaLotes:estado.metaCentrosDia>0?{
    ativa:true,quantidade:estado.metaCentrosDia,
    dataAlvo:estado.metaDataAlvo??null,
