@@ -66,6 +66,8 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
  ].join(' '));
  const linhasLista=()=>banco.prepare([
   'SELECT p.pedido_id AS pedidoId,p.criado_em AS criadoEm,',
+  'p.status AS statusPagamento,p.pagamento_id AS pagamentoId,',
+  'p.valor_total_centavos AS valorTotalPedidoCentavos,',
   's.produto_id AS produtoId,s.sku AS sku,s.fornecedor_id AS fornecedorId,',
   's.quantidade AS quantidade,s.preco_unit_centavos AS precoUnitCentavos,',
   existente.get('loja_real_produtos')?'pr.titulo AS titulo':'NULL AS titulo',
@@ -94,7 +96,10 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
    falhar('RELATORIO_COMERCIAL_ITENS_INCONSISTENTES');
   return {fonte:'SQLITE_COMERCIAL_REAL',nick:nick.toLowerCase(),
    totalLinhas:t.totalLinhas,totalUnidades:t.unidades,
-   itens,offset,limite,temMais:offset+itens.length<t.totalLinhas,
+   // O livro registra id/status, NAO meio (PIX/cartao/boleto).
+   // Nunca inferir o meio de pagamento pelo identificador do PSP.
+   itens:itens.map(item=>({...item,formaPagamento:null})),
+   offset,limite,temMais:offset+itens.length<t.totalLinhas,
    somentePedidosAprovados:true,somenteLeitura:true};
  }
  return Object.freeze({indicadores,comprasDoCadastro});
