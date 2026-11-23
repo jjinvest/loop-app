@@ -45,7 +45,9 @@ class VisaoEscritorioUnificadaSQLite{
   const cadastro=this.banco.prepare([
    'SELECT COUNT(*) AS confirmados,',
    'COALESCE(SUM(CASE WHEN q.indicado_id IS NOT NULL',
-   'AND d.indicado_id IS NULL THEN 1 ELSE 0 END),0) AS aDistribuir',
+   'AND (d.indicado_id IS NULL OR d.registrado_em<x.confirmado_em',
+    'OR d.registrado_em<q.confirmado_em)',
+    'THEN 1 ELSE 0 END),0) AS aDistribuir',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
    'LEFT JOIN loop_real_indicacoes_validas_financeiro q',
@@ -55,12 +57,13 @@ class VisaoEscritorioUnificadaSQLite{
    'WHERE v.indicador_id=?'
   ].join(' ')).get(id);
   const vinculadas=this.banco.prepare([
-   'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao d',
-   'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=d.indicado_id',
-   'JOIN loop_real_indicacoes_validas_financeiro q',
-   'ON q.indicado_id=d.indicado_id AND q.indicador_id=d.indicador_id',
-   'WHERE d.indicador_id=?'
-  ].join(' ')).get(id).n;
+    'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao d',
+    'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=d.indicado_id',
+    'JOIN loop_real_indicacoes_validas_financeiro q',
+    'ON q.indicado_id=d.indicado_id AND q.indicador_id=d.indicador_id',
+    'WHERE d.indicador_id=? AND d.registrado_em>=x.confirmado_em',
+    'AND d.registrado_em>=q.confirmado_em'
+   ].join(' ')).get(id).n;
   if(qualificadas>compras||compras>total||
      cadastro.confirmados>total||vinculadas>total||
      cadastro.aDistribuir>cadastro.confirmados)
@@ -175,7 +178,9 @@ class VisaoEscritorioUnificadaSQLite{
    'SELECT v.indicado_id AS indicadoId,c.nick,',
    'v.registrado_em AS registradoEm,',
    'q.posicao_id AS posicaoDestinoEnsaio,',
-   'dest.numero_posicao AS posicaoDestinoReservada,',
+   'CASE WHEN dest.registrado_em>=x.confirmado_em AND',
+    'dest.registrado_em>=valid.confirmado_em THEN dest.numero_posicao',
+    'ELSE NULL END AS posicaoDestinoReservada,',
    'x.titular_id AS confirmacaoTitularId,',
    'valid.indicado_id AS qualificacaoRealIndicadoId,',
    'EXISTS(SELECT 1 FROM loop_real_motor_compras m',

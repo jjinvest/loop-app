@@ -1468,7 +1468,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "cf99251ba726000a7cf9faaf4457132d7e3862d9"
+      "sha": "bafff3bf200b41114042e806089172d9c76198fd"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -1672,7 +1672,7 @@
     },
     {
       "path": "src/producao/visao-escritorio-unificada-sqlite.js",
-      "sha": "5b84f1c48f3b781063e22d798ddc2f966eae88a4"
+      "sha": "b8b0624ef7ff615f9cdf172e6c8239632df8dd7a"
     },
     {
       "path": "src/routes/admin-akitemm-avaliacoes-demo.js",
@@ -3080,7 +3080,7 @@
     },
     {
       "path": "test/minha-equipe-cadastros-confirmados-20261122.test.js",
-      "sha": "f9ed40f2db3c2844a8294b9b33ce21298505fdec"
+      "sha": "82f5fd3ec5fbcedd41025e3128d83623c8d56904"
     },
     {
       "path": "test/minha-equipe-sugestoes-privadas-inteligentes.test.js",
@@ -5877,6 +5877,27 @@
       "path": "test/rotulos-modos-catraca-operador-real.test.js",
       "depois": "16b2b57fb785e8200c2c57a49e2156f690c68115",
       "objetivo": "Alteracao autorizada estritamente nominal de Manual para Automático no controle da catraca; Parada e Agendada inalteradas; identificadores PAUSADA/MANUAL/AUTOMATICA, horario 09–18, politica, banco, caixa e giro preservados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/identidade-cliente-loop-sqlite.js",
+      "antes": "cf99251ba726000a7cf9faaf4457132d7e3862d9",
+      "depois": "bafff3bf200b41114042e806089172d9c76198fd",
+      "objetivo": "Indicado sem qualificacao nao tem destino/contagem funcional; escolha pre-qualificacao fica oculta, sem editar historico."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/visao-escritorio-unificada-sqlite.js",
+      "antes": "5b84f1c48f3b781063e22d798ddc2f966eae88a4",
+      "depois": "b8b0624ef7ff615f9cdf172e6c8239632df8dd7a",
+      "objetivo": "Indicado sem qualificacao nao tem destino/contagem funcional; escolha pre-qualificacao fica oculta, sem editar historico."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/minha-equipe-cadastros-confirmados-20261122.test.js",
+      "antes": "f9ed40f2db3c2844a8294b9b33ce21298505fdec",
+      "depois": "82f5fd3ec5fbcedd41025e3128d83623c8d56904",
+      "objetivo": "Indicado sem qualificacao nao tem destino/contagem funcional; escolha pre-qualificacao fica oculta, sem editar historico."
     }
   ]
 }
