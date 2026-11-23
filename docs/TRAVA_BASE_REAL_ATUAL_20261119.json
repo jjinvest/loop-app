@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "485085233a37c84600e487e5cdf28c162b4f484a"
+      "sha": "40b5b96af054a1014d5276a6f3b2818ca141b7f2"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1456,7 +1456,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "45d068fffcdc1791d09230dd7c4661de3b996c50"
+      "sha": "e6cc7dd7f25d98f7346d0eebd2bfdc65ab786daf"
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
@@ -1480,7 +1480,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "2f4c73fda9e1eb10a44cccf542bace2bd126f1d5"
+      "sha": "db5d631674d892757b3ee32b7bdd9cd74c7554e4"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2460,7 +2460,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "a60ae020213f0a0cfc8568b353839506e861fc1e"
+      "sha": "8f1ac0a507d1b31a779bd008c909e3bad976aea3"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -2704,7 +2704,7 @@
     },
     {
       "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
-      "sha": "040a49ee24f44b533b2c079bd58b094610105a4d"
+      "sha": "cd094925d218037cd315e8bb7c9bac80e9dfaed7"
     },
     {
       "path": "test/gateway-publico-real-sem-laboratorio.test.js",
@@ -5700,6 +5700,41 @@
       "antes": "989ba7052cd1132c67388087593c9a19becb9703",
       "depois": "2f4c73fda9e1eb10a44cccf542bace2bd126f1d5",
       "objetivo": "Preservar contrato e testes existentes do login unificado: maiuscula visual, comparacao case-insensitive, senha e backend inalterados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "2f4c73fda9e1eb10a44cccf542bace2bd126f1d5",
+      "depois": "db5d631674d892757b3ee32b7bdd9cd74c7554e4",
+      "objetivo": "Autorizacao explicita: OPERADOR exclusivamente em letras maiusculas digitadas manualmente, backend estrito, senha e contas clientes inalteradas; testes de contrato e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/gateway-admin-comercial.js",
+      "antes": "45d068fffcdc1791d09230dd7c4661de3b996c50",
+      "depois": "e6cc7dd7f25d98f7346d0eebd2bfdc65ab786daf",
+      "objetivo": "Autorizacao explicita: OPERADOR exclusivamente em letras maiusculas digitadas manualmente, backend estrito, senha e contas clientes inalteradas; testes de contrato e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
+      "antes": "040a49ee24f44b533b2c079bd58b094610105a4d",
+      "depois": "cd094925d218037cd315e8bb7c9bac80e9dfaed7",
+      "objetivo": "Autorizacao explicita: OPERADOR exclusivamente em letras maiusculas digitadas manualmente, backend estrito, senha e contas clientes inalteradas; testes de contrato e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "antes": "a60ae020213f0a0cfc8568b353839506e861fc1e",
+      "depois": "8f1ac0a507d1b31a779bd008c909e3bad976aea3",
+      "objetivo": "Autorizacao explicita: OPERADOR exclusivamente em letras maiusculas digitadas manualmente, backend estrito, senha e contas clientes inalteradas; testes de contrato e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "485085233a37c84600e487e5cdf28c162b4f484a",
+      "depois": "40b5b96af054a1014d5276a6f3b2818ca141b7f2",
+      "objetivo": "Autorizacao explicita: OPERADOR exclusivamente em letras maiusculas digitadas manualmente, backend estrito, senha e contas clientes inalteradas; testes de contrato e navegador PC/celular."
     }
   ]
 }
