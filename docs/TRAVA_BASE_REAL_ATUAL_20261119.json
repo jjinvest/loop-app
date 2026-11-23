@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "910a36ceea1ac7bf791037128356cb407f3afa22"
+      "sha": "ffb62f442c4e7d4f371939e6b7f96a779cdc14b6"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -6004,6 +6004,13 @@
       "antes": "6a62a6be6387af515488a34236fd61eedc933922",
       "depois": "2ebec56aed9525f6b30a6d2f69badd0e7b94ba8b",
       "objetivo": "Escritorio LOOP e Loja AKITEMM obedecem ao MESMO gate de habilitacao do link apos compra verde/roxa/dourada comprovada. Sessao/logout limpa links e teste PC/celular valida resposta."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "910a36ceea1ac7bf791037128356cb407f3afa22",
+      "depois": "ffb62f442c4e7d4f371939e6b7f96a779cdc14b6",
+      "objetivo": "Corrigir integralmente o gate de links do escritorio, preservar a mesma UI e limpar referencia ao sair da sessao."
     }
   ]
 }
