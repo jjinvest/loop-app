@@ -2428,8 +2428,9 @@
     throw Error('AGENDA_CLIENTE_DIVERGENTE');
    visorCatraca.registrarAgenda(d.agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
-   $('motorContadorEventos').textContent=d.tabuleiro.eventosNoCiclo+
-    ' de 6 eventos neste ciclo';
+   // Mensagem da catraca é atualizada somente pelo visor compartilhado;
+   // o evento real continua em d.tabuleiro.eventosNoCiclo.
+
    $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
     ' / '+String(d.limitePosicoesAtivas);
    // O visor central usa a mesma contagem visual de 24 horas.
