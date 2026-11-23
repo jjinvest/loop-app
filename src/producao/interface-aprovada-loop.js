@@ -55,6 +55,7 @@ function renderizarInterfaceAprovada(){
  html=trocarExato(html,'</head>',
   '<link rel="stylesheet" href="/identidade/assets/botoes-real.css">'+
   '<link rel="stylesheet" href="/identidade/assets/harmonia-toque-real.css"></head>');
+ html=trocarExato(html,'GIROS NAS ÚLTIMAS 24H','CICLOS DE HOJE');
  // O + da tela aprovada vai à administração protegida original,
  // nunca a um segundo Escritório nem ao serviço de homologação.
  html=trocarExato(html,
