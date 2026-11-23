@@ -1544,7 +1544,7 @@
     },
     {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
-      "sha": "60963c2408b02b32c226ae1e5f61380fac5d2255"
+      "sha": "5efd40fb54126b368dfc43a8505825281074d25c"
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
@@ -1584,7 +1584,7 @@
     },
     {
       "path": "src/producao/projecao-agenda-tabuleiro-compartilhada.js",
-      "sha": "faa3f2abbd43e95d3a25ad1a998c2cd0056f55bb"
+      "sha": "c224d9a6f868b7574a67d40756929497f98c126b"
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
@@ -1860,7 +1860,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "ba1dde5f4759c3ea3d17095976bc16360a5d28f7"
+      "sha": "826390afbf13554f2c345cba53dea21d3888d001"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -3701,6 +3701,10 @@
     {
       "path": "test/webhook-sigkill-rollback-sqlite.test.js",
       "sha": "7fbf8c072c69fa208ec975a307d525b642e020db"
+    },
+    {
+      "path": "test/zeramento-placares-ensaio-sem-apagar-posicoes-20261123.test.js",
+      "sha": "1058be8e380ff4e1c7aea9c6f540daeb8a0b11e9"
     }
   ],
   "alteracoesPontuaisAutorizadas": [

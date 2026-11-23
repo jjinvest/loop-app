@@ -25,7 +25,11 @@ function projetarAgendaTabuleiroCompartilhada(estado){
     (estado.girosHora!==undefined&&
      (!Number.isSafeInteger(estado.girosHora)||estado.girosHora<0))||
     (estado.metaDataAlvo!==null&&estado.metaDataAlvo!==undefined&&
-     !DATA.test(estado.metaDataAlvo)))
+     !DATA.test(estado.metaDataAlvo))||
+    (estado.marcoZeramentoVisualMs!==null&&
+     estado.marcoZeramentoVisualMs!==undefined&&
+     (!Number.isSafeInteger(estado.marcoZeramentoVisualMs)||
+      estado.marcoZeramentoVisualMs>estado.agoraServidorMs)))
   falha('TABULEIRO_AGENDA_PUBLICA_INVALIDA');
  // Flag designa o mesmo relógio de visualização nas DUAS sessões.
  // Contagens dessa agenda não são eventos financeiros ou ciclos concluídos.
@@ -39,6 +43,7 @@ function projetarAgendaTabuleiroCompartilhada(estado){
   abertura:estado.janelaInicio,fechamento:estado.janelaFim,
   agoraServidorMs:estado.agoraServidorMs,
   luzesDoRelogioCompartilhado:true,
+  marcoZeramentoVisualMs:estado.marcoZeramentoVisualMs??null,
   eventosReaisNoCiclo:estado.eventosNoCiclo,
   ciclosReaisConcluidos:estado.ciclosConcluidos,
   girosReaisHoje:estado.girosHoje,girosReais24h:estado.giros24h,

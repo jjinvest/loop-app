@@ -132,6 +132,35 @@ class OperacaoCatracaAdminSQLite{
    "(id,revisao,modo,inicio,fim,limite_diario,atualizado_em)",
    "VALUES(1,1,'PAUSADA','09:00','18:00',NULL,1)"
   ].join(' ')).run();
+  // Autorização pontual: zera SOMENTE placares de ensaio, preservando
+  // perfis, as cinco posições da fila B, motor, giros e livros financeiros.
+  // Marco persistente e idempotente, aplicado uma única vez em produção.
+  if(process.env.NODE_ENV==='production'&&
+     process.env.LOOP_ZERAR_PLACARES_TESTE_20261123==='SIM')
+   this.zerarPlacaresDeTesteUmaVez();
+ }
+ zerarPlacaresDeTesteUmaVez(){
+  this.db.exec('BEGIN IMMEDIATE');
+  try{
+   const feito=this.db.prepare([
+    'SELECT id FROM loop_real_catraca_admin_historico',
+    "WHERE acao='ZERAR_PLACARES_TESTE_20261123' LIMIT 1"
+   ].join(' ')).get();
+   if(feito){this.db.exec('COMMIT');return false;}
+   this._log('ZERAR_PLACARES_TESTE_20261123',{
+    escopo:'CONTADORES_VISUAIS_RELOGIO',
+    preserva:'CADASTROS_POSICOES_FILAS_MOTOR_FINANCEIRO'
+   },horarioLocal(this.agora).ts);
+   this.db.exec('COMMIT');return true;
+  }catch(e){this.db.exec('ROLLBACK');throw e;}
+ }
+ _marcoZeramentoPlacar(agoraMs){
+  const registro=this.db.prepare([
+   'SELECT executado_em AS em FROM loop_real_catraca_admin_historico',
+   "WHERE acao='ZERAR_PLACARES_TESTE_20261123' AND executado_em<=?",
+   'ORDER BY executado_em DESC,id DESC LIMIT 1'
+  ].join(' ')).get(agoraMs);
+  return registro?registro.em:null;
  }
  _ensaio(){
   if(process.env.NODE_ENV==='production')falha('CATRACA_MOTOR_PRODUTIVO_NAO_HOMOLOGADO');
@@ -181,7 +210,8 @@ class OperacaoCatracaAdminSQLite{
   ].join(' ')).get(agoraMs-86400000,agoraMs).n;
  }
  _relatorioRelogio24h(agoraMs){
-  const desde=agoraMs-86400000;
+  const desde=Math.max(agoraMs-86400000,
+   this._marcoZeramentoPlacar(agoraMs)??0);
   const antigo=this.db.prepare([
    'SELECT detalhes FROM loop_real_catraca_admin_historico',
    "WHERE acao='CONFIGURAR' AND executado_em<=?",
@@ -215,13 +245,15 @@ class OperacaoCatracaAdminSQLite{
   const diaLocal=Date.parse(hoje+'T00:00:00Z');
   const deslocamento=instanteLocalPseudoutc(agoraMs)-agoraMs;
   const inicioDia=diaLocal-deslocamento;
+  const corte=this._marcoZeramentoPlacar(agoraMs)??0;
   let politica=null,inicio=null,luzes=0,luzesHoje=0;
   for(const evento of [...configuracoes,{em:agoraMs,detalhes:null}]){
-   if(inicio!==null&&evento.em>inicio){
-    luzes+=contarRelogioNaJanela(politica,inicio,evento.em).luzes;
+   const inicioValido=inicio===null?null:Math.max(inicio,corte);
+   if(inicioValido!==null&&evento.em>inicioValido){
+    luzes+=contarRelogioNaJanela(politica,inicioValido,evento.em).luzes;
     if(evento.em>inicioDia)
      luzesHoje+=contarRelogioNaJanela(politica,
-      Math.max(inicio,inicioDia),evento.em).luzes;
+      Math.max(inicioValido,inicioDia),evento.em).luzes;
    }
    inicio=evento.em;
    if(evento.detalhes!==null)politica=JSON.parse(evento.detalhes);
@@ -290,6 +322,7 @@ class OperacaoCatracaAdminSQLite{
    giros24h:this._giros24h(tempo.ts),
    ...this._relatorioRelogio24h(tempo.ts),
    ...this._relatorioRelogioAcumulado(tempo.ts,tempo.dia),
+   marcoZeramentoVisualMs:this._marcoZeramentoPlacar(tempo.ts),
    hoje:tempo.dia,horaLocal:tempo.hora,
    fuso:FUSO,horarioPermitido:dentro,
    limiteNaoAtingido:permitido,
