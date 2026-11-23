@@ -35,7 +35,7 @@ function executar(d){
 }
 const metr= (fila,primeiro,total)=>({total,primeiro:primeiro===null?null:
  {numero:primeiro,ordem:1}});
-const relogio={luzesRelogio24h:136,ciclosRelogio24h:22,
+const relogio={luzesRelogio24h:132,ciclosRelogio24h:22,
  luzesRelogioHoje:16,ciclosRelogioHoje:2,
  luzesRelogioAcumuladas:736,ciclosRelogioAcumulados:122};
 const estado=()=>({filaA:6,filaB:13,
