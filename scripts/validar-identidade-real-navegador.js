@@ -721,9 +721,32 @@ async function main(){
    await operadorPage.locator('#loop03ImagemFotoTopo')
     .waitFor({state:'visible',timeout:12000});
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
-   await operadorPage.locator('#abaTabuleiro').click();
-   await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});
-   // Cofres exclusivos do operador, com centro destacado.
+   await operadorPage.locator('#abaPosicoes').click();
+   await operadorPage.locator('#conteudoPosicoes').waitFor({state:'visible'});
+   // A composição da fotografia permanece 2 cartões por fileira,
+   // independente da largura e sem eliminar os controles adicionados.
+   await operadorPage.locator('#adminResumoPosicoes .loop03-resumo-quadro')
+    .nth(1).waitFor({state:'visible'});
+   await operadorPage.locator('#adminResumoComercial .loop03-resumo-contador')
+    .nth(1).waitFor({state:'visible'});
+   const quadrosPosicoesOperador=await operadorPage.evaluate(()=>{
+    const ler=seletor=>[...document.querySelectorAll(seletor)].map(el=>({
+     left:el.getBoundingClientRect().left,top:el.getBoundingClientRect().top,
+     right:el.getBoundingClientRect().right
+    }));
+    return {
+     filas:ler('#adminResumoPosicoes .loop03-resumo-quadro'),
+     comercial:ler('#adminResumoComercial .loop03-resumo-contador')
+    };
+   });
+   for(const grupo of [quadrosPosicoesOperador.filas,
+    quadrosPosicoesOperador.comercial]){
+    assert.equal(grupo.length,2);
+    assert.ok(Math.abs(grupo[0].top-grupo[1].top)<3,
+     'os dois cartões devem estar lado a lado e não empilhados');
+    assert.ok(grupo[0].right<=grupo[1].left+3);
+   }
+   // Cofres exclusivos do operador, logo abaixo dos indicadores comerciais.
    const painelCofres=operadorPage.locator('#loop03CofresOperador');
    await painelCofres.waitFor({state:'visible'});
    await operadorPage.locator('#loop03CofresEstado').filter({
@@ -754,6 +777,9 @@ async function main(){
    await operadorPage.locator('#loop03CofresEstado').filter({
     hasText:/Aguardando conciliação externa/
    }).waitFor();
+   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
+   await operadorPage.locator('#abaTabuleiro').click();
+   await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});
    await operadorPage.locator('#atualizarTabuleiroIntegrado').click();
    const modal=operadorPage.locator('#loopOperadorCatracaDialog');
    await modal.waitFor({state:'visible'});
