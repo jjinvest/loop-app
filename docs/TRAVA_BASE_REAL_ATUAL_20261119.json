@@ -3236,7 +3236,7 @@
     },
     {
       "path": "test/placar-compartilhado-cliente-operador-20261122.test.js",
-      "sha": "7beb78afbdeb4c9e331c316cfa099b532f21d50b"
+      "sha": "60405dded45a7303c4e6a3dad713face18a9ac80"
     },
     {
       "path": "test/planejamento-vendas-fisicas-demo.test.js",
@@ -3560,7 +3560,7 @@
     },
     {
       "path": "test/tabuleiro-visual-unico.test.js",
-      "sha": "685fd358c89176c063830b2184dda3cb11e023c5"
+      "sha": "d3a0b9a626bc3521da229d428c20871b96c4a454"
     },
     {
       "path": "test/titularidade-cpf-termos-candidato.test.js",
