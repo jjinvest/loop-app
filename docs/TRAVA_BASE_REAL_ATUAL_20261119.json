@@ -1868,7 +1868,7 @@
     },
     {
       "path": "test/admin-comercial-integracao-operacional.test.js",
-      "sha": "39e952a786732e0282546fde28dbe015e419ab10"
+      "sha": "8f5d463e97ab6dc748344d794182612f75b01b03"
     },
     {
       "path": "test/admin-economia-privado-akitemm.test.js",
@@ -2900,7 +2900,7 @@
     },
     {
       "path": "test/loja-real-zero-produtos-antes-cadastro.test.js",
-      "sha": "4058fadcdd9ec66bb1e5822f15ff7b74ce616180"
+      "sha": "1d12cc940a723c243d0a6a7735a5e80206cf1e14"
     },
     {
       "path": "test/loja-separada-da-fila-loop-demo.test.js",
@@ -3148,7 +3148,7 @@
     },
     {
       "path": "test/operador-fotos-conta-real-unificada.test.js",
-      "sha": "c2b066a2abcf54b259e89f4086a94c3e79a5440f"
+      "sha": "21d758a55abb9c60198b8426944ec86e7d330679"
     },
     {
       "path": "test/operador-resumo-unidades-compras-avulsas-real.test.js",
@@ -3644,7 +3644,7 @@
     },
     {
       "path": "test/vitrine-real-400-quadrinhos-operador.test.js",
-      "sha": "1c1a5587afd65c28fb007c48ce15faa158ff31c0"
+      "sha": "2da2779f90427d5aa61e30f7c285dd87f5f72d08"
     },
     {
       "path": "test/webhook-antecipado-monitor-integrado.test.js",
@@ -5735,6 +5735,34 @@
       "antes": "485085233a37c84600e487e5cdf28c162b4f484a",
       "depois": "40b5b96af054a1014d5276a6f3b2818ca141b7f2",
       "objetivo": "Autorizacao explicita: OPERADOR exclusivamente em letras maiusculas digitadas manualmente, backend estrito, senha e contas clientes inalteradas; testes de contrato e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/admin-comercial-integracao-operacional.test.js",
+      "antes": "39e952a786732e0282546fde28dbe015e419ab10",
+      "depois": "8f5d463e97ab6dc748344d794182612f75b01b03",
+      "objetivo": "Atualizar regressão histórica para autenticar operador real apenas com nick OPERADOR, sem converter letras e mantendo senha."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/loja-real-zero-produtos-antes-cadastro.test.js",
+      "antes": "4058fadcdd9ec66bb1e5822f15ff7b74ce616180",
+      "depois": "1d12cc940a723c243d0a6a7735a5e80206cf1e14",
+      "objetivo": "Atualizar regressão histórica para autenticar operador real apenas com nick OPERADOR, sem converter letras e mantendo senha."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/operador-fotos-conta-real-unificada.test.js",
+      "antes": "c2b066a2abcf54b259e89f4086a94c3e79a5440f",
+      "depois": "21d758a55abb9c60198b8426944ec86e7d330679",
+      "objetivo": "Atualizar regressão histórica para autenticar operador real apenas com nick OPERADOR, sem converter letras e mantendo senha."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/vitrine-real-400-quadrinhos-operador.test.js",
+      "antes": "1c1a5587afd65c28fb007c48ce15faa158ff31c0",
+      "depois": "2da2779f90427d5aa61e30f7c285dd87f5f72d08",
+      "objetivo": "Atualizar regressão histórica para autenticar operador real apenas com nick OPERADOR, sem converter letras e mantendo senha."
     }
   ]
 }
