@@ -3140,7 +3140,7 @@
     },
     {
       "path": "test/operador-resumo-unidades-compras-avulsas-real.test.js",
-      "sha": "0e2b8a35ea8825edb96c50ec40c99d84983d230f"
+      "sha": "62a4f4d95ac40d7b5647e1def27668b2636490de"
     },
     {
       "path": "test/operador-visoes-regressao.test.js",
@@ -5457,6 +5457,13 @@
       "antes": "921a4c479b3b9455d04814542a13c82e5dd87c5f",
       "depois": "7bf3fd8c214aa045d069fa3d6e99241ecddf515e",
       "objetivo": "Garantia adicional autorizada de exclusividade: ocultar todos os painéis administrativos no modo cliente mesmo que o operador tenha aberto a aba antes; toda consulta continua protegida no servidor."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/operador-resumo-unidades-compras-avulsas-real.test.js",
+      "antes": "0e2b8a35ea8825edb96c50ec40c99d84983d230f",
+      "depois": "62a4f4d95ac40d7b5647e1def27668b2636490de",
+      "objetivo": "Teste ampliado para certificar ocultação do painel de compras no perfil cliente e impedir vazamento de informação do operador."
     }
   ]
 }
