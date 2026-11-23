@@ -440,7 +440,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9"
+      "sha": "43ca52af0f4d802c55293620a1099c0e722b36e1"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -516,7 +516,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "e34cfb69ecfadd68aeb0992fd662e2e7c357d758"
+      "sha": "565b830f5da99d68703b7778e3097883c605e083"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -1344,7 +1344,7 @@
     },
     {
       "path": "src/producao/banners-editor-real.css",
-      "sha": "4d1363472f230787dada4b7cf654198cfe7fe25c"
+      "sha": "d32ec7db4a1ef59036c96ea3780d11c445c206fd"
     },
     {
       "path": "src/producao/banners-escritorio-real-client.js",
@@ -1356,7 +1356,7 @@
     },
     {
       "path": "src/producao/banners-loja-akitemm-client.js",
-      "sha": "aca0fc1932a8aaea3a12a9d05c8dae9bd338e25e"
+      "sha": "9e1dcd8548e32c646f9691a5d65a8e57f1fbf452"
     },
     {
       "path": "src/producao/banners-loja-akitemm-real-sqlite.js",
@@ -5791,6 +5791,34 @@
       "antes": "5de42c4320a103a82c924ec2d5250b7313dafc22",
       "depois": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
       "objetivo": "Cadastro de produto real com detalhes de pendências, capa obrigatória para publicação, ajuste opcional de corte sem checkbox, e prova automatizada PC/Android; não mexer na identidade do cliente."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/candidato/vitrine-horizontal.css",
+      "antes": "e34cfb69ecfadd68aeb0992fd662e2e7c357d758",
+      "depois": "565b830f5da99d68703b7778e3097883c605e083",
+      "objetivo": "Pedido expresso: banner da loja AKITEMM sempre retangular do tamanho original com ou sem foto; foto centralizada sem corte inicial, zoom reduzivel e ajustavel; testes PC/celular; preservar banners do escritorio e demais telas."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/banners-loja-akitemm-client.js",
+      "antes": "aca0fc1932a8aaea3a12a9d05c8dae9bd338e25e",
+      "depois": "9e1dcd8548e32c646f9691a5d65a8e57f1fbf452",
+      "objetivo": "Pedido expresso: banner da loja AKITEMM sempre retangular do tamanho original com ou sem foto; foto centralizada sem corte inicial, zoom reduzivel e ajustavel; testes PC/celular; preservar banners do escritorio e demais telas."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/banners-editor-real.css",
+      "antes": "4d1363472f230787dada4b7cf654198cfe7fe25c",
+      "depois": "d32ec7db4a1ef59036c96ea3780d11c445c206fd",
+      "objetivo": "Pedido expresso: banner da loja AKITEMM sempre retangular do tamanho original com ou sem foto; foto centralizada sem corte inicial, zoom reduzivel e ajustavel; testes PC/celular; preservar banners do escritorio e demais telas."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-operador-primeiro-produto-navegador.js",
+      "antes": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
+      "depois": "43ca52af0f4d802c55293620a1099c0e722b36e1",
+      "objetivo": "Pedido expresso: banner da loja AKITEMM sempre retangular do tamanho original com ou sem foto; foto centralizada sem corte inicial, zoom reduzivel e ajustavel; testes PC/celular; preservar banners do escritorio e demais telas."
     }
   ]
 }
