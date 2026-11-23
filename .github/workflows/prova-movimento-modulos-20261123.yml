@@ -1,0 +1,26 @@
+name: LOOP - prova de movimentos independentes da fila e catraca
+on:
+  pull_request:
+    branches: [feature/unificar-escritorio-real-20261105]
+    paths:
+      - '.github/workflows/prova-movimento-modulos-20261123.yml'
+      - 'src/domain/**'
+      - 'src/producao/bancada-modulos-loop-sqlite.js'
+      - 'src/producao/interface-aprovada-contas.js'
+      - 'src/shared/tabuleiro-visual-loop.js'
+      - 'scripts/iniciar-identidade-real-loop.js'
+      - 'test/bancada-modulos-independentes-operador-real.test.js'
+  push:
+    branches: [feature/unificar-escritorio-real-20261105]
+  workflow_dispatch:
+jobs:
+  movimento-real:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Executar seis eventos, girar e conferir filas e porteira
+        run: node --test test/bancada-modulos-independentes-operador-real.test.js
