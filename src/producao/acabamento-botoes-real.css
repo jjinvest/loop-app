@@ -986,3 +986,24 @@ body.loop03-modo-operador #adminCadastroResultados .loop03-admin-candidato:focus
 body.loop03-modo-operador #adminVoltarBuscaEquipe:focus-visible{
  outline:2px solid #f7d493;outline-offset:2px;
 }
+
+
+/* Sugestoes da Minha Equipe; sem modificar os cartoes visuais aprovados. */
+.cliente-integrado #sugestoesMinhaRede.loop03-rede-sugestoes{
+ display:grid;gap:6px;padding:8px;border:1px solid #927e57;
+ border-radius:12px;background:#172130;margin:4px 0 12px;
+ box-sizing:border-box;max-width:100%;min-width:0;
+}
+.cliente-integrado #sugestoesMinhaRede[hidden]{display:none!important}
+.cliente-integrado #sugestoesMinhaRede button{
+ display:block;box-sizing:border-box;width:100%;min-height:42px;
+ padding:10px 12px;text-align:left;color:#f2e6cc;overflow-wrap:anywhere;
+ background:#253347;border:1px solid #9f8856;border-radius:9px;
+ font:inherit;cursor:pointer;
+}
+.cliente-integrado #sugestoesMinhaRede button:focus-visible{
+ outline:2px solid #f2d18c;outline-offset:2px;
+}
+.cliente-integrado #sugestoesMinhaRede p{
+ margin:3px;color:#e1d5bd;font-size:.85rem;
+}
