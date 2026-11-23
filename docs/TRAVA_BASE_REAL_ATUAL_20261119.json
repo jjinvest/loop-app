@@ -1856,7 +1856,7 @@
     },
     {
       "path": "src/shared/tabuleiro-visual-loop.js",
-      "sha": "8a103c36d7cdfa551a39443232d685d0864d788a"
+      "sha": "6f34c863c2eb57b8a4d7c4748a6d1fa99b0ac021"
     },
     {
       "path": "src/shared/visor-catraca.js",
@@ -3588,7 +3588,7 @@
     },
     {
       "path": "test/tabuleiro-visual-unico.test.js",
-      "sha": "d3a0b9a626bc3521da229d428c20871b96c4a454"
+      "sha": "b7548cfda8420364d3dea2bad7008d8d32953232"
     },
     {
       "path": "test/titularidade-cpf-termos-candidato.test.js",

@@ -137,6 +137,10 @@
    };
    if(contagem===null){
     const LOTE=50;
+    if(itens.length<=LOTE){
+     itens.forEach((p,i)=>adicionar(p,i));
+     return;
+    }
     let exibidos=0;
     const proximo=document.createElement('button');
     proximo.type='button';
