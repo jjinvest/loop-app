@@ -49,10 +49,12 @@ function consultarDivulgacao({banco,titularId}={}){
 // Link do indicador pode vir de VERDE abaixo de R$250; nao exige posicao
 // propria. Cadastro, venda comum ou cor CINZA nunca geram comissao.
 // Projecao somente leitura, NUNCA saldo sacavel nem pagamento automatico.
-function consultarComissoesDivulgacao({banco,titularId}={}){
+function consultarComissoesDivulgacao({banco,titularId,indicadoId=null}={}){
  conferirBanco(banco);
  if(typeof titularId!=='string'||!TITULAR.test(titularId))
   erro('DIVULGACAO_TITULAR_INVALIDO');
+ if(indicadoId!==null&&(typeof indicadoId!=='string'||!TITULAR.test(indicadoId)))
+  erro('DIVULGACAO_INDICADO_INVALIDO');
  const tabelasNecessarias=[
   'loop_real_vinculos_indicacao','loop_real_confirmacoes_cadastro',
   'loop_real_indicacoes_validas_financeiro','loop_real_motor_compras'
@@ -88,6 +90,7 @@ function consultarComissoesDivulgacao({banco,titularId}={}){
   'ON p.pedido_id=q.pedido_id AND p.titular_id=v.indicado_id',
   'AND p.pagamento_id=q.pagamento_id',
   'WHERE v.indicador_id=?',
+  ...(indicadoId===null?[]:['AND q.indicado_id=?']),
   'AND p.status=\'APROVADO_PARA_EXPEDICAO\'',
   'AND p.pagamento_id IS NOT NULL AND length(p.pagamento_id)>0',
   'AND m.posicao_id>0 AND m.valor_centavos>=25000',
@@ -117,7 +120,9 @@ function consultarComissoesDivulgacao({banco,titularId}={}){
    "AND l.grupo='BONUS' AND l.movimento='CREDITO')"
   ]:[])
  ].join(' ');
- const quantidade=banco.prepare(consulta).get(titularId)?.total;
+ const quantidade=banco.prepare(consulta).get(...(
+  indicadoId===null?[titularId]:[titularId,indicadoId]
+ ))?.total;
  if(!Number.isSafeInteger(quantidade)||quantidade<0||
     !Number.isSafeInteger(quantidade*2500))
   erro('DIVULGACAO_COMISSOES_EXCEDIDAS');
