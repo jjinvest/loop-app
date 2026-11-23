@@ -1067,3 +1067,9 @@ body.loop03-modo-operador #adminAvulsasClienteLista details span{
   padding-top:17px;margin-top:8px;
  }
 }
+
+
+/* Ao sair da visao operador, nenhum painel administrativo permanece visivel. */
+body:not(.loop03-modo-operador) .loop03-admin-section{
+ display:none!important;
+}
