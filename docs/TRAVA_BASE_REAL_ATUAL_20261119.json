@@ -516,7 +516,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "f7f22c8b06230206589e89cb96e9d2c3f13eb27c"
+      "sha": "40b33ba158619b54a8c5e6c6f536140be7cdd452"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -2556,7 +2556,7 @@
     },
     {
       "path": "test/enquadramento-banners-sem-esticar-20261123.test.js",
-      "sha": "28ef23cc696504a85062c265e8598914db3c006a"
+      "sha": "7fe0a7b3e7c181da806a27b395e9f1a3f46bcea1"
     },
     {
       "path": "test/ensaio-tres-clientes-acesso-unificado-preview.test.js",

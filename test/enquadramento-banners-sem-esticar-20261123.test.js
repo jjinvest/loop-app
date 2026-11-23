@@ -42,5 +42,5 @@ test('mosaicos e miniaturas preservam proporcao em ambos os sistemas',()=>{
 });
 test('foto nao expande a moldura compacta e preexistente da AKITEMM',()=>{
  const css=fs.readFileSync(path.join(raiz,'src/candidato/vitrine-horizontal.css'),'utf8');
- assert.match(css,/\.akitemm-banner\.akitemm-banner-com-foto\{\s*height:212px;min-height:212px;max-height:212px;aspect-ratio:auto/);
+ assert.match(css,/\.akitemm-banner\.akitemm-banner-com-foto\{\s*height:212px;min-height:212px;max-height:212px;aspect-ratio:2\/1/);
 });
