@@ -1528,7 +1528,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "194e5296c9e1610cfaa8536f98dea07ca6793b0b"
+      "sha": "4f4295a7aaaae047960c22ae0b50dc1dd9f38e7f"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -5319,6 +5319,13 @@
       "antes": null,
       "depois": "6cfbe2f71e086a2d3a9c6ca15278180d0b5ac18d",
       "objetivo": "Autorização direta do proprietário em 22/11/2026 após fotografia da AKITEMM: corrigir elementos sobrepostos na vitrine real, limitar largura dos filtros amarelos Todos/Ofertas e separar botões administrativos e instrução de arraste em barra própria fora da grade de filtros; preservar ações, identidades visuais, quatro filtros de cor, catálogo, banners, pedidos, conta e motor LOOP. Responsividade PC/celular e regressão."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/operador-loja-fotos-real.js",
+      "antes": "194e5296c9e1610cfaa8536f98dea07ca6793b0b",
+      "depois": "4f4295a7aaaae047960c22ae0b50dc1dd9f38e7f",
+      "objetivo": "Manter expressão de remoção dos comandos do operador na ordem comprovada pelos testes existentes; barra nova também removida na visão cliente, sem alterar acesso nem CSS."
     }
   ]
 }
