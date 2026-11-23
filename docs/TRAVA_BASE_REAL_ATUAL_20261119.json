@@ -1504,7 +1504,7 @@
     },
     {
       "path": "src/producao/livro-financeiro-real-sqlite.js",
-      "sha": "c4172f7af9dcd5d2471b05a14c564706b64b885a"
+      "sha": "22d37c955dd701841a021b1e898e0ff3708a51bd"
     },
     {
       "path": "src/producao/manutencao-comercial-sqlite.js",
@@ -2792,7 +2792,7 @@
     },
     {
       "path": "test/identidade-real-preparacao.test.js",
-      "sha": "cc33f849215611e23f6566f712f74a27892a1953"
+      "sha": "86d788460227110ec86f109041c65b4d1f59ebaf"
     },
     {
       "path": "test/identidade-visual-futurista-loop-v6.test.js",
@@ -3688,7 +3688,7 @@
     },
     {
       "path": "test/direitos-divulgacao-loop-sqlite.test.js",
-      "sha": "8bf84c6873367d3cd71bb11bb0b75ec35de06d2a"
+      "sha": "72170fd49273660c5a1d804f74a6e59d416ac3aa"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
