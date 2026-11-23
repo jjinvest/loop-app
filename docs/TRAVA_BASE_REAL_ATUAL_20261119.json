@@ -1480,7 +1480,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "02befae30b7f491dfab4802c098761dcb43092ae"
+      "sha": "c986616c0905f853e6c7bee8f0fdfec05624f700"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2196,7 +2196,7 @@
     },
     {
       "path": "test/bancada-modulos-independentes-operador-real.test.js",
-      "sha": "b5f7279af8ff43babbf59a018b38d0f83ecadcfb"
+      "sha": "379ef45f8209d2e36ec902d4832010ccf42ff981"
     },
     {
       "path": "test/banners-ajuste-direto-fotos.test.js",
@@ -5623,6 +5623,20 @@
       "antes": "94d163f807bc22039aeae9511722bc7e253c4aa5",
       "depois": "b5f7279af8ff43babbf59a018b38d0f83ecadcfb",
       "objetivo": "Evitar que atualizacao periodica do placar real anule luzes/eventos do motor de teste; manter rollback visual ao modo normal."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "02befae30b7f491dfab4802c098761dcb43092ae",
+      "depois": "c986616c0905f853e6c7bee8f0fdfec05624f700",
+      "objetivo": "Conservar testes isolados do placar sem binding de modo teste; proteger modo de teste no navegador real."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/bancada-modulos-independentes-operador-real.test.js",
+      "antes": "b5f7279af8ff43babbf59a018b38d0f83ecadcfb",
+      "depois": "379ef45f8209d2e36ec902d4832010ccf42ff981",
+      "objetivo": "Conservar testes isolados do placar sem binding de modo teste; proteger modo de teste no navegador real."
     }
   ]
 }
