@@ -27,6 +27,37 @@ const FOTO=gerarPngTeste();
 const SENHA='OperadorDeTesteIsoladoUnico-2026-MuitoLongo';
 const DOC='Documentos da conta descartavel usados somente para verificar o registro do primeiro produto na interface, com pagamentos inteiramente desabilitados.';
 
+// Prova geometrica sem alterar o HTML, as regras ou o visual aprovado.
+async function conferirAcoesSemSobreposicao(page,seletor){
+ const original=page.viewportSize();
+ try{
+  for(const largura of [320,360,390,412]){
+   await page.setViewportSize({width:largura,height:844});
+   const r=await page.locator(seletor).evaluate(raiz=>{
+    const ctrls=[...raiz.querySelectorAll('button,a,summary,[role="button"]')]
+     .filter(el=>{const rect=el.getBoundingClientRect();
+      return rect.width>8&&rect.height>8&&
+       getComputedStyle(el).visibility!=='hidden';})
+     .map(el=>({nome:(el.getAttribute('aria-label')||el.textContent||el.id)
+      .trim().slice(0,55),box:el.getBoundingClientRect()}));
+    const colisao=[];
+    for(let i=0;i<ctrls.length;i++)for(let j=i+1;j<ctrls.length;j++){
+     const a=ctrls[i],b=ctrls[j];
+     const dx=Math.min(a.box.right,b.box.right)-Math.max(a.box.left,b.box.left);
+     const dy=Math.min(a.box.bottom,b.box.bottom)-Math.max(a.box.top,b.box.top);
+     if(dx>3&&dy>3)colisao.push([a.nome,b.nome,Math.round(dx),Math.round(dy)]);
+    }
+    return {colisao,largura:document.documentElement.scrollWidth,
+     visor:innerWidth};
+   });
+   assert.deepEqual(r.colisao,[],
+    'Sobreposicao em '+seletor+' '+largura+'px: '+JSON.stringify(r));
+   assert.ok(r.largura<=r.visor+1,
+    'Tela excede largura em '+seletor+' '+largura+'px: '+JSON.stringify(r));
+  }
+ }finally{await page.setViewportSize(original);}
+}
+
 async function principal(){
  const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-operador-zero-'));
  const chave=path.join(pasta,'https.key');
@@ -122,6 +153,7 @@ async function principal(){
   assert.equal(estadoOperador.status,200);
   assert.equal(estadoOperador.corpo?.operador,true,
    'o cookie de operador precisa persistir no mesmo dominio da loja');
+  await conferirAcoesSemSobreposicao(page,'#akitemmFerramentasOperadorVitrine');
   assert.equal(await page.locator('#akitemmOperadorMais').count(),0,
    'o botao + superior nao existe na loja real');
   await page.locator('footer .akitemm-acesso-operador').waitFor({
@@ -263,6 +295,7 @@ async function principal(){
    await page.locator('#catalogoLojaLoop [data-akitemm-slot="'+slot+'"]').click();
    await m.waitFor({state:'visible'});
    await m.getByRole('heading',{name:'Cadastrar produto · AKITEMM'}).waitFor();
+   await conferirAcoesSemSobreposicao(page,'#akitemmOperadorFotosReal');
    // A ajuda deve mostrar exatamente ONDE corrigir, não só mensagem genérica.
    await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
    await m.locator('.akitemm-erros-cadastro:not([hidden])').waitFor();
@@ -300,6 +333,7 @@ async function principal(){
    await m.locator('input[type=file]').setInputFiles({
     name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
    });
+   await conferirAcoesSemSobreposicao(page,'#akitemmOperadorFotosReal');
    // Enquadramento automático; recorte só se o operador pedir.
    const corte=m.getByRole('button',{name:'Ajustar corte da foto (opcional)'});
    await corte.waitFor({state:'visible'});
@@ -332,6 +366,16 @@ async function principal(){
   assert.equal(produto.ativo,true);
   assert.equal(midia.fotos.listar('primeiro-produto').fotos.length,1);
   assert.equal(midia.fotos.listar('primeiro-produto').fotos[0].posicao,1);
+  const imagemOperador=page.locator(
+   '#catalogoLojaLoop [data-produto-id="primeiro-produto"] .akitemm-imagem-produto img');
+  await imagemOperador.scrollIntoViewIfNeeded();
+  const capaOperador=await imagemOperador.evaluate(async img=>{
+   await img.decode();
+   return {url:new URL(img.src).pathname,
+    largura:img.naturalWidth,altura:img.naturalHeight};
+  });
+  assert.ok(capaOperador.largura>0&&capaOperador.altura>0,
+   'a foto publicada tem que carregar na visao do operador');
   // Mesmo tocando no quadrinho 18, o segundo produto vai para a posição 2.
   await criarProduto({slot:18,codigo:'segundo-produto',
    nome:'Segundo produto de ensaio',cor:'DOURADO'});
@@ -512,6 +556,14 @@ async function principal(){
   const produtoCliente=cliente.locator(
    '#catalogoLojaLoop [data-produto-id="primeiro-produto"]');
   assert.match(await produtoCliente.innerText(),/R\$\s?249,90/);
+  const capaCliente=await produtoCliente.locator('.akitemm-imagem-produto img')
+   .evaluate(async img=>{
+    await img.decode();
+    return {url:new URL(img.src).pathname,
+     largura:img.naturalWidth,altura:img.naturalHeight};
+   });
+  assert.deepEqual(capaCliente,capaOperador,
+   'cliente e operador devem exibir a mesma fotografia de capa');
   await produtoCliente.locator('.akitemm-imagem-produto').click();
   await cliente.locator('#akitemmVisualizacaoProduto h2')
    .filter({hasText:'Produto de ensaio de operador'}).waitFor();
