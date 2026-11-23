@@ -4,6 +4,7 @@
 // autenticada + evento do motor, nunca dados de um formulario/cliente.
 // Em producao, sem adaptadores PSP/adesao/Pix homologados, o livro
 // existe e e auditavel, mas nenhum credito nem debito e habilitado.
+const {consultarComissoesDivulgacao}=require('./direitos-divulgacao-loop-sqlite');
 const LIMITE=1_000_000_000_000,MINIMO=2500,BASE=25000,RETORNO=75000;
 const TABELAS_LIVRO=Object.freeze([
  'loop_real_fin_lancamentos','loop_real_fin_saques_pagos'
@@ -120,35 +121,70 @@ class LivroFinanceiroRealSQLite{
    valor,comprovanteId,quando);
   return {repetido:false,origem};
  }
- // 10% sobre a base qualificada R$250, UMA vez por indicado VERDE.
- // q sozinho pode ter vindo de ensaio: sem prova PSP+verde externa, rejeitar.
+ // Bônus fixo de R$25 por ativação comprovada de indicado no LOOP.
+ // O indicador só precisa do link habilitado: NÃO exige posição própria.
+ // O callback externo segue obrigatório; chamar este método sem prova
+ // bancária produtiva não cria crédito, nem autoriza saque.
  registrarBonusPorIndicadoVerde({indicadoId}={}){
   if(typeof indicadoId!=='string'||!TITULAR.test(indicadoId))
    falha('FIN_INDICADO_INVALIDO');
   return this._transacao(()=>{
+   // Esquemas incompletos nao podem disparar comissao nem erro SQL aberto.
+   if(!this.banco.prepare([
+    "SELECT 1 FROM sqlite_master WHERE type='table'",
+    "AND name='loop_real_indicacoes_validas_financeiro'"
+   ].join(' ')).get())
+    falha('FIN_COMPROVACAO_EXTERNA_NAO_HOMOLOGADA');
    const q=this.banco.prepare([
-    'SELECT q.indicado_id,q.indicador_id,q.pedido_id,q.posicao_id,',
-    'q.evento_id,c.titular_id AS comprador,c.valor_centavos AS pago,',
-    'p.titular_id AS dono_posicao,v.indicador_id AS dono_convite',
-    'FROM loop_real_motor_qualificacoes q',
-    'JOIN loop_real_motor_compras c ON c.pedido_id=q.pedido_id',
-    'JOIN loop_real_motor_compras p ON p.posicao_id=q.posicao_id',
-    'JOIN loop_real_vinculos_indicacao v ON v.indicado_id=q.indicado_id',
+    'SELECT q.indicado_id,q.indicador_id,q.pedido_id,q.pagamento_id,',
+    'q.comprovante_bancario_id,q.tipo,',
+    'm.posicao_id AS posicao_indicado,',
+    'e.evento_id AS evento_motor',
+    'FROM loop_real_indicacoes_validas_financeiro q',
+    'JOIN loop_real_motor_compras m',
+    'ON m.pedido_id=q.pedido_id AND m.titular_id=q.indicado_id',
+    'LEFT JOIN loop_real_motor_qualificacoes e',
+    'ON e.indicado_id=q.indicado_id AND e.indicador_id=q.indicador_id',
     'WHERE q.indicado_id=?'
    ].join(' ')).get(indicadoId);
-   if(!q||q.comprador!==indicadoId||
-      q.indicador_id===indicadoId||
-      q.indicador_id!==q.dono_convite||
-      q.indicador_id!==q.dono_posicao||q.pago<BASE)
+   if(!q||q.indicado_id===q.indicador_id||
+      !Number.isSafeInteger(q.posicao_indicado)||q.posicao_indicado<1)
     falha('FIN_INDICACAO_NAO_QUALIFICADA');
-   const comprovanteId=this._prova('confirmarIndicacaoVerde',{
-    indicadoId,indicadorId:q.indicador_id,pedidoId:q.pedido_id,
-    posicaoIndicado:q.posicao_id,eventoMotor:q.evento_id,
-    baseCentavos:BASE
-   },'PSP_LIQUIDADO_E_INDICADO_VERDE');
-   return this._postar({origem:'bonus:'+indicadoId,
-    titularId:q.indicador_id,grupo:'BONUS',movimento:'CREDITO',
-    valor:BASE/10,comprovanteId});
+   const origem='bonus:'+indicadoId;
+   const anterior=this.banco.prepare([
+    'SELECT titular_id,grupo,movimento,valor_centavos',
+    'FROM loop_real_fin_lancamentos WHERE origem=?'
+   ].join(' ')).get(origem);
+   if(anterior){
+    if(anterior.titular_id!==q.indicador_id||anterior.grupo!=='BONUS'||
+       anterior.movimento!=='CREDITO'||anterior.valor_centavos!==BASE/10)
+     falha('FIN_BONUS_REPLAY_DIVERGENTE');
+    return {repetido:true,origem};
+   }
+   const elegibilidade=consultarComissoesDivulgacao({
+    banco:this.banco,titularId:q.indicador_id,indicadoId
+   });
+   if(elegibilidade.fonteCompleta!==true||
+      elegibilidade.ativacoesValidas!==1||
+      elegibilidade.comissaoAConferirCentavos!==BASE/10)
+    falha('FIN_INDICACAO_NAO_QUALIFICADA');
+   // Compatibilidade com o callback verde legado; outros tipos exigem
+   // adaptador específico homologado, sem reutilizar prova de outra cor.
+   const novo=typeof this.provas?.confirmarIndicacaoAtiva==='function';
+   if(q.tipo!=='COMPRA_250'&&!novo)
+    falha('FIN_COMPROVACAO_EXTERNA_NAO_HOMOLOGADA');
+   const prova=this._prova(
+    novo?'confirmarIndicacaoAtiva':'confirmarIndicacaoVerde',{
+     indicadoId,indicadorId:q.indicador_id,pedidoId:q.pedido_id,
+     pagamentoId:q.pagamento_id,
+     comprovanteQualificacaoId:q.comprovante_bancario_id,
+     posicaoIndicado:q.posicao_indicado,
+     eventoMotor:q.evento_motor||null,
+     baseCentavos:BASE
+    },novo?'PSP_LIQUIDADO_E_INDICADO_ATIVO':'PSP_LIQUIDADO_E_INDICADO_VERDE');
+   return this._postar({origem,titularId:q.indicador_id,
+    grupo:'BONUS',movimento:'CREDITO',valor:BASE/10,
+    comprovanteId:prova});
   });
  }
  // Um crédito de 750 por posição contemplada e giro REAL comprovado.

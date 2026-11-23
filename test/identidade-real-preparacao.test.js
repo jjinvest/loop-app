@@ -181,7 +181,7 @@ test('bootstrap utiliza esquema real, devolve tabuleiro sem compras e bloqueia c
  assert.equal((await fetch(url+'/api/contas/cadastrar',{method:'POST'})).status,503);
 });
 
-test('livro real: bonus 10% exige verde+PSP, credito unico, consolidacao e Pix por posicao',()=>{
+test('livro real: bonus 10% exige ativacao validada, prova PSP, credito unico e Pix por posicao',()=>{
  const {randomUUID}=require('node:crypto');
  const {DatabaseSync}=require('node:sqlite');
  const {LivroFinanceiroRealSQLite}=
@@ -192,7 +192,18 @@ test('livro real: bonus 10% exige verde+PSP, credito unico, consolidacao e Pix p
    'PRAGMA foreign_keys=ON;',
    'CREATE TABLE loop_real_contas(id TEXT PRIMARY KEY);',
    'CREATE TABLE loop_real_vinculos_indicacao(',
-   'indicado_id TEXT PRIMARY KEY,indicador_id TEXT NOT NULL);',
+   'indicado_id TEXT PRIMARY KEY,indicador_id TEXT NOT NULL,',
+   'registrado_em INTEGER NOT NULL);',
+   'CREATE TABLE loop_real_confirmacoes_cadastro(',
+   'titular_id TEXT PRIMARY KEY,confirmado_em INTEGER NOT NULL);',
+   'CREATE TABLE loop_real_indicacoes_validas_financeiro(',
+   'indicado_id TEXT PRIMARY KEY,indicador_id TEXT,',
+   'pedido_id TEXT,pagamento_id TEXT,comprovante_bancario_id TEXT,',
+   'valor_qualificado_centavos INTEGER,tipo TEXT,confirmado_em INTEGER);',
+   'CREATE TABLE loja_real_pedidos(pedido_id TEXT PRIMARY KEY,',
+   'titular_id TEXT,status TEXT,pagamento_id TEXT,atualizado_em INTEGER);',
+   'CREATE TABLE loop_real_fotos_regras_pedido(',
+   'pedido_id TEXT,cor TEXT,revisao INTEGER);',
    'CREATE TABLE loop_real_motor_compras(',
    'pedido_id TEXT PRIMARY KEY,titular_id TEXT NOT NULL,',
    'posicao_id INTEGER NOT NULL UNIQUE,valor_centavos INTEGER NOT NULL);',
@@ -207,8 +218,8 @@ test('livro real: bonus 10% exige verde+PSP, credito unico, consolidacao e Pix p
   const estranho='titular-'+randomUUID();
   const conta=db.prepare('INSERT INTO loop_real_contas(id) VALUES(?)');
   for(const id of [indicador,indicado,estranho])conta.run(id);
-  db.prepare('INSERT INTO loop_real_vinculos_indicacao VALUES(?,?)')
-   .run(indicado,indicador);
+  db.prepare('INSERT INTO loop_real_vinculos_indicacao VALUES(?,?,?)')
+   .run(indicado,indicador,200);
   const compra=db.prepare(
    'INSERT INTO loop_real_motor_compras VALUES(?,?,?,?)');
   compra.run('pedido-indicador-1',indicador,4,25000);
@@ -216,6 +227,19 @@ test('livro real: bonus 10% exige verde+PSP, credito unico, consolidacao e Pix p
   compra.run('pedido-indicado',indicado,7,25000);
   db.prepare('INSERT INTO loop_real_motor_qualificacoes VALUES(?,?,?,?,?)')
    .run(indicado,indicador,'pedido-indicado',4,'i:indicacao0001');
+  const foto=db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)');
+  const pedido=db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)');
+  pedido.run('pedido-divulgador-link',indicador,
+   'APROVADO_PARA_EXPEDICAO','PAG_LINK_VERDE',100);
+  foto.run('pedido-divulgador-link','VERDE',1);
+  pedido.run('pedido-indicado',indicado,
+   'APROVADO_PARA_EXPEDICAO','PAG_ATIVACAO_VERDE',300);
+  foto.run('pedido-indicado','VERDE',1);
+  db.prepare('INSERT INTO loop_real_confirmacoes_cadastro VALUES(?,?)')
+   .run(indicado,310);
+  db.prepare('INSERT INTO loop_real_indicacoes_validas_financeiro VALUES(?,?,?,?,?,?,?,?)')
+   .run(indicado,indicador,'pedido-indicado','PAG_ATIVACAO_VERDE',
+    'COMPROVANTE_PSP_ATIVACAO',25000,'COMPRA_250',400);
   db.prepare('INSERT INTO loop_real_motor_eventos VALUES(?,?)')
    .run('g:1','GIRO');
   db.prepare('INSERT INTO loop_real_motor_eventos VALUES(?,?)')

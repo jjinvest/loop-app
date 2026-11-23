@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "ffb62f442c4e7d4f371939e6b7f96a779cdc14b6"
+      "sha": "2d0b1fe25cf40ed79b0412b4787d6169adfbfd30"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1504,7 +1504,7 @@
     },
     {
       "path": "src/producao/livro-financeiro-real-sqlite.js",
-      "sha": "80a099daf927e532dd6064c52c2f40b286a4051f"
+      "sha": "22d37c955dd701841a021b1e898e0ff3708a51bd"
     },
     {
       "path": "src/producao/manutencao-comercial-sqlite.js",
@@ -1644,7 +1644,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "bc8991563432d71966a1318e1f1dc02d29b6a412"
+      "sha": "b0c5ebda1ff3a715c5c49911155b67f8274faf6b"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -2792,7 +2792,7 @@
     },
     {
       "path": "test/identidade-real-preparacao.test.js",
-      "sha": "cc33f849215611e23f6566f712f74a27892a1953"
+      "sha": "bbd38b1ebffeb1c85230d5af4bf071833deef564"
     },
     {
       "path": "test/identidade-visual-futurista-loop-v6.test.js",
@@ -3684,11 +3684,11 @@
     },
     {
       "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
-      "sha": "230ada044af08e1f34d0890e0d4c69bd9a95a4aa"
+      "sha": "4713dfb988c507570e454b2ed3eac9acef661fcc"
     },
     {
       "path": "test/direitos-divulgacao-loop-sqlite.test.js",
-      "sha": "bdb569a8d1a3cad46fb351831ab3270e3683f73e"
+      "sha": "a6a35380264398918984263d8fd9c31d4d481f04"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
