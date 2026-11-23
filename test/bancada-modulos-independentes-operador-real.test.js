@@ -139,7 +139,7 @@ test('visao do operador usa movimentos da bancada; cliente preserva privacidade'
  const server=fs.readFileSync('scripts/iniciar-identidade-real-loop.js','utf8');
  const gateway=fs.readFileSync('src/producao/gateway-admin-comercial.js','utf8');
  assert.match(browser,/async function carregarTabuleiroTesteOperador\(\)/);
- assert.match(browser,/visualTesteModulo!==null\|\|\$\('painelConta'\)/,
+ assert.match(browser,/typeof visualTesteModulo!=='undefined'&&visualTesteModulo!==null/,
   'o placar original nao pode sobrescrever LEDs no modo teste');
  assert.match(browser,/visualTabuleiro\.preencherLuzes\(x\.tabuleiro\.eventosNoCiclo\)/);
  assert.match(browser,/exibirNomesTeste:true/);
