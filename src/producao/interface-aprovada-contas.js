@@ -2030,13 +2030,26 @@
    if(d.origem!=='LIVRO_FINANCEIRO_REAL'||d.saqueRealHabilitado!==false||
       d.minimoSaqueCentavos!==2500||d.taxaSaquePercentual!==0)
     throw Error('FIN_RESPOSTA_DIVERGENTE');
+   const pendentes=d.bonusIndicacoesEmConferenciaNaoSacavel===true&&
+    Number.isSafeInteger(d.ativacoesIndicadosEmConferencia)&&
+    d.ativacoesIndicadosEmConferencia>=0&&
+    Number.isSafeInteger(d.bonusIndicacoesAConferirCentavos)&&
+    d.bonusIndicacoesAConferirCentavos===d.ativacoesIndicadosEmConferencia*2500;
+   if(pendentes){
+    $('finIndicadosValidos').textContent=String(d.ativacoesIndicadosEmConferencia+
+     (Number.isSafeInteger(d.indicadosValidos)?d.indicadosValidos:0));
+   }
    if(d.saldosLiberados!==true){
-    $('estadoFinanceiro').textContent=
+    $('estadoFinanceiro').textContent=pendentes?
+     'Bônus em conferência: '+
+      formatarDinheiroReal(d.bonusIndicacoesAConferirCentavos)+
+      ' ('+d.ativacoesIndicadosEmConferencia+
+      ' ativação(ões) válida(s)). Ainda não é saldo para saque. Mínimo R$ 25,00 e taxa 0% após liberação bancária.':
      'Livro financeiro preparado. Valores serão apresentados somente após comprovação externa.';
     return;
    }
    const valor=v=>Number.isSafeInteger(v)&&v>=0?formatarDinheiroReal(v):'—';
-   $('finIndicadosValidos').textContent=Number.isSafeInteger(d.indicadosValidos)?
+   if(!pendentes)$('finIndicadosValidos').textContent=Number.isSafeInteger(d.indicadosValidos)?
     String(d.indicadosValidos):'—';
    $('finSaldoBonus').textContent=valor(d.saldoBonusCentavos);
    // No saque por posição, usar somente o saldo individual do mesmo
