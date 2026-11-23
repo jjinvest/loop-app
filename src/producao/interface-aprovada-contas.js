@@ -2093,7 +2093,8 @@
   // Enquanto o operador confere a bancada, nenhuma consulta do placar
   // original pode sobrescrever os LEDs e os eventos do motor de teste.
   if(placarOperadorConsultando||!modoOperadorAtual||
-     visualTesteModulo!==null||$('painelConta')?.hidden!==false)return;
+     (typeof visualTesteModulo!=='undefined'&&visualTesteModulo!==null)||
+     $('painelConta')?.hidden!==false)return;
   placarOperadorConsultando=true;
   try{
    const [respostaMotor,respostaControle]=await Promise.all([
