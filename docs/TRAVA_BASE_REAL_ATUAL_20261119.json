@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "a24b3ba4e52e6bfa74fe315618f20e7b47bfa251"
+      "sha": "848962ac8be5d6717fbddf42769ebd03b8033cb0"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -3288,7 +3288,7 @@
     },
     {
       "path": "test/posicoes-operador-quadros-20261122.test.js",
-      "sha": "de5562b95137c32cda60f67523d36c81fee2f926"
+      "sha": "768ae1562aa7a8d1f40308cf529fcbba20d2931a"
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
