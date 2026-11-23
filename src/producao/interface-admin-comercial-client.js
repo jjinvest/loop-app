@@ -809,6 +809,100 @@
    area.textContent='Motor interno indisponível. Sem giro financeiro liberado.';
   }
  }
+ // Bancada operacional isolada foi movida do Escritório para a CENTRAL.
+ // Uma operação desta bancada não grava compra, cliente, Pix nem saldo.
+ async function consultarBancadaCentral(){
+  const painel=$('centralTestesOperacionais');
+  if(!painel||!csrf)return;
+  try{
+   const r=await fetch('/api/admin/loop/testes-modulos',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)throw Error('BANCADA_INDISPONIVEL');
+   const d=await r.json();
+   if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
+      !Array.isArray(d.catraca?.filaA)||
+      !Array.isArray(d.catraca?.filaB)||
+      !Array.isArray(d.fila?.filaA)||
+      !Array.isArray(d.fila?.filaB))
+    throw Error('BANCADA_FONTE_INVALIDA');
+   const c=d.catraca,x=d.fila;
+   $('adminTesteEstadoCatraca').textContent=
+    'Catraca: '+(c.catracaAtiva?'ATIVA':'PARADA')+
+    ' · Porteira '+(c.porteiraAberta?'ABERTA':'FECHADA')+
+    ' · Eventos '+c.tabuleiro.eventosNoCiclo+'/6'+
+    ' · Ciclos '+c.tabuleiro.centrosConcluidos+
+    ' · Giros '+c.tabuleiro.giros+
+    ' · Fila A '+c.filaA.length+' · Fila B '+c.filaB.length;
+   $('adminTesteEstadoFila').textContent=
+    'Porteira da fila: '+(x.porteiraAberta?'ABERTA':'FECHADA')+
+    ' · Fila A '+x.filaA.length+' · Fila B '+x.filaB.length+
+    ' · Giros de teste '+x.tabuleiro.giros;
+  }catch(e){$('adminTesteMensagem').textContent=
+   'Leitura da bancada indisponível: '+e.message;}
+ }
+ async function acionarBancadaCentral(acao,extra={}){
+  const estado=$('adminTesteMensagem');
+  if(!csrf){estado.textContent='Sessão administrativa não validada.';return;}
+  estado.textContent='Conferindo comando '+acao+'…';
+  try{
+   const r=await fetch('/api/admin/loop/testes-modulos',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':csrf},
+    body:JSON.stringify({acao,idOperacao:crypto.randomUUID(),...extra})
+   });
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(d.erro||'COMANDO_NAO_CONFIRMADO');
+   estado.textContent='Comando '+acao+' confirmado na bancada isolada.'+
+    (Number.isSafeInteger(d.posicaoId)?' Posição #'+d.posicaoId:'');
+   await consultarBancadaCentral();
+  }catch(e){estado.textContent='Comando não efetuado: '+e.message;}
+ }
+ for(const [id,acao] of [
+  ['adminTesteCarregarCatraca','CATRACA_CARREGAR'],
+  ['adminTesteIniciarCatraca','CATRACA_INICIAR'],
+  ['adminTestePausarCatraca','CATRACA_PAUSAR'],
+  ['adminTestePulsoCatraca','CATRACA_PULSO'],
+  ['adminTesteReiniciarCatraca','CATRACA_REINICIAR'],
+  ['adminTesteAbrirPorteiraCatraca','CATRACA_ABRIR_PORTEIRA'],
+  ['adminTesteFecharPorteiraCatraca','CATRACA_FECHAR_PORTEIRA'],
+  ['adminTesteAbrirPorteira','FILA_ABRIR_PORTEIRA'],
+  ['adminTesteFecharPorteira','FILA_FECHAR_PORTEIRA'],
+  ['adminTestePreencherFila','FILA_PREENCHER_TABULEIRO'],
+  ['adminTesteReiniciarFila','FILA_REINICIAR']])
+  $(id)?.addEventListener('click',()=>void acionarBancadaCentral(acao));
+ for(const [id,tipo] of [
+  ['adminTesteVerCatraca','Catraca'],
+  ['adminTesteVerFilas','Fila']])
+  $(id)?.addEventListener('click',()=>{
+   $('adminTesteMensagem').textContent='Visão da '+tipo+
+    ' atualizada na Central, sem trocar o motor real.';
+   void consultarBancadaCentral();
+   $(tipo==='Catraca'?'adminTesteEstadoCatraca':'adminTesteEstadoFila')
+    ?.scrollIntoView({behavior:'smooth',block:'center'});
+  });
+ $('adminTesteFormCatracaFila')?.addEventListener('submit',e=>{
+  e.preventDefault();
+  void acionarBancadaCentral('CATRACA_ENTRAR',{
+   nome:$('adminTesteNomeCatraca').value.trim()
+  });
+ });
+ $('adminTesteFormFila')?.addEventListener('submit',e=>{
+  e.preventDefault();
+  void acionarBancadaCentral('FILA_ENTRAR',{
+   nome:$('adminTesteNomeFila').value.trim()
+  });
+ });
+ for(const [id,acao,entrada] of [
+  ['adminTestePromoverCatracaFila','CATRACA_PROMOVER','adminTestePosicaoCatraca'],
+  ['adminTestePromoverFila','FILA_PROMOVER','adminTestePosicaoPromover']])
+  $(id)?.addEventListener('click',()=>{
+   const posicaoId=Number($(entrada).value);
+   if(!Number.isSafeInteger(posicaoId)||posicaoId<1){
+    $('adminTesteMensagem').textContent='Informe posição válida.';return;
+   }
+   void acionarBancadaCentral(acao,{posicaoId});
+  });
  $('atualizarLoopAdmin').addEventListener('click',()=>void atualizarMotorAdministrativo());
  (async()=>{
   try{
@@ -818,6 +912,7 @@
       !/^[A-Za-z0-9_-]{24,256}$/.test(dados.csrfToken))
     throw Error('Não foi possível validar a sessão do administrador.');
    csrf=dados.csrfToken;
+   await consultarBancadaCentral();
    await atualizar();
    await atualizarManutencao();
    await consultarAuditoria();
