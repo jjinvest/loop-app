@@ -523,8 +523,8 @@
     '<div class="loop03-admin-acoes"><button id="adminVoltarBuscaEquipe" type="button" hidden>← Voltar à busca</button></div>',
     '<section id="adminComprasCliente" class="loop03-admin-compras" hidden><h3>Produtos comprados</h3><div id="adminComprasClienteLista"></div><button type="button" id="adminMaisComprasCliente" hidden>Ver mais compras</button></section>',
     '<form id="adminCorrigeCadastro" class="loop03-admin-campos" hidden>',
-    '<label for="adminNomeCadastro">Nome</label><input id="adminNomeCadastro" maxlength="90" autocomplete="name" required>',
-    '<label for="adminTelefoneCadastro">Telefone</label><input id="adminTelefoneCadastro" inputmode="tel" autocomplete="tel" maxlength="24">',
+    '<label for="adminNomeCadastro">Nome</label><input id="adminNomeCadastro" maxlength="90" autocomplete="off" required>',
+    '<label for="adminTelefoneCadastro">Telefone</label><input id="adminTelefoneCadastro" inputmode="tel" autocomplete="off" maxlength="24">',
     '<label for="adminMotivoCadastro">Motivo da correção</label><textarea id="adminMotivoCadastro" minlength="10" maxlength="200" required rows="3"></textarea>',
     '<div class="loop03-admin-acoes"><button type="submit">Salvar correção auditada</button></div></form>',
     '<div class="loop03-admin-acoes"><a href="/administrador">Abrir Central do Administrador</a></div>'
