@@ -218,3 +218,26 @@ test('48/60 luzes = 8 ciclos representativos nos dois perfis, sem contemplação
   'o indicador visual nao gera contemplacao');
  assert.equal(agenda.financeiroReal,false);
 });
+
+test('placar superior e inferior usam 48 luzes do dia, nao janela movel de 24h',()=>{
+ const instante=Date.parse('2026-11-22T15:45:00-03:00');
+ const agenda=projetarAgendaTabuleiroCompartilhada({
+  ...controle,janelaInicio:'09:00',janelaFim:'18:00',
+  metaCentrosDia:10,metaDataAlvo:'2026-11-22',
+  agoraServidorMs:instante,giros24h:0,ciclosConcluidos:0,
+  luzesRelogioHoje:48,ciclosRelogioHoje:8,
+  luzesRelogio24h:42,ciclosRelogio24h:7,
+  luzesRelogioAcumuladas:766,ciclosRelogioAcumulados:127
+ });
+ const operador=criarVisor('operador',agenda,instante);
+ const cliente=criarVisor('cliente',agenda,instante);
+ for(const painel of [operador,cliente]){
+  assert.equal(painel.loop03Giros24Integrado.textContent,'8');
+  assert.equal(painel.loop03LuzesHoraIntegrado.textContent,'48 / 60');
+ }
+ assert.equal(operador.loop03NumeroIntegrado.textContent,'6 / 6');
+ assert.equal(agenda.luzesRelogioAcumuladas,766);
+ assert.equal(agenda.ciclosRelogioAcumulados,127);
+ assert.equal(agenda.girosReaisHoje,0);
+ assert.equal(agenda.financeiroReal,false);
+});
