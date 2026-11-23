@@ -114,4 +114,20 @@ test('relogio programado provoca movimentos persistidos sem abrir a porteira',t=
  assert.equal(res.cursorLuz,6);
  c.agenda.modo='PAUSADA';
  assert.equal(c.teste.processarRelogio().processado,false);
+ // Reabrir a instancia do teste no mesmo SQLite preserva giro e cursor.
+ const reaberta=new BancadaModulosLoopSQLite({banco:c.db,
+  agora:()=>Date.parse('2026-11-23T21:00:00Z'),
+  consultarAgenda:()=>({...c.agenda})});
+ assert.equal(reaberta.consultar().catraca.tabuleiro.giros,1);
+ assert.equal(reaberta.consultar().catraca.cursorLuz,6);
+ // Reiniciar a prova cria uma nova geracao: marcas anteriores nunca
+ // bloqueiam os eventos de uma nova bateria no mesmo dia.
+ c.acao('CATRACA_REINICIAR');
+ c.mudarTempo(inicio);
+ c.agenda.modo='AUTOMATICA';
+ c.acao('CATRACA_CARREGAR');
+ c.acao('CATRACA_INICIAR');
+ c.mudarTempo(inicio+90*60000);
+ assert.equal(c.teste.processarRelogio().processado,true);
+ assert.equal(c.teste.consultar().catraca.tabuleiro.eventosNoCiclo,1);
 });
