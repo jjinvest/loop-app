@@ -1492,7 +1492,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "60c6eab7b3b1e9574e44b910abb0b6e3782701ca"
+      "sha": "116f98a434f2d6b1191509f1b0111ba7039f2475"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1500,7 +1500,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "906eec917018b7a2e71d43a7b8bdb2088c8f74b7"
+      "sha": "2e174b4517af599041fa284a7c277adda9528e86"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
