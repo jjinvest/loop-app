@@ -120,7 +120,10 @@ test('link da central aparece no rodape de AMBOS os produtos, so para operador',
  const back=codigo('src/producao/gateway-admin-comercial.js');
  assert.match(back,/app\.get\('\/api\/operador\/estado'/);
  assert.match(back,/app\.post\('\/api\/operador\/entrar'/);
- assert.match(back,/req\.body\.nick\.trim\(\)\.toLowerCase\(\)!=='operador'/);
+ assert.match(back,/req\.body\.nick!=='OPERADOR'/);
+ assert.doesNotMatch(login,/normalizarOperadorNoLogin/);
+ assert.match(login,/nickDigitado!=='OPERADOR'/);
+ assert.match(login,/NICK_OPERADOR_MAIUSCULO_OBRIGATORIO/);
  assert.match(back,/sessoes\.autenticar\(req\.body\.senha\)/);
  assert.match(back,/app\.get\('\/administrador\/entrar'/);
  assert.match(back,/montarAdminComercialAprovado/);
