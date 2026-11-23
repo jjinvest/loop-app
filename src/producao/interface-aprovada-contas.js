@@ -1579,7 +1579,7 @@
   if(caixas.length===3){
    caixas[0].querySelector('small').textContent='POSIÇÕES NAS FILAS';
    caixas[0].querySelector('span').textContent='Ver posições e filas';
-   caixas[1].querySelector('small').textContent='CICLOS / 24H';
+   caixas[1].querySelector('small').textContent='CICLOS DE HOJE';
    caixas[2].querySelector('small').textContent='EVENTOS NO CICLO';
   }
   void carregarTabuleiroOperador();
@@ -1616,7 +1616,7 @@
   const indicadoresCliente=document.querySelectorAll('.loop03-indicadores .loop03-indicador');
   if(indicadoresCliente.length===3){
    indicadoresCliente[0].querySelector('small').textContent='MINHAS POSIÇÕES';
-   indicadoresCliente[1].querySelector('small').textContent='CICLOS / 24H';
+   indicadoresCliente[1].querySelector('small').textContent='CICLOS DE HOJE';
    indicadoresCliente[2].querySelector('small').textContent='POSIÇÃO SELECIONADA';
   }
   $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
@@ -2381,7 +2381,7 @@
    mostrarTotaisFilasRodape(d.filaA,d.filaB,false);
    atualizarTopoPosicaoReal();
    if(popupPosicoesRealAberto)preencherPopupReal();
-   // O visor central usa somente o mesmo resumo de 24h nos dois perfis.
+   // O visor central usa o mesmo dia civil de Brasília nos dois perfis.
    visorCatraca.registrarAgenda(d.agenda);
   }catch{
    // Uma leitura indisponível não altera cartões, posições ou contas.
@@ -3338,7 +3338,7 @@
 
    $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
     ' / '+String(d.limitePosicoesAtivas);
-   // O visor central usa a mesma contagem visual de 24 horas.
+   // O visor central usa a mesma contagem visual por dia de Brasília.
    const seletor=$('seletorPosicaoMotor');
    const seletorRotulo=$('rotuloSeletorPosicaoMotor');
    if(seletor){
