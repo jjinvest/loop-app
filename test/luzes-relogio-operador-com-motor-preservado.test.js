@@ -93,11 +93,11 @@ test('operador: 5 contemplados entre 9h e 18h acendem 6 LEDs a cada 18 minutos',
  x.mover('2026-11-21T11:06:00-03:00');
  assert.deepEqual(x.luzes(),[true,false,false,false,false,false]);
  assert.match(x.elements.motorContadorEventos.textContent,
-  /Relógio: 1 de 6 luzes · Eventos confirmados: 0 de 6/);
+  /RELÓGIO DE PARTICIPAÇÃO DE LUCRO — EM ANDAMENTO/);
  assert.deepEqual(x.reais(),[true,false,false,false,false,false],
   'brilho original acompanha a luz do relógio, sem alterar o evento confirmado');
  assert.match(x.elements.motorContadorEventos.textContent,
-  /Eventos confirmados: 0 de 6/);
+  /RELÓGIO DE PARTICIPAÇÃO DE LUCRO — EM ANDAMENTO/);
 });
 
 test('horário diferente, pausa e modo manual limpam LEDs agendados',()=>{
@@ -137,9 +137,10 @@ test('sem agenda autenticada não acende LEDs; com agenda compartilhada cliente 
  x.visor.registrarAgenda(agendaComum);
  assert.deepEqual(x.luzes(),[true,true,false,false,false,false]);
  assert.match(x.elements.motorContadorEventos.textContent,
-  /Eventos confirmados: 0 de 6/);
- assert.equal((interfaceReal.match(/\$\('motorContadorEventos'\)\.textContent=/g)||[]).length,1,
-  'legenda separa evento real de luz prevista e preserva visor original');
+  /RELÓGIO DE PARTICIPAÇÃO DE LUCRO — EM ANDAMENTO/);
+ assert.equal((interfaceReal.match(/\$\('motorContadorEventos'\)\.textContent=/g)||[]).length,0,
+  'a mensagem do relógio tem um único responsável, sem sobrescrita do motor');
+ assert.match(interfaceReal,/visualTabuleiro\.preencherLuzes\(d\.tabuleiro\.eventosNoCiclo\)/);
 
  assert.doesNotMatch(interfaceReal,/const metaAtiva=controle\.metaAplicavelHoje===true/,
   'data alvo do turno noturno deve ser avaliada pelo relógio local do servidor');
@@ -173,7 +174,7 @@ test('a cada consulta ao servidor recupera a posição temporal sem criar giro',
  x.visor.registrarAgenda(x.agenda({meta:5,eventosReaisNoCiclo:3}));
  assert.deepEqual(x.luzes(),[true,false,false,false,false,false]);
  assert.match(x.elements.motorContadorEventos.textContent,
-  /Eventos confirmados: 3 de 6/);
+  /RELÓGIO DE PARTICIPAÇÃO DE LUCRO — EM ANDAMENTO/);
  x.visor.observar(0,3);
  x.visor.registrarAgenda(x.agenda({
   modoExecucao:'STOP',meta:5,eventosReaisNoCiclo:3
@@ -214,7 +215,7 @@ test('o mesmo relogio real acende e pulsa uma luz de cada vez sem antecipar even
  x.mover('2026-11-22T09:06:00-03:00');
  assert.deepEqual(x.luzes(),[true,false,false,false,false,false]);
  assert.deepEqual(x.pulsando(),[true,false,false,false,false,false]);
- assert.match(x.elements.motorContadorEventos.textContent,/Eventos confirmados: 0 de 6/);
+ assert.match(x.elements.motorContadorEventos.textContent,/RELÓGIO DE PARTICIPAÇÃO DE LUCRO — EM ANDAMENTO/);
  x.mover('2026-11-22T09:12:00-03:00');
  assert.deepEqual(x.luzes(),[true,true,false,false,false,false]);
  assert.deepEqual(x.pulsando(),[false,true,false,false,false,false]);
