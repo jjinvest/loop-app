@@ -1332,7 +1332,7 @@
     },
     {
       "path": "src/producao/bancada-modulos-loop-sqlite.js",
-      "sha": "4b3c7b67216c206779697f4ecb61a7153ace9e13"
+      "sha": "2b72674c5432a699c78d18a8b5ae10660617ef48"
     },
     {
       "path": "src/producao/banner-mosaico-sqlite.js",
@@ -2192,7 +2192,7 @@
     },
     {
       "path": "test/bancada-modulos-independentes-operador-real.test.js",
-      "sha": "1b55ac329e2cb83668aa82575e6eac6808afa492"
+      "sha": "c854e51feff2de142a4df3343cfd5a1b57c24d8b"
     },
     {
       "path": "test/banners-ajuste-direto-fotos.test.js",
@@ -5535,6 +5535,20 @@
       "antes": null,
       "depois": "be1c02e8403820cf2c1963ad7263c145d4c26bec",
       "objetivo": "Ordem expressa do proprietario 23/11/2026: catraca com movimentos efetivos do motor, luzes do relogio do operador e porteira fechada; fila A/B com insercao, promocao individual, nomes e abastecimento independente da catraca, testes transacionais no SQLite segregados das contas; indexar regra CRIA-TESTA-APROVA-REAL. Interface somente do operador na aba Posições, sem alterar telas de clientes."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/bancada-modulos-loop-sqlite.js",
+      "antes": "4b3c7b67216c206779697f4ecb61a7153ace9e13",
+      "depois": "2b72674c5432a699c78d18a8b5ae10660617ef48",
+      "objetivo": "Idempotencia entre reinicios e repeticoes do relogio, sessao isolada, movimento seguro e provas de integridade."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/bancada-modulos-independentes-operador-real.test.js",
+      "antes": "1b55ac329e2cb83668aa82575e6eac6808afa492",
+      "depois": "c854e51feff2de142a4df3343cfd5a1b57c24d8b",
+      "objetivo": "Idempotencia entre reinicios e repeticoes do relogio, sessao isolada, movimento seguro e provas de integridade."
     }
   ]
 }
