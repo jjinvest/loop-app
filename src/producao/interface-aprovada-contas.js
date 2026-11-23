@@ -1191,10 +1191,10 @@
   tabuleiro.setAttribute('aria-label','Contadores visuais do relógio do tempo');
   tabuleiro.append(criar('h3','','TABULEIRO'),
    criar('p','loop03-titulo-relogio','RELÓGIO DO TEMPO'));
-  const luzes24h=relogio?.luzesRelogio24h??null;
+  const luzesContinuas=relogio?.luzesRelogioAcumuladas??null;
   tabuleiro.append(linha(
-   metade('Eventos no ciclo',luzes24h===null?
-    eventos+' / 6':(luzes24h%6)+' / 6'),
+   metade('Eventos no ciclo',luzesContinuas===null?
+    eventos+' / 6':(luzesContinuas%6)+' / 6'),
    metade('Eventos acumulados',relogio?
     relogio.luzesRelogioAcumuladas:'—')));
   tabuleiro.append(linha(
