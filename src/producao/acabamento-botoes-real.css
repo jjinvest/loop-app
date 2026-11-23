@@ -962,3 +962,27 @@ body.loop03-modo-operador #adminMaisComprasCliente{
   grid-template-columns:1fr;
  }
 }
+
+
+/* Consulta privada do operador: resultados independentes e retorno sem trocar aba. */
+body.loop03-modo-operador #adminBuscaCadastro[hidden],
+body.loop03-modo-operador #adminCorrigeCadastro[hidden],
+body.loop03-modo-operador #adminCadastroResultados[hidden],
+body.loop03-modo-operador #adminVoltarBuscaEquipe[hidden]{display:none!important}
+body.loop03-modo-operador #adminBuscaCadastro input{
+ width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+}
+body.loop03-modo-operador #adminCadastroResultados{
+ display:grid;gap:8px;min-width:0;
+}
+body.loop03-modo-operador #adminCadastroResultados .loop03-admin-candidato{
+ min-width:0;width:100%;text-align:left;white-space:normal;
+ overflow-wrap:anywhere;border:1px solid #b79a61;
+ border-radius:12px;padding:11px 13px;min-height:44px;
+ background:linear-gradient(135deg,#27364b,#17242d);
+ color:#f5e7cb;font:inherit;cursor:pointer;
+}
+body.loop03-modo-operador #adminCadastroResultados .loop03-admin-candidato:focus-visible,
+body.loop03-modo-operador #adminVoltarBuscaEquipe:focus-visible{
+ outline:2px solid #f7d493;outline-offset:2px;
+}
