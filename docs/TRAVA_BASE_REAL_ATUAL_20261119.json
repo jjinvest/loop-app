@@ -1480,7 +1480,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "a011a96fe4cc99d92b5dca150b087b478cde6568"
+      "sha": "2f4c73fda9e1eb10a44cccf542bace2bd126f1d5"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2544,7 +2544,7 @@
     },
     {
       "path": "test/entrada-unificada-operador.test.js",
-      "sha": "aaa7b57d4a4bb7eb75c44bc4ff8c1fd5aa2f6958"
+      "sha": "f0b2bcd535b4a5343f7bf503c32831783cbafcc3"
     },
     {
       "path": "test/entrada-vaga-6-azul-dourado.test.js",
@@ -5679,6 +5679,27 @@
       "antes": "61ce5949ddfa7f4f155399b8c552591213a37646",
       "depois": "3fa9a10f4883e7b8a99e371af5aa4661758ae9dd",
       "objetivo": "Corrigir explicacao do falso bloqueio: a divergencia de geometria no /staging nao deve ser confundida com mudanca na vitrine real; preserva comportamento e cobertura."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "a011a96fe4cc99d92b5dca150b087b478cde6568",
+      "depois": "989ba7052cd1132c67388087593c9a19becb9703",
+      "objetivo": "Pedido explicito: nick OPERADOR digitado em qualquer caixa fica visivel em MAIUSCULAS na tela unica, sem alterar cliente, senha, permissao nem molduras."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/entrada-unificada-operador.test.js",
+      "antes": "aaa7b57d4a4bb7eb75c44bc4ff8c1fd5aa2f6958",
+      "depois": "f0b2bcd535b4a5343f7bf503c32831783cbafcc3",
+      "objetivo": "Regressao do login operador com nick maiusculo, minusculo e misto, mantendo autenticacao por credencial sem atalho inseguro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "989ba7052cd1132c67388087593c9a19becb9703",
+      "depois": "2f4c73fda9e1eb10a44cccf542bace2bd126f1d5",
+      "objetivo": "Preservar contrato e testes existentes do login unificado: maiuscula visual, comparacao case-insensitive, senha e backend inalterados."
     }
   ]
 }

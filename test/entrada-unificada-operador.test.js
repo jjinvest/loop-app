@@ -20,6 +20,11 @@ test('mesma caixa de nick e senha autentica operador isolado do cliente',async t
  });
  assert.equal((await entrar('operador','errada')).status,401);
  assert.equal((await entrar('operador','SENHA_OPERADOR_TESTE_123456789012345','https://externo.invalid')).status,403);
+ // O acesso real aceita maiusculas, minusculas e escrita mista.
+ for(const nick of ['OPERADOR','Operador','OpErAdOr']){
+  const resposta=await entrar(nick,'SENHA_OPERADOR_TESTE_123456789012345');
+  assert.equal(resposta.status,200,'Nick misto deve autenticar: '+nick);
+ }
  const r=await entrar('operador','SENHA_OPERADOR_TESTE_123456789012345');
  assert.equal(r.status,200);
  assert.deepEqual(await r.json(),{operador:true});

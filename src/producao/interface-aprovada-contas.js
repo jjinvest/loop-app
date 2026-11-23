@@ -3549,9 +3549,20 @@
  }
  // Um formulario: nick VILELA entra como cliente e nick OPERADOR
  // usa a sessao administrativa sem nova tela de senha.
+ // Ao completar "operador", exibir o nick em MAIUSCULAS na mesma caixa.
+ // A senha e os nicks dos clientes permanecem inalterados.
+ const normalizarOperadorNoLogin=()=>{
+  const campo=$('login');
+  if(campo.value.trim().toLowerCase()!=='operador')return false;
+  campo.value='OPERADOR';
+  return true;
+ };
+ $('login').addEventListener('input',normalizarOperadorNoLogin);
+ $('login').addEventListener('change',normalizarOperadorNoLogin);
  onForm('formLogin',async()=>{
+  normalizarOperadorNoLogin();
   if($('login').value.trim().toLowerCase()==='operador'){
-   await autenticarOperadorFormulario($('login').value.trim(),$('senha').value);
+   await autenticarOperadorFormulario('OPERADOR',$('senha').value);
    $('senha').value='';
    abrirPainelOperador();
    dizer('Modo OPERADOR ativo. Acesse a AKITEMM ou a central pelo rodapé.');
