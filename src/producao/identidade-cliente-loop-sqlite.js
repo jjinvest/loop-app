@@ -814,6 +814,58 @@ class IdentidadeClienteLoopReal{
   };
  }
 
+ // Pesquisa privada e somente leitura, sem indice de nome/telefone em claro.
+ // Resultados limitados para nao expor listagens completas de cadastros.
+ buscarCadastrosOperador({termo}={}){
+  if(typeof termo!=='string'||termo.trim().length<2||termo.trim().length>90||
+     /[\x00-\x1f\x7f<>]/.test(termo))erro('BUSCA_CADASTRO_INVALIDA');
+  const busca=termo.trim();
+  const normalizar=x=>String(x||'').normalize('NFD')
+   .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+  const normal=normalizar(busca),soNumeros=/^[+()0-9 .-]+$/.test(busca);
+  const numeros=busca.replace(/\D/g,'');
+  if(soNumeros&&numeros.length<4)erro('BUSCA_CADASTRO_INVALIDA');
+  const cpfHmac=soNumeros&&numeros.length===11?
+   assinar(this.keyEmail,'CPF-CADASTRO',numeros):null;
+  const existeLegado=!!this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_telefones_legados'"
+  ].join(' ')).get();
+  const consulta=this.banco.prepare([
+   'SELECT c.id,c.nick,c.nome_iv,c.nome_ct,c.nome_tag,',
+   'c.email_iv,c.email_ct,c.email_tag,k.cpf_hmac,',
+   'COALESCE(k.telefone_iv,'+(existeLegado?'l.telefone_iv':'NULL')+') AS tel_iv,',
+   'COALESCE(k.telefone_ct,'+(existeLegado?'l.telefone_ct':'NULL')+') AS tel_ct,',
+   'COALESCE(k.telefone_tag,'+(existeLegado?'l.telefone_tag':'NULL')+') AS tel_tag',
+   'FROM loop_real_contas c',
+   'LEFT JOIN loop_real_contatos_cadastro k ON k.titular_id=c.id',
+   ...(existeLegado?[
+    'LEFT JOIN loop_real_telefones_legados l ON l.titular_id=c.id'
+   ]:[]),
+   'ORDER BY c.nick COLLATE NOCASE'
+  ].join(' '));
+  const resultados=[];
+  for(const row of consulta.iterate()){
+   const nickOk=normalizar(row.nick).includes(normal);
+   const nome=decifrar(this.keyCipher,row.nome_iv,row.nome_ct,row.nome_tag);
+   const nomeOk=normalizar(nome).includes(normal);
+   let telefone=null;
+   if(row.tel_iv&&row.tel_ct&&row.tel_tag)
+    telefone=decifrar(this.keyCipher,row.tel_iv,row.tel_ct,row.tel_tag);
+   const telOk=soNumeros&&telefone&&(
+    telefone.includes(numeros)||
+    (numeros.startsWith('55')&&telefone.includes(numeros.slice(2))));
+   const cpfOk=cpfHmac!==null&&row.cpf_hmac===cpfHmac;
+   const emailOk=busca.includes('@')&&normalizar(decifrar(
+    this.keyCipher,row.email_iv,row.email_ct,row.email_tag)).includes(normal);
+   if(!nickOk&&!nomeOk&&!telOk&&!cpfOk&&!emailOk)continue;
+   resultados.push({nick:row.nick,nome,
+    telefoneFinal:telefone?'••••'+telefone.slice(-4):null});
+   if(resultados.length===21)break;
+  }
+  return {resultados:resultados.slice(0,20),
+   temMais:resultados.length>20,somenteOperador:true};
+ }
  // Busca de cadastro pelo operador: a rota exige credencial administrativa.
  // Nunca disponibilizar senhas, tokens, dados de outros clientes sem controle.
  consultarCadastroOperador({nick}={}){
@@ -823,8 +875,15 @@ class IdentidadeClienteLoopReal{
   const contato=this.banco.prepare(
    'SELECT * FROM loop_real_contatos_cadastro WHERE titular_id=?'
   ).get(row.id);
-  const telefone=contato?decifrar(this.keyCipher,contato.telefone_iv,
-   contato.telefone_ct,contato.telefone_tag):null;
+  const legado=contato?null:this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_telefones_legados'"
+  ].join(' ')).get()?this.banco.prepare(
+   'SELECT * FROM loop_real_telefones_legados WHERE titular_id=?'
+  ).get(row.id):null;
+  const fone=contato||legado;
+  const telefone=fone?decifrar(this.keyCipher,fone.telefone_iv,
+   fone.telefone_ct,fone.telefone_tag):null;
   const cpf=contato?decifrar(this.keyCipher,contato.cpf_iv,
    contato.cpf_ct,contato.cpf_tag):null;
   return {
