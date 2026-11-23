@@ -1190,12 +1190,17 @@
   const tabuleiro=criar('section','loop03-resumo-quadro loop03-resumo-tabuleiro');
   tabuleiro.setAttribute('aria-label','Contadores visuais do relógio do tempo');
   tabuleiro.append(criar('h3','','TABULEIRO / RELÓGIO DO TEMPO'));
-  const luzesContinuas=relogio?.luzesRelogioAcumuladas??null;
+  // O dia de Brasília (00h-23h59) é a única referência de progresso.
+  // Após completar seis luzes, 6/6 permanece até a primeira luz seguinte.
+  const luzesDia=relogio?.luzesRelogioHoje??null;
+  const progressoDia=luzesDia===null?eventos:
+   (luzesDia===0?0:((luzesDia-1)%6)+1);
   tabuleiro.append(linha(
-   metade('Eventos no ciclo',luzesContinuas===null?
-    eventos+' / 6':(luzesContinuas%6)+' / 6'),
+   metade('Eventos no ciclo',progressoDia+' / 6'),
    metade('Eventos acumulados',relogio?
     relogio.luzesRelogioAcumuladas:'—')));
+  if(relogio)tabuleiro.append(criar('small','loop03-luzes-hoje',
+   'Luzes acesas hoje: '+luzesDia));
   tabuleiro.append(linha(
    metade('Centros concluídos hoje',relogio?
     relogio.ciclosRelogioHoje:'—'),
