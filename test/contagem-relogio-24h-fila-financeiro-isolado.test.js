@@ -103,3 +103,45 @@ test('troca de meta e horário não altera os pulsos já registrados na históri
  assert.equal(d.ciclosRelogio24h,1);
  assert.equal(d.giros24h,0);
 });
+
+test('histórico continuo não zera após 24h: 4 turnos são 120 luzes e 20 ciclos',t=>{
+ const x=preparar(t);
+ x.ajustar('AUTOMATICA','09:00','12:00',null);
+ let d=x.mover('2026-11-25T12:00:00-03:00');
+ assert.equal(d.luzesRelogio24h,30);
+ assert.equal(d.ciclosRelogio24h,5);
+ assert.equal(d.luzesRelogioHoje,30);
+ assert.equal(d.ciclosRelogioHoje,5);
+ assert.equal(d.luzesRelogioAcumuladas,120);
+ assert.equal(d.ciclosRelogioAcumulados,20);
+ assert.equal(d.girosTotais,0);
+ assert.equal(d.autorizacaoFinanceiraDosGiros,false);
+ const agenda=projetarAgendaTabuleiroCompartilhada(d);
+ assert.deepEqual([
+  agenda.luzesRelogioHoje,agenda.ciclosRelogioHoje,
+  agenda.luzesRelogioAcumuladas,agenda.ciclosRelogioAcumulados
+ ],[30,5,120,20]);
+ d=x.mover('2026-11-26T08:00:00-03:00');
+ assert.equal(d.luzesRelogioHoje,0);
+ assert.equal(d.ciclosRelogioHoje,0);
+ assert.equal(d.luzesRelogioAcumuladas,120);
+ assert.equal(d.ciclosRelogioAcumulados,20);
+});
+test('pausa conserva acumulado e retomada não reconta período parado',t=>{
+ const x=preparar(t);
+ x.ajustar('AUTOMATICA');
+ let d=x.mover('2026-11-22T09:37:00-03:00');
+ assert.equal(d.luzesRelogioAcumuladas,6);
+ x.ajustar('PAUSADA');
+ d=x.mover('2026-11-22T10:00:00-03:00');
+ assert.equal(d.luzesRelogioAcumuladas,6);
+ x.ajustar('AUTOMATICA');
+ d=x.mover('2026-11-22T10:06:00-03:00');
+ assert.equal(d.luzesRelogioAcumuladas,7);
+ assert.equal(d.ciclosRelogioAcumulados,1);
+ assert.equal(d.luzesRelogioHoje,7);
+ d=x.mover('2026-11-23T10:10:00-03:00');
+ assert.equal(d.luzesRelogioAcumuladas,26);
+ assert.equal(d.luzesRelogioHoje,0);
+ assert.equal(d.ciclosRelogioAcumulados,4);
+});
