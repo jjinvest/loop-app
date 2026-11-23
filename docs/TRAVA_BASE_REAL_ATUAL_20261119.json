@@ -440,7 +440,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "f0d2904198f695ebfb74c0375ebe966838800ffe"
+      "sha": "5de42c4320a103a82c924ec2d5250b7313dafc22"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -5763,6 +5763,13 @@
       "antes": "1c1a5587afd65c28fb007c48ce15faa158ff31c0",
       "depois": "2da2779f90427d5aa61e30f7c285dd87f5f72d08",
       "objetivo": "Atualizar regressão histórica para autenticar operador real apenas com nick OPERADOR, sem converter letras e mantendo senha."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-operador-primeiro-produto-navegador.js",
+      "antes": "f0d2904198f695ebfb74c0375ebe966838800ffe",
+      "depois": "5de42c4320a103a82c924ec2d5250b7313dafc22",
+      "objetivo": "Teste navegador da AKITEMM com credencial OPERADOR sensível a maiúsculas exigida pelo servidor."
     }
   ]
 }
