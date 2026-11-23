@@ -1159,12 +1159,13 @@
   if(id==='abaPosicoes')void carregarIndicadoresComerciaisOperador();
   const posicoesEmTeste=id==='abaPosicoes'&&visualTesteModulo!==null;
   const rotas={
-   abaPosicoes:[posicoesEmTeste?'/api/admin/loop/testes-modulos':
-    '/api/admin/loop/estado','adminResumoPosicoes'],
+   abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
    abaFinanceiro:['/api/admin/loop/controle','adminResumoFinanceiro'],
    abaMeusPedidos:['/api/admin/loop/cadeia-comercial','adminResumoPedidos']
   };
-  const info=rotas[id];if(!info)return;
+  const info=posicoesEmTeste?
+   ['/api/admin/loop/testes-modulos','adminResumoPosicoes']:rotas[id];
+  if(!info)return;
   const destino=$(info[1]);if(!destino)return;
   destino.textContent='Atualizando dados reais do servidor…';
   try{
