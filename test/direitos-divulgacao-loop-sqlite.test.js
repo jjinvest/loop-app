@@ -23,7 +23,7 @@ function fixture(t){
    revisao=1}={})=>{
   db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
    .run(pedido,id,status,pagamento,1700000000000);
-  db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)')
+  db.prepare('INSERT INTO loop_real_fotos_regras_pedido(pedido_id,cor,revisao) VALUES(?,?,?)')
    .run(pedido,cor,revisao);
  };
  return {db,estado,inserir};
@@ -217,7 +217,9 @@ test('API autenticada liga ativacao ao Financeiro, sem saldo sacavel ou vazament
  t.after(()=>db.close());
  const texto='Termos documentados exclusivos de teste isolado para validar a '+
   'ligacao da ativacao de indicacao ao painel financeiro real sem Pix, '+
-  'saldo, bonificacao automatica, clientes ou contas de producao.';
+  'saldo, bonificacao automatica, clientes ou contas de producao. '+
+  'Todas as pessoas, comprovantes e valores usados neste caso sao sinteticos, '+
+  'isolados em memoria e sem conexao com instituicoes financeiras reais.';
  const contas=new IdentidadeClienteLoopReal({
   banco:db,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32),enviarEmail:async()=>true,
