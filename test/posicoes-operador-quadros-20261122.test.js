@@ -64,11 +64,24 @@ test('relógio: ciclo atual à esquerda, acumulado à direita, dia separado',()=
  assert.equal(tabuleiro.children[0].textContent,'TABULEIRO / RELÓGIO DO TEMPO');
  assert.deepEqual(valores(tabuleiro.children[1]),[
   ['Eventos no ciclo','4 / 6'],['Eventos acumulados','736']]);
- assert.deepEqual(valores(tabuleiro.children[2]),[
+ assert.equal(tabuleiro.children[2].textContent,'Luzes acesas hoje: 16');
+ assert.deepEqual(valores(tabuleiro.children[3]),[
   ['Centros concluídos hoje','2'],
   ['Ciclos concluídos no total','122']]);
  assert.equal(JSON.stringify(d).includes('SEM GIRO FINANCEIRO'),false);
  assert.equal(JSON.stringify(d).includes('pagamento confirmado'),false);
+});
+test('48 luzes do dia mostram 6/6 e oito ciclos, mesmo com 766 acumuladas',()=>{
+ const d=estado();
+ d.relogio={luzesRelogio24h:42,ciclosRelogio24h:7,
+  luzesRelogioHoje:48,ciclosRelogioHoje:8,
+  luzesRelogioAcumuladas:766,ciclosRelogioAcumulados:127};
+ const card=executar(d).children[1];
+ assert.deepEqual(valores(card.children[1]),[
+  ['Eventos no ciclo','6 / 6'],['Eventos acumulados','766']]);
+ assert.equal(card.children[2].textContent,'Luzes acesas hoje: 48');
+ assert.deepEqual(valores(card.children[3]),[
+  ['Centros concluídos hoje','8'],['Ciclos concluídos no total','127']]);
 });
 test('sem configuração ou fila vazia, não inventa pagamentos nem posição',()=>{
  const d=executar({filaA:0,filaB:0,
