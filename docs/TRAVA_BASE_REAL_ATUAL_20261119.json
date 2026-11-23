@@ -1480,7 +1480,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "a3a3244c1f0b111a3a0c3b8ed0cf37ce7617d20b"
+      "sha": "d5ecb0cd1d8156f663cf30e3fc5561026d35ec2e"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -5602,6 +5602,13 @@
       "antes": null,
       "depois": "8c28bd815d51dbbefe5975df972f02bb3b32b440",
       "objetivo": "Gate de prova independente no Node 24: seis eventos por giro, fila sem catraca, porteira fechada, idempotencia e recuperacao."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "a3a3244c1f0b111a3a0c3b8ed0cf37ce7617d20b",
+      "depois": "d5ecb0cd1d8156f663cf30e3fc5561026d35ec2e",
+      "objetivo": "Preservar expressamente contrato original de estado operador na validação de regressão."
     }
   ]
 }
