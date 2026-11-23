@@ -5,6 +5,7 @@ const {DatabaseSync}=require('node:sqlite');
 const {consultarDivulgacao,consultarComissoesDivulgacao,
  verificarNickDivulgador}=
  require('../src/producao/direitos-divulgacao-loop-sqlite');
+const {LivroFinanceiroRealSQLite}=require('../src/producao/livro-financeiro-real-sqlite');
 const id='titular-123e4567-e89b-12d3-a456-426614174000';
 function fixture(t){
  const db=new DatabaseSync(':memory:');t.after(()=>db.close());
@@ -138,12 +139,34 @@ test('verde de R$190 habilita link mas compra do indicado sem ativacao nao da bo
  db.prepare("UPDATE loja_real_pedidos SET status='APROVADO_PARA_EXPEDICAO' WHERE pedido_id=?")
   .run('COMPRA_INDICADO');
  assert.equal(consultar().comissaoAConferirCentavos,2500);
- db.exec('CREATE TABLE loop_real_fin_lancamentos('+
-  'origem TEXT,grupo TEXT,movimento TEXT);');
- db.prepare('INSERT INTO loop_real_fin_lancamentos VALUES(?,?,?)')
-  .run('bonus:'+indicado,'BONUS','CREDITO');
+ db.exec('CREATE TABLE loop_real_motor_qualificacoes('+
+  'indicado_id TEXT PRIMARY KEY,indicador_id TEXT,evento_id TEXT);');
+ const livroSemProva=new LivroFinanceiroRealSQLite({banco:db});
+ assert.throws(()=>livroSemProva.registrarBonusPorIndicadoVerde({indicadoId:indicado}),
+  e=>e.codigo==='FIN_COMPROVACAO_EXTERNA_NAO_HOMOLOGADA');
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM loop_real_fin_lancamentos').get().n,0,
+  'nada e creditado sem prova externa');
+ const livroComProvaDeTeste=new LivroFinanceiroRealSQLite({banco:db,
+  provas:{confirmarIndicacaoVerde:args=>{
+   assert.equal(args.indicadoId,indicado);
+   assert.equal(args.indicadorId,id);
+   assert.equal(args.baseCentavos,25000);
+   assert.equal(args.comprovanteQualificacaoId,'COMPROVANTE_1');
+   return {ambiente:'PRODUCAO',estado:'PSP_LIQUIDADO_E_INDICADO_VERDE',
+    comprovanteId:'PROVA_RECONCILIADA_DE_TESTE'};
+  }}
+ });
+ const primeiro=livroComProvaDeTeste.registrarBonusPorIndicadoVerde({indicadoId:indicado});
+ assert.equal(primeiro.repetido,false);
+ assert.equal(livroComProvaDeTeste.consultar({titularId:id}).saldoBonusCentavos,2500);
+ assert.equal(livroComProvaDeTeste.consultar({titularId:id}).minimoSaqueCentavos,2500);
+ assert.equal(livroComProvaDeTeste.consultar({titularId:id}).taxaSaquePercentual,0);
+ assert.equal(livroComProvaDeTeste.consultar({titularId:id}).saqueRealHabilitado,false);
+ assert.equal(livroComProvaDeTeste.registrarBonusPorIndicadoVerde({indicadoId:indicado}).repetido,true,
+  'reprocessamento nao credita duas vezes');
+ assert.equal(livroComProvaDeTeste.consultar({titularId:id}).saldoBonusCentavos,2500);
  assert.equal(consultar().comissaoAConferirCentavos,0,
-  'credito ja registrado nao deve aparecer de novo como bonus a conferir');
+  'apos credito comprovado, o mesmo bonus deixa de estar pendente');
 });
 test('indicacao sem foto qualificada, comprovante ou posicao nao recebe 10%',t=>{
  const x=fixture(t),db=x.db;
