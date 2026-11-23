@@ -83,8 +83,8 @@ test('10% de venda confirmada independe de ativar posicao, nunca vira saldo',t=>
    'PSP_INDICADO',1700000001000);
  x.db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)')
   .run('PEDIDO_INDICADO','VERDE',1);
- x.db.prepare('ALTER TABLE loop_real_fotos_regras_pedido ADD COLUMN preco_unit_centavos INTEGER;');
- x.db.prepare('ALTER TABLE loop_real_fotos_regras_pedido ADD COLUMN quantidade INTEGER;');
+ x.db.exec('ALTER TABLE loop_real_fotos_regras_pedido ADD COLUMN preco_unit_centavos INTEGER;');
+ x.db.exec('ALTER TABLE loop_real_fotos_regras_pedido ADD COLUMN quantidade INTEGER;');
  x.db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=1000,quantidade=1 WHERE pedido_id=?')
   .run('LINK_QUALIF_VERDE');
  x.db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=25000,quantidade=1 WHERE pedido_id=?')

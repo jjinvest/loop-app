@@ -3688,7 +3688,7 @@
     },
     {
       "path": "test/direitos-divulgacao-loop-sqlite.test.js",
-      "sha": "b54a996da873bb9eeafa23db132455a0d2a4df03"
+      "sha": "bdb569a8d1a3cad46fb351831ab3270e3683f73e"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
@@ -5983,6 +5983,13 @@
       "antes": "61abdeafa10627668173f9ef490d76dd08bd3b98",
       "depois": "6a62a6be6387af515488a34236fd61eedc933922",
       "objetivo": "Apurar 10% de venda indicada comprovada sem exigir posicao no LOOP, sem gerar saldo/saque; atualizar ensaios do link por compra verdadeira isolada e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/direitos-divulgacao-loop-sqlite.test.js",
+      "antes": "b54a996da873bb9eeafa23db132455a0d2a4df03",
+      "depois": "bdb569a8d1a3cad46fb351831ab3270e3683f73e",
+      "objetivo": "Executar ALTER TABLE na preparacao SQLite do teste de apuracao de comissao sem creditos."
     }
   ]
 }
