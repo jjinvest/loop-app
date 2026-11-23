@@ -516,7 +516,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "e34cfb69ecfadd68aeb0992fd662e2e7c357d758"
+      "sha": "f7f22c8b06230206589e89cb96e9d2c3f13eb27c"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -1344,11 +1344,11 @@
     },
     {
       "path": "src/producao/banners-editor-real.css",
-      "sha": "4d1363472f230787dada4b7cf654198cfe7fe25c"
+      "sha": "383df598a2468232ae2dca866ff099dfa237e058"
     },
     {
       "path": "src/producao/banners-escritorio-real-client.js",
-      "sha": "cec40d2d2542f8e5f5c6d4e8dcb518fbafe16616"
+      "sha": "0e1ab6e446cd0bc1019192330551fed4d5f69473"
     },
     {
       "path": "src/producao/banners-escritorio-real.js",
@@ -1356,7 +1356,7 @@
     },
     {
       "path": "src/producao/banners-loja-akitemm-client.js",
-      "sha": "aca0fc1932a8aaea3a12a9d05c8dae9bd338e25e"
+      "sha": "619a10e5150bba9433b46c9784424235edd4230e"
     },
     {
       "path": "src/producao/banners-loja-akitemm-real-sqlite.js",
@@ -2553,6 +2553,10 @@
     {
       "path": "test/endereco-entrega-loja-candidato.test.js",
       "sha": "35334fd17e4d4fde737b6cd44440064474edcb9a"
+    },
+    {
+      "path": "test/enquadramento-banners-sem-esticar-20261123.test.js",
+      "sha": "28ef23cc696504a85062c265e8598914db3c006a"
     },
     {
       "path": "test/ensaio-tres-clientes-acesso-unificado-preview.test.js",

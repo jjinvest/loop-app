@@ -635,7 +635,7 @@
  painel.innerHTML='<section class="banner-editor-ajuste">'+
   '<header><strong>Ajustar foto</strong><button type="button" data-acao="cancelar" aria-label="Fechar">×</button></header>'+
   '<canvas aria-label="Arraste para enquadrar a foto"></canvas>'+
-  '<label>Ampliar <input type="range" min="100" max="300" value="100" step="1"></label>'+
+  '<label>Zoom da foto <input type="range" min="0" max="200" value="100" step="1" aria-label="Diminuir ou ampliar a foto"></label>'+
   '<footer><button type="button" data-acao="trocar">Trocar</button>'+
   '<button type="button" data-acao="cancelar">Cancelar</button>'+
   '<button type="button" data-acao="aplicar">Aplicar</button></footer></section>';
@@ -651,7 +651,7 @@
   if(!crop)return;
   const img=crop.imagem,w=canvas.width,h=canvas.height;
   const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)return;
-  const escala=Math.max(w/img.naturalWidth,h/img.naturalHeight)*crop.zoom;
+  const escala=Math.min(w/img.naturalWidth,h/img.naturalHeight)*crop.zoom;
   const dw=escala*img.naturalWidth,dh=escala*img.naturalHeight;
   const maxX=Math.max(0,(dw-w)/2),maxY=Math.max(0,(dh-h)/2);
   crop.x=Math.max(-maxX,Math.min(maxX,crop.x));
@@ -673,8 +673,12 @@
    if(!im.naturalWidth||!im.naturalHeight)throw Error('Imagem inválida.');
    canvas.width=1000;canvas.height=Math.round(1000*Number(colunas.value)/razao);
    zoom.value='100';
-   crop={pos,imagem:im,zoom:1,x:0,y:0,arrasto:null};
+   crop={pos,imagem:im,original:b,zoom:1,x:0,y:0,arrasto:null};
    painel.hidden=false;desenhar();
+   const aspecto=im.naturalWidth/im.naturalHeight,alvo=razao/Number(colunas.value);
+   status.textContent=Math.min(aspecto/alvo,alvo/aspecto)<0.52?
+    "A foto inteira não ocupa este quadro sem cortes. Escolha outra imagem se quiser preencher tudo.":
+    "Foto inteira enquadrada, sem cortes e sem deformação."; 
   }catch(e){status.textContent='Erro ao ajustar: '+e.message;}
  }
  function fechar(){seq++;crop=null;painel.hidden=true;}
@@ -697,7 +701,7 @@
  canvas.addEventListener('pointerup',soltar);
  canvas.addEventListener('pointercancel',soltar);
  zoom.addEventListener('input',()=>{
-  if(crop){crop.zoom=Number(zoom.value)/100;desenhar();}
+  if(crop){crop.zoom=Math.pow(4,(Number(zoom.value)-100)/100);desenhar();}
  });
  painel.addEventListener('click',async e=>{
   const acao=e.target.closest('[data-acao]')?.dataset.acao;
@@ -708,10 +712,12 @@
   }
   if(acao==='aplicar'){
    const pos=crop.pos;
-   const foto=await new Promise(ok=>canvas.toBlob(ok,'image/jpeg',.87));
+   const semAjuste=crop.zoom===1&&crop.x===0&&crop.y===0;
+   const foto=semAjuste?crop.original:
+    await new Promise(ok=>canvas.toBlob(ok,'image/jpeg',.87));
    if(!foto){status.textContent='Não foi possível gerar a foto.';return;}
    pendentes.set(pos,foto);
-   miniaturas.set(pos,canvas.toDataURL('image/jpeg',.8));
+   miniaturas.set(pos,semAjuste?await dataURL(foto):canvas.toDataURL('image/jpeg',.8));
    status.textContent='Foto '+pos+' ajustada. Salve o banner.';
    fechar();pintar();
   }
