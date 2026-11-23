@@ -1268,7 +1268,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "76e829c22d94c12a77f3f2893a58b43e2c63bbab"
+      "sha": "ed7793820186fe88734455486feeb85cfda0c8af"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1435,6 +1435,14 @@
       "sha": "cbf343f224d4b98590974ca5046401f053468b01"
     },
     {
+      "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
+      "sha": "4713dfb988c507570e454b2ed3eac9acef661fcc"
+    },
+    {
+      "path": "src/producao/douradas-operador-sqlite.js",
+      "sha": "039addd87248bf7fdfe0e7bdaefb77406e9031d0"
+    },
+    {
       "path": "src/producao/emitir-auditoria-custodia-readonly.js",
       "sha": "bb84265135a8e84066143dfef95bb1048c73e7f4"
     },
@@ -1456,7 +1464,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "e9a1ba093928eaba11cb2f63d32de77c5f2863cf"
+      "sha": "bc5ca557e6a0bb463f3d1c5ab569cab8dc43cf18"
     },
     {
       "path": "src/producao/harmonia-toque-real.css",
@@ -1476,15 +1484,15 @@
     },
     {
       "path": "src/producao/interface-admin-comercial-aprovada.js",
-      "sha": "0cdc1bea9b747d00d17bdde1bcb15db1e0324bf1"
+      "sha": "b00cb7e59d7c1d4988d15fc98a5ccca78c9e01d5"
     },
     {
       "path": "src/producao/interface-admin-comercial-client.js",
-      "sha": "a232f90902696a1b39db33eed61ac27710f42d99"
+      "sha": "ccf8f29cfb117e599275a6dcf124f5b46f92e2d9"
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "8bd9d9bb76d638ff271cc40561a4d3001b6884d4"
+      "sha": "60c6eab7b3b1e9574e44b910abb0b6e3782701ca"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2507,6 +2515,10 @@
       "sha": "3c62ba8147c026444fc4d8b55569718d9bb871f7"
     },
     {
+      "path": "test/direitos-divulgacao-loop-sqlite.test.js",
+      "sha": "a6a35380264398918984263d8fd9c31d4d481f04"
+    },
+    {
       "path": "test/disponibilidade-caixa2-integracao-v6.test.js",
       "sha": "ebe48ce618544e111fe51578e7bad28b61c267b2"
     },
@@ -2521,6 +2533,10 @@
     {
       "path": "test/dourada-manual-auditoria-pontas-loop-v6.test.js",
       "sha": "e97fa74ba34d28dfb44f36830515f88e31e5a1af"
+    },
+    {
+      "path": "test/douradas-operador-real-fluxo.test.js",
+      "sha": "87f3b6b2bb7e01daa384ca7dae9de43280df1c81"
     },
     {
       "path": "test/educacao-carrinho-loop-v6.test.js",
@@ -3288,7 +3304,7 @@
     },
     {
       "path": "test/posicoes-operador-quadros-20261122.test.js",
-      "sha": "3ca3ea803418850ce47dfb082139a997dc154d90"
+      "sha": "cfea11d1e622bc34bb64b4e7b39e35bfc0e06963"
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
@@ -3477,6 +3493,10 @@
     {
       "path": "test/retorno-saque-centro-v6.test.js",
       "sha": "9bf1ab61c201f88b4b8df1c82c9905a29283e567"
+    },
+    {
+      "path": "test/rotulos-modos-catraca-operador-real.test.js",
+      "sha": "16b2b57fb785e8200c2c57a49e2156f690c68115"
     },
     {
       "path": "test/saneamento-sete-contas-legadas-sqlite.test.js",
@@ -3677,18 +3697,6 @@
     {
       "path": "test/webhook-sigkill-rollback-sqlite.test.js",
       "sha": "7fbf8c072c69fa208ec975a307d525b642e020db"
-    },
-    {
-      "path": "test/rotulos-modos-catraca-operador-real.test.js",
-      "sha": "16b2b57fb785e8200c2c57a49e2156f690c68115"
-    },
-    {
-      "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
-      "sha": "4713dfb988c507570e454b2ed3eac9acef661fcc"
-    },
-    {
-      "path": "test/direitos-divulgacao-loop-sqlite.test.js",
-      "sha": "a6a35380264398918984263d8fd9c31d4d481f04"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
