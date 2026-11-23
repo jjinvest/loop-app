@@ -1480,7 +1480,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "989ba7052cd1132c67388087593c9a19becb9703"
+      "sha": "2f4c73fda9e1eb10a44cccf542bace2bd126f1d5"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -5693,6 +5693,13 @@
       "antes": "aaa7b57d4a4bb7eb75c44bc4ff8c1fd5aa2f6958",
       "depois": "f0b2bcd535b4a5343f7bf503c32831783cbafcc3",
       "objetivo": "Regressao do login operador com nick maiusculo, minusculo e misto, mantendo autenticacao por credencial sem atalho inseguro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "989ba7052cd1132c67388087593c9a19becb9703",
+      "depois": "2f4c73fda9e1eb10a44cccf542bace2bd126f1d5",
+      "objetivo": "Preservar contrato e testes existentes do login unificado: maiuscula visual, comparacao case-insensitive, senha e backend inalterados."
     }
   ]
 }
