@@ -202,3 +202,108 @@ test('indicacao sem foto qualificada, comprovante ou posicao nao recebe 10%',t=>
   .run('COMPRA_CINZA',indicado,10,25000);
  assert.equal(consultarComissoesDivulgacao({banco:db,titularId:id}).comissaoAConferirCentavos,0);
 });
+
+test('API autenticada liga ativacao ao Financeiro, sem saldo sacavel ou vazamento',async t=>{
+ const {randomBytes}=require('node:crypto');
+ const {once}=require('node:events');
+ const {IdentidadeClienteLoopReal}=
+  require('../src/producao/identidade-cliente-loop-sqlite');
+ const {MotorLoopIntegradoSQLite}=
+  require('../src/producao/motor-loop-integrado-sqlite');
+ const {criarAppIdentidadeLoop}=
+  require('../src/producao/servidor-identidade-loop');
+ const db=new DatabaseSync(':memory:');
+ db.exec('PRAGMA foreign_keys=ON');
+ t.after(()=>db.close());
+ const texto='Termos documentados exclusivos de teste isolado para validar a '+
+  'ligacao da ativacao de indicacao ao painel financeiro real sem Pix, '+
+  'saldo, bonificacao automatica, clientes ou contas de producao.';
+ const contas=new IdentidadeClienteLoopReal({
+  banco:db,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
+  chaveCodigo:randomBytes(32),enviarEmail:async()=>true,
+  termos:{versao:'TERMOS-TESTE-BONUS',texto},
+  privacidade:{versao:'PRIV-TESTE-BONUS',texto}
+ });
+ const docs=contas.documentos();
+ const cadastrar=(nick,indicadorNick=null)=>contas.cadastrar({
+  nome:'Conta de teste',nick,email:nick.toLowerCase()+'@example.invalid',
+  senha:'SenhaForteParaTeste2026!',aceiteTermos:true,
+  aceitePrivacidade:true,versaoTermos:docs.termos.versao,
+  hashTermos:docs.termos.hash,
+  versaoPrivacidade:docs.privacidade.versao,
+  hashPrivacidade:docs.privacidade.hash,
+  ...(indicadorNick?{indicadorNick}:{})
+ });
+ const titular=await cadastrar('Alpha');
+ const indicado=await cadastrar('Bravo','Alpha');
+ const motor=new MotorLoopIntegradoSQLite({banco:db});
+ const app=criarAppIdentidadeLoop({
+  contas,motorLoop:motor,origemHttps:'https://bonus.example.invalid'
+ });
+ const server=app.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const usuario=await contas.entrar({nick:'Alpha',senha:'SenhaForteParaTeste2026!'});
+ const outro=await contas.entrar({nick:'Bravo',senha:'SenhaForteParaTeste2026!'});
+ const get=async sessao=>{
+  const response=await fetch(base+'/api/financeiro/me',{
+   headers:sessao?{Cookie:'loop_real_s='+sessao.token}:{}
+  });
+  return {status:response.status,dados:await response.json()};
+ };
+ assert.equal((await get(null)).status,401);
+ const inicio=await get(usuario);
+ assert.equal(inicio.status,200);
+ assert.equal(inicio.dados.bonusIndicacoesAConferirCentavos,null);
+ db.exec([
+  'CREATE TABLE loja_real_pedidos(',
+  'pedido_id TEXT PRIMARY KEY,titular_id TEXT,status TEXT,',
+  'pagamento_id TEXT,atualizado_em INTEGER);',
+  'CREATE TABLE loop_real_fotos_regras_pedido(',
+  'pedido_id TEXT,cor TEXT,revisao INTEGER);'
+ ].join(' '));
+ const dataCadastro=db.prepare('SELECT registrado_em FROM loop_real_vinculos_indicacao '+
+  'WHERE indicado_id=?').get(indicado.titularId).registrado_em;
+ const compraInicial=dataCadastro-1000;
+ db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
+  .run('LINK_VERDE_BARATO',titular.titularId,
+   'APROVADO_PARA_EXPEDICAO','PAG_LINK_BARATO',compraInicial);
+ db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)')
+  .run('LINK_VERDE_BARATO','VERDE',1);
+ db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
+  .run('PEDIDO_ATIVADO',indicado.titularId,
+   'APROVADO_PARA_EXPEDICAO','PSP_ATIVACAO',dataCadastro+2000);
+ db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)')
+  .run('PEDIDO_ATIVADO','VERDE',1);
+ assert.equal((await get(usuario)).dados.bonusIndicacoesAConferirCentavos,0);
+ db.prepare([
+  'INSERT INTO loop_real_confirmacoes_cadastro',
+  '(titular_id,cpf_hmac,termos_versao,termos_hash,confirmado_em)',
+  'VALUES(?,?,?,?,?)'
+ ].join(' ')).run(indicado.titularId,randomBytes(32).toString('hex'),
+  docs.termos.versao,docs.termos.hash,dataCadastro+1500);
+ db.prepare([
+  'INSERT INTO loop_real_indicacoes_validas_financeiro',
+  '(indicado_id,indicador_id,pedido_id,pagamento_id,',
+  'comprovante_bancario_id,valor_qualificado_centavos,tipo,confirmado_em)',
+  "VALUES(?,?,?,?,?,25000,'COMPRA_250',?)"
+ ].join(' ')).run(indicado.titularId,titular.titularId,'PEDIDO_ATIVADO',
+  'PSP_ATIVACAO','COMPROVANTE_ATIVACAO',dataCadastro+2500);
+ assert.equal((await get(usuario)).dados.bonusIndicacoesAConferirCentavos,0);
+ motor.registrarCompraEnsaio({
+  titularId:indicado.titularId,pedidoId:'PEDIDO_ATIVADO'
+ });
+ const ativado=await get(usuario);
+ assert.equal(ativado.status,200);
+ assert.equal(ativado.dados.ativacoesIndicadosEmConferencia,1);
+ assert.equal(ativado.dados.bonusIndicacoesAConferirCentavos,2500);
+ assert.equal(ativado.dados.bonusIndicacoesEmConferenciaNaoSacavel,true);
+ assert.equal(ativado.dados.saldoBonusCentavos,0);
+ assert.equal(ativado.dados.saldosLiberados,false);
+ assert.equal(ativado.dados.minimoSaqueCentavos,2500);
+ assert.equal(ativado.dados.taxaSaquePercentual,0);
+ assert.equal(ativado.dados.saqueRealHabilitado,false);
+ assert.equal((await get(outro)).dados.bonusIndicacoesAConferirCentavos,0,
+  'indicado nao ve a remuneracao do proprio indicador');
+});
