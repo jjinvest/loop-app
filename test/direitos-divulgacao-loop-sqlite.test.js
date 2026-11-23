@@ -89,6 +89,15 @@ test('10% de venda confirmada independe de ativar posicao, nunca vira saldo',t=>
   .run('LINK_QUALIF_VERDE');
  x.db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=25000,quantidade=1 WHERE pedido_id=?')
   .run('PEDIDO_INDICADO');
+ // Produto cinza no pedido misto nao gera nenhum centavo de comissao.
+ x.db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?,?,?)')
+  .run('PEDIDO_INDICADO','CINZA',1,5000,1);
+ // Compra exclusivamente cinza continua sendo venda, sem bonificacao.
+ x.db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
+  .run('PEDIDO_CINZA',comprador,'APROVADO_PARA_EXPEDICAO',
+   'PSP_CINZA',1700000001200);
+ x.db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?,?,?)')
+  .run('PEDIDO_CINZA','CINZA',1,10000,1);
  const r=consultarComissoesDivulgacao({banco:x.db,titularId:id});
  assert.equal(r.percentual,10);
  assert.equal(r.vendasConfirmadas,1);
