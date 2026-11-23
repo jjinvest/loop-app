@@ -14,7 +14,7 @@ const html=fs.readFileSync(path.join(__dirname,
  '../src/producao/interface-aprovada-loop.js'),'utf8');
 
 const inicio=js.indexOf(' function mostrarResumoPosicoesOperador(destino,d){');
-const fim=js.indexOf(' function mostrarResumoComercialOperador(destino,d){',inicio);
+const fim=js.indexOf(' async function consultarFilaOperador(fila,pagina=0){',inicio);
 assert.ok(inicio>=0&&fim>inicio,'renderizador do painel de posições');
 const funcao=js.slice(inicio,fim);
 class No{
