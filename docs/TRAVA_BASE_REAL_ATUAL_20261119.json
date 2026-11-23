@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "8b2189f50a18b93ef8557d479f53eb2ca09c8393"
+      "sha": "b2899a7aa466d64c07883ed7747bea5b9457a7c3"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1184,7 +1184,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "19ff777f77fecb14cca101aa0755bb435be6182a"
+      "sha": "7881b7078fc094d6e533f2dfdd65efc68c534165"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
@@ -1927,12 +1927,16 @@
       "sha": "26bc0ec5681f5d9054e9ba763d7f0e660ba9f3dc"
     },
     {
+      "path": "test/akitemm-filtros-faixa-responsiva.test.js",
+      "sha": "496a233336b33c032843dd8b0d2c052d61d68a7e"
+    },
+    {
       "path": "test/akitemm-fluxo-pix-sandbox-seguranca.test.js",
       "sha": "5d5c788a8b701bb10a6a2cf0bd4e28a8aac54a26"
     },
     {
       "path": "test/akitemm-grade-2x2-4x2-aprovada.test.js",
-      "sha": "4d4fa4da44d020f28edf92b6eb5003ac5d2da675"
+      "sha": "7e6de65a13ad9b68ba252039fc4ec4b50de1562e"
     },
     {
       "path": "test/akitemm-marca-identidade-dourado-real.test.js",

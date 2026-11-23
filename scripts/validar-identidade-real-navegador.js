@@ -67,6 +67,59 @@ async function conferirLayoutReal(page,secao,{mobile=false}={}){
  }
  await page.setViewportSize(original);
 }
+async function conferirFiltrosAkitemmResponsivos(page){
+ const tamanho=page.viewportSize();
+ try{
+  for(const largura of [320,390,600,820,1280,1440]){
+   await page.setViewportSize({width:largura,height:844});
+   const info=await page.evaluate(()=>{
+    const regiao=document.querySelector('.akitemm-busca-filtros');
+    const legenda=regiao?.querySelector('.akitemm-legenda-cores');
+    const seletores=['#akitemmFiltroTodos','.akitemm-busca','#akitemmFiltroOfertas'];
+    const cores=['CINZA','VERDE','DOURADO','ROXO'];
+    const medir=el=>{
+     const r=el.getBoundingClientRect();
+     return {x:r.left,y:r.top,right:r.right,bottom:r.bottom,width:r.width};
+    };
+    return {
+     container:medir(regiao),legenda:medir(legenda),
+     topo:seletores.map(x=>medir(regiao.querySelector(x))),
+     cores:cores.map(c=>medir(regiao.querySelector('[data-akitemm-cor="'+c+'"]'))),
+     documento:document.documentElement.scrollWidth,
+     viewport:innerWidth
+    };
+   });
+   const {container,legenda,topo,cores}=info;
+   assert.ok(info.documento<=info.viewport+1,
+    'Filtros da AKITEMM cortam a tela em '+largura+'px');
+   assert.ok(legenda.width>container.width*.95,
+    'Legenda deve usar toda a largura em '+largura+'px');
+   for(const r of [...topo,...cores]){
+    assert.ok(r.width>40&&r.x>=container.x-2&&r.right<=container.right+2,
+     'Filtro fora da moldura em '+largura+'px: '+JSON.stringify(r));
+   }
+   if(largura>800){
+    assert.ok(cores.every(c=>Math.abs(c.y-cores[0].y)<2),
+     'CINZA VERDE DOURADO ROXO precisam estar lado a lado no PC');
+    for(let k=1;k<4;k++)assert.ok(cores[k].x>cores[k-1].right-2,
+     'A ordem das cores não pode ser trocada nem sobreposta');
+    assert.ok(topo.every(t=>Math.abs(t.y-topo[0].y)<2),
+     'Todos, Busca e Ofertas na mesma fileira do PC');
+   }else{
+    assert.ok(Math.abs(cores[1].y-cores[0].y)<2&&
+     Math.abs(cores[3].y-cores[2].y)<2&&
+     cores[2].y>cores[0].bottom-2,
+     'No celular/tablet, cores em duas colunas sem sobreposição');
+   }
+   if(largura<=450){
+    assert.ok(Math.abs(topo[0].y-topo[2].y)<2,
+     'Todos e Ofertas na primeira linha do celular');
+    assert.ok(topo[1].y>topo[0].bottom-2,
+     'Busca ocupa a segunda linha inteira no celular');
+   }
+  }
+ }finally{await page.setViewportSize(tamanho);}
+}
 async function main(){
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
@@ -1306,6 +1359,8 @@ async function main(){
    // sem produtos fictícios nem checkout.
    await page.locator('#akitemmAbasProdutos button').first().waitFor({state:'visible'});
    assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
+   // Geometria do PC e do celular: quatro cores em ordem, sem cortar.
+   await conferirFiltrosAkitemmResponsivos(page);
    // Controles de leitura respondem mesmo sem produtos publicados.
    assert.equal(await page.locator('#akitemmFiltroOfertas').isDisabled(),false);
    await page.locator('#akitemmFiltroOfertas').click();
