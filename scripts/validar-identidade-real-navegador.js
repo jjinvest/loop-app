@@ -388,7 +388,7 @@ async function main(){
       })};
     });
    assert.equal(quadros.display,'grid');
-   assert.deepEqual(quadros.titulos,['FILAS','TABULEIRO']);
+   assert.deepEqual(quadros.titulos,['FILAS','TABULEIRO / RELÓGIO DO TEMPO']);
    assert.deepEqual(quadros.rotulos,[
     ['Primeiro da fila A','Total da fila A',
      'Primeiro da fila B','Total da fila B'],
@@ -401,9 +401,7 @@ async function main(){
    assert.match(quadros.valores[0][3],/^\d+$/);
    assert.match(quadros.valores[1][0],/^\d+ \/ 6$/);
    for(let i=1;i<4;i++)assert.match(quadros.valores[1][i],/^\d+$/);
-   assert.equal(await operadorPage.locator(
-    '#adminResumoPosicoes .loop03-titulo-relogio').innerText(),
-    'RELÓGIO DO TEMPO');
+
    assert.equal(quadros.contidos,true,
     'cartões não podem fugir das molduras no celular');
    await operadorPage.locator('#adminAtualizarPosicoes').click();
