@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "Complemento visual autorizado 22/11/2026: o cabeçalho realmente entregue da AKITEMM utiliza a marca 'loop-marca-unificada' e exibe 3.0 como elemento span, diferente do HTML estático com em. Aplicar prata no 3.0 em ambos os formatos e manter LOOP dourado. Nenhum outro arquivo visual aprovado deve mudar.",
+  "autorizaçãoAtual": "22/11/2026: o proprietário autorizou expressamente, por foto da AKITEMM, apenas organizar os controles 'Todos', busca e 'Ofertas' ao longo de toda a largura disponível; colocar os quatro filtros CINZA, VERDE, DOURADO e ROXO lado a lado, nesta ordem, na linha inferior no computador, com adaptação responsiva em duas colunas no celular e busca em linha própria nos dispositivos pequenos. Alteração limitada a src/laboratorio/loja-cliente-demo.css, sem modificar o HTML, regras, ações, cores, catálogo, compras, banners ou os 23 demais arquivos visuais protegidos. Validação do navegador 320–1440 px e testes de contrato incluídos.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -69,7 +69,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "19ff777f77fecb14cca101aa0755bb435be6182a"
+      "sha": "721cc6d9e22b104d5a70cf1b86586c4d9be3f07a"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
@@ -128,6 +128,7 @@
     "21/11/2026: pedido expresso do proprietário com quatro capturas de tela para restaurar a foto única do titular entre LOOP e AKITEMM, aprimorar exclusivamente o painel Minha Conta (resumo legível, seleção e confirmação de foto), remover a descrição redundante da grafia do nick e organizar a verificação de e-mail com temporizador verdadeiro e reenvio seguro. Mudança HTML limitada a src/candidato/checkout-candidato-ui.html; CSS de acabamento somente na instância real. Preservar os outros 23 arquivos visuais, logins, catraca, tabuleiro, loja e dados financeiros.",
     "22/11/2026: pedido explícito do proprietário, com duas fotos, para corrigir exclusivamente o cabeçalho da loja AKITEMM: LOOP e símbolo dourados, versão 3.0 prateada, como a identidade aprovada do Escritório. No mesmo atendimento, restabelecer os quatro banners originais do Escritório do cliente, que estavam reduzidos visualmente a dois devido à filtragem, mantendo os extras publicados e o editor somente no operador. Alteração visual restrita ao arquivo src/laboratorio/loja-cliente-demo.css; os outros 23 HTML/CSS continuam sem modificações. Preservar os banners originais e dados, e todos os demais painéis, tabuleiro, catraca e financeiro.",
     "Esclarecimento do proprietário em 22/11/2026 às 21:03–21:05: o operador mantém quatro espaços base e + para adicionar ilimitados; o cliente deve exibir SOMENTE os banners com fotos completas publicadas, mesmo que sejam apenas dois. Não forçar quatro vazios para o cliente. Acrescentar lixeira com confirmação para descartar exclusivamente espaços extras (5 em diante), sem apagar os quatro espaços base, fotos alheias ou modificar a loja. Preservar o acabamento da marca LOOP dourado/3.0 prateado e todos os demais elementos aprovados.",
-    "Complemento visual autorizado 22/11/2026: o cabeçalho realmente entregue da AKITEMM utiliza a marca 'loop-marca-unificada' e exibe 3.0 como elemento span, diferente do HTML estático com em. Aplicar prata no 3.0 em ambos os formatos e manter LOOP dourado. Nenhum outro arquivo visual aprovado deve mudar."
+    "Complemento visual autorizado 22/11/2026: o cabeçalho realmente entregue da AKITEMM utiliza a marca 'loop-marca-unificada' e exibe 3.0 como elemento span, diferente do HTML estático com em. Aplicar prata no 3.0 em ambos os formatos e manter LOOP dourado. Nenhum outro arquivo visual aprovado deve mudar.",
+    "22/11/2026: o proprietário autorizou expressamente, por foto da AKITEMM, apenas organizar os controles 'Todos', busca e 'Ofertas' ao longo de toda a largura disponível; colocar os quatro filtros CINZA, VERDE, DOURADO e ROXO lado a lado, nesta ordem, na linha inferior no computador, com adaptação responsiva em duas colunas no celular e busca em linha própria nos dispositivos pequenos. Alteração limitada a src/laboratorio/loja-cliente-demo.css, sem modificar o HTML, regras, ações, cores, catálogo, compras, banners ou os 23 demais arquivos visuais protegidos. Validação do navegador 320–1440 px e testes de contrato incluídos."
   ]
 }
