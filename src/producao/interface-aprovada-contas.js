@@ -1157,8 +1157,10 @@
  async function carregarAbaOperador(id){
   if(!modoOperadorAtual)return;
   if(id==='abaPosicoes')void carregarIndicadoresComerciaisOperador();
+  const posicoesEmTeste=id==='abaPosicoes'&&visualTesteModulo!==null;
   const rotas={
-   abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
+   abaPosicoes:[posicoesEmTeste?'/api/admin/loop/testes-modulos':
+    '/api/admin/loop/estado','adminResumoPosicoes'],
    abaFinanceiro:['/api/admin/loop/controle','adminResumoFinanceiro'],
    abaMeusPedidos:['/api/admin/loop/cadeia-comercial','adminResumoPedidos']
   };
@@ -1171,7 +1173,21 @@
    if(!r.ok)throw Error(d.erro||'Consulta indisponível.');
    if(!modoOperadorAtual)return;
    if(id==='abaPosicoes'){
-    mostrarResumoPosicoesOperador(destino,d);
+    if(posicoesEmTeste){
+     const x=d[visualTesteModulo.toLowerCase()];
+     if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
+        !Array.isArray(x?.filaA)||!Array.isArray(x?.filaB))
+      throw Error('RESUMO_POSICOES_TESTE_INVALIDO');
+     mostrarResumoPosicoesOperador(destino,{
+      filaA:x.filaA.length,filaB:x.filaB.length,
+      tabuleiro:{eventosNoCiclo:x.tabuleiro.eventosNoCiclo,
+       ciclosConcluidos:x.tabuleiro.centrosConcluidos}
+     });
+     const origem=document.createElement('p');
+     origem.textContent='TESTE OPERACIONAL · '+visualTesteModulo+
+      ' · contadores do motor de teste';
+     destino.prepend(origem);
+    }else mostrarResumoPosicoesOperador(destino,d);
    }else if(id==='abaFinanceiro'){
     destino.textContent='Modo da catraca: '+d.modo+
      '\nGiros de hoje: '+d.girosHoje+
