@@ -148,13 +148,17 @@ async function iniciar(ambiente=process.env,opcoes={}){
  const config=configurar(ambiente,opcoes);
  const banco=new DatabaseSync(config.arquivo);
  banco.exec('PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;PRAGMA foreign_keys=ON;');
- let agendador=null,agendadorMidia=null,catalogoMidia=null;
+ let agendador=null,agendadorMidia=null,catalogoMidia=null,bancoTeste=null;
  try{
   const contas=new IdentidadeClienteLoopReal({...config,banco});
   const motorLoop=new MotorLoopIntegradoSQLite({banco});
   const operacaoCatraca=new OperacaoCatracaAdminSQLite({banco,motor:motorLoop});
+  // SQLite proprio dos testes no MESMO volume persistente: nunca introduzir
+  // tabelas de ensaio no banco de identidade, pedidos ou posicoes reais.
+  bancoTeste=new DatabaseSync('/dados-reais/testes-modulos.sqlite');
+  bancoTeste.exec('PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;PRAGMA foreign_keys=ON;');
   const bancadaOperacional=new BancadaModulosLoopSQLite({
-   banco,consultarAgenda:()=>operacaoCatraca.consultar()
+   banco:bancoTeste,consultarAgenda:()=>operacaoCatraca.consultar()
   });
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
   // Nenhum fornecedor é homologado automaticamente.
@@ -394,6 +398,8 @@ async function iniciar(ambiente=process.env,opcoes={}){
     try{await agendadorMidia?.encerrar();}catch{}
     try{await agendador.encerrar();}catch{}
     try{catalogoMidia?.fechar();}catch{}
+    try{bancoTeste?.exec('PRAGMA wal_checkpoint(TRUNCATE)');}catch{}
+    bancoTeste?.close();
     try{banco.exec('PRAGMA wal_checkpoint(TRUNCATE)');}catch{}
     banco.close();
    });
@@ -404,6 +410,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
   if(agendadorMidia)await agendadorMidia.encerrar();
   if(agendador)await agendador.encerrar();
   catalogoMidia?.fechar();
+  bancoTeste?.close();
   banco.close();
   throw e;
  }
