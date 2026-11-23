@@ -599,6 +599,71 @@ class IdentidadeClienteLoopReal{
    throw e;
   }
  }
+ // Autocomplete SOMENTE da rede do titular, nunca uma lista global.
+ // Corrige acentos e oferece nome proximo sem trocar nick ou cadastro.
+ pesquisarIndicados({titularId,termo}={}){
+  if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
+     typeof termo!=='string'||termo.trim().length<1||
+     termo.trim().length>50||/[\x00-\x1f\x7f<>]/.test(termo))
+   erro('BUSCA_REDE_INVALIDA');
+  const normalizar=x=>String(x||'').normalize('NFD')
+   .replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const t=normalizar(termo.trim().replace(/^@/,''));
+  const numero=t.replace(/\D/g,'');
+  const numeroValido=/^[+()0-9 .-]+$/.test(termo.trim())&&numero.length>=4;
+  // Uma letra errada ou letras vizinhas invertidas: apenas sugestao,
+  // nunca alteracao automatica do cadastro armazenado.
+  const aproximado=(valor)=>{
+   if(t.length<3||numeroValido)return false;
+   return normalizar(valor).split(/[\s.'-]+/).some(p=>{
+    if(Math.abs(p.length-t.length)>1||!p)return false;
+    if(p.length===t.length){
+     let erros=0;
+     for(let i=0;i<p.length;i++)if(p[i]!==t[i])erros++;
+     if(erros<=1)return true;
+     for(let i=0;i<p.length-1;i++)
+      if(p.slice(0,i)===t.slice(0,i)&&p[i]===t[i+1]&&
+         p[i+1]===t[i]&&p.slice(i+2)===t.slice(i+2))return true;
+     return false;
+    }
+    const maior=p.length>t.length?p:t,menor=p.length>t.length?t:p;
+    let i=0,j=0,erros=0;
+    while(i<maior.length&&j<menor.length){
+     if(maior[i]===menor[j]){i++;j++;}
+     else {i++;if(++erros>1)return false;}
+    }
+    return true;
+   });
+  };
+  const rows=this.banco.prepare([
+   'SELECT c.nick,c.nome_iv,c.nome_ct,c.nome_tag,',
+   'k.telefone_iv,k.telefone_ct,k.telefone_tag',
+   'FROM loop_real_vinculos_indicacao v',
+   'JOIN loop_real_contas c ON c.id=v.indicado_id',
+   'LEFT JOIN loop_real_contatos_cadastro k ON k.titular_id=v.indicado_id',
+   'WHERE v.indicador_id=?',
+   'ORDER BY v.registrado_em ASC,v.indicado_id ASC'
+  ].join(' '));
+  const resultados=[];
+  let ordem=0;
+  for(const x of rows.iterate(titularId)){
+   ordem++;
+   const nome=decifrar(this.keyCipher,x.nome_iv,x.nome_ct,x.nome_tag);
+   const n=normalizar(x.nick),nomeNormal=normalizar(nome);
+   const telefone=x.telefone_iv?decifrar(this.keyCipher,
+    x.telefone_iv,x.telefone_ct,x.telefone_tag):null;
+   const exato=n.includes(t)||nomeNormal.includes(t)||
+    (numeroValido&&telefone?.includes(numero))||
+    (t.startsWith('#')&&String(ordem)===t.slice(1));
+   const sugestao=!exato&&(aproximado(x.nick)||aproximado(nome));
+   if(!exato&&!sugestao)continue;
+   resultados.push({nick:x.nick,nome,numeroCadastro:ordem,
+    aproximado:sugestao});
+   if(resultados.length>=21)break;
+  }
+  return {resultados:resultados.slice(0,20),
+   temMais:resultados.length>20,somenteMinhaRede:true};
+ }
  listarIndicados(titularId,{limite=50,offset=0,cursor=null}={}){
   if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
      !Number.isSafeInteger(limite)||limite<1||limite>50||
