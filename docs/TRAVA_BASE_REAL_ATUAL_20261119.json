@@ -1336,11 +1336,11 @@
     },
     {
       "path": "src/producao/banners-editor-real.css",
-      "sha": "be5e88f2a1e6cecb4a61dff7548e8884e39ab514"
+      "sha": "4d1363472f230787dada4b7cf654198cfe7fe25c"
     },
     {
       "path": "src/producao/banners-escritorio-real-client.js",
-      "sha": "2009538c74271a0234e455a85b7c3614e3ae0ad8"
+      "sha": "cec40d2d2542f8e5f5c6d4e8dcb518fbafe16616"
     },
     {
       "path": "src/producao/banners-escritorio-real.js",
@@ -2897,6 +2897,10 @@
     {
       "path": "test/longevidade-cadastros-filas-reais.test.js",
       "sha": "628475096b8dc02bf1d92694daccee808a61934b"
+    },
+    {
+      "path": "test/loop-banners-sequencia-celular.test.js",
+      "sha": "9795d93b94f53aea722e4f81756905af7ddf8b1c"
     },
     {
       "path": "test/loop-douradas-1000-conversoes.test.js",
