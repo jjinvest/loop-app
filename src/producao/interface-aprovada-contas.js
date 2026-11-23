@@ -521,7 +521,19 @@
     '<div id="adminCadastroResultados" class="loop03-admin-resultados" role="listbox" aria-label="Sugestões de clientes" hidden></div>',
     '<div id="adminCadastroEstado" class="loop03-admin-dado" role="status" aria-live="polite">Digite nome, nick, telefone, e-mail ou CPF para consultar.</div>',
     '<div class="loop03-admin-acoes"><button id="adminVoltarBuscaEquipe" type="button" hidden>← Voltar à busca</button></div>',
-    '<section id="adminComprasCliente" class="loop03-admin-compras" hidden><h3>Produtos comprados</h3><div id="adminComprasClienteLista"></div><button type="button" id="adminMaisComprasCliente" hidden>Ver mais compras</button></section>',
+    '<section id="adminComprasCliente" class="loop03-admin-compras" hidden><h3>Produtos comprados</h3>',
+    '<div class="loop03-compras-colunas">',
+    '<div class="loop03-compras-coluna"><h4>Unidades e compras aprovadas</h4>',
+    '<div id="adminResumoUnidadesCliente" class="loop03-compras-total" role="status"></div>',
+    '<div id="adminComprasClienteLista"></div>',
+    '<button type="button" id="adminMaisComprasCliente" hidden>Ver mais produtos aprovados</button></div>',
+    '<div class="loop03-compras-coluna loop03-compras-coluna-avulsas"><h4>Compras avulsas / normais</h4>',
+    '<div id="adminAvulsasResumo" class="loop03-compras-total" role="status"></div>',
+    '<p class="loop03-compras-aviso">Produtos cinza registrados na compra: não qualificam posição no LOOP.</p>',
+    '<button type="button" id="adminVerAvulsasCliente" aria-expanded="false" aria-controls="adminAvulsasClienteLista" hidden>Ver compras avulsas</button>',
+    '<div id="adminAvulsasClienteLista" hidden></div>',
+    '<button type="button" id="adminMaisAvulsasCliente" hidden>Ver mais compras avulsas</button></div>',
+    '</div></section>',
     '<form id="adminCorrigeCadastro" class="loop03-admin-campos" hidden>',
     '<label for="adminNomeCadastro">Nome</label><input id="adminNomeCadastro" maxlength="90" autocomplete="off" required>',
     '<label for="adminTelefoneCadastro">Telefone</label><input id="adminTelefoneCadastro" inputmode="tel" autocomplete="off" maxlength="24">',
@@ -563,12 +575,22 @@
   let nickCadastroConsultado=null,consultaCadastroVersao=0;
   let temporizadorSugestaoCadastro=null;
   let historicoCadastroNick=null,historicoCadastroOffset=0;
+  let avulsasCadastroNick=null,avulsasCadastroOffset=0,avulsasRequisitando=false;
   const comprasPainel=$('adminComprasCliente');
   function limparHistoricoCadastro(){
    historicoCadastroNick=null;historicoCadastroOffset=0;
+   avulsasCadastroNick=null;avulsasCadastroOffset=0;avulsasRequisitando=false;
    if(comprasPainel)comprasPainel.hidden=true;
    $('adminComprasClienteLista')?.replaceChildren();
+   $('adminAvulsasClienteLista')?.replaceChildren();
+   if($('adminResumoUnidadesCliente'))$('adminResumoUnidadesCliente').textContent='';
+   if($('adminAvulsasResumo'))$('adminAvulsasResumo').textContent='';
    if($('adminMaisComprasCliente'))$('adminMaisComprasCliente').hidden=true;
+   if($('adminMaisAvulsasCliente'))$('adminMaisAvulsasCliente').hidden=true;
+   if($('adminAvulsasClienteLista'))$('adminAvulsasClienteLista').hidden=true;
+   const abrir=$('adminVerAvulsasCliente');
+   if(abrir){abrir.hidden=true;abrir.setAttribute('aria-expanded','false');
+    abrir.textContent='Ver compras avulsas';}
   }
   async function carregarComprasCadastro(nick,{mais=false}={}){
    if(!modoOperadorAtual||!comprasPainel)return;
@@ -587,11 +609,34 @@
     const r=await fetch(url,{credentials:'same-origin',cache:'no-store'});
     const d=await r.json().catch(()=>({}));
     if(!r.ok||d.fonte!=='SQLITE_COMERCIAL_REAL'||!Array.isArray(d.itens)||
-       !Number.isSafeInteger(d.totalUnidades)||d.totalUnidades<0||
-       !Number.isSafeInteger(d.totalLinhas)||d.totalLinhas<0)
+       ![d.totalUnidades,d.totalLinhas,d.totalUnidadesCompradas,
+        d.totalUnidadesAprovadas,d.totalUnidadesPendentes].every(
+        x=>Number.isSafeInteger(x)&&x>=0)||
+       d.totalUnidadesAprovadas>d.totalUnidadesCompradas)
      throw Error(d.erro||'HISTORICO_COMERCIAL_NAO_CONFIAVEL');
     if(historicoCadastroNick!==nick||!modoOperadorAtual)return;
     aviso.remove();
+    if(!mais){
+     const resumo=$('adminResumoUnidadesCliente');
+     resumo.textContent='Unidades compradas: '+d.totalUnidadesCompradas+
+      '\nUnidades aprovadas: '+d.totalUnidadesAprovadas+
+      '\nUnidades aguardando pagamento: '+d.totalUnidadesPendentes;
+     resumo.style.whiteSpace='pre-line';
+     const avisoAvulsas=$('adminAvulsasResumo'),abrir=$('adminVerAvulsasCliente');
+     if(d.classificacaoAvulsasDisponivel===true&&
+        Number.isSafeInteger(d.totalUnidadesAvulsas)&&
+        Number.isSafeInteger(d.totalLinhasAvulsas)){
+      avisoAvulsas.textContent='Unidades avulsas em pedidos: '+
+       d.totalUnidadesAvulsas;
+      abrir.hidden=d.totalLinhasAvulsas===0;
+      if(d.totalLinhasAvulsas===0)
+       avisoAvulsas.textContent+='\nNenhuma compra avulsa classificada.';
+     }else{
+      avisoAvulsas.textContent='Classificação histórica de compras avulsas não disponível.';
+      abrir.hidden=true;
+     }
+     avisoAvulsas.style.whiteSpace='pre-line';
+    }
     if(!mais&&d.itens.length===0){
      const vazio=document.createElement('p');
      vazio.className='loop03-compras-aviso';
@@ -622,12 +667,6 @@
     }
     historicoCadastroOffset=pagina+d.itens.length;
     botao.hidden=!d.temMais;
-    if(!mais){
-     const total=document.createElement('p');
-     total.className='loop03-compras-total';
-     total.textContent='Unidades compradas e aprovadas: '+d.totalUnidades;
-     lista.prepend(total);
-    }
    }catch(e){
     if(historicoCadastroNick!==nick||!modoOperadorAtual)return;
     aviso.textContent='Compras indisponíveis nesta consulta. '+e.message;
@@ -635,6 +674,86 @@
   }
   $('adminMaisComprasCliente')?.addEventListener('click',()=>{
    if(historicoCadastroNick)void carregarComprasCadastro(historicoCadastroNick,{mais:true});
+  });
+  async function carregarAvulsasCadastro(nick,{mais=false}={}){
+   if(!modoOperadorAtual||!comprasPainel||avulsasRequisitando)return;
+   const lista=$('adminAvulsasClienteLista');
+   const botao=$('adminMaisAvulsasCliente'),pagina=mais?avulsasCadastroOffset:0;
+   if(!mais){avulsasCadastroNick=nick;avulsasCadastroOffset=0;
+    lista.replaceChildren();}
+   avulsasRequisitando=true;
+   botao.hidden=true;
+   lista.hidden=false;
+   const aviso=document.createElement('p');
+   aviso.className='loop03-compras-aviso';
+   aviso.textContent='Consultando compras avulsas registradas…';
+   lista.append(aviso);
+   try{
+    const url='/api/admin/contas/compras-avulsas?nick='+
+     encodeURIComponent(nick)+'&offset='+pagina;
+    const r=await fetch(url,{credentials:'same-origin',cache:'no-store'});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.fonte!=='SQLITE_COMERCIAL_REAL'||
+       d.classificacaoAvulsasDisponivel!==true||
+       !Array.isArray(d.itens)||!Number.isSafeInteger(d.totalUnidadesAvulsas)||
+       !Number.isSafeInteger(d.totalLinhasAvulsas))
+     throw Error(d.erro||'AVULSAS_NAO_CONFIAVEIS');
+    if(avulsasCadastroNick!==nick||historicoCadastroNick!==nick||
+       !modoOperadorAtual)return;
+    aviso.remove();
+    if(!mais&&d.itens.length===0){
+     const vazio=document.createElement('p');
+     vazio.className='loop03-compras-aviso';
+     vazio.textContent='Nenhuma compra avulsa registrada.';
+     lista.append(vazio);
+    }
+    for(const item of d.itens){
+     if(!Number.isSafeInteger(item.quantidade)||item.quantidade<1||
+        !Number.isSafeInteger(item.precoUnitCentavos)||item.precoUnitCentavos<1)
+      throw Error('ITEM_AVULSO_INVALIDO');
+     const detalhe=document.createElement('details');
+     detalhe.className='loop03-compra-item loop03-compra-avulsa-item';
+     const resumo=document.createElement('summary');
+     resumo.textContent=(item.titulo||item.produtoId||('SKU '+item.sku))+
+      ' · '+item.quantidade+' un. · '+(
+       item.statusPagamento==='APROVADO_PARA_EXPEDICAO'?
+       'Aprovado':'Aguardando pagamento');
+     const corpo=document.createElement('span');
+     const data=new Date(item.criadoEm);
+     corpo.textContent='Quantidade: '+item.quantidade+
+      '\nData: '+(Number.isFinite(data.getTime())?
+       data.toLocaleDateString('pt-BR'):'Não informada')+
+      '\nPreço por unidade: '+new Intl.NumberFormat('pt-BR',{
+       style:'currency',currency:'BRL'}).format(item.precoUnitCentavos/100)+
+      '\nForma de pagamento: '+(item.formaPagamento||'Não registrada pelo sistema')+
+      '\nSituação: '+(item.statusPagamento==='APROVADO_PARA_EXPEDICAO'?
+       'Pagamento aprovado':'Aguardando pagamento')+
+      '\nPedido: '+(item.pedidoId||'Não informado')+
+      (item.pagamentoId?'\nReferência do pagamento: '+item.pagamentoId:'');
+     corpo.style.whiteSpace='pre-line';
+     detalhe.append(resumo,corpo);lista.append(detalhe);
+    }
+    avulsasCadastroOffset=pagina+d.itens.length;
+    botao.hidden=!d.temMais;
+   }catch(e){
+    if(avulsasCadastroNick!==nick||historicoCadastroNick!==nick)return;
+    aviso.textContent='Detalhes avulsos indisponíveis. '+e.message;
+   }finally{avulsasRequisitando=false;}
+  }
+  $('adminVerAvulsasCliente')?.addEventListener('click',()=>{
+   const nick=historicoCadastroNick;
+   if(!nick)return;
+   const lista=$('adminAvulsasClienteLista');
+   const abrir=lista.hidden;
+   lista.hidden=!abrir;
+   const botao=$('adminVerAvulsasCliente');
+   botao.setAttribute('aria-expanded',String(abrir));
+   botao.textContent=abrir?'Ocultar compras avulsas':'Ver compras avulsas';
+   $('adminMaisAvulsasCliente').hidden=true;
+   if(abrir)void carregarAvulsasCadastro(nick);
+  });
+  $('adminMaisAvulsasCliente')?.addEventListener('click',()=>{
+   if(avulsasCadastroNick)void carregarAvulsasCadastro(avulsasCadastroNick,{mais:true});
   });
   function voltarBuscaEquipe(){
    clearTimeout(temporizadorSugestaoCadastro);

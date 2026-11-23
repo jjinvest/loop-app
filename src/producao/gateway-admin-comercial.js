@@ -345,6 +345,27 @@ function montarGatewayAdminComercial(app,{
    catch(e){return res.status(e.codigo==='CADASTRO_NAO_LOCALIZADO'?404:503)
     .json({erro:e.codigo||'COMPRAS_CADASTRO_INDISPONIVEIS'});}
   });
+  // Avulsas: consulta somente leitura protegida. Classificacao CINZA
+  // historica, capturada no pedido; nunca usar cor atual do catalogo.
+  app.get('/api/admin/contas/compras-avulsas',proteger,(req,res)=>{
+   res.set('Cache-Control','private, no-store');
+   const ks=Object.keys(req.query).sort().join(',');
+   const nick=req.query.nick,offsetBruto=req.query.offset;
+   if(!['nick','nick,offset'].includes(ks)||
+      typeof nick!=='string'||!/^[A-Za-z]{1,12}$/.test(nick)||
+      (offsetBruto!==undefined&&(typeof offsetBruto!=='string'||
+       !/^(0|[1-9][0-9]*)$/.test(offsetBruto)||
+       !Number.isSafeInteger(Number(offsetBruto)))))
+    return res.status(400).json({erro:'RELATORIO_COMERCIAL_PARAMETRO_INVALIDO'});
+   if(!relatorioComercial)return res.status(503).json({
+    erro:'RELATORIO_COMERCIAL_NAO_DISPONIVEL'
+   });
+   try{return res.json(relatorioComercial.comprasAvulsasDoCadastro({
+    nick,offset:offsetBruto===undefined?0:Number(offsetBruto)
+   }));}
+   catch(e){return res.status(e.codigo==='CADASTRO_NAO_LOCALIZADO'?404:503)
+    .json({erro:e.codigo||'COMPRAS_AVULSAS_INDISPONIVEIS'});}
+  });
   app.post('/api/admin/contas/cadastro/corrigir',proteger,validarCsrf,(req,res)=>{
    res.set('Cache-Control','private, no-store');
    if(!req.is('application/json')||!req.body||
