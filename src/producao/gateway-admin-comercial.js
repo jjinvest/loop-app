@@ -18,6 +18,7 @@ const {BannersLojaAkitemmRealSQLite}=
  require('./banners-loja-akitemm-real-sqlite');
 const {consultarCofresOperador}=
  require('./cofres-operador-readonly');
+const {DouradasOperadorSQLite}=require('./douradas-operador-sqlite');
 const {criarRelatorioClientesProdutosOperador}=
  require('./relatorio-clientes-produtos-operador');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
@@ -70,6 +71,7 @@ function montarGatewayAdminComercial(app,{
   erro('ADMIN_RECUPERACAO_RESERVAS_MOTOR_DIVERGENTE');
  // Relatorios do operador apenas sobre o mesmo banco e a leitura comercial
  // ja autorizada. Nao instanciam checkout nem manipulam posicoes.
+ const douradas=motorLoop?new DouradasOperadorSQLite({motor:motorLoop}):null;
  const relatorioComercial=contas&&motorLoop&&
   contas.banco===motorLoop.banco?
   criarRelatorioClientesProdutosOperador({banco:contas.banco}):null;
@@ -561,6 +563,32 @@ function montarGatewayAdminComercial(app,{
    banco:motorLoop.banco,motorLoop,classificacaoLoop
   }));}
   catch{return res.status(503).json({erro:'QUALIFICACAO_REAL_CONSULTA_INDISPONIVEL'});}
+ });
+ // Douradas operacionais: posição real do LOOP e auditoria SQLite, SEM
+ // venda, aporte, débito em caixa, bônus ou saldo para saque.
+ app.get('/api/admin/loop/douradas',proteger,(_req,res)=>{
+  res.set('Cache-Control','private, no-store');
+  if(!douradas)return res.status(503).json({erro:'DOURADAS_MOTOR_INDISPONIVEL'});
+  try{return res.json(douradas.consultar());}
+  catch(e){return res.status(503).json({erro:e.codigo||'DOURADAS_CONSULTA_INDISPONIVEL'});}
+ });
+ app.post('/api/admin/loop/douradas',proteger,validarCsrf,(req,res)=>{
+  res.set('Cache-Control','private, no-store');
+  if(!douradas)return res.status(503).json({erro:'DOURADAS_MOTOR_INDISPONIVEL'});
+  if(!req.is('application/json')||!req.body||
+      Array.isArray(req.body)||typeof req.body!=='object'||
+      Object.keys(req.body).sort().join(',')!=='idOperacao,motivo')
+   return res.status(400).json({erro:'DOURADAS_COMANDO_INVALIDO'});
+  try{
+   const criado=douradas.criar(req.body);
+   return res.status(criado.repetida?200:201).json({
+    ...criado,...douradas.consultar()
+   });
+  }catch(e){
+   const codigo=e.codigo||'DOURADAS_OPERACAO_INDISPONIVEL';
+   return res.status(codigo==='DOURADAS_COMANDO_INVALIDO'?400:
+    codigo==='DOURADAS_REPLAY_DIVERGENTE'?409:503).json({erro:codigo});
+  }
  });
  // Cofres exclusivamente do operador: apenas saldos com prova externa.
  // A ausência da integração retorna valores desconhecidos, não R$ 0 fictício.
