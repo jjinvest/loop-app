@@ -817,7 +817,7 @@ class IdentidadeClienteLoopReal{
  // Pesquisa privada e somente leitura, sem indice de nome/telefone em claro.
  // Resultados limitados para nao expor listagens completas de cadastros.
  buscarCadastrosOperador({termo}={}){
-  if(typeof termo!=='string'||termo.trim().length<2||termo.trim().length>90||
+  if(typeof termo!=='string'||termo.trim().length<1||termo.trim().length>90||
      /[\x00-\x1f\x7f<>]/.test(termo))erro('BUSCA_CADASTRO_INVALIDA');
   const busca=termo.trim();
   const normalizar=x=>String(x||'').normalize('NFD')
