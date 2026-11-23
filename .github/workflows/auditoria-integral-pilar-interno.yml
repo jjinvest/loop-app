@@ -84,8 +84,8 @@ jobs:
       - name: Fluxo unificado cliente / loja / conta PC e celular
         if: success() || failure()
         run: node scripts/validar-conta-unica-candidato-browser.js
-      # A rotina legada /staging pressupunha 10 abas e 400 quadrinhos,
-      # diferente da vitrine REAL atual: nao e gate de aceitacao da AKITEMM.
+      # A prova antiga da rota /staging falhava no calculo de geometria
+      # no celular, e nao certifica o fluxo da rota /loja real.
       - name: AKITEMM real / cadastro de produto / fotos / filtros / PC e celular
         if: success() || failure()
         run: node scripts/validar-operador-primeiro-produto-navegador.js
