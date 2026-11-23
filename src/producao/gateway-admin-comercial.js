@@ -112,7 +112,7 @@ function montarGatewayAdminComercial(app,{
      !req.body||Array.isArray(req.body)||
      Object.keys(req.body).sort().join(',')!=='nick,senha'||
      typeof req.body.nick!=='string'||
-     req.body.nick.trim().toLowerCase()!=='operador'||
+     req.body.nick!=='OPERADOR'||
      typeof req.body.senha!=='string')
    return res.status(400).json({erro:'CAMPOS_OPERADOR_INVALIDOS'});
   try{
