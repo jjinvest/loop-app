@@ -2792,7 +2792,7 @@
     },
     {
       "path": "test/identidade-real-preparacao.test.js",
-      "sha": "86d788460227110ec86f109041c65b4d1f59ebaf"
+      "sha": "bbd38b1ebffeb1c85230d5af4bf071833deef564"
     },
     {
       "path": "test/identidade-visual-futurista-loop-v6.test.js",
@@ -3688,7 +3688,7 @@
     },
     {
       "path": "test/direitos-divulgacao-loop-sqlite.test.js",
-      "sha": "72170fd49273660c5a1d804f74a6e59d416ac3aa"
+      "sha": "a6a35380264398918984263d8fd9c31d4d481f04"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
