@@ -129,6 +129,12 @@ class LivroFinanceiroRealSQLite{
   if(typeof indicadoId!=='string'||!TITULAR.test(indicadoId))
    falha('FIN_INDICADO_INVALIDO');
   return this._transacao(()=>{
+   // Esquemas incompletos nao podem disparar comissao nem erro SQL aberto.
+   if(!this.banco.prepare([
+    "SELECT 1 FROM sqlite_master WHERE type='table'",
+    "AND name='loop_real_indicacoes_validas_financeiro'"
+   ].join(' ')).get())
+    falha('FIN_COMPROVACAO_EXTERNA_NAO_HOMOLOGADA');
    const q=this.banco.prepare([
     'SELECT q.indicado_id,q.indicador_id,q.pedido_id,q.pagamento_id,',
     'q.comprovante_bancario_id,q.tipo,',
