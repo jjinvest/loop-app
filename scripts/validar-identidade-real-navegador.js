@@ -1631,14 +1631,14 @@ async function main(){
    assert.equal(await pagina.locator('#loop03TotalIntegrado').innerText(),
     String(diagnostico.quantidadePosicoes)+' / 10');
    assert.ok((await pagina.locator('#pedidosPaginacao').innerText())
-    .includes('Página 1 · 1 pedido(s) no histórico'));
+    .includes('Página 1 · 2 pedido(s) no histórico'));
    assert.equal(await pagina.locator('#pedidosAnterior').isDisabled(),true);
    assert.equal(await pagina.locator('#pedidosProximo').isDisabled(),true);
-   assert.equal(await pagina.locator('#pedidosResumo').innerText(),'1 pedido no histórico');
+   assert.equal(await pagina.locator('#pedidosResumo').innerText(),'2 pedidos no histórico');
    assert.equal(await pagina.locator('#conteudoMeusPedidos #atualizarPedidos').isVisible(),true);
-   await pagina.locator('#listaPedidos .loop03-pedido-remessas > summary').click();
+   await pagina.locator('#listaPedidos .loop03-pedido-remessas > summary').first().click();
    assert.equal(await pagina.locator('#listaPedidos .loop03-pedido-remessas[open]').count(),1);
-   assert.ok((await pagina.locator('#listaPedidos .loop03-pedido-remessas').innerText())
+   assert.ok((await pagina.locator('#listaPedidos .loop03-pedido-remessas').first().innerText())
     .includes('Fornecedor'));
    const estiloNavegacao=await pagina.locator('#conteudoMeusPedidos .loop03-pedidos-paginacao')
     .evaluate(el=>getComputedStyle(el).display);

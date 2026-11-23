@@ -2,7 +2,8 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {DatabaseSync}=require('node:sqlite');
-const {consultarDivulgacao,verificarNickDivulgador}=
+const {consultarDivulgacao,consultarComissoesDivulgacao,
+ verificarNickDivulgador}=
  require('../src/producao/direitos-divulgacao-loop-sqlite');
 const id='titular-123e4567-e89b-12d3-a456-426614174000';
 function fixture(t){
@@ -64,4 +65,41 @@ test('sem tabelas de pedido nao inventa habilitacao',t=>{
  db.exec('CREATE TABLE loop_real_contas(id TEXT PRIMARY KEY,nick TEXT);');
  db.prepare('INSERT INTO loop_real_contas VALUES(?,?)').run(id,'Vilela');
  assert.equal(consultarDivulgacao({banco:db,titularId:id}).linkLiberado,false);
+});
+
+test('10% de venda confirmada independe de ativar posicao, nunca vira saldo',t=>{
+ const x=fixture(t),comprador='titular-123e4567-e89b-12d3-a456-426614174001';
+ x.db.exec('CREATE TABLE loop_real_vinculos_indicacao('+
+  'indicado_id TEXT PRIMARY KEY,indicador_id TEXT,registrado_em INTEGER);');
+ x.db.prepare('INSERT INTO loop_real_contas VALUES(?,?)')
+  .run(comprador,'Thaisa');
+ // Primeiro o titular compra VERDE R$10 e passa a poder divulgar.
+ x.inserir('LINK_QUALIF_VERDE','VERDE');
+ x.db.prepare('INSERT INTO loop_real_vinculos_indicacao VALUES(?,?,?)')
+  .run(comprador,id,1700000000500);
+ // Depois a pessoa indicada compra. A inscricao no LOOP nao existe.
+ x.db.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)')
+  .run('PEDIDO_INDICADO',comprador,'APROVADO_PARA_EXPEDICAO',
+   'PSP_INDICADO',1700000001000);
+ x.db.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)')
+  .run('PEDIDO_INDICADO','VERDE',1);
+ x.db.prepare('ALTER TABLE loop_real_fotos_regras_pedido ADD COLUMN preco_unit_centavos INTEGER;');
+ x.db.prepare('ALTER TABLE loop_real_fotos_regras_pedido ADD COLUMN quantidade INTEGER;');
+ x.db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=1000,quantidade=1 WHERE pedido_id=?')
+  .run('LINK_QUALIF_VERDE');
+ x.db.prepare('UPDATE loop_real_fotos_regras_pedido SET preco_unit_centavos=25000,quantidade=1 WHERE pedido_id=?')
+  .run('PEDIDO_INDICADO');
+ const r=consultarComissoesDivulgacao({banco:x.db,titularId:id});
+ assert.equal(r.percentual,10);
+ assert.equal(r.vendasConfirmadas,1);
+ assert.equal(r.comissaoAConferirCentavos,2500);
+ assert.equal(r.saldoLiberadoCentavos,0);
+ assert.equal(r.podeSacar,false);
+ assert.equal(r.financeiroReal,false);
+ assert.deepEqual(consultarComissoesDivulgacao({banco:x.db,titularId:id}),r);
+ x.db.prepare("UPDATE loja_real_pedidos SET status='CANCELADO' WHERE pedido_id=?")
+  .run('PEDIDO_INDICADO');
+ const estornado=consultarComissoesDivulgacao({banco:x.db,titularId:id});
+ assert.equal(estornado.vendasConfirmadas,0);
+ assert.equal(estornado.comissaoAConferirCentavos,0);
 });

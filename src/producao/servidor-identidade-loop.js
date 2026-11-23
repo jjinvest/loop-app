@@ -3,7 +3,8 @@
 // src/candidato e nunca monta as rotas de laboratório ou dinheiro.
 const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
-const {consultarDivulgacao,verificarNickDivulgador}=
+const {consultarDivulgacao,consultarComissoesDivulgacao,
+ verificarNickDivulgador}=
  require('./direitos-divulgacao-loop-sqlite');
 const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
 const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
@@ -467,6 +468,15 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   try{return res.set('Cache-Control','private, no-store').json(
    consultarDivulgacao({banco:contas.banco,titularId:req.conta.titularId})
   );}catch{return res.status(503).json({erro:'DIVULGACAO_INDISPONIVEL'});}
+ });
+ // Apuracao dos 10% para quem divulgou sem precisar aderir ao LOOP.
+ // Resultado e apenas previsao auditavel, nao saldo nem autorizacao de saque.
+ app.get('/api/contas/comissoes-divulgacao',protegido,(req,res)=>{
+  try{return res.set('Cache-Control','private, no-store').json(
+   consultarComissoesDivulgacao({
+    banco:contas.banco,titularId:req.conta.titularId
+   })
+  );}catch{return res.status(503).json({erro:'COMISSOES_CONSULTA_INDISPONIVEL'});}
  });
  // Convite registra somente um cadastro, sem ativar comissão, dinheiro ou posição.
  app.get('/api/contas/minha-rede',protegido,(req,res)=>{

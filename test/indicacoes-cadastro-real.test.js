@@ -119,10 +119,23 @@ test('API de convites usa sessão e o cadastro atribui pelo nick do link',async 
  t.after(()=>new Promise(resolve=>srv.close(resolve)));
  const url='http://127.0.0.1:'+srv.address().port;
  assert.equal((await fetch(url+'/api/contas/minha-rede')).status,401);
+ const bloqueado=await fetch(url+'/convite/loja?ref=Alpha',{redirect:'manual'});
+ assert.equal(bloqueado.status,403,'cadastro sozinho nao libera divulgacao');
+ // Em RAM, simular a fotografia de uma venda verde ja confirmada por PSP:
+ // isso concede somente o link, sem aderir nem criar posicao no LOOP.
+ x.banco.exec([
+  'CREATE TABLE loja_real_pedidos(',
+  'pedido_id TEXT PRIMARY KEY,titular_id TEXT,status TEXT,pagamento_id TEXT);',
+  'CREATE TABLE loop_real_fotos_regras_pedido(',
+  'pedido_id TEXT,cor TEXT,revisao INTEGER);'
+ ].join(' '));
+ x.banco.prepare('INSERT INTO loja_real_pedidos VALUES(?,?,?,?)')
+  .run('VENDA_VERDE_CONF',a.titularId,'APROVADO_PARA_EXPEDICAO','PSP_VERDE');
+ x.banco.prepare('INSERT INTO loop_real_fotos_regras_pedido VALUES(?,?,?)')
+  .run('VENDA_VERDE_CONF','VERDE',1);
  const redir=await fetch(url+'/convite/loja?ref=Alpha',{redirect:'manual'});
  assert.equal(redir.status,303);
- assert.equal(redir.headers.get('location'),
-  '/loja?ref=Alpha');
+ assert.equal(redir.headers.get('location'),'/loja?ref=Alpha');
  assert.equal((await fetch(url+'/convite/loja?ref=%2Ffoo',{
   redirect:'manual'
  })).status,400);

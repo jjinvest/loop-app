@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "61abdeafa10627668173f9ef490d76dd08bd3b98"
+      "sha": "6a62a6be6387af515488a34236fd61eedc933922"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1644,7 +1644,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "efe9f91cba23e3dc50aa61cefbd4d76955037d97"
+      "sha": "bc8991563432d71966a1318e1f1dc02d29b6a412"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -2812,7 +2812,7 @@
     },
     {
       "path": "test/indicacoes-cadastro-real.test.js",
-      "sha": "dfdb7a49705238d51a7e1ea6cd400e3f04bf538e"
+      "sha": "dd911e04c33f9b6aac2ee4bfcb67a6c96d759e0f"
     },
     {
       "path": "test/indicacoes-campanha-so-com-cadeira.test.js",
@@ -3684,11 +3684,11 @@
     },
     {
       "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
-      "sha": "25a928d0cfd6fc6c256c901835f3f5789f253697"
+      "sha": "230ada044af08e1f34d0890e0d4c69bd9a95a4aa"
     },
     {
       "path": "test/direitos-divulgacao-loop-sqlite.test.js",
-      "sha": "5a85841c8d379e42bdd773f7c95b07142f8f8b89"
+      "sha": "b54a996da873bb9eeafa23db132455a0d2a4df03"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
@@ -5948,6 +5948,41 @@
       "antes": "0854b6f30e96b88988d92c9d5765c7629abb05b3",
       "depois": "61abdeafa10627668173f9ef490d76dd08bd3b98",
       "objetivo": "A prova PC/celular agora exige compra verde efetivamente confirmada em banco descartavel antes de liberar link; cadastro sozinho nao habilita. Teste do pedido barato demonstra que nao cria posicao LOOP."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
+      "antes": "25a928d0cfd6fc6c256c901835f3f5789f253697",
+      "depois": "230ada044af08e1f34d0890e0d4c69bd9a95a4aa",
+      "objetivo": "Apurar 10% de venda indicada comprovada sem exigir posicao no LOOP, sem gerar saldo/saque; atualizar ensaios do link por compra verdadeira isolada e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/servidor-identidade-loop.js",
+      "antes": "efe9f91cba23e3dc50aa61cefbd4d76955037d97",
+      "depois": "bc8991563432d71966a1318e1f1dc02d29b6a412",
+      "objetivo": "Apurar 10% de venda indicada comprovada sem exigir posicao no LOOP, sem gerar saldo/saque; atualizar ensaios do link por compra verdadeira isolada e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/direitos-divulgacao-loop-sqlite.test.js",
+      "antes": "5a85841c8d379e42bdd773f7c95b07142f8f8b89",
+      "depois": "b54a996da873bb9eeafa23db132455a0d2a4df03",
+      "objetivo": "Apurar 10% de venda indicada comprovada sem exigir posicao no LOOP, sem gerar saldo/saque; atualizar ensaios do link por compra verdadeira isolada e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/indicacoes-cadastro-real.test.js",
+      "antes": "dfdb7a49705238d51a7e1ea6cd400e3f04bf538e",
+      "depois": "dd911e04c33f9b6aac2ee4bfcb67a6c96d759e0f",
+      "objetivo": "Apurar 10% de venda indicada comprovada sem exigir posicao no LOOP, sem gerar saldo/saque; atualizar ensaios do link por compra verdadeira isolada e navegador PC/celular."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "61abdeafa10627668173f9ef490d76dd08bd3b98",
+      "depois": "6a62a6be6387af515488a34236fd61eedc933922",
+      "objetivo": "Apurar 10% de venda indicada comprovada sem exigir posicao no LOOP, sem gerar saldo/saque; atualizar ensaios do link por compra verdadeira isolada e navegador PC/celular."
     }
   ]
 }
