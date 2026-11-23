@@ -1478,6 +1478,7 @@
   $('loop03NickIntegrado').textContent='OPERADOR';
   $('loop03RodapeFilaIntegrado').hidden=true;
   $('loop03RodapeCoroaIntegrado').hidden=true;
+  mostrarTotaisFilasRodape(null,null,true);
   $('loop03AbrirPerfil').disabled=true;
   fecharDadosRodapeReal();
   // O operador tem seu proprio retrato; nao copia foto de titular.
@@ -2104,6 +2105,17 @@
   $('seletorPosicoesResumo').hidden=true;
   $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded','false');
  }
+ // Dois indicadores exclusivamente de posições nas filas:
+ // Cliente vê só A; operador vê A e B. Não é número de clientes distintos.
+ function mostrarTotaisFilasRodape(totalA,totalB,operador){
+  const a=$('loop03TotalFilaARodape'),b=$('loop03TotalFilaBRodape');
+  if(!a||!b)return;
+  const valido=x=>Number.isSafeInteger(x)&&x>=0;
+  a.hidden=!valido(totalA);
+  a.textContent=valido(totalA)?'Fila A · '+totalA:'';
+  b.hidden=!operador||!valido(totalB);
+  b.textContent=operador&&valido(totalB)?'Fila B · '+totalB:'';
+ }
  // Rodapé da mesma tela: nick e localização da posição selecionada
  // (ou a primeira ativa), sem transferir ID/indicações do placar superior.
  function atualizarSituacaoRodapeReal(posicoes=posicoesResumoReal){
@@ -2302,6 +2314,7 @@
    }
    $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
     ' / '+String(d.limitePosicoesAtivas);
+   mostrarTotaisFilasRodape(d.filaA,d.filaB,false);
    atualizarTopoPosicaoReal();
    if(popupPosicoesRealAberto)preencherPopupReal();
    // O visor central usa somente o mesmo resumo de 24h nos dois perfis.
@@ -2352,6 +2365,7 @@
       controle.girosTotais!==d.catraca.giros||
       controle.filaA!==d.filaA||controle.filaB!==d.filaB)return;
    $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
+   mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    $('loop03NumeroIntegrado').textContent=
     d.tabuleiro.eventosNoCiclo+' / 6';
    // A aba Posições acompanha a agenda a cada 15s, ainda que o
@@ -3161,6 +3175,7 @@
     throw Error('TABULEIRO_ADMIN_FONTE_INVALIDA');
    visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
    visualTabuleiro.preencherFila('motorFilaB',d.filaB,'B');
+   mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
    for(let i=0;i<6;i++)
     visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),d.tabuleiro.vagas[i]);
@@ -3226,6 +3241,7 @@
    // O backend definitivo expõe somente contagens de terceiros.
    visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
    visualTabuleiro.preencherFila('motorFilaB',d.filaB,'B');
+   mostrarTotaisFilasRodape(d.filaA,d.filaB,false);
    const titularPorNumero=new Map(
     d.minhasPosicoes.map(p=>[p.numero,p])
    );
