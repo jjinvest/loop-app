@@ -2340,7 +2340,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "c7050ffdb99bd6c07d2133c45c072c917b6abfb4"
+      "sha": "e325adbc3bb549cfa0f0a3ae2d3ef83e031d0bb2"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
@@ -3008,7 +3008,7 @@
     },
     {
       "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
-      "sha": "b6b436d7463a78731949dcc4b9a1474c911f86b4"
+      "sha": "5c4a27585b6478a9ff8dcf5cc85008916272b992"
     },
     {
       "path": "test/manutencao-comercial-online.test.js",
@@ -3468,7 +3468,7 @@
     },
     {
       "path": "test/servidor-escritorio-preview-railway.test.js",
-      "sha": "193b98efc887d680ba6f30d9bf746be987673c68"
+      "sha": "4f7b040f250a94ee46641461f11592d71dfb13c8"
     },
     {
       "path": "test/servidor-publico-bloqueio-laboratorio-marco-zero.test.js",
