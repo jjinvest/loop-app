@@ -676,7 +676,9 @@ class IdentidadeClienteLoopReal{
   const base=ponto?.numeroCadastro??offset;
   const rows=this.banco.prepare([
    'SELECT v.indicado_id AS indicadoId,c.nick,v.registrado_em AS registradoEm,',
-   'd.numero_posicao AS posicaoDestinoReservada,',
+   'CASE WHEN d.registrado_em>=x.confirmado_em AND',
+    'd.registrado_em>=q.confirmado_em THEN d.numero_posicao',
+    'ELSE NULL END AS posicaoDestinoReservada,',
    'x.titular_id AS confirmacaoTitularId,',
    'q.indicado_id AS qualificacaoRealIndicadoId',
    'FROM loop_real_vinculos_indicacao v',
@@ -703,7 +705,9 @@ class IdentidadeClienteLoopReal{
   const contagem=this.banco.prepare([
    'SELECT COUNT(*) AS confirmados,',
    'COALESCE(SUM(CASE WHEN q.indicado_id IS NOT NULL',
-   'AND d.indicado_id IS NULL THEN 1 ELSE 0 END),0) AS aDistribuir',
+   'AND (d.indicado_id IS NULL OR d.registrado_em<x.confirmado_em',
+    'OR d.registrado_em<q.confirmado_em)',
+    'THEN 1 ELSE 0 END),0) AS aDistribuir',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
    'LEFT JOIN loop_real_indicacoes_validas_financeiro q',
@@ -713,12 +717,13 @@ class IdentidadeClienteLoopReal{
    'WHERE v.indicador_id=?'
   ].join(' ')).get(titularId);
   const vinculadas=this.banco.prepare([
-   'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao d',
-   'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=d.indicado_id',
-   'JOIN loop_real_indicacoes_validas_financeiro q',
-   'ON q.indicado_id=d.indicado_id AND q.indicador_id=d.indicador_id',
-   'WHERE d.indicador_id=?'
-  ].join(' ')).get(titularId).n;
+    'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao d',
+    'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=d.indicado_id',
+    'JOIN loop_real_indicacoes_validas_financeiro q',
+    'ON q.indicado_id=d.indicado_id AND q.indicador_id=d.indicador_id',
+    'WHERE d.indicador_id=? AND d.registrado_em>=x.confirmado_em',
+    'AND d.registrado_em>=q.confirmado_em'
+   ].join(' ')).get(titularId).n;
   return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
    numeroCadastro:base+i+1,filaCadastro:'B',

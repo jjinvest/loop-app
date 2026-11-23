@@ -113,6 +113,29 @@ test('cadastro do link não confirma CPF; confirmação é explícita, privada e
  assert.equal(x.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
 
+
+test('destino antigo sem qualificacao nao ocupa quadradinho ou indicador funcional',async t=>{
+ const x=preparar(t),dono=await x.novo('Vilela',null,1);
+ const thais=await x.novo('Thais','Vilela',2);
+ x.banco.prepare([
+  'INSERT INTO loop_real_destinos_indicacao',
+  '(indicado_id,indicador_id,numero_posicao,registrado_em)',
+  'VALUES(?,?,?,?)'
+ ].join(' ')).run(thais.titularId,dono.titularId,1,Date.now()-600000);
+ let rede=x.visao.listarRede({titularId:dono.titularId});
+ assert.equal(rede.total,1);
+ assert.equal(rede.indicados[0].posicaoDestinoReservada,null);
+ assert.equal(rede.resumo.indicacoesVinculadas,0);
+ assert.equal(rede.resumo.aDistribuir,0);
+ assert.equal(x.contas.listarIndicados(dono.titularId).indicados[0].posicaoDestinoReservada,null);
+ x.confirmar(thais.titularId,2);
+ rede=x.visao.listarRede({titularId:dono.titularId});
+ assert.equal(rede.indicados[0].posicaoDestinoReservada,null);
+ assert.equal(rede.resumo.indicacoesVinculadas,0);
+ assert.equal(x.motor.consultar({titularId:dono.titularId}).minhasPosicoes.length,0);
+ assert.equal(x.banco.prepare('PRAGMA foreign_key_check').all().length,0);
+});
+
 test('conta só confirma seu próprio CPF pelo endpoint autenticado e protegido',async t=>{
  const x=preparar(t);
  await x.novo('Vilela',null,1);
