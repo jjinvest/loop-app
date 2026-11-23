@@ -13,12 +13,12 @@ function renderizarAdminComercialAprovado(){
  let base=original.slice(0,inicio);
  for(const [antes,depois] of [
   ['<title>Escritório do Administrador</title>',
-   '<title>AKITEMM · Escritório do Administrador</title>'],
+   '<title>LOOP · Central do Administrador</title>'],
   ['/staging/assets/cliente.css','/identidade/assets/cliente.css'],
   ['/staging/assets/admin.css','/identidade/assets/admin.css'],
   ['/staging/assets/admin.js','/identidade/assets/admin-comercial.js'],
   ['<span class="marca">ESCRITÓRIO DO ADMINISTRADOR</span>',
-   '<span class="marca">GESTÃO COMERCIAL · ACESSO RESTRITO</span>'],
+   '<span class="marca">CENTRAL DO ADMINISTRADOR</span>'],
   ['Painel operacional conectado ao mesmo banco da loja e do cliente. Missões não criam pagamento, posição, giro nem benefício.',
    'Preços e custos por distribuidor com histórico e relatórios para contabilidade.']
  ]){
@@ -145,9 +145,54 @@ function renderizarAdminComercialAprovado(){
   '<p class="subtexto">As imagens do Escritório LOOP são independentes das quatro imagens da AKITEMM. O acesso de edição utiliza seu login de operador.</p>'+
   '<a class="primario" href="/escritorio?visao=operador">Editar banners do LOOP no escritório</a>'+
   '</section>';
+ const testesOperacionais='<section class="painel" id="centralTestesOperacionais" '+
+  'aria-labelledby="centralTestesTitulo">'+
+  '<h2 id="centralTestesTitulo">TESTES OPERACIONAIS · FILAS E CATRACA</h2>'+
+  '<p class="subtexto">Bancadas isoladas de ensaio, com snapshots próprios; '+
+  'não criam dinheiro, posições de clientes nem giros financeiros. '+
+  'Não alteram os indicadores reais do Escritório do Operador.</p>'+
+  '<div class="linha">'+
+  '<button type="button" id="adminTesteCarregarCatraca">Carregar 7 posições na catraca</button>'+
+  '<button type="button" id="adminTesteIniciarCatraca">Iniciar catraca</button>'+
+  '<button type="button" id="adminTestePausarCatraca">Pausar catraca</button>'+
+  '<button type="button" id="adminTestePulsoCatraca">Executar uma luz (manual)</button>'+
+  '<button type="button" id="adminTesteReiniciarCatraca">Reiniciar teste</button>'+
+  '<button type="button" id="adminTesteAbrirPorteiraCatraca">Abrir porteira da catraca</button>'+
+  '<button type="button" id="adminTesteFecharPorteiraCatraca">Fechar porteira da catraca</button>'+
+  '</div>'+
+  '<form id="adminTesteFormCatracaFila" class="linha">'+
+  '<label for="adminTesteNomeCatraca">Nome da posição de teste</label>'+
+  '<input id="adminTesteNomeCatraca" minlength="2" maxlength="70" required>'+
+  '<button type="submit">Adicionar à fila conectada</button></form>'+
+  '<div class="linha">'+
+  '<input id="adminTestePosicaoCatraca" type="number" min="1" step="1" '+
+  'aria-label="Número da posição da catraca">'+
+  '<button id="adminTestePromoverCatracaFila" type="button">Promover para A</button></div>'+
+  '<div class="linha">'+
+  '<button type="button" id="adminTesteAbrirPorteira">Abrir porteira da fila</button>'+
+  '<button type="button" id="adminTesteFecharPorteira">Fechar porteira da fila</button>'+
+  '<button type="button" id="adminTestePreencherFila">Abastecer tabuleiro sem giro</button>'+
+  '<button type="button" id="adminTesteReiniciarFila">Reiniciar teste da fila</button>'+
+  '</div>'+
+  '<form id="adminTesteFormFila" class="linha">'+
+  '<label for="adminTesteNomeFila">Nome da posição para testar a fila</label>'+
+  '<input id="adminTesteNomeFila" minlength="2" maxlength="70" required>'+
+  '<button type="submit">Inserir posição na Fila B</button></form>'+
+  '<div class="linha"><input id="adminTestePosicaoPromover" type="number" min="1" step="1" '+
+  'aria-label="Número da posição para promoção">'+
+  '<button id="adminTestePromoverFila" type="button">Testar promoção para A</button>'+
+  '<button id="adminTesteVerCatraca" type="button">Ver catraca</button>'+
+  '<button id="adminTesteVerFilas" type="button">Ver filas</button>'+
+  '<a href="/escritorio?visao=operador">Voltar ao Escritório do Operador</a>'+
+  '</div>'+
+  '<p id="adminTesteMensagem" role="status">Leituras de teste independentes do motor real.</p>'+
+  '<div class="duas-colunas">'+
+  '<div id="adminTesteEstadoCatraca" role="status">Consultando catraca...</div>'+
+  '<div id="adminTesteEstadoFila" role="status">Consultando filas...</div></div>'+
+  '</section>';
  const destino='<section class="painel" aria-labelledby="tituloContabilidadeAdmin">';
  if(!pagina.includes(destino))throw Error('PAINEL_ADMIN_APROVADO_DESATUALIZADO');
- return pagina.replace(destino,bannersLoop+motorPainel+adicao+classificacaoPainel+manutencaoPainel+auditoriaPainel+destino);
+ return pagina.replace(destino,bannersLoop+testesOperacionais+motorPainel+adicao+classificacaoPainel+manutencaoPainel+auditoriaPainel+destino);
 }
 function montarAdminComercialAprovado(app,{
  controle,catalogo,auditoria=null,manutencao=null,
