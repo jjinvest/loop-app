@@ -152,3 +152,45 @@ test('visao do operador usa movimentos da bancada; cliente preserva privacidade'
  const guard=fs.readFileSync('src/producao/backup-identidade-real.js','utf8');
  assert.match(guard,/BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS/);
 });
+
+test('a fila conectada cruza a porteira da catraca somente por abertura expressa',t=>{
+ const c=contexto();t.after(()=>c.db.close());
+ c.acao('CATRACA_CARREGAR');
+ const maria=c.acao('CATRACA_ENTRAR',{nome:'Maria'});
+ c.acao('CATRACA_ENTRAR',{nome:'Joao'});
+ assert.equal(c.teste.consultar().catraca.filaB.length,2);
+ assert.equal(c.teste.consultar().catraca.tabuleiro.eventosNoCiclo,0,
+  'nova posicao nao e uma luz ou um giro');
+ c.acao('CATRACA_PROMOVER',{posicaoId:maria.posicaoId});
+ assert.deepEqual(c.teste.consultar().catraca.filaA.map(p=>p.nome),['Maria']);
+ assert.deepEqual(c.teste.consultar().catraca.filaB.map(p=>p.nome),['Joao']);
+ c.acao('CATRACA_INICIAR');
+ for(let i=0;i<6;i++)assert.equal(c.acao('CATRACA_PULSO').porta,'FECHADA');
+ const antes=c.teste.consultar().catraca;
+ assert.equal(antes.tabuleiro.giros,1);
+ assert.equal(antes.tabuleiro.vagas[5],null);
+ assert.equal(antes.filaA.length+antes.filaB.length,2);
+ c.acao('CATRACA_ABRIR_PORTEIRA');
+ for(let i=0;i<6;i++)assert.equal(c.acao('CATRACA_PULSO').porta,'ABERTA');
+ const depois=c.teste.consultar().catraca;
+ assert.equal(depois.tabuleiro.giros,2);
+ assert.equal(depois.tabuleiro.vagas[5],'Maria',
+  'a fila A entra na vaga 6 apenas no giro com a porteira aberta');
+ assert.equal(depois.filaA.length,0);
+ assert.equal(depois.filaB.length,1);
+ assert.equal(depois.filaB[0].nome,'Joao');
+ assert.equal(c.teste.consultar().fila.filaB.length,0);
+ c.acao('CATRACA_FECHAR_PORTEIRA');
+ assert.equal(c.teste.consultar().catraca.porteiraAberta,false);
+ assert.equal(c.teste.consultar().catraca.tabuleiro.eventosNoCiclo,0);
+});
+test('operador oferece comandos do fluxo mecanico sem chamar de compra real',()=>{
+ const browser=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+ for(const id of ['adminTesteFormCatracaFila','adminTesteNomeCatraca',
+  'adminTestePromoverCatracaFila','adminTesteAbrirPorteiraCatraca',
+  'adminTesteFecharPorteiraCatraca'])
+  assert.ok(browser.includes(id),'controle ausente: '+id);
+ assert.match(browser,/CATRACA_ENTRAR/);
+ assert.match(browser,/CATRACA_PROMOVER/);
+ assert.match(browser,/não são compras da AKITEMM/);
+});
