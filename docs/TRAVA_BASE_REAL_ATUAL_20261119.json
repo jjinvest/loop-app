@@ -1268,7 +1268,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "0c8dec1c5ca07f84a5e535a7cc04fb05001001de"
+      "sha": "d5a9015b7410d807d6131fd3319e78eec5dca2da"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "2d0b1fe25cf40ed79b0412b4787d6169adfbfd30"
+      "sha": "fa068f4ef4bf62498f08b5d11bdad3ff74f86b3a"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1492,7 +1492,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "4a882a8a73094ffed67721d495f510b2fe1f3492"
+      "sha": "4acdda77d8855e0b552b7840f254a49479ae2231"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -2396,7 +2396,7 @@
     },
     {
       "path": "test/cofres-operador-readonly.test.js",
-      "sha": "65bf327fb97c78d9423750f5ce060f3a61f5b2a5"
+      "sha": "a01e46a94de1dd6b9b632a48298db05529395f26"
     },
     {
       "path": "test/comprovante-asaas-sandbox-ponte-lab.test.js",
@@ -3288,7 +3288,7 @@
     },
     {
       "path": "test/posicoes-operador-quadros-20261122.test.js",
-      "sha": "843d5ee0819903ba6cc1c0df356f9343db06b71b"
+      "sha": "60447635916563269e8fce9ec08e0707c7c2df24"
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
