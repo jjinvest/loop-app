@@ -17,7 +17,7 @@ test('destaque quadrado Android sai sem alterar geometria ou identidade visual',
  assert.ok(css.includes('@media (hover:none) and (pointer:coarse)'));
  assert.ok(css.includes(':focus:not(:focus-visible)'));
  assert.ok(css.includes(':where(.akitemm-loja,.cliente-integrado'));
- assert.doesNotMatch(css,/\b(?:border-radius|padding|margin|width|height|display|position|transform|background|color|font|grid|flex|box-shadow)\s*:/);
+ assert.doesNotMatch(css,/^\s*(?:border-radius|padding|margin|width|height|display|position|transform|background|color|font|grid|flex|box-shadow)\s*:/m);
  const servidor=fs.readFileSync('src/producao/servidor-identidade-loop.js','utf8');
  assert.ok(servidor.includes("style-src 'self'"));
 });

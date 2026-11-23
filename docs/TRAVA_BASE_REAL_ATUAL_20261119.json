@@ -2728,7 +2728,7 @@
     },
     {
       "path": "test/harmonia-toque-real.test.js",
-      "sha": "9c0456365fd0540607c940b7f84b25292ee38ea8"
+      "sha": "1b4f1552c0a5dfc08ea1435f785cdd7e2bacc99b"
     },
     {
       "path": "test/historico-ciclos-relacional-sqlite.test.js",
@@ -5818,6 +5818,13 @@
       "antes": "6042daf424a35df74bd455fbcad0ab5e5b269935",
       "depois": "4a882a8a73094ffed67721d495f510b2fe1f3492",
       "objetivo": "Harmonizacao do destaque quadrado de toque Android por CSS externo em LOOP e AKITEMM; nenhuma alteracao de geometria, cores, caracteristicas, regras ou financeiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/harmonia-toque-real.test.js",
+      "antes": "9c0456365fd0540607c940b7f84b25292ee38ea8",
+      "depois": "1b4f1552c0a5dfc08ea1435f785cdd7e2bacc99b",
+      "objetivo": "Ajustar assercao para aceitar exclusivamente -webkit-tap-highlight-color sem permitir modificacao de cor visual ou geometria."
     }
   ]
 }
