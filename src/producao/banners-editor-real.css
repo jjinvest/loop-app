@@ -364,3 +364,30 @@ body.loop03-modo-operador #conteudoResumo .loop03-banner-item:not(.loop03-banner
  .banner-real-formulario .banner-editor-celula{height:clamp(130px,40vw,185px)}
  .banner-real-formulario .banner-editor-ajuste{padding:10px}
 }
+
+
+/* Apenas LOOP no celular: uma foto inteira de cada vez por banner.
+   Desktop e mosaicos da AKITEMM não são modificados. */
+@media(max-width:600px){
+ #conteudoResumo .loop03-banner-item .banner-mosaico{
+  display:block;grid-template-columns:none;
+  padding:6px;background:#090e1a;
+ }
+ #conteudoResumo .loop03-banner-item .banner-mosaico>.banner-mosaico-celula{
+  position:absolute;inset:6px;min-width:0;min-height:0;
+  opacity:0;pointer-events:none;z-index:1;
+  transition:opacity .6s ease-in-out;
+  border-radius:12px;
+ }
+ #conteudoResumo .loop03-banner-item .banner-mosaico>.banner-mosaico-celula.banner-foto-ativa{
+  opacity:1;pointer-events:auto;z-index:2;
+ }
+ #conteudoResumo .loop03-banner-item .banner-mosaico>.banner-mosaico-celula img{
+  object-fit:contain;object-position:center;background:#090e1a;
+ }
+}
+@media(max-width:600px) and (prefers-reduced-motion:reduce){
+ #conteudoResumo .loop03-banner-item .banner-mosaico>.banner-mosaico-celula{
+  transition:none;
+ }
+}
