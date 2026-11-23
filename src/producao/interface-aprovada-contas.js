@@ -2651,7 +2651,7 @@
     const d=await r.json();
     if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||d.fila!==fila||
        !Number.isSafeInteger(d.total)||d.total<0||
-       !Array.isArray(d.janela)||d.janela.length>10||
+       !Array.isArray(d.janela)||d.janela.length>20||
        !Array.isArray(d.pagina)||d.pagina.length>30||
        d.janela.some((p,i)=>p.ordem!==i+1)||
        d.pagina.some((p,i)=>p.ordem!==pagina*30+i+1))
