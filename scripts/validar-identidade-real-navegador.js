@@ -195,6 +195,43 @@ async function main(){
   ...basePedidos(),eventosComerciais,classificacaoLoop,
   integradorComercialEnsaio,preflightCapacidade
  });
+ // O convite da prova de navegador deve pertencer a um comprador
+ // HABILITADO. A compra verde de R$10 libera SOMENTE o link, nunca posicao.
+ // O PSP abaixo e ficticio apenas nesta execucao em memoria.
+ catalogo.criarProduto({produtoId:'verdeLinkBrowser',
+  titulo:'Produto verde de habilitacao do link na prova isolada'});
+ catalogo.vincularOferta({
+  produtoId:'verdeLinkBrowser',distribuidorId:'DIST_LINK_BROWSER',
+  sku:'SKU_VERDE_LINK',precoUnitCentavos:1000
+ });
+ classificacaoLoop.configurarProduto({
+  produtoId:'verdeLinkBrowser',cor:'VERDE',autorizado:true
+ });
+ const cotacaoLink='COTACAO_LINK_BROWSER';
+ const enderecoLink={destinatario:'Pessoa de Ensaio',cep:'27250010',
+  logradouro:'Rua de Ensaio',numero:'2',bairro:'Centro',
+  cidade:'Volta Redonda',uf:'RJ',complemento:''};
+ cotacoes.set(cotacaoLink,{
+  cotacaoId:cotacaoLink,titularId:cliente.titularId,
+  cepDestino:enderecoLink.cep,status:'APROVADA',
+  expiraEm:Date.now()+600000,
+  grupos:[{fornecedorId:'DIST_LINK_BROWSER',freteCentavos:0,
+   itens:[{sku:'SKU_VERDE_LINK',precoUnitCentavos:1000,quantidade:1}]}]
+ });
+ const pedidosLink=new PedidosComerciaisSQLite({
+  ...basePedidos(),eventosComerciais,classificacaoLoop
+ });
+ const pedidoLink=await pedidosLink.criarPedido({
+  titularId:cliente.titularId,cotacaoId:cotacaoLink,
+  chaveIdempotencia:'LINK_BROWSER_SEM_POSICAO',
+  enderecoEntrega:enderecoLink
+ });
+ assert.equal((await pedidosLink.confirmarPagamento({
+  pedidoId:pedidoLink.pedidoId
+ })).confirmado,true);
+ assert.equal(motorLoop.consultar({titularId:cliente.titularId})
+  .minhasPosicoes.length,1,'compra verde barata nao insere posicao');
+
  const leituraComercial=criarLeituraComercialSegura({
   banco,pedidos:pedidosComerciais
  });
@@ -1264,6 +1301,8 @@ async function main(){
    await detalhes.waitFor({state:'hidden'});
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaLinks').click();
+   await page.waitForFunction(()=>
+    document.getElementById('linkLoja')?.value.includes('/loja/'));
    assert.match(await page.locator('#linkLoja').inputValue(),
     /\/loja\/dozeletrasab/);
    assert.match(await page.locator('#linkEscritorio').inputValue(),
@@ -1594,14 +1633,14 @@ async function main(){
    assert.equal(await pagina.locator('#loop03TotalIntegrado').innerText(),
     String(diagnostico.quantidadePosicoes)+' / 10');
    assert.ok((await pagina.locator('#pedidosPaginacao').innerText())
-    .includes('Página 1 · 1 pedido(s) no histórico'));
+    .includes('Página 1 · 2 pedido(s) no histórico'));
    assert.equal(await pagina.locator('#pedidosAnterior').isDisabled(),true);
    assert.equal(await pagina.locator('#pedidosProximo').isDisabled(),true);
-   assert.equal(await pagina.locator('#pedidosResumo').innerText(),'1 pedido no histórico');
+   assert.equal(await pagina.locator('#pedidosResumo').innerText(),'2 pedidos no histórico');
    assert.equal(await pagina.locator('#conteudoMeusPedidos #atualizarPedidos').isVisible(),true);
-   await pagina.locator('#listaPedidos .loop03-pedido-remessas > summary').click();
+   await pagina.locator('#listaPedidos .loop03-pedido-remessas > summary').first().click();
    assert.equal(await pagina.locator('#listaPedidos .loop03-pedido-remessas[open]').count(),1);
-   assert.ok((await pagina.locator('#listaPedidos .loop03-pedido-remessas').innerText())
+   assert.ok((await pagina.locator('#listaPedidos .loop03-pedido-remessas').first().innerText())
     .includes('Fornecedor'));
    const estiloNavegacao=await pagina.locator('#conteudoMeusPedidos .loop03-pedidos-paginacao')
     .evaluate(el=>getComputedStyle(el).display);
@@ -1678,7 +1717,7 @@ async function main(){
    await pagina.locator('#pedidosLojaLoop').filter({
     hasText:compra.pedidoId
    }).waitFor({state:'visible'});
-   assert.equal(await pagina.locator('#pedidosLojaLoop li').count(),1);
+   assert.equal(await pagina.locator('#pedidosLojaLoop li').count(),2);
    const loja=pagina.locator('#estadoLojaLoop');
    await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
@@ -1827,7 +1866,7 @@ async function main(){
    assert.equal(await pagina.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
    await pagina.goto(base+'/administrador');
    const integrado=pagina.locator('#integracaoQualificadaEstado');
-   await integrado.filter({hasText:/Confirmadas: 1/}).waitFor();
+   await integrado.filter({hasText:/Confirmadas: 2/}).waitFor();
    assert.equal(await pagina.locator('#sincronizarComprasLoop').isEnabled(),true);
    await pagina.locator('#sincronizarComprasLoop').click();
    await integrado.filter({hasText:/Sincronizado:/}).waitFor();

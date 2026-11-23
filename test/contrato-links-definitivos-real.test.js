@@ -65,14 +65,11 @@ test('contrato definitivo: loja abre sem nick; convite vai para a loja e nao par
   versaoPrivacidade:docs.privacidade.versao,hashPrivacidade:docs.privacidade.hash
  });
  const conviteLoja=await acessar('/loja/ANA');
- assert.equal(conviteLoja.status,303);
- assert.equal(conviteLoja.headers.get('location'),'/loja?ref=ana');
+ assert.equal(conviteLoja.status,403,'sem compra nao existe link ativo');
  const conviteEscritorio=await acessar('/escritorio/ANA');
- assert.equal(conviteEscritorio.status,303);
- assert.equal(conviteEscritorio.headers.get('location'),'/escritorio?ref=ana');
+ assert.equal(conviteEscritorio.status,403);
  const legado=await acessar('/convite/loja?ref=Ana');
- assert.equal(legado.status,303);
- assert.equal(legado.headers.get('location'),'/loja?ref=Ana');
+ assert.equal(legado.status,403);
  const falso=await acessar('/loja/ZzzNaoExiste');
  assert.equal(falso.status,404,'o backend nao inventa indicadores');
 });

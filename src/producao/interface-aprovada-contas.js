@@ -122,7 +122,7 @@
  const carregarPaginaFila={A:null,B:null};
  let finOrigemReal='BONUS_INDICACAO',ensaioFinanceiroAtivo=false;
  let somentePosicoesPeloQuadrado=false,proximaAbaVemDoQuadrado=false;
- let origemLinks=null;
+ let origemLinks=null,geracaoPermissaoLinks=0;
  const codigos={
   CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos. Confira os dados e tente novamente.',
   NICK_OPERADOR_MAIUSCULO_OBRIGATORIO:'Nick ou senha incorretos. Confira os dados e tente novamente.',
@@ -150,6 +150,7 @@
   CSRF_INVALIDO:'Sua sessão expirou. Entre novamente.',
   INDICADOR_INVALIDO:'O link de convite contém um nick inválido.',
   INDICADOR_NAO_ENCONTRADO:'Este convite não pertence a uma conta cadastrada.',
+   LINK_DIVULGACAO_NAO_LIBERADO:'Este link ainda não foi habilitado por compra de produto qualificador.',
   AUTOINDICACAO_PROIBIDA:'Não é possível indicar a própria conta.'
  };
  const erro=e=>{
@@ -204,6 +205,13 @@
   }
  }
  function mostrarLogin(t){
+  // Limpar referencias a link da conta anterior, antes de novo login.
+  geracaoPermissaoLinks++;origemLinks=null;
+  for(const [campo,botao] of [['linkLoja','copiarLinkLoja'],
+   ['linkEscritorio','copiarLinkEscritorio']]){
+   if($(campo))$(campo).value='';
+   if($(botao))$(botao).disabled=true;
+  }
   limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   tela=t;modoOperadorAtual=false;
@@ -1455,7 +1463,7 @@
   // acompanham a mesma visualização do LOOP, sem expor dados administrativos.
   void atualizarAtalhoOperadorReal();
   prepararRede();
-  preencherLinks(s.nick);
+  void preencherLinks(s.nick);
   void carregarRede();
   void carregarDados();
  }
@@ -1511,6 +1519,9 @@
    else itens[i-1]?.focus();
   });
   $('equipeVerLinks').addEventListener('click',()=>$('abaLinks').click());
+   $('abaLinks').addEventListener('click',()=>{
+    if(nickResumoReal)void preencherLinks(nickResumoReal);
+   });
   for(const [botao,campo] of [
    ['copiarLinkEscritorio','linkEscritorio'],
    ['copiarLinkLoja','linkLoja']
@@ -1596,13 +1607,34 @@
   exibirRede();
   campo.focus();
  }
- function preencherLinks(nick){
-  const endereco=location.origin,identificador=encodeURIComponent(nickVisivel(nick));
-  origemLinks={loja:endereco+'/loja/'+identificador,
-   escritorio:endereco+'/escritorio/'+identificador};
-  $('linkLoja').value=origemLinks.loja;
-  $('linkEscritorio').value=origemLinks.escritorio;
-  $('linksNick').textContent='Links da conta @'+nickVisivel(nick);
+ async function preencherLinks(nick){
+  const geracao=++geracaoPermissaoLinks;
+  origemLinks=null;
+  for(const [campo,botao] of [['linkLoja','copiarLinkLoja'],
+   ['linkEscritorio','copiarLinkEscritorio']]){
+   $(campo).value='';$(botao).disabled=true;
+  }
+  $('linksNick').textContent='Links de @'+nickVisivel(nick)+
+   ' · aguardando compra habilitadora confirmada.';
+  try{
+   const d=await requisitar('/divulgacao');
+   if(geracao!==geracaoPermissaoLinks||nickResumoReal!==nick||
+      $('painelConta').hidden)return;
+   if(d.linkLiberado!==true||
+      d.fonte!=='PEDIDO_PSP_CONFIRMADO_COM_FOTOGRAFIA_DA_COR'||
+      d.financeiroReal!==false)return;
+   const endereco=location.origin,identificador=encodeURIComponent(nickVisivel(nick));
+   origemLinks={loja:endereco+'/loja/'+identificador,
+    escritorio:endereco+'/escritorio/'+identificador};
+   $('linkLoja').value=origemLinks.loja;
+   $('linkEscritorio').value=origemLinks.escritorio;
+   $('copiarLinkLoja').disabled=false;
+   $('copiarLinkEscritorio').disabled=false;
+   $('linksNick').textContent='Links habilitados de @'+nickVisivel(nick);
+  }catch{
+   if(geracao===geracaoPermissaoLinks)
+    $('linksNick').textContent='Links indisponíveis nesta consulta.';
+  }
  }
  function exibirRede(){
   const alvo=$('listaEquipe');
