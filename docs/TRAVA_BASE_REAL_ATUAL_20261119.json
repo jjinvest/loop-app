@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "885210c77cf4b0fda29016ebf1cfb466b285f46c"
+      "sha": "12ca6747f60cc07926dbc3371828e5d9f1261a4b"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1268,7 +1268,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "19455a52d42b15607507fc172d1fe7570bd8e991"
+      "sha": "76e829c22d94c12a77f3f2893a58b43e2c63bbab"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1456,7 +1456,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "e6cc7dd7f25d98f7346d0eebd2bfdc65ab786daf"
+      "sha": "e9a1ba093928eaba11cb2f63d32de77c5f2863cf"
     },
     {
       "path": "src/producao/harmonia-toque-real.css",
@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "fa068f4ef4bf62498f08b5d11bdad3ff74f86b3a"
+      "sha": "a24b3ba4e52e6bfa74fe315618f20e7b47bfa251"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1492,7 +1492,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "4acdda77d8855e0b552b7840f254a49479ae2231"
+      "sha": "906eec917018b7a2e71d43a7b8bdb2088c8f74b7"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -1528,7 +1528,7 @@
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "768e3031a304c71f4a39d6805807efb8451d2736"
+      "sha": "41f839c38e4f6881605fde48b7c306a98bcd27e1"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
@@ -1536,7 +1536,7 @@
     },
     {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
-      "sha": "02747a08f6abcf07d9bc7c2cffdc06b1386c1310"
+      "sha": "60963c2408b02b32c226ae1e5f61380fac5d2255"
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
@@ -1576,7 +1576,7 @@
     },
     {
       "path": "src/producao/projecao-agenda-tabuleiro-compartilhada.js",
-      "sha": "208162a84285e75ffccf0e46fa59b7baa4c682f6"
+      "sha": "faa3f2abbd43e95d3a25ad1a998c2cd0056f55bb"
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
@@ -2444,7 +2444,7 @@
     },
     {
       "path": "test/contagem-relogio-24h-fila-financeiro-isolado.test.js",
-      "sha": "96b363dbee391cad7f5889da28dcb42c3c0e9254"
+      "sha": "66cd953ca04c9883f8d55f8f89994e8d8cf650f7"
     },
     {
       "path": "test/contas-participantes-demo.test.js",
@@ -3288,7 +3288,7 @@
     },
     {
       "path": "test/posicoes-operador-quadros-20261122.test.js",
-      "sha": "60447635916563269e8fce9ec08e0707c7c2df24"
+      "sha": "27eaf9159eb4dc51f8d6ba358ad832d0adb7d426"
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
@@ -3632,7 +3632,7 @@
     },
     {
       "path": "test/visor-filas-vizinhos-paginacao-real.test.js",
-      "sha": "32f66da9c569fc64f381ba18942995ea874fd9f6"
+      "sha": "f42d3b8f79597d6ed17e618d1fe41a6df2024b65"
     },
     {
       "path": "test/visualizacao-banners-operador-sem-cliente.test.js",
