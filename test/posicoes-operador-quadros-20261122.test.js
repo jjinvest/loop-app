@@ -106,7 +106,7 @@ test('operador tem 2 quadros lado a lado com metades; cliente só total A',()=>{
  assert.match(js,/mostrarTotaisFilasRodape\(d\.filaA,d\.filaB,false\)/);
  assert.match(css,/body:not\(\.loop03-modo-operador\) #loop03TotalFilaBRodape/);
  assert.match(gateway,/app\.get\('\/api\/admin\/loop\/filas',proteger/);
- assert.match(html,/id=\\"loop03TotalFilaARodape\\"/);
- assert.match(html,/id=\\"loop03TotalFilaBRodape\\"/);
+ assert.match(html,/id="loop03TotalFilaARodape"/);
+ assert.match(html,/id="loop03TotalFilaBRodape"/);
  assert.doesNotMatch(funcao,/fetch\(|method:\s*'POST'|INSERT|UPDATE|DELETE/);
 });
