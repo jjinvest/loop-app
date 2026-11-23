@@ -440,7 +440,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "fa87468550b4a0c39cf7be08b433295ca43e64ce"
+      "sha": "bb8b75f570a519b1ec284c8375d6a7fcdb9a8a6e"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -5853,6 +5853,13 @@
       "antes": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
       "depois": "fa87468550b4a0c39cf7be08b433295ca43e64ce",
       "objetivo": "Auditoria geometrica em quatro larguras Android e paridade de imagem capa operador/cliente com dados isolados; nao altera o HTML ou CSS aprovado."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-operador-primeiro-produto-navegador.js",
+      "antes": "fa87468550b4a0c39cf7be08b433295ca43e64ce",
+      "depois": "bb8b75f570a519b1ec284c8375d6a7fcdb9a8a6e",
+      "objetivo": "Teste: medir o modal real de foto depois do upload, sem procurar classe inexistente; zero mudanca de producao."
     }
   ]
 }

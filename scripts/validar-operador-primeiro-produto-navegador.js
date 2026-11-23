@@ -333,8 +333,7 @@ async function principal(){
    await m.locator('input[type=file]').setInputFiles({
     name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
    });
-   await conferirAcoesSemSobreposicao(page,
-    '#akitemmOperadorFotosReal .akitemm-foto-acoes');
+   await conferirAcoesSemSobreposicao(page,'#akitemmOperadorFotosReal');
    // Enquadramento automático; recorte só se o operador pedir.
    const corte=m.getByRole('button',{name:'Ajustar corte da foto (opcional)'});
    await corte.waitFor({state:'visible'});
