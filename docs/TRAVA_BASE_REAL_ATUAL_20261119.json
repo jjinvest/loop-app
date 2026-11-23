@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "40b5b96af054a1014d5276a6f3b2818ca141b7f2"
+      "sha": "0854b6f30e96b88988d92c9d5765c7629abb05b3"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "db5d631674d892757b3ee32b7bdd9cd74c7554e4"
+      "sha": "5623877edd7725649924d63dc62960e41d45dfd1"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2464,7 +2464,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "8f1ac0a507d1b31a779bd008c909e3bad976aea3"
+      "sha": "027f1d06bebd8134f7ab4f0883317dc55a28a653"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -5825,6 +5825,27 @@
       "antes": "9c0456365fd0540607c940b7f84b25292ee38ea8",
       "depois": "1b4f1552c0a5dfc08ea1435f785cdd7e2bacc99b",
       "objetivo": "Ajustar assercao para aceitar exclusivamente -webkit-tap-highlight-color sem permitir modificacao de cor visual ou geometria."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "db5d631674d892757b3ee32b7bdd9cd74c7554e4",
+      "depois": "5623877edd7725649924d63dc62960e41d45dfd1",
+      "objetivo": "Login cliente/operador aprovado: mostrar somente 'Nick ou senha incorretos' sem indicar a grafia reservada, manter exigência estrita de OPERADOR em maiúsculas e funcionamento da autenticação."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "antes": "8f1ac0a507d1b31a779bd008c909e3bad976aea3",
+      "depois": "027f1d06bebd8134f7ab4f0883317dc55a28a653",
+      "objetivo": "Login cliente/operador aprovado: mostrar somente 'Nick ou senha incorretos' sem indicar a grafia reservada, manter exigência estrita de OPERADOR em maiúsculas e funcionamento da autenticação."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "40b5b96af054a1014d5276a6f3b2818ca141b7f2",
+      "depois": "0854b6f30e96b88988d92c9d5765c7629abb05b3",
+      "objetivo": "Login cliente/operador aprovado: mostrar somente 'Nick ou senha incorretos' sem indicar a grafia reservada, manter exigência estrita de OPERADOR em maiúsculas e funcionamento da autenticação."
     }
   ]
 }
