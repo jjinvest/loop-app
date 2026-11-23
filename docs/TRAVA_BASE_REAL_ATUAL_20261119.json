@@ -628,7 +628,7 @@
     },
     {
       "path": "src/domain/catalogo.js",
-      "sha": "e1425d8f316bcd1d1bcdde47bc7bbefd07fd4d99"
+      "sha": "460ec19b452d5d69de16a00daf98b1bb0cc64267"
     },
     {
       "path": "src/domain/catraca-asaas-sandbox-lab.js",
@@ -1363,6 +1363,10 @@
       "sha": "1eb019ba46f70a4d1a6f4a00fa6fd45ec6606650"
     },
     {
+      "path": "src/producao/canais-digitais-akitemm-real.js",
+      "sha": "f4b236431d07a5cfc6a9583f369ad48a11fa5ba4"
+    },
+    {
       "path": "src/producao/canais-fornecedor-akitemm-sqlite.js",
       "sha": "b1800df368b03249e4c3d7d877f38d97d52cc5e6"
     },
@@ -1372,7 +1376,7 @@
     },
     {
       "path": "src/producao/catalogo-mercadorias-real.js",
-      "sha": "e5cd1550f4d029460e12418d0dfb8cb0e32d3706"
+      "sha": "fe9699d98de892bc21f88a8c1688753d939e350a"
     },
     {
       "path": "src/producao/catalogo-multidistribuidores-sqlite.js",
@@ -2263,6 +2267,10 @@
       "sha": "094bfb7f007df95153c651b9dfe3dadb8bb27845"
     },
     {
+      "path": "test/canais-digitais-akitemm-real.test.js",
+      "sha": "77f5b533ba2540b7c26c4390abcbfe3ff85d2fc1"
+    },
+    {
       "path": "test/canais-fornecedor-akitemm-sqlite.test.js",
       "sha": "86757daf4aac4a24644b82fae41eb4fea3850eb5"
     },
@@ -2300,7 +2308,7 @@
     },
     {
       "path": "test/catalogo-cursos-pdf-real-e2e.test.js",
-      "sha": "71dbf65e4eb26bbc918399bb13f7d8a713b3314b"
+      "sha": "f9a3bf44c48b537ad1715db091ebcd5cd8dbd95b"
     },
     {
       "path": "test/catalogo-mercadorias-real-e2e.test.js",
@@ -3244,7 +3252,7 @@
     },
     {
       "path": "test/ponte-catalogo-real-preview.test.js",
-      "sha": "3ae9bb20b5a96ee8886803acbb0ae68c030c595d"
+      "sha": "872d085da7471334b4c4614733444ca8d737fbbe"
     },
     {
       "path": "test/ponte-compras-convites-demo.test.js",
@@ -5791,6 +5799,55 @@
       "antes": "5de42c4320a103a82c924ec2d5250b7313dafc22",
       "depois": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
       "objetivo": "Cadastro de produto real com detalhes de pendências, capa obrigatória para publicação, ajuste opcional de corte sem checkbox, e prova automatizada PC/Android; não mexer na identidade do cliente."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/domain/catalogo.js",
+      "antes": "e1425d8f316bcd1d1bcdde47bc7bbefd07fd4d99",
+      "depois": "460ec19b452d5d69de16a00daf98b1bb0cc64267",
+      "objetivo": "Amplia acervo digital da AKITEMM com tipos PDF/CURSO/AFILIADO, canais privados auditaveis e fotos de capa; financeiro e acesso de comprador permanecem bloqueados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/catalogo-mercadorias-real.js",
+      "antes": "e5cd1550f4d029460e12418d0dfb8cb0e32d3706",
+      "depois": "af37ca830617ffdf7438e24a503ad62904197870",
+      "objetivo": "Amplia acervo digital da AKITEMM com tipos PDF/CURSO/AFILIADO, canais privados auditaveis e fotos de capa; financeiro e acesso de comprador permanecem bloqueados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/catalogo-mercadorias-real.js",
+      "antes": "af37ca830617ffdf7438e24a503ad62904197870",
+      "depois": "fe9699d98de892bc21f88a8c1688753d939e350a",
+      "objetivo": "Amplia catalogo digital (PDF, videoaulas e afiliado), exige capa publica, mantem APIs interservico privadas e pagamento/posicao bloqueados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/catalogo-cursos-pdf-real-e2e.test.js",
+      "antes": "71dbf65e4eb26bbc918399bb13f7d8a713b3314b",
+      "depois": "f9a3bf44c48b537ad1715db091ebcd5cd8dbd95b",
+      "objetivo": "Prova de PDF proprio com capa antes de publicacao; historico e arquivo de versoes preservados."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/canais-digitais-akitemm-real.js",
+      "antes": "NOVO",
+      "depois": "f4b236431d07a5cfc6a9583f369ad48a11fa5ba4",
+      "objetivo": "Arquivo novo explicitamente autorizado para catálogo digital com provedor plugável, proteção de URLs e testes sem pagamento/posição."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/canais-digitais-akitemm-real.test.js",
+      "antes": "NOVO",
+      "depois": "77f5b533ba2540b7c26c4390abcbfe3ff85d2fc1",
+      "objetivo": "Arquivo novo explicitamente autorizado para catálogo digital com provedor plugável, proteção de URLs e testes sem pagamento/posição."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/ponte-catalogo-real-preview.test.js",
+      "antes": "3ae9bb20b5a96ee8886803acbb0ae68c030c595d",
+      "depois": "872d085da7471334b4c4614733444ca8d737fbbe",
+      "objetivo": "Ajusta prova de integração histórica para exigir capa de PDF antes de publicação, sem liberar compra ou downloads."
     }
   ]
 }

@@ -5,6 +5,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const http=require('node:http');
 const {once}=require('node:events');
 const {criarMaterialPDFTeste}=require('../src/domain/material-pdf-teste');
+const {gerarPngTeste}=require('../scripts/fixtures/gerar-png-teste');
 const {criarCatalogoMercadoriasReal,tokenCatalogo}=
  require('../src/producao/catalogo-mercadorias-real');
 const token='d'.repeat(64),chave=tokenCatalogo(token);
@@ -31,7 +32,8 @@ test('PDF real: upload autenticado, 2 versoes, bloqueio de publicacao e persiste
  async function call(rota,{method='GET',body,mime,versao,auth=true}={}){
   const r=await fetch(base+rota,{method,headers:{
    'x-loop-catalogo-token':auth?chave:'0'.repeat(64),
-   ...(mime?{'content-type':mime,'x-pdf-versao-esperada':String(versao)}:
+   ...(mime?{'content-type':mime,
+     [mime==='application/pdf'?'x-pdf-versao-esperada':'x-foto-versao-esperada']:String(versao)}:
     body?{'content-type':'application/json'}:{})
   },body:mime?body:body?JSON.stringify(body):undefined});
   return {status:r.status,data:await r.json()};
@@ -58,6 +60,13 @@ test('PDF real: upload autenticado, 2 versoes, bloqueio de publicacao e persiste
  assert.equal(v1.data.checkoutReal,false);
  assert.equal((await call('/produtos/'+CURSO.id+'/pdf',{method:'POST',
   mime:'application/pdf',versao:0,body:original})).status,409);
+ const semCapa=await call('/produtos/'+CURSO.id,{method:'PATCH',
+  body:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}});
+ assert.equal(semCapa.status,409);
+ assert.equal(semCapa.data.erro,'PUBLICACAO_EXIGE_CAPA');
+ const capa=gerarPngTeste();
+ assert.equal((await call('/produtos/'+CURSO.id+'/fotos/1',{method:'POST',
+  mime:'image/png',versao:0,body:capa})).status,201);
  const publicado=await call('/produtos/'+CURSO.id,{method:'PATCH',
   body:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}});
  assert.equal(publicado.status,200,JSON.stringify(publicado.data));

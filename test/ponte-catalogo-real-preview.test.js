@@ -113,6 +113,14 @@ test('ponte REAL liga cadastro, foto e vitrine sem conta de teste e sem checkout
  assert.equal(estado.status,200);
  assert.equal(estado.body.arquivoAnexado,true);
  assert.equal(estado.body.armazenamento,'SQLITE_COMERCIAL_REAL');
+ // Publicação digital também exige capa de imagem real no catálogo.
+ const semCapa=await call('/staging/escritorio-unificado/produtos/'+curso.id,{
+  method:'PATCH',admin:true,json:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}});
+ assert.equal(semCapa.status,409);
+ assert.equal(semCapa.body.erro,'PUBLICACAO_EXIGE_CAPA');
+ const capa=await call('/staging/escritorio-unificado/produtos/'+curso.id+'/fotos/1',{
+  method:'POST',admin:true,mime:'image/png',bytes:png,revision:0});
+ assert.equal(capa.status,201,JSON.stringify(capa.body));
  assert.equal((await call('/staging/escritorio-unificado/produtos/'+curso.id,{
   method:'PATCH',admin:true,json:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}})).status,200);
  const catalogo=await call('/staging/vitrine/loja/catalogo');

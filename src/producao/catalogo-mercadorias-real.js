@@ -8,6 +8,7 @@ const {RepositorioCatalogoSQLite}=require('../domain/repositorio-catalogo-sqlite
 const {FotosProdutoCandidatoSQLite}=require('../domain/fotos-produto-candidato-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
 const {MaterialPdfCursosReal}=require('./material-pdf-cursos-real');
+const {CanaisDigitaisAkitemmReal,MODOS}=require('./canais-digitais-akitemm-real');
 const ID=/^[a-z0-9-]{3,80}$/;
 const ID_COMERCIAL=/^[A-Za-z0-9_-]{1,80}$/;
 const FOTO_MIME=new Set(['image/jpeg','image/png','image/webp']);
@@ -76,6 +77,7 @@ function criarCatalogoMercadoriasReal({
  });
  const config=new AkitemmConfigLojaDemoSQLite({banco:repo.banco});
  const pdf=new MaterialPdfCursosReal({banco:repo.banco,catalogo:repo});
+ const canaisDigitais=new CanaisDigitaisAkitemmReal({banco:repo.banco,catalogo:repo});
  function listarPublicos(){
   return repo.listar().filter(p=>p.estado==='PUBLICADO').map(p=>({
    produtoId:p.id,nome:p.nome,descricao:p.descricao,tipo:p.tipo,
@@ -90,12 +92,11 @@ function criarCatalogoMercadoriasReal({
  }
  // A loja definitiva consulta esta fonte pelo MESMO processo, sem
  // trocar o banco de clientes e sem passar por qualquer rota de ensaio.
- // Apenas produtos fisicos explicitamente publicados, sem preco/checkout.
+ // Produtos fisicos e digitais publicados, sem preco/checkout habilitado.
  function listarVitrinePreparacao({limite=100}={}){
   if(!Number.isSafeInteger(limite)||limite<1||limite>400)
    throw Error('CATALOGO_REAL_LIMITE_INVALIDO');
-  const publicos=repo.listar().filter(p=>
-   p.estado==='PUBLICADO'&&p.tipo==='FISICO');
+  const publicos=repo.listar().filter(p=>p.estado==='PUBLICADO');
   // Nao truncar silenciosamente produtos visiveis no acervo real.
   if(publicos.length>limite)throw Error('CATALOGO_REAL_PAGINACAO_NECESSARIA');
   const agora=Date.now();
@@ -106,7 +107,7 @@ function criarCatalogoMercadoriasReal({
     throw Error('CATALOGO_REAL_HISTORICO_INVALIDO');
    return Object.freeze({
     produtoId:p.id,titulo:p.nome,descricao:p.descricao||'',
-    tipo:'FISICO',cor:'CINZA',criadoEm,
+    tipo:p.tipo,cor:'CINZA',criadoEm,
     novidade:criadoEm>=agora-30*86400000,unidadesConfirmadas:0,
     // Referencia apenas fotos persistidas deste produto publicado.
     // Nao trafega BLOB nem credenciais de catalogo para o cliente.
@@ -116,7 +117,8 @@ function criarCatalogoMercadoriasReal({
     })),
     precoCentavos:null,estoqueConfirmado:false,
     compravel:false,checkoutReal:false,
-    estado:'AGUARDANDO_HOMOLOGACAO_FORNECEDOR'
+    estado:p.tipo==='FISICO'?'AGUARDANDO_HOMOLOGACAO_FORNECEDOR':
+     'AGUARDANDO_ENTREGA_DIGITAL'
    });
   });
  }
@@ -128,7 +130,7 @@ function criarCatalogoMercadoriasReal({
    throw Error('FOTO_PUBLICA_IDENTIFICADOR_INVALIDO');
   const local=ID.test(produtoId)?repo.buscar(produtoId):null;
   if(local){
-   if(local.estado!=='PUBLICADO'||local.tipo!=='FISICO')
+   if(local.estado!=='PUBLICADO')
     throw Error('FOTO_NAO_PUBLICADA');
   }else{
    // Foto de produto do catalogo comercial principal: produto ativo
@@ -172,6 +174,7 @@ function criarCatalogoMercadoriasReal({
      estado:'CATALOGO_REAL_PERSISTENTE',sqliteIntegro:true,
      quantidadeProdutos:repo.listar().length,
      cursosPdfArmazenados:repo.banco.prepare('SELECT COUNT(*) AS n FROM akitemm_curso_pdf_atual_real').get().n,
+     canaisDigitaisConfigurados:repo.banco.prepare('SELECT COUNT(*) AS n FROM akitemm_canais_digitais_real').get().n,
      checkoutReal:false,
      pagamentoReal:false,semItensInseridosAutomaticamente:true
     });return true;
@@ -248,8 +251,19 @@ function criarCatalogoMercadoriasReal({
       if(atual.produto.tipo==='PDF'&&!pdf.estado(id).arquivoAnexado){
        responder(res,409,{erro:'PUBLICACAO_EXIGE_PDF'});return true;
       }
+      if(atual.produto.tipo==='PDF'&&!fotos.listar(id).fotos.length){
+       responder(res,409,{erro:'PUBLICACAO_EXIGE_CAPA'});return true;
+      }
       if(atual.produto.tipo==='FISICO'&&!fotos.listar(id).fotos.length){
        responder(res,409,{erro:'PUBLICACAO_EXIGE_FOTO'});return true;
+      }
+      if(['CURSO','AFILIADO'].includes(atual.produto.tipo)){
+       if(!canaisDigitais.estado(id).configurado){
+        responder(res,409,{erro:'PUBLICACAO_EXIGE_CANAL_DIGITAL'});return true;
+       }
+       if(!fotos.listar(id).fotos.length){
+        responder(res,409,{erro:'PUBLICACAO_EXIGE_CAPA'});return true;
+       }
       }
      }
      repo.atualizar({id,revisaoEsperada:d.revisaoEsperada,alteracoes:d.alteracoes});
@@ -272,6 +286,28 @@ function criarCatalogoMercadoriasReal({
      }
      const bytes=await corpo(req,MAX_PDF);
      const salvo=await pdf.salvar({produtoId:id,bytes,revisaoEsperada:Number(revisao)});
+     responder(res,salvo.repetido?200:201,salvo);return true;
+    }
+   }
+   // Configuracao somente interservicos: sem compra, sem link publico,
+   // sem gerar acesso, posicao ou transferencia financeira.
+   const canalRota=rota.match(/^\/produtos\/([a-z0-9-]{3,80})\/canal-digital$/);
+   if(canalRota){
+    const id=canalRota[1],item=repo.buscar(id);
+    if(!item){responder(res,404,{erro:'DIGITAL_PRODUTO_NAO_ENCONTRADO'});return true;}
+    if(!Object.hasOwn(MODOS,item.tipo)){
+     responder(res,409,{erro:'DIGITAL_TIPO_NAO_PERMITIDO'});return true;
+    }
+    if(req.method==='GET'){
+     responder(res,200,canaisDigitais.estado(id));return true;
+    }
+    if(req.method==='PUT'){
+     const dados=lerJson(await corpo(req,MAX_JSON));
+     if(!exato(dados,['config','revisaoEsperada'])||
+        !exato(dados.config,['modo','provedor','referencia','urlDestino']))
+      throw Error('DIGITAL_CAMPOS_INVALIDOS');
+     const salvo=canaisDigitais.configurar({produtoId:id,
+      ...dados.config,revisaoEsperada:dados.revisaoEsperada});
      responder(res,salvo.repetido?200:201,salvo);return true;
     }
    }
@@ -314,13 +350,14 @@ function criarCatalogoMercadoriasReal({
   }catch(e){
    const erro=erroCodigo(e);
    const status=erro==='CORPO_GRANDE_DEMAIS'?413:
-    ['CONFLITO_REVISAO','CONFIG_CONFLITO_REVISAO','PDF_CONFLITO_REVISAO'].includes(erro)?409:
+    ['CONFLITO_REVISAO','CONFIG_CONFLITO_REVISAO','PDF_CONFLITO_REVISAO',
+     'DIGITAL_CONFLITO_REVISAO'].includes(erro)?409:
     /INTEGRIDADE|SQLITE/.test(erro)?503:400;
    if(!res.headersSent&&!res.writableEnded)responder(res,status,{erro});
    return true;
   }
  }
- return {atender,repo,fotos,config,pdf,listarVitrinePreparacao,
+ return {atender,repo,fotos,config,pdf,canaisDigitais,listarVitrinePreparacao,
   buscarProdutoCompartilhado,listarFotosProdutoCompartilhado,
   abrirFotoPublicada,fechar:()=>repo.fechar()};
 }
