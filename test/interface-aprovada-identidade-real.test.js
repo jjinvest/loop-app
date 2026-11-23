@@ -110,7 +110,8 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(paginaHtml,/Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima\./);
  assert.doesNotMatch(paginaHtml,/incluindo a informação de que o indicador|14 tópicos completos/);
  assert.match(script,/tituloDocs\.textContent=\x27Ler Termos de Uso e Privacidade\x27/);
- assert.match(script,/de 6 eventos neste ciclo/);
+ assert.doesNotMatch(script,/de 6 eventos neste ciclo/);
+ assert.match(paginaHtml,/RELÓGIO DE PARTICIPAÇÃO DE LUCRO — FORA DO TURNO OU PAUSADO/);
  assert.doesNotMatch(script,/Posições de ensaio por compra:/);
  assert.doesNotMatch(script,/Indicação qualificada em ensaio/);
  assert.doesNotMatch(script,/Motor interno indisponível/);
