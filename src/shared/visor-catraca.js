@@ -65,7 +65,7 @@
     Math.max(0,decorridoAntesHora)*total/duracaoMs));
    const luzesHora=emTurno&&!finalizado?
     Math.max(0,passadas-passadasNoInicioHora):0;
-   return {luzes,passadas,total,proxima,diaTurno,finalizado,luzesHora,
+   return {luzes,passadas,total,proxima,diaTurno,finalizado,emTurno,luzesHora,
     intervalo:Math.max(1,Math.round(duracaoMs/total/1000))};
   }
   function sincronizarLuzesVisuais(estado){
@@ -126,13 +126,17 @@
    if(resumo&&compartilhado&&operadorAberto)
     resumo.textContent='';
    const contador=$('motorContadorEventos');
-   if(contador&&compartilhado){
-    const reais=agendaVisorCatraca.eventosReaisNoCiclo;
-    contador.textContent=valido?
-     'Relógio: '+estado.luzes+' de 6 luzes · Eventos confirmados: '+
-      (Number.isSafeInteger(reais)?reais:0)+' de 6':
-     'Relógio de teste fora do turno ou pausado · Eventos confirmados: '+
-      (Number.isSafeInteger(reais)?reais:0)+' de 6';
+   if(contador){
+    // Estado legível da participação de lucro, sem repetir 0/6 ou 6/6.
+    // Indicadores contábeis e eventos reais permanecem nos seus painéis.
+    const pausa=agendaVisorCatraca?.pausaManual===true||
+     agendaVisorCatraca?.modoExecucao==='STOP';
+    const rodando=valido&&estado.emTurno===true&&!estado.finalizado&&
+     !pausa;
+    const livre=agendaVisorCatraca?.modoExecucao==='NATURAL'&&!pausa;
+    contador.textContent='RELÓGIO DE PARTICIPAÇÃO DE LUCRO — '+
+     (rodando?'EM ANDAMENTO':livre?'MODO LIVRE':
+      'FORA DO TURNO OU PAUSADO');
    }
   }
   function atualizarMarcadorCatraca(){
