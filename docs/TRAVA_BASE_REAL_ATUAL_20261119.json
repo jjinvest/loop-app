@@ -1344,11 +1344,11 @@
     },
     {
       "path": "src/producao/banners-editor-real.css",
-      "sha": "383df598a2468232ae2dca866ff099dfa237e058"
+      "sha": "9bb0ccb5539e4ea00c8b1ead60d5eed5fc2fa390"
     },
     {
       "path": "src/producao/banners-escritorio-real-client.js",
-      "sha": "0e1ab6e446cd0bc1019192330551fed4d5f69473"
+      "sha": "ad1b6546dd7087aa9ef363fa3343cb6f1f10638f"
     },
     {
       "path": "src/producao/banners-escritorio-real.js",
@@ -1356,7 +1356,7 @@
     },
     {
       "path": "src/producao/banners-loja-akitemm-client.js",
-      "sha": "619a10e5150bba9433b46c9784424235edd4230e"
+      "sha": "57345717ccecb9fbb06289565a8e91da8328ac95"
     },
     {
       "path": "src/producao/banners-loja-akitemm-real-sqlite.js",
@@ -2556,7 +2556,7 @@
     },
     {
       "path": "test/enquadramento-banners-sem-esticar-20261123.test.js",
-      "sha": "7fe0a7b3e7c181da806a27b395e9f1a3f46bcea1"
+      "sha": "e3c6e27f23eff7ca6ef05b77cf648cf6a9c872a1"
     },
     {
       "path": "test/ensaio-tres-clientes-acesso-unificado-preview.test.js",

@@ -276,6 +276,8 @@
       im.loading='eager';
       im.src='/api/loop/banners/'+slot.slot+'/foto/'+pos+
        '?rev='+slot.revisao;
+      quadro.style.setProperty('--banner-reflexo',
+       'url('+JSON.stringify(im.src)+')');
       quadro.append(im);
       if(editavel){
        const lixeira=document.createElement('button');

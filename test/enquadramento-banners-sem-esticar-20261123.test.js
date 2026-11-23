@@ -40,6 +40,16 @@ test('mosaicos e miniaturas preservam proporcao em ambos os sistemas',()=>{
  assert.match(css,/\.banner-mosaico-celula img\{[\s\S]*?object-fit:contain;object-position:center/);
  assert.match(css,/\.banner-editor-celula img:not\(\[hidden\]\)\{[\s\S]*?object-fit:contain;object-position:center/);
 });
+test('reflexo suave usa a mesma imagem e fica atras da foto inteira',()=>{
+ const css=fs.readFileSync(path.join(raiz,'src/producao/banners-editor-real.css'),'utf8');
+ assert.match(css,/background-image:var\(--banner-reflexo\)/);
+ assert.match(css,/filter:blur\(16px\) brightness\(\.55\)/);
+ assert.match(css,/object-fit:contain;object-position:center;background:transparent/);
+ for(const arquivo of fontes){
+  const js=fs.readFileSync(path.join(raiz,arquivo),'utf8');
+  assert.match(js,/style\.setProperty\('--banner-reflexo'/);
+ }
+});
 test('foto nao expande a moldura compacta e preexistente da AKITEMM',()=>{
  const css=fs.readFileSync(path.join(raiz,'src/candidato/vitrine-horizontal.css'),'utf8');
  assert.match(css,/\.akitemm-banner\.akitemm-banner-com-foto\{\s*height:212px;min-height:212px;max-height:212px;aspect-ratio:2\/1/);

@@ -219,6 +219,8 @@
      im.alt='Foto '+pos+' do banner '+slot.slot;
      im.src='/api/loja/banners/'+slot.slot+'/foto/'+pos+
       '?rev='+slot.revisao;
+     quadro.style.setProperty('--banner-reflexo',
+      'url('+JSON.stringify(im.src)+')');
      quadro.append(im);
      if(operador){
       const b=document.createElement('button');
