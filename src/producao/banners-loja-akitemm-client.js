@@ -153,7 +153,7 @@
    '?rev='+(current()?.revisao||0),
   apagar:pos=>removerFotoIndividual(current()?.slot,pos)});
  colunas.addEventListener('change',()=>{
-  modo.value=Number(colunas.value)>1?'PREENCHER':'INTEIRA';
+  modo.value='INTEIRA';
   fotosEditor.pintar();
  });
 
@@ -165,7 +165,7 @@
   escolher.value='';previa.hidden=true;previa.removeAttribute('src');
   fotosEditor.limpar();
   colunas.value=String(atual.colunas||1);
-  modo.value=atual.modo||(atual.colunas===1?'INTEIRA':'PREENCHER');
+  modo.value='INTEIRA';
   mostrarCampos();fotosEditor.pintar();
   estado.textContent='';
   if(!dialogo.open){parar();dialogo.showModal();}
@@ -209,7 +209,7 @@
   mosaico.replaceChildren();
   if(exibirMosaico){
    mosaico.style.setProperty('--banner-quadros',String(quadros));
-   mosaico.dataset.modo=slot.modo||'PREENCHER';
+   mosaico.dataset.modo='INTEIRA';
    for(let pos=1;pos<=quadros;pos++){
     const sub=slot.fotos?.[pos-1],quadro=document.createElement('div');
     quadro.className='banner-mosaico-celula';
@@ -240,7 +240,7 @@
    const caminho='/api/loja/banners/'+slot.slot+'/imagem?revisao='+
     (slot.atualizadoEm||slot.revisao);
    if(foto.getAttribute('src')!==caminho)foto.src=caminho;
-   foto.style.objectFit=slot.modo==='PREENCHER'?'cover':'contain';
+   foto.style.objectFit='contain';
    foto.alt='Banner '+slot.slot+' da AKITEMM';
   }else foto.removeAttribute('src');
   conteudo.style.display=(imagem||slot.slot!==1||adicionando)?'none':'';
@@ -609,7 +609,7 @@
  painel.innerHTML='<section class="banner-editor-ajuste">'+
   '<header><strong>Ajustar foto</strong><button type="button" data-acao="cancelar" aria-label="Fechar">×</button></header>'+
   '<canvas aria-label="Arraste para enquadrar a foto"></canvas>'+
-  '<label>Ampliar <input type="range" min="100" max="300" value="100" step="1"></label>'+
+  '<label>Ampliar / reduzir <input type="range" min="50" max="300" value="100" step="1"></label>'+
   '<footer><button type="button" data-acao="trocar">Trocar</button>'+
   '<button type="button" data-acao="cancelar">Cancelar</button>'+
   '<button type="button" data-acao="aplicar">Aplicar</button></footer></section>';
@@ -625,7 +625,8 @@
   if(!crop)return;
   const img=crop.imagem,w=canvas.width,h=canvas.height;
   const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)return;
-  const escala=Math.max(w/img.naturalWidth,h/img.naturalHeight)*crop.zoom;
+  // Encaixar a foto inteira primeiro; o zoom nunca parte de um corte.
+  const escala=Math.min(w/img.naturalWidth,h/img.naturalHeight)*crop.zoom;
   const dw=escala*img.naturalWidth,dh=escala*img.naturalHeight;
   const maxX=Math.max(0,(dw-w)/2),maxY=Math.max(0,(dh-h)/2);
   crop.x=Math.max(-maxX,Math.min(maxX,crop.x));
