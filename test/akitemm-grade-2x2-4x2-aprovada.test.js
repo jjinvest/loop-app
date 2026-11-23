@@ -26,16 +26,18 @@ test('quatro filtros na ordem autorizada, sem alterar os IDs e as classes',()=>{
  assert.match(js,/botao\.addEventListener\('click',\(\)=>escolherCor\(botao\.dataset\.akitemmCor\)\)/);
 });
 
-test('legenda em duas colunas no PC e celular; 4 colunas PC e 2 no celular',()=>{
+test('legenda em quatro colunas no PC e duas no celular; catálogo intacto',()=>{
  const legenda=regra('.akitemm-loja .akitemm-legenda-cores');
  assert.match(legenda,/display:grid/);
- assert.match(legenda,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(legenda,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+ assert.match(legenda,/width:100%;max-width:none/);
+ assert.match(css,/@media\(max-width:800px\)[\s\S]*?\.akitemm-loja \.akitemm-legenda-cores\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  const desktop=regra('.akitemm-loja #catalogoLojaLoop');
  assert.match(desktop,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
  assert.match(css,/@media\(max-width:800px\)\{\s*\.akitemm-loja #catalogoLojaLoop\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
 });
 
-test('dez abas de 40 espacos em fileiras horizontais; filtros continuam com layout anterior',()=>{
+test('dez abas de 40 espacos em fileiras horizontais; filtros preservam função',()=>{
  assert.match(js,/TOTAL_ABAS=10,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40/);
  assert.match(js,/const linhas=expandida\?LINHAS_ABA:2/);
  assert.match(js,/const indice=abaProdutos\*VAGAS_ABA\+i/);
