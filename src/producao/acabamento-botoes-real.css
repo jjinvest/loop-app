@@ -804,15 +804,15 @@ body.loop03-modo-operador .cliente-integrado #conteudoPosicoes .loop03-admin-sec
 }
 #loop03CofresOperador .loop03-cofre{
  min-width:0;display:flex;flex-direction:column;
- justify-content:flex-end;align-items:center;box-sizing:border-box;
- padding:9px 3px 10px;border-radius:17px;
+ justify-content:center;align-items:center;box-sizing:border-box;
+ padding:11px 4px 12px;border-radius:17px;
  border:1px solid #80643c;
  background:linear-gradient(150deg,#232a35,#101724 68%,#282331);
  text-align:center;gap:6px;color:#f4dfb0;overflow:hidden;
- min-height:172px;
+ min-height:116px;
 }
 #loop03CofresOperador .loop03-cofre-centro{
- min-height:192px;border:2px solid #caa457;
+ min-height:138px;border:2px solid #caa457;
  background:radial-gradient(circle at 50% 12%,#1c4036,#1b2930 50%,#151b29);
  box-shadow:0 0 17px #c8a45735,inset 0 1px #fde29a77;
 }
