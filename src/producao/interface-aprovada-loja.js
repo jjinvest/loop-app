@@ -14,6 +14,7 @@
  const solicitarCadastro=()=>location.assign(destinoCadastro());
  let visitante=true,operadorAtivo=false,operadorAutenticadoLoja=false;
  let clienteNick=null,csrfLoja=null;
+ let linkLiberado=false,geracaoConsultaLink=0;
  const visaoLoja=new URLSearchParams(location.search).get('visao');
  const visaoClienteLoja=visaoLoja==='cliente';
  const visaoOperadorLoja=visaoLoja==='operador';
@@ -78,6 +79,7 @@
   // Nunca reaproveitar foto do perfil anterior em mudança de sessão.
   await atualizarAtalhoOperadorReal();
   await sincronizarFotoLoja();
+  if(!visitante&&!operadorAtivo)await atualizarDireitoLink();
  }
  window.addEventListener('pageshow',()=>{void revalidarFotoDaSessao();});
  window.addEventListener('focus',()=>{void revalidarFotoDaSessao();});
@@ -204,13 +206,36 @@
  function prepararLinkPessoal(){
   const input=$('enderecoDivulgarLojaLoop');
   const btn=$('copiarDivulgarLojaLoop');
-  const valido=!visitante&&!operadorAtivo&&
+  const autenticado=!visitante&&!operadorAtivo&&
    typeof clienteNick==='string'&&/^[A-Za-z]{1,12}$/.test(clienteNick);
+  const valido=autenticado&&linkLiberado===true;
   input.value=valido?location.origin+'/loja/'+encodeURIComponent(clienteNick):'';
   btn.disabled=!valido;btn.setAttribute('aria-disabled',String(!valido));
   $('statusDivulgarLojaLoop').textContent=valido?
    'Link pessoal ativo para convites e cadastro de indicados.':
-   'Entre como cliente para compartilhar seu link pessoal.';
+   autenticado?'Link pendente: a compra confirmada de um produto verde, roxo ou dourado/laranja libera a divulgação. Produto cinza não qualifica.':
+   'Entre como cliente para consultar seu direito ao link.';
+ }
+ async function atualizarDireitoLink(){
+  const geracao=++geracaoConsultaLink;
+  const nick=clienteNick;
+  linkLiberado=false;prepararLinkPessoal();
+  if(visitante||operadorAtivo||!nick)return;
+  try{
+   const r=await fetch('/api/contas/divulgacao',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)throw Error('LINK_CONSULTA_INDISPONIVEL');
+   const d=await r.json();
+   if(geracao!==geracaoConsultaLink||nick!==clienteNick||visitante||operadorAtivo)return;
+   if(d.fonte!=='PEDIDO_PSP_CONFIRMADO_COM_FOTOGRAFIA_DA_COR'||
+      d.financeiroReal!==false)throw Error('LINK_FONTE_INVALIDA');
+   linkLiberado=d.linkLiberado===true;
+  }catch{
+   if(geracao!==geracaoConsultaLink||nick!==clienteNick)return;
+   linkLiberado=false;
+  }
+  if(geracao===geracaoConsultaLink)prepararLinkPessoal();
  }
  $('copiarDivulgarLojaLoop').addEventListener('click',async()=>{
   const input=$('enderecoDivulgarLojaLoop');
@@ -1247,7 +1272,7 @@
    const me=await res.json();
    if(typeof me.nick!=='string'||me.financeiroReal!==false)
     throw Error('IDENTIDADE_INCOMPATIVEL');
-   clienteNick=me.nick;csrfLoja=me.csrf;prepararLinkPessoal();
+   clienteNick=me.nick;csrfLoja=me.csrf;await atualizarDireitoLink();
    if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=nickVisivel(me.nick);
    informar('AKITEMM: loja conectada à sua conta LOOP. Vendas reais ainda não liberadas.');
   }

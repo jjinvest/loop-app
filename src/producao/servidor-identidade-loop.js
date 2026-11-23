@@ -3,6 +3,8 @@
 // src/candidato e nunca monta as rotas de laboratório ou dinheiro.
 const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
+const {consultarDivulgacao,verificarNickDivulgador}=
+ require('./direitos-divulgacao-loop-sqlite');
 const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
 const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
 const {CaptchaLoginSQLite}=require('../shared/captcha-login-sqlite');
@@ -351,6 +353,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    if(captcha)captcha.verificar({
     captchaId:b.captchaId,captchaResposta:b.captchaResposta
    });
+   // A referencia exige compra habilitadora conciliada no historico comercial.
+   if(dadosCadastro.indicadorNick&&!verificarNickDivulgador({
+    banco:contas.banco,nick:dadosCadastro.indicadorNick
+   }))return res.status(403).json({erro:'LINK_DIVULGACAO_NAO_LIBERADO'});
    const result=await contas.cadastrar(dadosCadastro);
    return res.status(201).json(result);
   }catch(e){return falha(res,e);}
@@ -457,6 +463,11 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   try{return res.json(contas.dadosTitular(req.conta.titularId));}
   catch{return res.status(503).json({erro:'DADOS_INDISPONIVEIS'});}
  });
+ app.get('/api/contas/divulgacao',protegido,(req,res)=>{
+  try{return res.set('Cache-Control','private, no-store').json(
+   consultarDivulgacao({banco:contas.banco,titularId:req.conta.titularId})
+  );}catch{return res.status(503).json({erro:'DIVULGACAO_INDISPONIVEL'});}
+ });
  // Convite registra somente um cadastro, sem ativar comissão, dinheiro ou posição.
  app.get('/api/contas/minha-rede',protegido,(req,res)=>{
   const bruto=req.query?.offset,cursor=req.query?.cursor;
@@ -518,6 +529,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    'SELECT 1 FROM loop_real_contas WHERE nick=?'
   ).get(nick);
   if(!existe)return res.status(404).type('text').send('Convite inexistente');
+  if(!verificarNickDivulgador({banco:contas.banco,nick}))
+   return res.status(403).type('text').send('Link ainda não habilitado');
   // Convite de loja abre a vitrine antes do login; convite do escritorio
   // permanece no formulario de nick. A referencia acompanha a rota.
   return res.set('Cache-Control','no-store').redirect(303,
@@ -529,6 +542,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   const nick=req.query?.ref;
   if(typeof nick!=='string'||!(/^[A-Za-z]{1,12}$/).test(nick))
    return res.status(400).type('text').send('Convite inválido');
+  if(!verificarNickDivulgador({banco:contas.banco,nick}))
+   return res.status(403).type('text').send('Link ainda não habilitado');
   return res.set('Cache-Control','no-store').redirect(303,
    '/loja?ref='+encodeURIComponent(nick));
  });

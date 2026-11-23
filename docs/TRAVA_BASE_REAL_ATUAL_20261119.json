@@ -1488,7 +1488,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "9fad13b2e5a5552ed1409999ebd08d65a1978600"
+      "sha": "777d3110c62244f5fd1a28adf1e8c38a13d9f8d0"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1644,7 +1644,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "ff995b166772311a67a8a04aa3f49eb5067c119f"
+      "sha": "efe9f91cba23e3dc50aa61cefbd4d76955037d97"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -2456,7 +2456,7 @@
     },
     {
       "path": "test/contrato-links-definitivos-real.test.js",
-      "sha": "2fbccd874b020d75360f6bed4e0af001eaa1baa7"
+      "sha": "2e2e7135e0181504f9a55b63244582f3b8a28d96"
     },
     {
       "path": "test/contrato-mensagens-operacionais-real.test.js",
@@ -3681,6 +3681,14 @@
     {
       "path": "test/rotulos-modos-catraca-operador-real.test.js",
       "sha": "16b2b57fb785e8200c2c57a49e2156f690c68115"
+    },
+    {
+      "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
+      "sha": "25a928d0cfd6fc6c256c901835f3f5789f253697"
+    },
+    {
+      "path": "test/direitos-divulgacao-loop-sqlite.test.js",
+      "sha": "5a85841c8d379e42bdd773f7c95b07142f8f8b89"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
@@ -5898,6 +5906,41 @@
       "antes": "f9ed40f2db3c2844a8294b9b33ce21298505fdec",
       "depois": "82f5fd3ec5fbcedd41025e3128d83623c8d56904",
       "objetivo": "Indicado sem qualificacao nao tem destino/contagem funcional; escolha pre-qualificacao fica oculta, sem editar historico."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/servidor-identidade-loop.js",
+      "antes": "ff995b166772311a67a8a04aa3f49eb5067c119f",
+      "depois": "efe9f91cba23e3dc50aa61cefbd4d76955037d97",
+      "objetivo": "Separar a habilitacao do link de divulgacao da compra comum, CPF/adesao e posicao LOOP. Cinza nunca qualifica; compra habilitadora exige conciliacao PSP; rotas e UI respeitam o gate."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "9fad13b2e5a5552ed1409999ebd08d65a1978600",
+      "depois": "777d3110c62244f5fd1a28adf1e8c38a13d9f8d0",
+      "objetivo": "Separar a habilitacao do link de divulgacao da compra comum, CPF/adesao e posicao LOOP. Cinza nunca qualifica; compra habilitadora exige conciliacao PSP; rotas e UI respeitam o gate."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/contrato-links-definitivos-real.test.js",
+      "antes": "2fbccd874b020d75360f6bed4e0af001eaa1baa7",
+      "depois": "2e2e7135e0181504f9a55b63244582f3b8a28d96",
+      "objetivo": "Separar a habilitacao do link de divulgacao da compra comum, CPF/adesao e posicao LOOP. Cinza nunca qualifica; compra habilitadora exige conciliacao PSP; rotas e UI respeitam o gate."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
+      "antes": null,
+      "depois": "25a928d0cfd6fc6c256c901835f3f5789f253697",
+      "objetivo": "Novo componente de consulta somente leitura comprovada: link apenas apos compra habilitadora verificada. Nao ativa posicao ou dinheiro."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "test/direitos-divulgacao-loop-sqlite.test.js",
+      "antes": null,
+      "depois": "5a85841c8d379e42bdd773f7c95b07142f8f8b89",
+      "objetivo": "Novo componente de consulta somente leitura comprovada: link apenas apos compra habilitadora verificada. Nao ativa posicao ou dinheiro."
     }
   ]
 }
