@@ -287,19 +287,39 @@ function montarGatewayAdminComercial(app,{
     }
    });
  }
- // Gestão de cadastro: só a sessão autenticada como OPERADOR tem acesso.
- // Leitura exige nick exato; escrita exige CSRF, motivo e auditoria no SQLite.
+ // Gestao de cadastro: somente o operador autenticado pode consultar.
+ // Pesquisa sensivel usa POST com CSRF para evitar nome/telefone/CPF na URL.
  if(contas){
+  app.post('/api/admin/contas/pesquisar',proteger,validarCsrf,(req,res)=>{
+   res.set('Cache-Control','private, no-store');
+   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+      Object.keys(req.body).join(',')!=='termo')
+    return res.status(400).json({erro:'BUSCA_CADASTRO_INVALIDA'});
+   try{return res.json(contas.buscarCadastrosOperador({termo:req.body.termo}));}
+   catch(e){return res.status(e.codigo==='BUSCA_CADASTRO_INVALIDA'?400:503)
+    .json({erro:e.codigo||'BUSCA_CADASTRO_INDISPONIVEL'});}
+  });
   app.get('/api/admin/contas/cadastro',proteger,(req,res)=>{
    res.set('Cache-Control','private, no-store');
    if(Object.keys(req.query).join(',')!=='nick'||
       typeof req.query.nick!=='string'||
       !/^[A-Za-z]{1,12}$/.test(req.query.nick))
     return res.status(400).json({erro:'NICK_INVALIDO'});
-   try{return res.json({cadastro:contas.consultarCadastroOperador({
-    nick:req.query.nick
-   })});}
-   catch(e){
+   try{
+    const cadastro=contas.consultarCadastroOperador({nick:req.query.nick});
+    let posicoesAtivas=null;
+    if(motorLoop&&motorLoop.banco===contas.banco){
+     const titular=contas.banco.prepare(
+      'SELECT id FROM loop_real_contas WHERE nick=? COLLATE NOCASE'
+     ).get(cadastro.nick);
+     if(!titular)erro('CADASTRO_NAO_LOCALIZADO');
+     const estado=motorLoop.consultar({titularId:titular.id});
+     if(!Array.isArray(estado.minhasPosicoes))
+      erro('POSICOES_CADASTRO_INDISPONIVEIS');
+     posicoesAtivas=estado.minhasPosicoes.length;
+    }
+    return res.json({cadastro:{...cadastro,posicoesAtivas}});
+   }catch(e){
     return res.status(e.codigo==='CADASTRO_NAO_LOCALIZADO'?404:503)
      .json({erro:e.codigo||'CONSULTA_CADASTRO_INDISPONIVEL'});
    }
