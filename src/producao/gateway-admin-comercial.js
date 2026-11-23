@@ -29,7 +29,7 @@ function montarGatewayAdminComercial(app,{
  pedidosComerciais=null,
  motorLoop=null,operacaoCatraca=null,consultarSaldosCofres=null,
  integradorComercialEnsaio=null,jornadaComercialEnsaio=null,
- recuperacaoReservas=null,classificacaoLoop=null,origemHttps
+ recuperacaoReservas=null,classificacaoLoop=null,bancadaOperacional=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
@@ -596,6 +596,31 @@ function montarGatewayAdminComercial(app,{
     codigo==='CATRACA_MOTOR_PRODUTIVO_NAO_HOMOLOGADO'?423:503;
    return res.status(http).json({erro:codigo});
   }
+ });
+ // Bancada de teste de movimentos: mesmo motor de dominio, snapshots
+ // independentes, operador autenticado, CSRF e historico transacional.
+ // A porteira pode estar fechada durante o giro da catraca; as filas
+ // continuam recebendo posicoes sem acionar eventos do tabuleiro.
+ app.get('/api/admin/loop/testes-modulos',proteger,(_req,res)=>{
+  if(!bancadaOperacional)
+   return res.status(503).json({erro:'BANCADA_NAO_CONFIGURADA'});
+  try{return res.set('Cache-Control','private, no-store').json(
+   bancadaOperacional.consultar());}
+  catch(e){return res.status(503).json({erro:e.codigo||'BANCADA_INDISPONIVEL'});}
+ });
+ app.post('/api/admin/loop/testes-modulos',proteger,validarCsrf,(req,res)=>{
+  if(!bancadaOperacional)
+   return res.status(503).json({erro:'BANCADA_NAO_CONFIGURADA'});
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     typeof req.body!=='object'||
+     Object.keys(req.body).some(k=>
+      !['acao','idOperacao','nome','posicaoId'].includes(k)))
+   return res.status(400).json({erro:'BANCADA_COMANDO_INVALIDO'});
+  try{return res.set('Cache-Control','private, no-store').json(
+   bancadaOperacional.comandar(req.body));}
+  catch(e){const codigo=e.codigo||'BANCADA_OPERACAO_INDISPONIVEL';
+   return res.status(/INVALID|OPERACAO_INVALIDA/.test(codigo)?400:409)
+    .json({erro:codigo});}
  });
  // Projecao real do livro de vendas; comandos de ensaio so com sessao
  // administrativa, CSRF, e jamais em NODE_ENV=production.
