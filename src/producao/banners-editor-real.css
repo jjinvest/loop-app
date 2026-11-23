@@ -292,6 +292,13 @@ body.loop03-modo-operador #conteudoResumo .loop03-banner-item:not(.loop03-banner
  position:absolute;inset:0;display:block;width:100%;height:100%;
  object-fit:cover;
 }
+/* Na AKITEMM, a miniatura tambem mostra a foto inteira sem zoom inicial. */
+.akitemm-loja .banner-real-formulario .banner-editor-celula img:not([hidden]){
+ object-fit:contain;object-position:center;background:#090e1a;
+}
+.akitemm-loja .akitemm-banner .banner-mosaico-celula img{
+ object-fit:contain;object-position:center;background:#090e1a;
+}
 .banner-real-formulario .banner-editor-sinal{
  position:relative;z-index:2;display:grid;place-items:center;
  width:44px;height:44px;border-radius:50%;

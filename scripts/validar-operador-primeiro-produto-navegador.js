@@ -113,6 +113,38 @@ async function principal(){
   assert.equal(token,true);
   await page.goto(base+'/loja',{waitUntil:'domcontentloaded'});
   await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+  // Regressao do banner: o retangulo nao pode crescer ao receber imagem.
+  // Validar tamanhos em celular e PC sem enviar fotos ao ambiente real.
+  const medirBanner=async pagina=>{
+   const medidas=await pagina.evaluate(()=>{
+    const banner=document.querySelector('.akitemm-loja .akitemm-banner');
+    if(!banner)throw Error('BANNER_AKITEMM_NAO_ENCONTRADO');
+    const original=banner.getBoundingClientRect();
+    const tinhaFoto=banner.classList.contains('akitemm-banner-com-foto');
+    banner.classList.add('akitemm-banner-com-foto');
+    const comFoto=banner.getBoundingClientRect();
+    if(!tinhaFoto)banner.classList.remove('akitemm-banner-com-foto');
+    const foto=document.createElement('img');
+    foto.className='akitemm-banner-foto-editavel';
+    banner.append(foto);
+    const ajuste=getComputedStyle(foto).objectFit;
+    foto.remove();
+    return {antes:original.height,depois:comFoto.height,
+     larguraAntes:original.width,larguraDepois:comFoto.width,ajuste};
+   });
+   assert.ok(Math.abs(medidas.antes-medidas.depois)<=1,
+    'A foto nao pode mudar a altura do banner: '+JSON.stringify(medidas));
+   assert.ok(Math.abs(medidas.larguraAntes-medidas.larguraDepois)<=1);
+   assert.equal(medidas.ajuste,'contain');
+  };
+  await medirBanner(page);
+  const pc=await browser.newPage({
+   ignoreHTTPSErrors:true,viewport:{width:1280,height:800}
+  });
+  try{
+   await pc.goto(base+'/loja',{waitUntil:'domcontentloaded'});
+   await medirBanner(pc);
+  }finally{await pc.close();}
   const estadoOperador=await page.evaluate(async()=>{
    const r=await fetch('/api/operador/estado',{
     credentials:'same-origin',cache:'no-store'
