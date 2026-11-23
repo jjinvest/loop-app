@@ -440,7 +440,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9"
+      "sha": "fa87468550b4a0c39cf7be08b433295ca43e64ce"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -5846,6 +5846,13 @@
       "antes": "40b5b96af054a1014d5276a6f3b2818ca141b7f2",
       "depois": "0854b6f30e96b88988d92c9d5765c7629abb05b3",
       "objetivo": "Login cliente/operador aprovado: mostrar somente 'Nick ou senha incorretos' sem indicar a grafia reservada, manter exigência estrita de OPERADOR em maiúsculas e funcionamento da autenticação."
+    },
+    {
+      "data": "2026-11-23",
+      "path": "scripts/validar-operador-primeiro-produto-navegador.js",
+      "antes": "e0f09ef67e0bcd3388565f7843b191e9e8c8dec9",
+      "depois": "fa87468550b4a0c39cf7be08b433295ca43e64ce",
+      "objetivo": "Auditoria geometrica em quatro larguras Android e paridade de imagem capa operador/cliente com dados isolados; nao altera o HTML ou CSS aprovado."
     }
   ]
 }
