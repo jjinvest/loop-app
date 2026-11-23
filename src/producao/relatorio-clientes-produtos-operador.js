@@ -67,7 +67,7 @@ function criarRelatorioClientesProdutosOperador({banco}={}){
  const linhasLista=()=>banco.prepare([
   'SELECT p.pedido_id AS pedidoId,p.criado_em AS criadoEm,',
   'p.status AS statusPagamento,p.pagamento_id AS pagamentoId,',
-  'p.valor_total_centavos AS valorTotalPedidoCentavos,',
+  // Não duplicar total do pedido em cada linha de produto, nem presumir coluna histórica.
   's.produto_id AS produtoId,s.sku AS sku,s.fornecedor_id AS fornecedorId,',
   's.quantidade AS quantidade,s.preco_unit_centavos AS precoUnitCentavos,',
   existente.get('loja_real_produtos')?'pr.titulo AS titulo':'NULL AS titulo',
