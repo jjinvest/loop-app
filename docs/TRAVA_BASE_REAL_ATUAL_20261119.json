@@ -1484,7 +1484,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "ffb62f442c4e7d4f371939e6b7f96a779cdc14b6"
+      "sha": "2d0b1fe25cf40ed79b0412b4787d6169adfbfd30"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1504,7 +1504,7 @@
     },
     {
       "path": "src/producao/livro-financeiro-real-sqlite.js",
-      "sha": "80a099daf927e532dd6064c52c2f40b286a4051f"
+      "sha": "c4172f7af9dcd5d2471b05a14c564706b64b885a"
     },
     {
       "path": "src/producao/manutencao-comercial-sqlite.js",
@@ -1644,7 +1644,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "bc8991563432d71966a1318e1f1dc02d29b6a412"
+      "sha": "b0c5ebda1ff3a715c5c49911155b67f8274faf6b"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -3684,11 +3684,11 @@
     },
     {
       "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
-      "sha": "904cdfb513590c22a88c335826209c32afcbd105"
+      "sha": "4713dfb988c507570e454b2ed3eac9acef661fcc"
     },
     {
       "path": "test/direitos-divulgacao-loop-sqlite.test.js",
-      "sha": "738d4f6eca443b45f30692bc7bfb802976387de3"
+      "sha": "eea9f420b53fa637cc6a613ab5a4172946fe536d"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
