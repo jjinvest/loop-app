@@ -408,7 +408,7 @@ class MotorLoopIntegradoSQLite{
   return {
    fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',fila,total:pessoas.length,
    ancora:indice<0?null:{numero:alvo,ordem:indice+1},
-   janela:desdeInicio?pessoas.slice(0,10).map(linha):
+   janela:desdeInicio?pessoas.slice(0,20).map(linha):
     indice<0?[]:pessoas.slice(janelaInicio,indice+3)
     .map((p,i)=>linha(p,janelaInicio+i)),
    pagina:itens.map((p,i)=>linha(p,inicio+i)),
