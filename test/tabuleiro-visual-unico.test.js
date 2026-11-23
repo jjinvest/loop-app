@@ -62,26 +62,26 @@ test('mesmo desenho das filas e bolinhas nas duas interfaces',()=>{
   assert.doesNotMatch(code,/style\.opacity=i<d\.tabuleiro/);
  }
 });
-test('filas mostram ordinal da espera e nao o numero unico do titular',()=>{
+test('filas mostram ordem na esfera e numero proprio ao lado',()=>{
  const {visual,el}=fake();
  visual.preencherFila('motorFilaA',[{numero:9,minha:true,
   estadoAdesao:'PENDENTE'}],'A');
  assert.equal(el.motorFilaA.children.length,1);
  const row=el.motorFilaA.children[0];
- assert.equal(row.children[1].children[0].textContent,'1º lugar');
- assert.equal(row.children[0].textContent,'1');
+ assert.equal(row.children[1].children[0].textContent,'Número 9');
+ assert.equal(row.children[0].textContent,'1º');
  assert.doesNotMatch(row.children[1].children[0].textContent,/#9/);
  assert.match(row.children[1].children[1].textContent,/Minha posição/);
  assert.equal(row.children[0].className,'loop03-inicial-fila loop03-azul');
  visual.preencherFila('motorFilaB',21,'B');
  assert.equal(el.motorFilaB.children.length,21,
   'cada lugar existente deve aparecer, nao reduzir fila a um resumo');
- assert.equal(el.motorFilaB.children[0].children[0].textContent,'1');
- assert.equal(el.motorFilaB.children[20].children[0].textContent,'21');
+ assert.equal(el.motorFilaB.children[0].children[0].textContent,'1º');
+ assert.equal(el.motorFilaB.children[20].children[0].textContent,'21º');
  assert.equal(el.motorFilaB.children[0].children[1].children[0].textContent,
-  '1º lugar · identidade protegida');
+  'Número não disponível');
  assert.equal(el.motorFilaB.children[20].children[1].children[0].textContent,
-  '21º lugar · identidade protegida');
+  'Número não disponível');
  assert.equal(el.motorFilaB.children[0].children[1].children.length,1,
   'nenhum nick ou ID de terceiro pode ser inferido');
  visual.preencherFila('motorFilaB',0,'B');
@@ -89,7 +89,7 @@ test('filas mostram ordinal da espera e nao o numero unico do titular',()=>{
  assert.throws(()=>visual.preencherFila('motorFilaB',-1,'B'),
   /FILA_FONTE_INVALIDA/);
 });
-test('mil IDs distintos podem ocupar ordem 1 a 1000 sem mostrar numero permanente',()=>{
+test('ordem da fila e IDs próprios permanecem distintos até o milésimo lugar',()=>{
  const {visual,el}=fake();
  const itens=Array.from({length:30},(_,i)=>({
   numero:10000+i*17,ordem:971+i,minha:i===18
@@ -97,10 +97,10 @@ test('mil IDs distintos podem ocupar ordem 1 a 1000 sem mostrar numero permanent
  visual.preencherFila('motorFilaA',itens,'A');
  assert.equal(el.motorFilaA.children.length,30);
  assert.equal(el.motorFilaA.children[0].children[0].textContent,'971');
- assert.equal(el.motorFilaA.children[29].children[1].children[0].textContent,'1000º lugar');
+ assert.equal(el.motorFilaA.children[29].children[1].children[0].textContent,'Número '+(10000+29*17));
  assert.equal(el.motorFilaA.children[18].children[0].textContent,'989');
- assert.doesNotMatch(el.motorFilaA.children.map(x=>
-  x.children[1].children[0].textContent).join(' '),/#/);
+ assert.match(el.motorFilaA.children.map(x=>
+  x.children[1].children[0].textContent).join(' '),/Número 10000/);
 });
 test('roda usa centro verde, periferia branca, sexta vermelha e dourada permanente',()=>{
  const html=ler('candidato/checkout-candidato-ui.html');

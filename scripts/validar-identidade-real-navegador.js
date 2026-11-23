@@ -1153,11 +1153,11 @@ async function main(){
     'esfera vazia não mostra marcador fictício');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
    const resumoFilaB=await page.locator('#motorFilaB').textContent();
-   assert.ok(resumoFilaB.includes('1º lugar')&&
+   assert.ok(resumoFilaB.includes('1º')&&resumoFilaB.includes('Número 1')&&
     await page.locator('#motorFilaB .loop03-linha-fila').count()===1,
-    'fila B mostra ordinal paginado real, sem inventar IDs: '+resumoFilaB);
-   assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'1',
-    'fila paginada exibe ordinal 1, nunca ID interno ou titular alheio');
+    'fila B mostra ordem na bolinha e número próprio no texto: '+resumoFilaB);
+   assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'1º',
+    'fila paginada exibe o lugar na porteira, diferente do número próprio');
    assert.equal(await page.locator('#motorBolinha1').getAttribute('aria-label'),
     'Evento 1 aguardando');
    assert.equal(await page.locator('#motorBolinha6')
