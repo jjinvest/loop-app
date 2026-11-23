@@ -3684,11 +3684,11 @@
     },
     {
       "path": "src/producao/direitos-divulgacao-loop-sqlite.js",
-      "sha": "230ada044af08e1f34d0890e0d4c69bd9a95a4aa"
+      "sha": "904cdfb513590c22a88c335826209c32afcbd105"
     },
     {
       "path": "test/direitos-divulgacao-loop-sqlite.test.js",
-      "sha": "bdb569a8d1a3cad46fb351831ab3270e3683f73e"
+      "sha": "738d4f6eca443b45f30692bc7bfb802976387de3"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
