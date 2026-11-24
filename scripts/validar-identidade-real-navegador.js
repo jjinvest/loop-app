@@ -1700,7 +1700,9 @@ async function main(){
    assert.equal(await pagina.locator('#motorBolinha6')
     .evaluate(el=>el.classList.contains('loop03-marcador-aceso')),false);
    assert.equal(await pagina.locator('#motorFilaB .loop03-linha-fila').count(),
-    estadoCliente.filaB,'fila deve refletir a contagem real, sem limite fixo de uma pessoa');
+    Math.max(9,Math.min(100,estadoCliente.filaB)),'lugares livres até 9, sem limitar a fila existente');
+   assert.equal(await pagina.locator('#motorFilaB .loop03-bola-interativa').count(),
+    Math.min(100,estadoCliente.filaB),'somente posições existentes têm bola');
    await pagina.screenshot({
     path:path.join(pasta,'integrado-tabuleiro-'+visual.nome+'.png'),
     fullPage:true
