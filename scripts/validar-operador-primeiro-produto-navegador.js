@@ -333,9 +333,8 @@ async function principal(){
    assert.match(await m.locator('.akitemm-editor-status').textContent(),
     /Escolha uma foto de capa para publicar/);
    assert.equal(await m.locator('.akitemm-recorte-opcional input[type=checkbox]').count(),0);
-   await capa.locator('input[type=file]').setInputFiles({
-    name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
-   });
+   const [seletorNativo]=await Promise.all([page.waitForEvent('filechooser'),capa.locator('input[type=file]').tap()]);
+   await seletorNativo.setFiles({name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO});
    await conferirAcoesSemSobreposicao(page,'#akitemmOperadorFotosReal');
    // Enquadramento automático; recorte só se o operador pedir.
    const corte=capa.getByRole('button',{name:'Ajustar corte da foto (opcional)'});

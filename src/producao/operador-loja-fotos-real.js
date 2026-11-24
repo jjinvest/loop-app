@@ -768,7 +768,8 @@
   label.textContent=posicao===1?'＋ Foto de capa':'＋ Foto '+posicao;
   const existente=document.createElement('img');existente.hidden=true;existente.alt='Foto '+posicao+' salva';
   const input=document.createElement('input');
-  input.type='file';input.accept='image/jpeg,image/png,image/webp';
+  input.type='file';input.accept='image/*';
+  input.setAttribute('aria-label',posicao===1?'Selecionar foto de capa':'Selecionar foto '+posicao);
   input.dataset.recorteNativo='sim';
   label.append(input);caixa.append(label,existente);
   const aviso=linha(posicao===1?'Obrigatória · JPG, PNG ou WebP':'Opcional');
@@ -831,11 +832,11 @@
    recortar.hidden=true;recortar.textContent='Ajustar corte da foto (opcional)';
    const foto=input.files?.[0];
    if(!foto)return;
-   if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||
-      foto.size<40||foto.size>15*1024*1024){
-    aviso.textContent='Selecione uma foto JPEG, PNG ou WebP de até 15 MB.';
+   if((foto.type&&!foto.type.startsWith('image/')&&foto.type!=='application/octet-stream')||foto.size<40||foto.size>15*1024*1024){
+    aviso.textContent='Escolha uma imagem de até 15 MB.';
     input.value='';return;
    }
+   aviso.textContent='Preparando a foto…';
    // A CSP da aplicação real autoriza data: e bloqueia blob:.
    // FileReader evita abrir exceções inseguras na política de imagens.
    carregando=new Promise((resolve,reject)=>{
@@ -852,10 +853,15 @@
     };
     img.onerror=()=>reject(Error('FOTO_NAO_ABRIU'));
     leitor.onerror=()=>reject(Error('FOTO_NAO_LEIDA'));
-    leitor.onload=()=>{img.src=String(leitor.result||'');};
+    leitor.onload=()=>{
+     const dados=String(leitor.result||'');
+     // Alguns seletores Android não informam MIME. O navegador decodifica
+     // a imagem; somente o JPEG reprocessado pelo canvas chega ao servidor.
+     img.src=dados.replace(/^data:(?:application\/octet-stream)?;base64,/, 'data:image/jpeg;base64,');
+    };
     leitor.readAsDataURL(foto);
    });
-   carregando.catch(()=>{aviso.textContent='Não foi possível abrir a imagem. Escolha outra foto.';});
+   carregando.catch(()=>{aviso.textContent='Não foi possível abrir esta imagem. Use uma foto JPG, PNG ou WebP.';});
   });
   return {
    campo:input,
@@ -1863,6 +1869,8 @@
  // Não captura os controles de filtros nem o botão de detalhes.
  // O cliente normal continua com o comportamento aprovado.
  document.addEventListener('click',ev=>{
+  // O bloqueio pós-arrasto pertence à vitrine, nunca ao formulário aberto.
+  if(dialogo?.contains(ev.target))return;
   if(Date.now()<suprimirCliqueAte){
    ev.preventDefault();ev.stopImmediatePropagation();return;
   }

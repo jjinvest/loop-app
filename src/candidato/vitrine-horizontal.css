@@ -583,3 +583,20 @@ dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-campo-pendente{borde
 .akitemm-midia-video{margin-top:12px;padding:12px;border:1px dashed #8b9dac;border-radius:12px;display:grid;gap:8px}
 .akitemm-midia-video video,.akitemm-video-produto{width:100%;max-height:320px;background:#101923;border-radius:10px;object-fit:contain}
 .akitemm-midia-video [hidden]{display:none!important}
+
+/* AKITEMM: arte panorâmica preenche a faixa no computador; celular mantém o encaixe aprovado. */
+@media (min-width:801px){
+ .akitemm-loja .akitemm-banner .akitemm-banner-foto-editavel:not([hidden]){
+  object-fit:fill!important;
+ }
+ .akitemm-loja .akitemm-banner.akitemm-banner-com-foto:has(.akitemm-banner-foto-editavel:not([hidden]))::before{
+  opacity:0;
+ }
+}
+
+/* Seletor nativo: toda a superfície do quadrinho recebe o toque, sem depender de rótulo. */
+dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-escolher-foto,
+dialog.akitemm-operador-editor .akitemm-midia-video .akitemm-escolher-foto{position:relative;isolation:isolate;touch-action:manipulation}
+dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-escolher-foto input[type=file],
+dialog.akitemm-operador-editor .akitemm-midia-video .akitemm-escolher-foto input[type=file]{position:absolute;inset:0;inline-size:100%;block-size:100%;width:100%;height:100%;margin:0;opacity:0;z-index:2;cursor:pointer;pointer-events:auto}
+dialog.akitemm-operador-editor .akitemm-escolher-foto:focus-within{outline:2px solid #e6bd73;outline-offset:2px}

@@ -49,3 +49,15 @@ test('setas AKITEMM sem aro, margens do editor ajustadas sem regravar fotos',()=
  assert.match(js,/Math\.min\(w\/cw,h\/ch\)/);
  assert.match(js,/l:l&&r\?l:0,r:l&&r\?r:0/);
 });
+
+test('AKITEMM usa largura panorâmica no PC e preserva encaixe proporcional no celular',()=>{
+ const read=p=>fs.readFileSync(path.join(__dirname,'../',p),'utf8');
+ const css=read('src/candidato/vitrine-horizontal.css');
+ const js=read('src/producao/banners-loja-akitemm-client.js');
+ assert.match(css,/@media \(min-width:801px\)\{\s*\.akitemm-loja \.akitemm-banner \.akitemm-banner-foto-editavel:not\(\[hidden\]\)\{\s*object-fit:fill!important/);
+ assert.match(css,/object-fit:contain!important/);
+ assert.match(css,/height:212px;min-height:212px;max-height:212px/);
+ assert.match(js,/window\.matchMedia\('\(min-width:801px\)'\)\.matches/);
+ assert.match(js,/const zx=1\/\(1-l-r\),zy=1\/\(1-t-b\)/);
+ assert.match(js,/Math\.min\(w\/iw,h\/ih\)/);
+});
