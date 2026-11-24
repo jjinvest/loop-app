@@ -40,7 +40,7 @@ function cenario(){
  };
  const chamadas=[],visores=[];
  const contexto={
-  modoOperadorAtual:false,
+  modoOperadorAtual:false,visualTesteModulo:null,
   popupPosicoesRealAberto:false,
   posicoesResumoReal:[],posicaoSelecionada:'',
   posicaoResumoEscolhidaManualmente:false,
@@ -118,4 +118,13 @@ test('fonte divergente nao sobrescreve placar, e os perfis atualizam no temporiz
  assert.match(tick,/void atualizarPlacarOperador\(\)/);
  assert.match(tick,/void atualizarPlacarCliente\(\)/);
  assert.doesNotMatch(rotinas,/method:'POST'|executarGiro\(|registrarCompra\(/);
+});
+
+test('placar comercial em trânsito não sobrescreve cenário selecionado',async()=>{
+ const x=cenario();x.contexto.modoOperadorAtual=true;
+ const leitura=x.contexto.atualizarOperador();
+ x.contexto.visualTesteModulo='CATRACA';
+ await leitura;
+ assert.equal(x.elementos.loop03TotalIntegrado.textContent,'—');
+ assert.equal(x.visores.length,0);
 });
