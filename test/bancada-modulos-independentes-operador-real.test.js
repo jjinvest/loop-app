@@ -235,3 +235,18 @@ test('referencia visual usa numero isolado e nick original sem consultar cadastr
  assert.match(office,/if\(p\.referenciaBancada===true\)return;[\s\S]*?fetch\('\/api\/admin\/contas\/cadastro/);
  assert.match(office,/mostrarTotaisFilasRodape\(d\.filaA,d\.filaB,true\)/);
 });
+
+test('referência menor da distribuição preserva vagas reais e fica só no operador',()=>{
+ const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+ const trecho=office.slice(office.indexOf('// Terceira representação isolada:'),office.indexOf('visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);',office.indexOf('// Terceira representação isolada:')));
+ assert.ok(trecho.includes('if(referenciaVisual)'));
+ assert.ok(trecho.includes('if(!d.tabuleiro.vagas[i])'));
+ assert.ok(trecho.includes("classList.contains('posicao-vazia')"));
+ assert.ok(trecho.includes("loop03-referencia-distribuicao loop03-bola-interativa loop03-a"));
+ assert.ok(trecho.includes("referenciaVisual.numero).padStart(7,'0')"));
+ assert.ok(trecho.includes('nick.textContent=referenciaVisual.nome'));
+ assert.doesNotMatch(trecho,/fetch\(|method:|preencherVaga\(/);
+ const css=fs.readFileSync('src/candidato/escritorio-cliente-integrado.css','utf8');
+ assert.ok(css.includes('width:60%;aspect-ratio:1;max-width:62px'));
+ assert.ok(css.includes('pointer-events:none;line-height:1.05'));
+});

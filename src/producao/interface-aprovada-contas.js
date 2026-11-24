@@ -3346,6 +3346,27 @@
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
    for(let i=0;i<6;i++)
     visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),d.tabuleiro.vagas[i]);
+   // Terceira representação isolada: esfera menor dentro de uma vaga livre.
+   // A vaga original não muda; a referência nunca é entregue ao motor.
+   if(referenciaVisual){
+    let vagaLivre=-1;
+    for(let i=5;i>=0;i--)if(!d.tabuleiro.vagas[i]){vagaLivre=i;break;}
+    if(vagaLivre>=0){
+     const selo=$('tabuleiroMotorVaga'+(vagaLivre+1));
+     if(selo?.classList.contains('posicao-vazia')){
+      const bola=document.createElement('span');
+      bola.className='loop03-referencia-distribuicao loop03-bola-interativa loop03-a';
+      bola.setAttribute('aria-label','Referência visual de '+referenciaVisual.nome);
+      const id=document.createElement('span');
+      id.className='loop03-referencia-distribuicao-id';
+      id.textContent='#'+String(referenciaVisual.numero).padStart(7,'0');
+      const nick=document.createElement('small');
+      nick.className='loop03-referencia-distribuicao-nick';
+      nick.textContent=referenciaVisual.nome;
+      bola.append(id,nick);selo.replaceChildren(bola);
+     }
+    }
+   }
    visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);
    // Operador e cliente leem a MESMA projeção da catraca no SQLite.
    // Luzes do relógio são visuais; giros e eventos têm livros separados.
