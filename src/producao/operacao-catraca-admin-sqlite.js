@@ -157,6 +157,17 @@ class OperacaoCatracaAdminSQLite{
     'UPDATE loop_real_catraca_admin_meta',
     'SET centros_dia=0,data_alvo=NULL,atualizado_em=? WHERE id=1'
    ].join(' ')).run(ts);
+   // O histórico do relógio reconstrói a meta pelos eventos CONFIGURAR.
+   // Sem registrar o estado zero aqui, uma meta antiga voltaria a
+   // contar luzes mesmo com a configuração atual zerada.
+   const politica=this._politica();
+   this._log('CONFIGURAR',{
+    modo:politica.modo,janelaInicio:politica.inicio,
+    janelaFim:politica.fim,limiteDiario:politica.limite_diario,
+    metaCentrosDia:0,metaDataAlvo:null,luzesPlanejadas:0,
+    revisaoAnterior:politica.revisao,motivo:'ZERAMENTO_META_ENSAIO',
+    giroProdutivoHabilitado:false
+   },ts);
    this._log(acao,{
     escopo:'META_E_CONTADORES_VISUAIS_DO_RELOGIO',
     metaCentrosDia:0,
