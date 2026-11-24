@@ -14,7 +14,7 @@ function preparar(db){
   chaveCodigo:randomBytes(32)
  });
 }
-test('duas tabelas de mosaicos da AKITEMM real nao bloqueiam reinicio de identidade',t=>{
+test('quatro tabelas de mosaicos da AKITEMM real nao bloqueiam reinicio de identidade',t=>{
  const db=new DatabaseSync(':memory:');t.after(()=>db.close());
  const loja=new BannersLojaAkitemmRealSQLite({banco:db});
  const criado=loja.adicionar();
@@ -25,7 +25,8 @@ test('duas tabelas de mosaicos da AKITEMM real nao bloqueiam reinicio de identid
   "SELECT name FROM sqlite_master WHERE name LIKE 'akitemm_banner_mosaico_%'"
  ).all().map(x=>x.name).sort();
  assert.deepEqual(origem,[
-  'akitemm_banner_mosaico_foto','akitemm_banner_mosaico_layout'
+  'akitemm_banner_mosaico_foto','akitemm_banner_mosaico_foto_extra',
+  'akitemm_banner_mosaico_layout','akitemm_banner_mosaico_layout_ampliado'
  ]);
 });
 test('tabela desconhecida akitemm_ segue proibida mesmo com mosaicos reais',t=>{

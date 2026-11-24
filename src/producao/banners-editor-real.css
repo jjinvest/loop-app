@@ -399,13 +399,3 @@ body.loop03-modo-operador #conteudoResumo .loop03-banner-item:not(.loop03-banner
   transition:none;
  }
 }
-
-.akitemm-loja .akitemm-banner.akitemm-banner-com-foto::before{
- content:'';position:absolute;inset:-18px;z-index:0;
- background-image:var(--akitemm-banner-fundo);
- background-position:center;background-size:cover;background-repeat:no-repeat;
- filter:blur(18px) brightness(.58);pointer-events:none;
-}
-.akitemm-loja .akitemm-banner .akitemm-banner-foto-editavel:not([hidden]){
- object-fit:contain!important;background:transparent!important;z-index:1;
-}

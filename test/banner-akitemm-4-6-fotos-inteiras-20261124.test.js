@@ -36,6 +36,6 @@ test('banner preserva proporção, controles pequenos e faixa inteira',()=>{
  assert.match(front,/\[2,3,4,5,6\]\.map/);
  assert.match(front,/foto\.style\.objectFit='contain'/);
  assert.match(front,/area\.clientWidth/);
- assert.match(css,/object-fit:contain!important/);
+ assert.match(vit,/object-fit:contain!important/);
  assert.match(vit,/width:16px;height:16px/);
 });

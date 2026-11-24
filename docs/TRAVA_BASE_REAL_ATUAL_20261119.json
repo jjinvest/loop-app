@@ -516,7 +516,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "c8e49a9167a43b878fe4933f231c7d1cf519dea3"
+      "sha": "140bbdefae25f5fd30fadf5b1cf0593df8566d2f"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -1324,7 +1324,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "58ade13412e99a217802c3b19c62cd2ecad77277"
+      "sha": "79f2069bc4e8b27e688d87659aa34025ed3179d0"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1344,7 +1344,7 @@
     },
     {
       "path": "src/producao/banners-editor-real.css",
-      "sha": "6348efa6c5cbc28cc03dcfec450afd5ae9bba5f4"
+      "sha": "9bb0ccb5539e4ea00c8b1ead60d5eed5fc2fa390"
     },
     {
       "path": "src/producao/banners-escritorio-real-client.js",
@@ -1476,7 +1476,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "bafff3bf200b41114042e806089172d9c76198fd"
+      "sha": "86d921a0dc9e242a1ab8689e0dc40c0c862d6dd5"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -2216,7 +2216,7 @@
     },
     {
       "path": "test/banner-akitemm-4-6-fotos-inteiras-20261124.test.js",
-      "sha": "27e07f923ae8e248782a01959025d0b1ed07be81"
+      "sha": "71da3d5078fd9f0ef50f2aee48ce4df92c1560f8"
     },
     {
       "path": "test/banners-ajuste-direto-fotos.test.js",
@@ -2816,7 +2816,7 @@
     },
     {
       "path": "test/identidade-real-mosaico-banners-guard.test.js",
-      "sha": "f1c77463309c1254bd45eaf24312d6c818ded74a"
+      "sha": "3d95dc718c308a1ad91fb82689e4f081782a8c5a"
     },
     {
       "path": "test/identidade-real-persistencia.test.js",
