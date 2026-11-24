@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "f4833df144cec68d659dbe990aaf0d043e77b607"
+      "sha": "16961901884bc76f03a2c77421ca1afe8fd5a025"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -2380,7 +2380,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "f23e71ccc360f7362f80b69d4f0a9e10ab67fb4d"
+      "sha": "9d7621b96ebe47e9a9f1f0988f4b49fc41420314"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
@@ -3720,7 +3720,7 @@
     },
     {
       "path": "test/zeramento-placares-ensaio-sem-apagar-posicoes-20261123.test.js",
-      "sha": "b19e07e2c3010b87f42eba32f978fd9790b4c43e"
+      "sha": "f8ee34820cc1e621a29464c1440c27861d8dfe51"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
