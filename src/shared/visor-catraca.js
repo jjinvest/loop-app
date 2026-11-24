@@ -185,12 +185,12 @@
       const segundos=Math.max(0,Math.ceil((proxima-agoraServidor)/1000));
       visor.textContent=String(Math.floor(segundos/60)).padStart(2,'0')+
        ':'+String(segundos%60).padStart(2,'0');
-      titulo.textContent='PRÓXIMA LUZ · RELÓGIO';
+      titulo.textContent='PRÓXIMA LUZ · EVENTO';
      }else{
       visor.textContent='00:00';
       titulo.textContent='LUZES DO TURNO COMPLETAS';
      }
-     estado.textContent='Relógio: '+visual.luzes+'/6 luzes · '+
+     estado.textContent='Eventos: '+visual.luzes+'/6 luzes · '+
       visual.passadas+'/'+visual.total+' do dia · '+
       Math.floor(visual.intervalo/60)+' min'+
       (visual.intervalo%60?' '+visual.intervalo%60+' s':'')+
