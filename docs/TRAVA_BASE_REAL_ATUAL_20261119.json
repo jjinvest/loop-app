@@ -1188,11 +1188,11 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "53f5c61b2cf694d7f0d033ee50713619d733eab1"
+      "sha": "44753cf86d7d61f6a23bbada6aab3bd039a155c4"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
-      "sha": "c69bfc690a93922baec4aa16fe3e0e306220331b"
+      "sha": "2ff5869aa2e90181f14533f7e7b6bdb41276474c"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.js",
@@ -1937,6 +1937,10 @@
     {
       "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
       "sha": "83d0b6bbb54d224f58d0f8dfda2cbe7135ad6859"
+    },
+    {
+      "path": "test/akitemm-banner-largura-total-panoramico-20261123.test.js",
+      "sha": "620046ebc89f814684314dea71e58e7f0dff1b38"
     },
     {
       "path": "test/akitemm-config-loja-demo.test.js",
