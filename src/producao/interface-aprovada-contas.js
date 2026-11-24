@@ -3313,7 +3313,6 @@
     consultarFilaTabuleiroOperador('B',d.filaB)
    ]);
    if(!modoOperadorAtual||visualTesteModulo!==null)return;
-   visualTabuleiro.preencherFila('motorFilaA',filaVisualA,'A');
    // Referência temporária solicitada pelo operador: apenas apresentação.
    // Número proveniente da posição isolada, nunca de uma conta real.
    let referenciaVisual=null;
@@ -3337,6 +3336,12 @@
    if(referenciaVisual)
     visualTabuleiro.preencherFila('motorFilaB',[...filaVisualB.map(p=>({...p,nome:undefined})),referenciaVisual],'B',{exibirNomesTeste:true});
    else visualTabuleiro.preencherFila('motorFilaB',filaVisualB,'B');
+   // Segunda representação da MESMA referência isolada: somente visual A.
+   // Sem promoção, cadastro, movimentação, identificação adicional ou contador real.
+   if(referenciaVisual&&filaVisualA.length===d.filaA&&filaVisualA.length<100){
+    const referenciaVisualA={...referenciaVisual,ordem:filaVisualA.length+1,pendente:false};
+    visualTabuleiro.preencherFila('motorFilaA',[...filaVisualA.map(p=>({...p,nome:undefined})),referenciaVisualA],'A',{exibirNomesTeste:true});
+   }else visualTabuleiro.preencherFila('motorFilaA',filaVisualA,'A');
    mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
    for(let i=0;i<6;i++)
