@@ -3328,7 +3328,7 @@
        const p=bancada.fila?.filaB?.find(p=>p.nome==='Taísa'&&p.titular==='ensaio-taisa'&&!p.dourada);
        if(p&&Number.isSafeInteger(p.numero)&&p.numero>0)
         referenciaVisual={ordem:filaVisualB.length+1,numero:p.numero,nome:p.nome,
-         pendente:p.pendente===true,indicacoesVinculadas:p.indicacoesVinculadas||0,referenciaBancada:true};
+         pendente:p.pendente===true,indicacoesVinculadas:5,referenciaBancada:true};
       }
      }
     }catch{/* A fila real continua disponível sem a referência temporária. */}

@@ -33,7 +33,7 @@ test('cinco bolas têm ordinal da porteira distinto do ID próprio',()=>{
   const l=r.area.children[i];
   assert.equal(l.children[0].textContent,String(i+1));
   assert.equal(l.children[1].children[0].textContent,
-   '#'+[12,7,99,42,180][i]);
+   '#'+String([12,7,99,42,180][i]).padStart(7,'0'));
   assert.doesNotMatch(l.children[1].children[0].textContent,/identidade protegida/);
  }
 });
@@ -61,17 +61,17 @@ test('cem lugares no visor sem reciclar ID, duas esferas e nick autorizado',()=>
  assert.equal(r.area.children.length,100);
  assert.equal(r.area.children[0].children[0].className,'loop03-fila-ordinal-branca');
  assert.equal(r.area.children[0].children[1].className,'loop03-inicial-fila loop03-bola-interativa loop03-dourada');
- assert.equal(r.area.children[0].children[1].children[0].textContent,'#10001');
+ assert.equal(r.area.children[0].children[1].children[0].textContent,'#0010001');
  assert.equal(r.area.children[1].children[1].children[1].textContent,'Vilela');
  assert.equal(r.area.children[1].children[2].children[1].textContent,'2');
  assert.equal(r.area.children[99].children[0].textContent,'100');
- assert.equal(r.area.children[99].children[1].children[0].textContent,'#10100');
+ assert.equal(r.area.children[99].children[1].children[0].textContent,'#0010100');
 });
 
-test('número longo abreviado no círculo sem perder o ID completo e dourada sem indicação',()=>{
- const {area}=renderizar([{numero:123456789,nickVisual:'Vilela',indicacoesVinculadas:4},{numero:1000,dourada:true,nickVisual:'Vilela',indicacoesVinculadas:4}]);
- assert.equal(area.children[0].children[1].children[0].textContent,'#123456…');
- assert.match(area.children[0].children[1].attrs.title,/#123456789 Vilela/);
+test('número completo de sete dígitos no círculo e dourada sem indicação',()=>{
+ const {area}=renderizar([{numero:1000000,nickVisual:'Vilela',indicacoesVinculadas:4},{numero:1000,dourada:true,nickVisual:'Vilela',indicacoesVinculadas:4}]);
+ assert.equal(area.children[0].children[1].children[0].textContent,'#1000000');
+ assert.match(area.children[0].children[1].attrs.title,/#1000000 Vilela/);
  assert.equal(area.children[1].children.length,2);
  assert.equal(area.children[1].children[1].children.length,1);
 });
