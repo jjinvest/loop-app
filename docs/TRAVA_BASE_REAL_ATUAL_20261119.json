@@ -1336,7 +1336,7 @@
     },
     {
       "path": "src/producao/bancada-modulos-loop-sqlite.js",
-      "sha": "ddbdf82e60cc5ac1214733c0be3fbc7ea89087aa"
+      "sha": "fdbe84217cfded1cf7c9856f97ee531f8d14bcc0"
     },
     {
       "path": "src/producao/banner-mosaico-sqlite.js",
@@ -1492,7 +1492,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "cc0f1b27497b69cf2d7b2602508dd5184b930bf6"
+      "sha": "fad39e297fb6f8d579f85a68f07bf11f0ed1f364"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1864,7 +1864,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "ef1e1115a91bbaae364c7522d203c2a83c750826"
+      "sha": "3271441e2ee1175ccd93a3ec1c0b359e361bf51c"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
