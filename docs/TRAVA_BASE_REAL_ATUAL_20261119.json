@@ -2944,7 +2944,7 @@
     },
     {
       "path": "test/loja-real-zero-produtos-antes-cadastro.test.js",
-      "sha": "1d12cc940a723c243d0a6a7735a5e80206cf1e14"
+      "sha": "6fd9c9611c429af6a9ea460c0dfc6cc6799f259a"
     },
     {
       "path": "test/loja-separada-da-fila-loop-demo.test.js",
@@ -3200,7 +3200,7 @@
     },
     {
       "path": "test/operador-visoes-regressao.test.js",
-      "sha": "eb92c3e21f15fd9955952c22b1f227624ca6bdb1"
+      "sha": "7912ce04c33b7afd0b7accea9c76adcc436a90f1"
     },
     {
       "path": "test/operar-receptor-asaas-railway-staging.test.js",
