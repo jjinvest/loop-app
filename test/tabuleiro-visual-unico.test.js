@@ -68,21 +68,21 @@ test('filas mostram ordem na esfera e numero proprio ao lado',()=>{
   estadoAdesao:'PENDENTE'}],'A');
  assert.equal(el.motorFilaA.children.length,1);
  const row=el.motorFilaA.children[0];
- assert.equal(row.children[1].children[0].textContent,'Número 9');
- assert.equal(row.children[0].textContent,'1º');
- assert.doesNotMatch(row.children[1].children[0].textContent,/#9/);
- assert.match(row.children[1].children[1].textContent,/Minha posição/);
- assert.equal(row.children[0].className,'loop03-inicial-fila loop03-azul');
+ assert.equal(row.children[2].children[0].textContent,'#9');
+ assert.equal(row.children[0].textContent,'1');
+ assert.match(row.children[2].children[0].textContent,/#9/);
+ assert.match(row.children[2].children[1].textContent,/Minha posição/);
+ assert.equal(row.children[1].className,'loop03-inicial-fila loop03-azul');
  visual.preencherFila('motorFilaB',21,'B');
  assert.equal(el.motorFilaB.children.length,21,
   'cada lugar existente deve aparecer, nao reduzir fila a um resumo');
- assert.equal(el.motorFilaB.children[0].children[0].textContent,'1º');
- assert.equal(el.motorFilaB.children[20].children[0].textContent,'21º');
- assert.equal(el.motorFilaB.children[0].children[1].children[0].textContent,
-  'Número não disponível');
- assert.equal(el.motorFilaB.children[20].children[1].children[0].textContent,
-  'Número não disponível');
- assert.equal(el.motorFilaB.children[0].children[1].children.length,1,
+ assert.equal(el.motorFilaB.children[0].children[0].textContent,'1');
+ assert.equal(el.motorFilaB.children[20].children[0].textContent,'21');
+ assert.equal(el.motorFilaB.children[0].children[2].children[0].textContent,
+  '');
+ assert.equal(el.motorFilaB.children[20].children[2].children[0].textContent,
+  '');
+ assert.equal(el.motorFilaB.children[0].children[2].children.length,1,
   'nenhum nick ou ID de terceiro pode ser inferido');
  visual.preencherFila('motorFilaB',0,'B');
  assert.equal(el.motorFilaB.children[0].textContent,'Fila vazia');
@@ -97,10 +97,10 @@ test('ordem da fila e IDs próprios permanecem distintos até o milésimo lugar'
  visual.preencherFila('motorFilaA',itens,'A');
  assert.equal(el.motorFilaA.children.length,30);
  assert.equal(el.motorFilaA.children[0].children[0].textContent,'971');
- assert.equal(el.motorFilaA.children[29].children[1].children[0].textContent,'Número '+(10000+29*17));
+ assert.equal(el.motorFilaA.children[29].children[2].children[0].textContent,'#'+(10000+29*17));
  assert.equal(el.motorFilaA.children[18].children[0].textContent,'989');
  assert.match(el.motorFilaA.children.map(x=>
-  x.children[1].children[0].textContent).join(' '),/Número 10000/);
+  x.children[2].children[0].textContent).join(' '),/#10000/);
 });
 test('roda usa centro verde, periferia branca, sexta vermelha e dourada permanente',()=>{
  const html=ler('candidato/checkout-candidato-ui.html');
