@@ -583,3 +583,13 @@ dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-campo-pendente{borde
 .akitemm-midia-video{margin-top:12px;padding:12px;border:1px dashed #8b9dac;border-radius:12px;display:grid;gap:8px}
 .akitemm-midia-video video,.akitemm-video-produto{width:100%;max-height:320px;background:#101923;border-radius:10px;object-fit:contain}
 .akitemm-midia-video [hidden]{display:none!important}
+
+/* AKITEMM: arte panorâmica preenche a faixa no computador; celular mantém o encaixe aprovado. */
+@media (min-width:801px){
+ .akitemm-loja .akitemm-banner .akitemm-banner-foto-editavel:not([hidden]){
+  object-fit:fill!important;
+ }
+ .akitemm-loja .akitemm-banner.akitemm-banner-com-foto:has(.akitemm-banner-foto-editavel:not([hidden]))::before{
+  opacity:0;
+ }
+}
