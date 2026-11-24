@@ -1158,7 +1158,13 @@ async function main(){
     'ordem branca independente da identidade');
    assert.equal(await linhaFilaB.locator('.loop03-inicial-fila').count(),1,
     'esfera de estado separada da ordem');
-   assert.equal(await linhaFilaB.locator('.loop03-inicial-fila').innerText(),'');
+   assert.equal(await linhaFilaB.locator('.loop03-inicial-fila .loop03-numero-titular').innerText(),'#1');
+   await linhaFilaB.locator('.loop03-bola-interativa').click();
+   const fichaBola=page.locator('#loopDetalheBolaFila');
+   await fichaBola.waitFor({state:'visible'});
+   assert.match(await fichaBola.innerText(),/#1/);
+   assert.doesNotMatch(await fichaBola.innerText(),/CPF:|Telefone:|E-mail:/);
+   await fichaBola.getByRole('button',{name:'Fechar'}).click();
    assert.equal(await linhaFilaB.locator('.loop03-numero-titular').innerText(),'#1',
     'ID permanente real');
    assert.match(await linhaFilaB.innerText(),/dozeletrasab/i);
