@@ -578,7 +578,7 @@
    conteudoFinanceiro:[
     '<h2>Financeiro · Operador</h2>',
     '<div id="adminResumoFinanceiro" class="loop03-admin-dado" role="status">Consultando controle de caixa e catraca…</div>',
-    '<section id="adminFluxoFinanceiroTeste" class="loop03-admin-compras" hidden><h3>Fluxo controlado — dinheiro fictício</h3><div id="adminFluxoFinanceiroDados" class="loop03-compras-colunas" role="status"></div><button type="button" id="adminFluxoAbrirFinanceiro">Acompanhar a distribuição em tempo real</button></section>',
+    '<section id="adminFluxoFinanceiroTeste" class="loop03-admin-compras" hidden><h3>Caixa de conferência</h3><div id="adminFluxoFinanceiroDados" class="loop03-compras-colunas" role="status"></div><button type="button" id="adminFluxoAbrirFinanceiro">Acompanhar a distribuição em tempo real</button></section>',
     '<section id="adminDistribuicaoFinanceira" class="loop03-admin-compras"><h3>Distribuição financeira LOOP</h3><div id="adminDistribuicaoFinanceiraDados" class="loop03-compras-colunas" role="status" aria-live="polite">Consultando livro financeiro e cofres…</div></section>',
     '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarFinanceiro">Atualizar</button><a href="/administrador">Gestão financeira na Central</a></div>'
    ],
@@ -1479,10 +1479,6 @@
       tabuleiro:{eventosNoCiclo:x.tabuleiro.eventosNoCiclo,
        ciclosConcluidos:x.tabuleiro.centrosConcluidos}
      });
-     const origem=document.createElement('p');
-     origem.textContent='TESTE OPERACIONAL · '+visualTesteModulo+
-      ' · contadores do motor de teste';
-     destino.prepend(origem);
     }else{
      // Os LEDs do relógio não são giros do motor. A leitura do mesmo
      // controle compartilhado alimenta os eventos/centros VISUAIS.
@@ -1611,17 +1607,14 @@
   if(!modoOperadorAtual||!cenarioDisponivel){if(area)area.hidden=true;return;}
   if(!area){
    area=document.createElement('div');area.id='adminCenarioOrigem';area.className='loop03-admin-acoes';
-   const texto=document.createElement('span');texto.id='adminCenarioOrigemTexto';texto.setAttribute('role','status');
    const botao=document.createElement('button');botao.id='adminCenarioAlternar';botao.type='button';
    botao.addEventListener('click',()=>alternarCenarioOperador(visualTesteModulo!=='CATRACA'));
-   area.append(texto,botao);
-   $('conteudoTabuleiro').prepend(area);
+   area.append(botao);
+   $('adminFluxoFinanceiroTeste')?.append(area);
   }
   area.hidden=false;
-  $('adminCenarioOrigemTexto').textContent=visualTesteModulo==='CATRACA'?
-   'Cenário de conferência · dinheiro fictício':'Operação comercial · dados reais';
   $('adminCenarioAlternar').textContent=visualTesteModulo==='CATRACA'?
-   'Ver operação comercial':'Ver cenário de conferência';
+   'Operação comercial':'Conferência';
  }
  function alternarCenarioOperador(ativo){
   if(!modoOperadorAtual||!cenarioDisponivel)return;
@@ -2184,7 +2177,7 @@
   const emTeste=operador&&(visualTesteModulo!==null||p.referenciaBancada===true);
   const nick=emTeste&&typeof p.nome==='string'?p.nome:
    typeof p.nickVisual==='string'&&/^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:'';
-  if(emTeste)adicionar('Origem','Bancada operacional — sem dinheiro real');
+  if(emTeste&&operador)adicionar('Origem','Conferência');
   if(ouro)adicionar('Posição','Dourada');
   else if(nick)adicionar('Nick',nick);
   if(!ouro&&p.indicadaMinha===true&&!operador)adicionar('Indicação','Sua indicação');
@@ -3060,43 +3053,13 @@
   return /^\d{4}-\d{2}-\d{2}$/.test(d||'')?
    d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4):'todos os dias';
  }
- function textoAgendaOperador(d){
-  if(!d||!Number.isSafeInteger(d.metaCentrosDia))return 'Agenda não disponível.';
-  const n=d.metaCentrosDia,futura=!!d.metaDataAlvo&&d.metaDataAlvo>d.hoje;
-  // O turno que começou ontem pode continuar ativo após meia-noite.
-  const ontem=/^\d{4}-\d{2}-\d{2}$/.test(d.hoje||'')?
-   new Date(Date.parse(d.hoje+'T12:00:00Z')-86400000)
-    .toISOString().slice(0,10):null;
-  const continuaOntem=d.metaDataAlvo===ontem&&
-   d.janelaInicio>d.janelaFim&&d.horarioPermitido===true&&
-   typeof d.horaLocal==='string'&&d.horaLocal<=d.janelaFim;
-  const anterior=!!d.metaDataAlvo&&d.metaDataAlvo<d.hoje&&!continuaOntem;
-  const situacao=d.modo==='PAUSADA'?'PAUSADA':
-   d.modo==='MANUAL'?'MODO AUTOMÁTICO':n===0?'SEM META':
-   anterior?'DATA ENCERRADA':futura?'AGENDADA — AGUARDANDO DATA':
-   d.horarioPermitido?'DENTRO DO TURNO':'AGENDADA — AGUARDANDO HORÁRIO';
-  return situacao+'\n'+dataAgendaOperador(d.metaDataAlvo)+' · '+
-   d.janelaInicio+'–'+d.janelaFim+'\nMeta: '+n+' centros · '+(n*6)+
-   ' luzes.\n'+(d.autorizacaoFinanceiraDosGiros===true?
-    'Liberação condicionada ao caixa real comprovado.':
-    'CAIXA: pagamentos e giros financeiros ainda não autorizados.');
- }
  function limparAgendaOperador(){
   document.getElementById('loopOperadorAgendaConfirmada')?.remove();
  }
- function mostrarAgendaOperador(d){
-  if(!modoOperadorAtual)return;
-  const alvo=$('estadoRelogioTabuleiro');
-  if(!alvo)return;
-  let aviso=$('loopOperadorAgendaConfirmada');
-  if(!aviso){
-   aviso=document.createElement('section');
-   aviso.id='loopOperadorAgendaConfirmada';
-   aviso.setAttribute('role','status');
-   aviso.setAttribute('aria-label','Programação exclusiva do operador');
-   alvo.insertAdjacentElement('afterend',aviso);
-  }
-  aviso.textContent=textoAgendaOperador(d);
+ // A programação permanece acessível no próprio diálogo do relógio.
+ // Não reinserir o comprovante textual na tela da Distribuição.
+ function mostrarAgendaOperador(){
+  limparAgendaOperador();
  }
  // Seletor próprio: os três botões sempre cabem no Android.
  function criarCampoHorarioOperador(form,descricao,valor){
@@ -3381,10 +3344,10 @@
  function mostrarControlesFluxoTeste(x){
   let painel=$('adminFluxoAoVivo');
   const f=x.financeiro;
-  if(!f||visualTesteModulo!=='CATRACA'){if(painel)painel.hidden=true;return;}
+  if(!modoOperadorAtual||!f||visualTesteModulo!=='CATRACA'){if(painel)painel.hidden=true;return;}
   if(!painel){
    painel=document.createElement('section');painel.id='adminFluxoAoVivo';painel.className='loop03-admin-compras';
-   const h=document.createElement('h3');h.textContent='Fluxo controlado · dinheiro fictício';
+   const h=document.createElement('h3');h.textContent='Distribuição';
    const estado=document.createElement('p');estado.id='adminFluxoAoVivoEstado';estado.setAttribute('role','status');
    const msg=document.createElement('p');msg.id='adminFluxoAoVivoMensagem';msg.setAttribute('role','status');
    const botoes=document.createElement('div');botoes.className='loop03-admin-acoes';
@@ -3404,8 +3367,6 @@
      }catch(e){msg.textContent='Comando não executado: '+e.message;b.disabled=false;}
     });botoes.append(b);
    }
-   const a=document.createElement('button');a.type='button';a.textContent='Voltar à visão comercial';
-   a.addEventListener('click',()=>alternarCenarioOperador(false));botoes.append(a);
    const dados=document.createElement('div');dados.id='adminFluxoAoVivoDados';dados.className='loop03-compras-colunas';
    painel.append(h,estado,botoes,msg,dados);$('conteudoTabuleiro').append(painel);
   }
@@ -3470,17 +3431,14 @@
    visorCatraca.observar(x.tabuleiro.giros,x.tabuleiro.eventosNoCiclo,{fonte:'MODULO_'+visualTesteModulo});
    $('loop03TotalIntegrado').textContent=String(x.filaA.length+x.filaB.length);
    $('loop03NumeroIntegrado').textContent=x.tabuleiro.eventosNoCiclo+' / 6';
-   $('estadoTabuleiroIntegrado').textContent='TESTE OPERACIONAL · '+
-    (visualTesteModulo==='FILA'?'FILAS A/B':'CATRACA')+
-    ' · '+(x.porteiraAberta?'PORTEIRA ABERTA':'PORTEIRA FECHADA')+
-    ' · '+x.tabuleiro.giros+' giros executados no motor';
-   $('estadoTabuleiroIntegrado').hidden=false;
+   $('estadoTabuleiroIntegrado').textContent='';
+   $('estadoTabuleiroIntegrado').hidden=true;
    mostrarControlesFluxoTeste(x);
    void carregarAbaOperador('abaPosicoes');
   }catch(e){
-   if(!modoOperadorAtual)return;
+   if(!modoOperadorAtual||visualTesteModulo===null)return;
    $('estadoTabuleiroIntegrado').textContent=
-    'Leitura do teste indisponível: '+e.message;
+    'Consulta indisponível: '+e.message;
    $('estadoTabuleiroIntegrado').hidden=false;
   }finally{leituraTabuleiroTesteEmCurso=false;}
  }
