@@ -2809,7 +2809,7 @@
      posicoes.push(...d.pagina);
     }
     const scrollAnterior=area.scrollTop;
-    visualTabuleiro.preencherFila(id,posicoes.slice(0,limite),fila);
+    visualTabuleiro.preencherFila(id,posicoes.slice(0,limite),fila,{reservarLugares:9});
     area.scrollTop=scrollAnterior;
     if(visao.total===0){
      const vazio=document.createElement('p');
@@ -3313,60 +3313,13 @@
     consultarFilaTabuleiroOperador('B',d.filaB)
    ]);
    if(!modoOperadorAtual||visualTesteModulo!==null)return;
-   // Referência temporária solicitada pelo operador: apenas apresentação.
-   // Número proveniente da posição isolada, nunca de uma conta real.
-   let referenciaVisual=null;
-   if(filaVisualB.length===d.filaB&&filaVisualB.length<100){
-    try{
-     const resposta=await fetch('/api/admin/loop/testes-modulos',{
-      credentials:'same-origin',cache:'no-store'});
-     if(resposta.ok){
-      const bancada=await resposta.json();
-      if(bancada.fonte==='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'&&
-       bancada.testandoModulosSeparados===true){
-       const p=bancada.fila?.filaB?.find(p=>p.nome==='Taísa'&&p.titular==='ensaio-taisa'&&!p.dourada);
-       if(p&&Number.isSafeInteger(p.numero)&&p.numero>0)
-        referenciaVisual={ordem:filaVisualB.length+1,numero:p.numero,nome:p.nome,
-         pendente:p.pendente===true,indicacoesVinculadas:5,referenciaBancada:true};
-      }
-     }
-    }catch{/* A fila real continua disponível sem a referência temporária. */}
-   }
-   if(!modoOperadorAtual||visualTesteModulo!==null)return;
-   if(referenciaVisual)
-    visualTabuleiro.preencherFila('motorFilaB',[...filaVisualB.map(p=>({...p,nome:undefined})),referenciaVisual],'B',{exibirNomesTeste:true});
-   else visualTabuleiro.preencherFila('motorFilaB',filaVisualB,'B');
-   // Segunda representação da MESMA referência isolada: somente visual A.
-   // Sem promoção, cadastro, movimentação, identificação adicional ou contador real.
-   if(referenciaVisual&&filaVisualA.length===d.filaA&&filaVisualA.length<100){
-    const referenciaVisualA={...referenciaVisual,ordem:filaVisualA.length+1,pendente:false};
-    visualTabuleiro.preencherFila('motorFilaA',[...filaVisualA.map(p=>({...p,nome:undefined})),referenciaVisualA],'A',{exibirNomesTeste:true});
-   }else visualTabuleiro.preencherFila('motorFilaA',filaVisualA,'A');
+   // Apenas posições retornadas pelo motor; os lugares livres são ordinais visuais.
+   visualTabuleiro.preencherFila('motorFilaB',filaVisualB,'B',{reservarLugares:9});
+   visualTabuleiro.preencherFila('motorFilaA',filaVisualA,'A',{reservarLugares:9});
    mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
    for(let i=0;i<6;i++)
     visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),d.tabuleiro.vagas[i]);
-   // Terceira representação isolada: esfera menor dentro de uma vaga livre.
-   // A vaga original não muda; a referência nunca é entregue ao motor.
-   if(referenciaVisual){
-    let vagaLivre=-1;
-    for(let i=5;i>=0;i--)if(!d.tabuleiro.vagas[i]){vagaLivre=i;break;}
-    if(vagaLivre>=0){
-     const selo=$('tabuleiroMotorVaga'+(vagaLivre+1));
-     if(selo?.classList.contains('posicao-vazia')){
-      const bola=document.createElement('span');
-      bola.className='loop03-referencia-distribuicao loop03-bola-interativa loop03-a';
-      bola.setAttribute('aria-label','Referência visual de '+referenciaVisual.nome);
-      const id=document.createElement('span');
-      id.className='loop03-referencia-distribuicao-id';
-      id.textContent='#'+String(referenciaVisual.numero).padStart(7,'0');
-      const nick=document.createElement('small');
-      nick.className='loop03-referencia-distribuicao-nick';
-      nick.textContent=referenciaVisual.nome;
-      bola.append(id,nick);selo.replaceChildren(bola);
-     }
-    }
-   }
    visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);
    // Operador e cliente leem a MESMA projeção da catraca no SQLite.
    // Luzes do relógio são visuais; giros e eventos têm livros separados.
@@ -3428,8 +3381,8 @@
    // Mesmo componente de fila, círculo e luzes usado pelo laboratório.
    // O backend definitivo expõe somente contagens de terceiros.
    // As listas paginadas fornecem números reais; contagens nunca viram bolas fictícias.
-   if(d.filaA===0)visualTabuleiro.preencherFila('motorFilaA',[],'A');
-   if(d.filaB===0)visualTabuleiro.preencherFila('motorFilaB',[],'B');
+   if(d.filaA===0)visualTabuleiro.preencherFila('motorFilaA',[],'A',{reservarLugares:9});
+   if(d.filaB===0)visualTabuleiro.preencherFila('motorFilaB',[],'B',{reservarLugares:9});
    mostrarTotaisFilasRodape(d.filaA,d.filaB,false);
    const titularPorNumero=new Map(
     d.minhasPosicoes.map(p=>[p.numero,p])
