@@ -95,3 +95,39 @@ test('LEDs e 3 indicadores compartilhados recomeçam em zero no marco',()=>{
  for(let i=1;i<=6;i++)
   assert.equal(elem('motorBolinha'+i).classList.contains('loop03-relogio-luz-visual'),false);
 });
+
+test('zerar meta de ensaio preserva bolas e cadastros e permite nova meta',t=>{
+ const banco=new DatabaseSync(':memory:');
+ t.after(()=>banco.close());
+ banco.exec('CREATE TABLE clientes_teste(id INTEGER PRIMARY KEY);'+
+  'CREATE TABLE bolas_teste(id INTEGER PRIMARY KEY,fila TEXT);');
+ for(let i=1;i<=2;i++)banco.prepare('INSERT INTO clientes_teste VALUES(?)').run(i);
+ for(let i=1;i<=5;i++)banco.prepare("INSERT INTO bolas_teste VALUES(?,'B')").run(i);
+ const agora=Date.parse('2026-11-24T09:00:00-03:00');
+ const motor={banco,_transacao:fn=>fn(null),consultar:()=>({
+  filaA:0,filaB:5,tabuleiro:{eventosNoCiclo:0,ciclosConcluidos:0},
+  catraca:{giros:0}
+ })};
+ const op=new OperacaoCatracaAdminSQLite({banco,motor,agora:()=>new Date(agora)});
+ const anterior=op.consultar();
+ op.configurar({modo:'AUTOMATICA',janelaInicio:'09:00',
+  janelaFim:'18:00',limiteDiario:null,revisaoEsperada:anterior.revisao,
+  metaCentrosDia:10,metaDataAlvo:'2026-11-24',motivo:'TESTAR META DEZ'});
+ assert.equal(op.consultar().metaCentrosDia,10);
+ assert.equal(op.zerarMetaDoRelogioUmaVez(),true);
+ assert.equal(op.zerarMetaDoRelogioUmaVez(),false);
+ const d=op.consultar();
+ assert.equal(d.metaCentrosDia,0);
+ assert.equal(d.metaDataAlvo,null);
+ assert.equal(d.luzesRelogioHoje,0);
+ assert.equal(d.ciclosRelogioHoje,0);
+ assert.equal(d.filaB,5);
+ assert.equal(projetarAgendaTabuleiroCompartilhada(d).metaLotes,null);
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM clientes_teste').get().n,2);
+ assert.equal(banco.prepare("SELECT COUNT(*) AS n FROM bolas_teste WHERE fila='B'").get().n,5);
+ assert.equal(banco.prepare("SELECT COUNT(*) AS n FROM loop_real_catraca_admin_historico WHERE acao='ZERAR_META_RELOGIO_20261124'").get().n,1);
+ op.configurar({modo:'AUTOMATICA',janelaInicio:'09:00',
+  janelaFim:'18:00',limiteDiario:null,revisaoEsperada:d.revisao,
+  metaCentrosDia:3,metaDataAlvo:'2026-11-24',motivo:'NOVA META OPERADOR'});
+ assert.equal(projetarAgendaTabuleiroCompartilhada(op.consultar()).metaLotes.quantidade,3);
+});
