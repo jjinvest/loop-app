@@ -7,7 +7,7 @@ const motor=fs.readFileSync('src/producao/operacao-catraca-admin-sqlite.js','utf
 test('rotulos da catraca: Parada, Automatico, Agendada',()=>{
  assert.ok(ui.includes("['PAUSADA','Parada'],['MANUAL','Automático'],"));
  assert.ok(ui.includes("['AUTOMATICA','Agendada']"));
- assert.ok(ui.includes("d.modo==='MANUAL'?'MODO AUTOMÁTICO'"));
+ assert.ok(!ui.includes("d.modo==='MANUAL'?'MODO AUTOMÁTICO'"),'aviso redundante removido; seletor preservado');
  assert.ok(ui.includes("Modo Automático: sem contagem pela agenda."));
  assert.ok(!ui.includes("['MANUAL','Manual']"));
  assert.ok(!ui.includes('Modo Manual: não há contagem automática.'));
