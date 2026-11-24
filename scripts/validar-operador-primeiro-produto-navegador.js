@@ -558,6 +558,10 @@ async function principal(){
   await cliente.locator('#catalogoLojaLoop [data-produto-id="primeiro-produto"]')
    .waitFor({state:'visible'});
   assert.equal(await cliente.locator('.akitemm-alca-arrastar').count(),0);
+  assert.equal(await cliente.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),0);
+  assert.equal(await cliente.locator('#catalogoLojaLoop').getAttribute('data-perfil-vitrine'),'cliente');
+  assert.equal(await cliente.locator('#catalogoLojaLoop .ak-faixa-horizontal').first().evaluate(el=>getComputedStyle(el).flexDirection),'row');
+  assert.equal(await cliente.locator('#catalogoLojaLoop [data-produto-id]').count(),2);
   const cards=cliente.locator('#catalogoLojaLoop [data-produto-id]');
   assert.equal(await cards.first().getAttribute('data-produto-id'),'segundo-produto');
   const produtoCliente=cliente.locator(
