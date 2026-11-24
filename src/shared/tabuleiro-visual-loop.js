@@ -132,10 +132,29 @@
     linha.setAttribute('aria-label','Fila '+tipo+' · '+ordem+'º lugar · '+
      (numeroPosicao===null?'número indisponível':'número '+numeroPosicao)+
      (detalhe?' · '+detalhe:p?.minha===true?' · meu lugar':''));
-    linha.append(inicial,conteudo);
+    const ordemBranca=document.createElement('span');
+    ordemBranca.className='loop03-fila-ordinal-branca';
+    ordemBranca.textContent=String(ordem);
+    ordemBranca.setAttribute('aria-label','Lugar '+ordem+' na fila');
+    inicial.textContent='';
+    inicial.setAttribute('aria-label',dourada(p)?'Bola dourada':'Bola da posição');
+    identificacao.textContent=numeroPosicao===null?'':'#'+numeroPosicao;
+    if(p?.indicacoesVinculadas>0&&Number.isSafeInteger(p.indicacoesVinculadas)){
+     const indicador=document.createElement('small');
+     indicador.className='loop03-fila-indicacoes';
+     indicador.textContent='♟ '+p.indicacoesVinculadas;
+     indicador.setAttribute('aria-label',p.indicacoesVinculadas+' indicações');
+     conteudo.append(indicador);
+    }
+    linha.append(ordemBranca,inicial,conteudo);
     area.append(linha);
    };
    if(contagem===null){
+    if(id==='motorFilaA'||id==='motorFilaB'){
+     const limite=Math.min(itens.length,100);
+     for(let i=0;i<limite;i++)adicionar(itens[i],i);
+     return;
+    }
     const LOTE=50;
     if(itens.length<=LOTE){
      itens.forEach((p,i)=>adicionar(p,i));
