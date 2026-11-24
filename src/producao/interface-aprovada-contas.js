@@ -2585,6 +2585,12 @@
   $('loop03CofresAtualizar')?.addEventListener('click',()=>
    void carregarCofresOperador({forcar:true}));
   visorCatraca.iniciar();
+  // Somente a vista do teste recebe atualização mais rápida.
+  window.setInterval(()=>{
+   if(document.hidden||!modoOperadorAtual)return;
+   if(visualTesteModulo==='CATRACA'&&$('conteudoTabuleiro')?.hidden===false)
+    void carregarTabuleiroTesteOperador();
+  },2000);
   // Sem reproduzir os cartões ao atualizar o placar nas outras abas.
   // O operador mantém seu fluxo de atualização somente no Tabuleiro.
   window.setInterval(()=>{
@@ -3360,7 +3366,10 @@
   $('adminFluxoStop').disabled=!x.catracaAtiva;
   renderizarFinanceiroFluxoTeste($('adminFluxoAoVivoDados'),f);
  }
+ let leituraTabuleiroTesteEmCurso=false;
  async function carregarTabuleiroTesteOperador(){
+  if(leituraTabuleiroTesteEmCurso)return;
+  leituraTabuleiroTesteEmCurso=true;
   try{
    const [rt,rc]=await Promise.all([
     fetch('/api/admin/loop/testes-modulos',{
@@ -3397,7 +3406,12 @@
    visualTabuleiro.preencherLuzes(x.tabuleiro.eventosNoCiclo);
    mostrarAgendaOperador(controle);
    const agenda={...controle.agenda,luzesDoRelogioCompartilhado:false,
-    luzesDoRelogioOperador:false};
+    luzesDoRelogioOperador:false,...(x.financeiro?{fluxoControlado:{
+     ativa:x.catracaAtiva,proximoEmMs:x.catracaAtiva?Number(x.cursorDia)+10000:null,
+     eventos:x.tabuleiro.eventosNoCiclo,total:x.financeiro.eventos,
+     limite:x.financeiro.produtos,encerrado:x.financeiro.saldoCentavos<25000,
+     agoraServidorMs:x.financeiro.agoraServidorMs
+    }}:{})};
    visorCatraca.registrarAgenda(agenda);
    visorCatraca.observar(x.tabuleiro.giros,x.tabuleiro.eventosNoCiclo,{fonte:'MODULO_'+visualTesteModulo});
    $('loop03TotalIntegrado').textContent=String(x.filaA.length+x.filaB.length);
@@ -3414,7 +3428,7 @@
    $('estadoTabuleiroIntegrado').textContent=
     'Leitura do teste indisponível: '+e.message;
    $('estadoTabuleiroIntegrado').hidden=false;
-  }
+  }finally{leituraTabuleiroTesteEmCurso=false;}
  }
  async function carregarTabuleiroOperador(){
   if(visualTesteModulo)return carregarTabuleiroTesteOperador();
