@@ -199,12 +199,12 @@ dialog.akitemm-operador-editor .akitemm-editor-corpo .akitemm-atalho-erro{
  text-align:left;background:#392b29;color:#ffe6b1;border:1px solid #b78b65
 }
 dialog.akitemm-operador-editor .akitemm-campo-pendente{
- border:2px solid #e3a45b!important;border-radius:11px;
+ border:2px solid #ff4d55!important;border-radius:11px;
  padding:8px!important;background:#3a2b2c!important;
 }
 dialog.akitemm-operador-editor [aria-invalid=true]{
- outline:3px solid #efb05d!important;outline-offset:1px!important;
- border-color:#efb05d!important
+ outline:3px solid #ff4d55!important;outline-offset:1px!important;
+ border-color:#ff4d55!important
 }
 dialog.akitemm-operador-editor .akitemm-campo-erro{
  color:#ffcc91;font-size:13px;font-weight:750;line-height:1.45
@@ -553,3 +553,29 @@ dialog.akitemm-operador-editor .akitemm-card-rascunho
 .akitemm-loja .akitemm-banner .akitemm-banner-foto-editavel:not([hidden]){
  transform-origin:center;
 }
+
+/* Mídia de produto: espaços individuais, capa identificada, sem filtros. */
+dialog.akitemm-operador-editor .akitemm-midia-grupo{
+ border:1px solid #667480;border-radius:14px;padding:12px;min-width:0;
+}
+dialog.akitemm-operador-editor .akitemm-midia-grupo h3{margin:0 0 7px}
+dialog.akitemm-operador-editor .akitemm-midia-grade{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(132px,100%),1fr));gap:8px;margin-top:10px;
+}
+dialog.akitemm-operador-editor .akitemm-midia-slot{
+ display:flex;flex-direction:column;gap:6px;min-width:0;padding:7px;
+ border:1px solid #617281;border-radius:12px;background:#152532;position:relative;
+}
+dialog.akitemm-operador-editor .akitemm-midia-slot:first-child{border-color:#d9b775}
+dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-escolher-foto{
+ min-height:72px;display:grid;place-items:center;text-align:center;cursor:pointer;
+ border:1px dashed #c5ab78;border-radius:10px;padding:8px;color:#f4dfb5;
+}
+dialog.akitemm-operador-editor .akitemm-midia-slot img,
+dialog.akitemm-operador-editor .akitemm-midia-slot canvas{
+ width:100%;aspect-ratio:1;object-fit:contain;border-radius:8px;background:#101923;
+}
+dialog.akitemm-operador-editor .akitemm-midia-slot [hidden]{display:none!important}
+dialog.akitemm-operador-editor .akitemm-midia-slot p{font-size:12px;overflow-wrap:anywhere}
+dialog.akitemm-operador-editor .akitemm-midia-slot button{min-height:36px;font-size:12px;padding:5px;white-space:normal}
+dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-campo-pendente{border-color:#ff4d55!important}
