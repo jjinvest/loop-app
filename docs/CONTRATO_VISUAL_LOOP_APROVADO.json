@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "22/11/2026: ajustar exclusivamente a faixa de filtros AKITEMM para impedir o botão amarelo de ocupar largura excessiva e textos se sobreporem; ferramentas e ajuda do operador deslocadas para faixa própria. Demais telas, conteúdos e fluxos aprovados intocados.",
+  "autorizaçãoAtual": "23/11/2026: proprietário solicitou expressamente que o banner comprido da AKITEMM ocupe toda a largura da loja, acima da vitrine e do carrinho, mantendo altura compacta e enquadramento.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -69,11 +69,11 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "53f5c61b2cf694d7f0d033ee50713619d733eab1"
+      "sha": "44753cf86d7d61f6a23bbada6aab3bd039a155c4"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
-      "sha": "c69bfc690a93922baec4aa16fe3e0e306220331b"
+      "sha": "2ff5869aa2e90181f14533f7e7b6bdb41276474c"
     },
     {
       "path": "src/laboratorio/loop-03-shell.css",
@@ -132,6 +132,7 @@
     "22/11/2026: o proprietário autorizou expressamente, por foto da AKITEMM, apenas organizar os controles 'Todos', busca e 'Ofertas' ao longo de toda a largura disponível; colocar os quatro filtros CINZA, VERDE, DOURADO e ROXO lado a lado, nesta ordem, na linha inferior no computador, com adaptação responsiva em duas colunas no celular e busca em linha própria nos dispositivos pequenos. Alteração limitada a src/laboratorio/loja-cliente-demo.css, sem modificar o HTML, regras, ações, cores, catálogo, compras, banners ou os 23 demais arquivos visuais protegidos. Validação do navegador 320–1440 px e testes de contrato incluídos.",
     "22/11/2026: complemento da mesma autorização de filtros AKITEMM: padronizar exclusivamente a altura dos três controles Todos/Busca/Ofertas em 44px após a validação de navegador identificar diferença vertical; manter todos os rótulos, cores e cliques.",
     "23/11/2026: o proprietário autorizou apenas quatro ajustes na aba Tabuleiro do LOOP, sem mudar regras: título visível totalmente em maiúsculas 'PARTICIPAÇÃO DE LUCRO / LOOP 3.0'; ampliar em computador e celular a altura dos quadros das filas A e B para acomodar dez ou mais posições, com rolagem; eliminar dentro da catraca a mensagem numérica redundante 'eventos confirmados', '0 de 6' e '6 de 6'; manter a frase existente 'A catraca completa um ciclo...' e substituí-la apenas quanto ao estado do relógio por 'RELÓGIO DE PARTICIPAÇÃO DE LUCRO — FORA DO TURNO OU PAUSADO' (ou 'EM ANDAMENTO'/'MODO LIVRE' conforme status), sem exibir rótulos de teste. Mudança visual limitada a src/candidato/checkout-candidato-ui.html e src/candidato/escritorio-cliente-integrado.css. Os outros 22 arquivos visuais permanecem protegidos.",
-    "22/11/2026: proprietário autorizou diretamente por fotografia corrigir a faixa amarela e sobreposições da vitrine AKITEMM, mantendo filtros, marcas, controles e operações. Mudança visual restrita a src/laboratorio/loja-cliente-demo.css; componentes de suporte em src/candidato/vitrine-horizontal.css e JS do operador, com regressão PC/celular."
+    "22/11/2026: proprietário autorizou diretamente por fotografia corrigir a faixa amarela e sobreposições da vitrine AKITEMM, mantendo filtros, marcas, controles e operações. Mudança visual restrita a src/laboratorio/loja-cliente-demo.css; componentes de suporte em src/candidato/vitrine-horizontal.css e JS do operador, com regressão PC/celular.",
+    "23/11/2026: autorizado deslocar exclusivamente o banner da AKITEMM para a primeira linha panorâmica, com 100% da largura da grade; vitrine, carrinho, fotos e zoom permanecem no padrão."
   ]
 }
