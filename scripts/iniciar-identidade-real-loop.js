@@ -160,6 +160,18 @@ async function iniciar(ambiente=process.env,opcoes={}){
   const bancadaOperacional=new BancadaModulosLoopSQLite({
    banco:bancoTeste,consultarAgenda:()=>operacaoCatraca.consultar()
   });
+  // Demonstração única expressamente solicitada, no SQLite isolado.
+  // A operação é idempotente; fila já utilizada nunca é reiniciada.
+  if(ambiente.LOOP_DEMONSTRAR_TAISA==='1'){
+   try{
+    const demo=bancadaOperacional.comandar({idOperacao:'demo-taisa-20261124',
+     acao:'FILA_DEMONSTRAR_TAISA'});
+    console.info('LOOP_DEMO_TAISA_POSICAO='+demo.posicaoId);
+   }catch(e){
+    if(e.codigo!=='BANCADA_FILA_JA_UTILIZADA')throw e;
+    console.warn('LOOP_DEMO_TAISA_FILA_JA_UTILIZADA');
+   }
+  }
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
   // Nenhum fornecedor é homologado automaticamente.
   const auditoria=new AuditoriaOperacionalSQLite({

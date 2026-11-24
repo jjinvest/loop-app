@@ -135,11 +135,16 @@ class BancadaModulosLoopSQLite{
    testandoModulosSeparados:true};
   for(const modulo of MODULOS){
    const row=this._linha(modulo),sim=this._restaurar(row);
+   const visualFila=(p,i)=>({
+    id:p.id,numero:p.id,ordem:i+1,nome:p.nome,titular:p.participanteId,
+    nickVisual:p.nome,empresa:p.empresa===true,dourada:p.empresa===true,
+    pendente:p.statusAdesao==='PENDENTE',indicacoesVinculadas:p.indicacoesVinculadas||0
+   });
    result[modulo.toLowerCase()]={
     porteiraAberta:row.porteira_aberta===1,
     catracaAtiva:row.catraca_ativa===1,
-    filaA:sim.filas.filaA.map(p=>({id:p.id,nome:p.nome,titular:p.participanteId})),
-    filaB:sim.filas.filaB.map(p=>({id:p.id,nome:p.nome,titular:p.participanteId})),
+    filaA:sim.filas.filaA.map(visualFila),
+    filaB:sim.filas.filaB.map(visualFila),
     tabuleiro:{centro:sim.tabuleiro.centro?.nome||null,
      centroPosicao:sim.tabuleiro.centro?{
       numero:sim.tabuleiro.centro.id,
@@ -175,6 +180,15 @@ class BancadaModulosLoopSQLite{
   const modulo=fila?'FILA':'CATRACA';
   const agenda=catraca?this.consultarAgenda():null;
   return this._transacao(modulo,idOperacao,{acao,nome,posicaoId},({row,sim})=>{
+   if(acao==='FILA_DEMONSTRAR_TAISA'){
+    // Somente na bancada isolada, sem sobrescrever ou reciclar posições.
+    if(sim.filas.sequencia!==0||sim.tabuleiro.centro||sim.tabuleiro.vagas.some(Boolean))
+     falha('BANCADA_FILA_JA_UTILIZADA');
+    const r=sim.registrarPosicaoSimulada({nome:'Taísa',participanteId:'ensaio-taisa',
+     vendaId:'bancada-'+idOperacao});
+    return {acao,posicaoId:r.posicao.id,nome:r.posicao.nome,
+     entrouNaFila:'B',porteiraAberta:row.porteira_aberta===1};
+   }
    if(acao==='FILA_ENTRAR'||acao==='CATRACA_ENTRAR'){
     if(typeof nome!=='string'||nome.trim().length<2||nome.length>70)
      falha('BANCADA_NOME_INVALIDO');

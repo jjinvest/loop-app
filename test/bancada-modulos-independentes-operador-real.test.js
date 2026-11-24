@@ -198,3 +198,22 @@ test('Central oferece os comandos isolados; escritório do operador fica sem ban
  assert.match(client,/CATRACA_PROMOVER/);
  assert.doesNotMatch(office,/'<section id="adminTesteModulos"/);
 });
+
+test('Taísa de teste entra como número um na fila isolada, sem giro nem alteração da catraca',t=>{
+ const c=contexto();t.after(()=>c.db.close());
+ const anterior=c.teste.consultar().catraca;
+ const r=c.teste.comandar({idOperacao:'demo-taisa-20261124',acao:'FILA_DEMONSTRAR_TAISA'});
+ assert.equal(r.posicaoId,1);
+ const d=c.teste.consultar();
+ assert.equal(d.fila.filaB.length,1);
+ assert.equal(d.fila.filaB[0].numero,1);
+ assert.equal(d.fila.filaB[0].ordem,1);
+ assert.equal(d.fila.filaB[0].nome,'Taísa');
+ assert.equal(d.fila.filaB[0].dourada,false);
+ assert.equal(d.fila.filaB[0].indicacoesVinculadas,0);
+ assert.equal(d.fila.tabuleiro.giros,0);
+ assert.deepEqual(d.catraca,anterior);
+ assert.equal(c.teste.comandar({idOperacao:'demo-taisa-20261124',acao:'FILA_DEMONSTRAR_TAISA'}).repetida,true);
+ assert.throws(()=>c.acao('FILA_DEMONSTRAR_TAISA'),{codigo:'BANCADA_FILA_JA_UTILIZADA'});
+ assert.equal(c.teste.consultar().fila.filaB.length,1);
+});
