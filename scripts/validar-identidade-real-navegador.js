@@ -1453,79 +1453,22 @@ async function main(){
    assert.equal(await page.locator('#akitemmBusca').isDisabled(),false);
    assert.match(await page.locator('#statusPedidoLoja').innerText(),
     /checkout real ainda não foi liberado/i);
-   // As dez abas e as molduras são a vitrine aprovada,
-   // sem produtos fictícios nem checkout.
-   await page.locator('#akitemmAbasProdutos button').first().waitFor({state:'visible'});
-   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
-   // Geometria do PC e do celular: quatro cores em ordem, sem cortar.
+   // Cliente não recebe os espaços de cadastro nem páginas vazias do operador.
+   await page.locator('#catalogoLojaLoop[data-perfil-vitrine="cliente"]').waitFor({state:'attached'});
+   assert.equal(await page.locator('#akitemmAbasProdutos').isHidden(),true);
+   assert.equal(await page.locator('#akitemmCarregarMais').isHidden(),true);
    await conferirFiltrosAkitemmResponsivos(page);
-   // Controles de leitura respondem mesmo sem produtos publicados.
-   assert.equal(await page.locator('#akitemmFiltroOfertas').isDisabled(),false);
-   await page.locator('#akitemmFiltroOfertas').click();
-   assert.equal(await page.locator('#akitemmFiltroOfertas').getAttribute('aria-pressed'),'true');
-   assert.equal((await page.locator('#akitemmResultadoProdutos').innerText()).trim(),'',
-    'a vitrine não exibe a mensagem de ausência de ofertas');
-   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
-   await page.locator('#akitemmFiltroTodos').click();
-   for(const cor of ['CINZA','VERDE','DOURADO','ROXO']){
-    const filtro=page.locator('[data-akitemm-cor="'+cor+'"]');
-    assert.equal(await filtro.isDisabled(),false);
-    await filtro.click();
-    assert.equal(await filtro.getAttribute('aria-pressed'),'true');
-    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+   for(const filtro of ['#akitemmFiltroOfertas',...['CINZA','VERDE','DOURADO','ROXO'].map(c=>'[data-akitemm-cor="'+c+'"]'),...['cursos','fisicos','novidades','mais-vendidos'].map(c=>'[data-akitemm-categoria="'+c+'"]')]){
+    const b=page.locator(filtro);
+    assert.equal(await b.isDisabled(),false);
+    await b.click();
+    assert.equal(await b.getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),0);
     await page.locator('#akitemmFiltroTodos').click();
    }
-   for(const categoria of ['cursos','fisicos','novidades','mais-vendidos']){
-    const filtro=page.locator('[data-akitemm-categoria="'+categoria+'"]');
-    assert.equal(await filtro.isDisabled(),false);
-    await filtro.click();
-    assert.equal(await filtro.getAttribute('aria-pressed'),'true');
-    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
-    await page.locator('#akitemmFiltroTodos').click();
-   }
-   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
-   assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),2);
-   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),0);
    assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
-   const cartoes=await page.evaluate(()=>{
-    const faixa=document.querySelector('#catalogoLojaLoop .ak-faixa-horizontal');
-    const lista=[...faixa.querySelectorAll('.produto-loja-loop')].slice(0,4)
-      .map(el=>{
-       const r=el.getBoundingClientRect();
-       return {left:r.left,top:r.top,width:r.width,height:r.height};
-      });
-    const largura=faixa.getBoundingClientRect().width;
-    return {lista,largura,larguraTela:innerWidth,
-     larguraDocumento:document.documentElement.scrollWidth};
-   });
-   assert.equal(cartoes.lista.length,4);
-   if(item.largura<=900){
-    assert.ok(cartoes.lista.every(c=>c.width>=cartoes.largura-14),
-     'no celular cada quadrinho usa toda a largura da fileira');
-    for(let i=1;i<4;i++)assert.ok(
-     cartoes.lista[i].top>=cartoes.lista[i-1].top+cartoes.lista[i-1].height,
-     'no celular os quadrinhos ficam um abaixo do outro');
-   }else{
-    for(let i=1;i<4;i++){
-     assert.ok(Math.abs(cartoes.lista[i].top-cartoes.lista[0].top)<3,
-      'no computador os quadrinhos ficam na mesma fileira');
-     assert.ok(cartoes.lista[i].left>cartoes.lista[i-1].left,
-      'no computador os quadrinhos ficam lado a lado');
-    }
-   }
-   assert.ok(cartoes.larguraDocumento<=cartoes.larguraTela+1,
-    'vitrine sem transbordamento horizontal');
-   await page.locator('#akitemmCarregarMais').click();
-   assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),4);
-   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),40);
-   await page.locator('#akitemmAbasProdutos button').nth(9).click();
-   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').first()
-    .getAttribute('data-akitemm-slot'),'361');
-   assert.equal(await page.locator('#akitemmAbasProdutos button[aria-current="page"]')
-    .innerText(),'10');
-   await page.locator('#akitemmAbasProdutos button').first().click();
-   await page.locator('#akitemmCarregarMais').click();
-   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'vitrine sem transbordamento');
    assert.match(await page.locator('#estadoLojaLoop').innerText(),
     /capacidade técnica da sua conta.*Checkout e pagamentos reais ainda não habilitados/i);
    await page.screenshot({
