@@ -13,6 +13,7 @@
   (indicadorNick?'&ref='+encodeURIComponent(indicadorNick):'');
  const solicitarCadastro=()=>location.assign(destinoCadastro());
  let visitante=true,operadorAtivo=false,operadorAutenticadoLoja=false;
+ let atualizarVisaoVitrine=null;
  let clienteNick=null,csrfLoja=null;
  let linkLiberado=false,geracaoConsultaLink=0;
  const visaoLoja=new URLSearchParams(location.search).get('visao');
@@ -449,9 +450,11 @@
  async function atualizarAtalhoOperadorReal(){
   const linkRodape=document.querySelector('.akitemm-acesso-operador');
   const exibir=(adminAutenticado,clienteAutenticado=null)=>{
+   const papelAnterior=operadorAtivo;
    operadorAutenticadoLoja=adminAutenticado===true;
    operadorAtivo=deveAtivarOperadorLoja(
     operadorAutenticadoLoja,clienteAutenticado);
+   if(papelAnterior!==operadorAtivo)atualizarVisaoVitrine?.();
    // O retorno acompanha a sessao atual, nao um cookie antigo.
    const voltarLoop=document.querySelector('.akitemm-voltar');
    if(voltarLoop)voltarLoop.href=operadorAtivo?
@@ -746,6 +749,7 @@
   const lista=$('catalogoLojaLoop');
   lista.replaceChildren();
   lista.classList.add('ak-vitrine-horizontal');
+  lista.dataset.perfilVitrine=operadorAtivo?'operador':'cliente';
   $('akitemmVisualizacaoProduto').hidden=true;
   $('akitemmAreaProdutos').dataset.modo='lista';
   // Os 400 quadrinhos existem independentemente de produtos publicados.
@@ -759,10 +763,10 @@
   const slotsVisiveis=Array.from({length:400},(_,i)=>i+1).filter(n=>{
    const produto=produtosPorSlot.get(n);
    if(produto)return idsFiltrados.has(produto.produtoId);
-   if(termo)return false;
+   if(!operadorAtivo||termo)return false;
    return !cor||corEspaco(n)===cor;
   });
-  const totalAbas=filtrada?Math.max(1,Math.ceil(slotsVisiveis.length/40)):10;
+  const totalAbas=operadorAtivo&&!filtrada?10:Math.max(1,Math.ceil(slotsVisiveis.length/40));
   if(abaVitrine>=totalAbas)abaVitrine=0;
   let nav=$('akitemmAbasProdutos');
   if(!nav){
@@ -770,7 +774,7 @@
    nav.setAttribute('aria-label','Abas de produtos AKITEMM');
    $('akitemmCarregarMais').after(nav);
   }
-  nav.replaceChildren();
+  nav.replaceChildren();nav.hidden=!operadorAtivo&&totalAbas<=1;
   for(let n=0;n<totalAbas;n++){
    const btn=document.createElement('button');
    btn.type='button';btn.textContent=String(n+1);
@@ -785,13 +789,13 @@
   const expandida=expandidas.has(abaVitrine);
   const linhas=expandida?4:2;
   const botaoMais=$('akitemmCarregarMais');
-  botaoMais.hidden=filtrada?slotsVisiveis.length<=abaVitrine*40+20:false;
+  botaoMais.hidden=operadorAtivo&&!filtrada?false:slotsVisiveis.length<=abaVitrine*40+20;
   botaoMais.disabled=false;
   botaoMais.setAttribute('aria-disabled','false');
   botaoMais.textContent=expandida?
    'Mostrar menos produtos ↑':'Mostrar mais produtos ↓';
   const faixas=[];
-  for(let linha=0;linha<linhas;linha++){
+  for(let linha=0;linha<(operadorAtivo?linhas:Math.min(linhas,Math.ceil(Math.max(0,slotsVisiveis.length-abaVitrine*40)/10)));linha++){
    const faixa=document.createElement('div');
    faixa.className='ak-faixa-horizontal';
    faixa.tabIndex=0;faixa.setAttribute('role','group');
@@ -1056,7 +1060,8 @@
     termo?'Nenhum produto encontrado para esta busca.':
     filtroOfertas?'':
     'Nenhum produto publicado neste filtro.'):
-   itens.length+' produto(s) publicado(s); dez abas com quarenta espaços cada.';
+   operadorAtivo?itens.length+' produto(s) publicado(s); dez abas com quarenta espaços cada.':
+   itens.length?itens.length+' produto(s) publicado(s).':'Em breve, novos produtos na AKITEMM.';
   $('akitemmFiltroTodos').setAttribute('aria-pressed',
    String(!categoria&&!cor&&!termo&&!filtroOfertas));
   $('akitemmFiltroOfertas').setAttribute('aria-pressed',String(filtroOfertas));
@@ -1068,6 +1073,7 @@
    b.classList.toggle('ativo',selecionada);
   }
  };
+ atualizarVisaoVitrine=()=>{abaVitrine=0;expandidas.clear();filtrar();};
  $('akitemmCarregarMais').addEventListener('click',()=>{
   if(expandidas.has(abaVitrine))expandidas.delete(abaVitrine);
   else expandidas.add(abaVitrine);
