@@ -558,7 +558,9 @@ async function principal(){
   await cliente.locator('#catalogoLojaLoop [data-produto-id="primeiro-produto"]')
    .waitFor({state:'visible'});
   assert.equal(await cliente.locator('.akitemm-alca-arrastar').count(),0);
-  assert.equal(await cliente.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),0);
+  assert.equal(await cliente.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),18);
+  assert.equal(await cliente.locator('#akitemmAbasProdutos button').count(),10);
+  assert.equal(await cliente.locator('#akitemmCarregarMais').isHidden(),false);
   assert.equal(await cliente.locator('#catalogoLojaLoop').getAttribute('data-perfil-vitrine'),'cliente');
   assert.equal(await cliente.locator('#catalogoLojaLoop .ak-faixa-horizontal').first().evaluate(el=>getComputedStyle(el).flexDirection),'row');
   assert.equal(await cliente.locator('#catalogoLojaLoop [data-produto-id]').count(),2);

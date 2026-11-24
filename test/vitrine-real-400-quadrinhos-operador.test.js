@@ -101,7 +101,7 @@ test('400 fixtures tecnicas em banco descartavel, 10 abas x 40 e operador isolad
  assert.match(await js.text(),/X-Foto-Versao-Esperada/);
  const fonte=fs.readFileSync(path.join(__dirname,
   '../src/producao/interface-aprovada-loja.js'),'utf8');
- assert.match(fonte,/const totalAbas=operadorAtivo&&!filtrada\?10:Math.max\(1,Math.ceil\(slotsVisiveis.length\/40\)\)/);
+ assert.match(fonte,/const totalAbas=!filtrada\?10:Math.max\(1,Math.ceil\(slotsVisiveis.length\/40\)\)/);
  assert.match(fonte,/const linhas=expandida\?4:2/);
  assert.match(fonte,/abaVitrine\*40/);
  assert.match(fonte,/data.*akitemmSlot|dataset.akitemmSlot/);
@@ -127,12 +127,12 @@ test('destaques PC lado a lado, celular em coluna, sem aviso redundante de ofert
  assert.match(js,/const slotsVisiveis=Array\.from\(\{length:400\}/);
 });
 
-test('cliente e visitante só recebem produtos publicados; operador mantém espaços de cadastro',()=>{
+test('cliente e visitante veem molduras originais sem ganhar controles administrativos',()=>{
  const js=fs.readFileSync(path.join(__dirname,'../src/producao/interface-aprovada-loja.js'),'utf8');
  const css=fs.readFileSync(path.join(__dirname,'../src/candidato/vitrine-horizontal.css'),'utf8');
- assert.match(js,/if\(!operadorAtivo\|\|termo\)return false/);
+ assert.match(js,/if\(termo\)return false/);
  assert.match(js,/lista\.dataset\.perfilVitrine=operadorAtivo\?'operador':'cliente'/);
- assert.match(js,/nav\.hidden=!operadorAtivo&&totalAbas<=1/);
+ assert.match(js,/nav\.hidden=false/);
  assert.match(css,/\[data-perfil-vitrine="cliente"\]/);
  assert.match(css,/flex:0 0 calc\(50% - 4px\)/);
 });

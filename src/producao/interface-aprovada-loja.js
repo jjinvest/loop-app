@@ -763,10 +763,10 @@
   const slotsVisiveis=Array.from({length:400},(_,i)=>i+1).filter(n=>{
    const produto=produtosPorSlot.get(n);
    if(produto)return idsFiltrados.has(produto.produtoId);
-   if(!operadorAtivo||termo)return false;
+   if(termo)return false;
    return !cor||corEspaco(n)===cor;
   });
-  const totalAbas=operadorAtivo&&!filtrada?10:Math.max(1,Math.ceil(slotsVisiveis.length/40));
+  const totalAbas=!filtrada?10:Math.max(1,Math.ceil(slotsVisiveis.length/40));
   if(abaVitrine>=totalAbas)abaVitrine=0;
   let nav=$('akitemmAbasProdutos');
   if(!nav){
@@ -774,7 +774,7 @@
    nav.setAttribute('aria-label','Abas de produtos AKITEMM');
    $('akitemmCarregarMais').after(nav);
   }
-  nav.replaceChildren();nav.hidden=!operadorAtivo&&totalAbas<=1;
+  nav.replaceChildren();nav.hidden=false;
   for(let n=0;n<totalAbas;n++){
    const btn=document.createElement('button');
    btn.type='button';btn.textContent=String(n+1);
@@ -789,13 +789,13 @@
   const expandida=expandidas.has(abaVitrine);
   const linhas=expandida?4:2;
   const botaoMais=$('akitemmCarregarMais');
-  botaoMais.hidden=operadorAtivo&&!filtrada?false:slotsVisiveis.length<=abaVitrine*40+20;
+  botaoMais.hidden=!filtrada?false:slotsVisiveis.length<=abaVitrine*40+20;
   botaoMais.disabled=false;
   botaoMais.setAttribute('aria-disabled','false');
   botaoMais.textContent=expandida?
    'Mostrar menos produtos ↑':'Mostrar mais produtos ↓';
   const faixas=[];
-  for(let linha=0;linha<(operadorAtivo?linhas:Math.min(linhas,Math.ceil(Math.max(0,slotsVisiveis.length-abaVitrine*40)/10)));linha++){
+  for(let linha=0;linha<linhas;linha++){
    const faixa=document.createElement('div');
    faixa.className='ak-faixa-horizontal';
    faixa.tabIndex=0;faixa.setAttribute('role','group');
