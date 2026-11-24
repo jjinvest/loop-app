@@ -3299,7 +3299,7 @@
    });
   }catch(e){status.textContent='Não foi possível abrir: '+e.message;}
  }
- // Distribuição: somente os oito cartões solicitados, na ordem aprovada.
+ // Distribuição: cartões solicitados e total de repasses, na ordem aprovada.
  // O Financeiro preserva seu detalhamento e histórico independentes.
  function renderizarQuadroDistribuicao(alvo,f){
   if(!alvo||f?.origem!=='RECEBIMENTOS_FICTICIOS_SQLITE'||f.financeiroReal!==false)return;
@@ -3331,7 +3331,8 @@
    cartao('Cofre de reserva',dinheiro(f.destinos.LOOP_DIREITA)),
    cartao('Cofre de douradas',dinheiro(f.destinos.LOOP_DOURADAS),true),
    cartao('Comissões de bônus',dinheiro(f.destinos.BONUS)),
-   cartao('Participação de lucro dos clientes',dinheiro(f.destinos.LOOP_CENTRO))
+   cartao('Participação de lucro dos clientes',dinheiro(f.destinos.LOOP_CENTRO)),
+   cartao('Total pago pela empresa',dinheiro(f.destinos.BONUS+f.destinos.LOOP_CENTRO),true)
   );
  }
  function renderizarFinanceiroFluxoTeste(alvo,f){
