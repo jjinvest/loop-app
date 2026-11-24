@@ -3313,7 +3313,26 @@
    ]);
    if(!modoOperadorAtual||visualTesteModulo!==null)return;
    visualTabuleiro.preencherFila('motorFilaA',filaVisualA,'A');
-   visualTabuleiro.preencherFila('motorFilaB',filaVisualB,'B');
+   // Referência temporária solicitada pelo operador: apenas apresentação.
+   // Não tem ID de posição real, não participa dos totais nem do motor.
+   let referenciaVisual=null;
+   if(d.filaB===8&&filaVisualB.length===8){
+    try{
+     const resposta=await fetch('/api/admin/loop/testes-modulos',{
+      credentials:'same-origin',cache:'no-store'});
+     if(resposta.ok){
+      const bancada=await resposta.json();
+      if(bancada.fonte==='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'&&
+       bancada.testandoModulosSeparados===true&&
+       bancada.fila?.filaB?.some(p=>p.nome==='Taísa'&&p.titular==='ensaio-taisa'&&!p.dourada))
+       referenciaVisual={ordem:9,nome:'Taísa (fictícia)'};
+     }
+    }catch{/* A fila real continua disponível sem a referência temporária. */}
+   }
+   if(!modoOperadorAtual||visualTesteModulo!==null)return;
+   if(referenciaVisual)
+    visualTabuleiro.preencherFila('motorFilaB',[...filaVisualB.map(p=>({...p,nome:undefined})),referenciaVisual],'B',{exibirNomesTeste:true});
+   else visualTabuleiro.preencherFila('motorFilaB',filaVisualB,'B');
    mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
    for(let i=0;i<6;i++)
