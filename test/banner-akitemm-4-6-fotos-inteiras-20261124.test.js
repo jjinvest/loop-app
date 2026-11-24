@@ -39,3 +39,13 @@ test('banner preserva proporção, controles pequenos e faixa inteira',()=>{
  assert.match(vit,/object-fit:contain!important/);
  assert.match(vit,/width:16px;height:16px/);
 });
+test('setas AKITEMM sem aro, margens do editor ajustadas sem regravar fotos',()=>{
+ const read=p=>fs.readFileSync(path.join(__dirname,'../',p),'utf8');
+ const css=read('src/candidato/vitrine-horizontal.css');
+ const js=read('src/producao/banners-loja-akitemm-client.js');
+ assert.match(css,/#akitemmBannerAnterior,\s*\.akitemm-loja \.akitemm-banner #akitemmBannerProximo\{\s*border:0!important;background:transparent!important;box-shadow:none!important/);
+ assert.match(css,/height:212px;min-height:212px;max-height:212px/);
+ assert.match(js,/foto\.addEventListener\('load',identificarMargemFoto\)/);
+ assert.match(js,/Math\.min\(w\/cw,h\/ch\)/);
+ assert.match(js,/l:l&&r\?l:0,r:l&&r\?r:0/);
+});
