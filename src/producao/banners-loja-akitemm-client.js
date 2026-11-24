@@ -34,6 +34,14 @@
   if(!w||!h)return;
   const iw=foto.naturalWidth,ih=foto.naturalHeight;
   const {l,r,t,b}=margemFoto;
+  // No computador a foto acompanha a largura da faixa; o celular mantém
+  // a composição proporcional anterior. Só margens neutras são removidas.
+  if(window.matchMedia('(min-width:801px)').matches){
+   const zx=1/(1-l-r),zy=1/(1-t-b);
+   foto.style.clipPath='inset('+[h*t,w*r,h*b,w*l].map(v=>v+'px').join(' ')+')';
+   foto.style.transform='translate('+(w*(r-l)*zx/2)+'px,'+(h*(b-t)*zy/2)+'px) scale('+zx+','+zy+')';
+   return;
+  }
   const s=Math.min(w/iw,h/ih),dw=iw*s,dh=ih*s;
   const cw=dw*(1-l-r),ch=dh*(1-t-b);
   const z=Math.min(w/cw,h/ch);
@@ -81,6 +89,7 @@
  }
  foto.addEventListener('load',identificarMargemFoto);
  if(typeof ResizeObserver==='function')new ResizeObserver(ajustarFotoExibida).observe(area);
+ window.matchMedia('(min-width:801px)').addEventListener('change',ajustarFotoExibida);
 
  const placeholder=document.createElement('div');
  placeholder.className='akitemm-banner-espaco-livre';placeholder.hidden=true;
