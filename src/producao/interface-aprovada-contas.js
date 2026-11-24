@@ -2053,7 +2053,45 @@
  }
  let painelMotorPreparado=false;
  const visorCatraca=window.LoopVisorCatraca.criar({elemento:$});
- const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
+ async function abrirDetalheBolaFila(p,fila){
+  if(!Number.isSafeInteger(p?.numero)||p.numero<1)return;
+  const anterior=$('loopDetalheBolaFila');if(anterior?.open)anterior.close();
+  const operador=modoOperadorAtual===true;
+  const ouro=p.dourada===true||p.empresa===true;
+  const modal=document.createElement('dialog');modal.id='loopDetalheBolaFila';
+  modal.setAttribute('aria-label','Detalhes da posição #'+p.numero);
+  const titulo=document.createElement('h2');titulo.textContent='#'+p.numero;
+  const dados=document.createElement('div');dados.className='loop-detalhe-bola-dados';
+  const adicionar=(rotulo,valor)=>{
+   const linha=document.createElement('p'),nome=document.createElement('strong');
+   nome.textContent=rotulo+': ';linha.append(nome,document.createTextNode(String(valor)));dados.append(linha);
+  };
+  const nick=typeof p.nickVisual==='string'&&/^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:'';
+  if(ouro)adicionar('Posição','Dourada');
+  else if(nick)adicionar('Nick',nick);
+  if(!ouro&&p.indicadaMinha===true&&!operador)adicionar('Indicação','Sua indicação');
+  if(operador){adicionar('Fila',fila);if(Number.isSafeInteger(p.ordem))adicionar('Lugar',p.ordem);
+   if(!ouro&&Number.isSafeInteger(p.indicacoesVinculadas))adicionar('Indicações',p.indicacoesVinculadas);}
+  const fechar=document.createElement('button');fechar.type='button';fechar.textContent='Fechar';
+  fechar.addEventListener('click',()=>modal.close());
+  modal.addEventListener('close',()=>modal.remove(),{once:true});
+  modal.append(titulo,dados,fechar);document.body.append(modal);modal.showModal();
+  if(!operador||ouro||!nick||visualTesteModulo!==null)return;
+  const estado=document.createElement('p');estado.textContent='Consultando cadastro…';dados.append(estado);
+  try{
+   const r=await fetch('/api/admin/contas/cadastro?nick='+encodeURIComponent(nick),{credentials:'same-origin',cache:'no-store'});
+   const d=await r.json();
+   if(!modal.open||!modoOperadorAtual){if(modal.open)modal.close();return;}
+   if(!r.ok||!d.cadastro||d.cadastro.nick?.toLowerCase()!==nick.toLowerCase())throw Error('CADASTRO_INDISPONIVEL');
+   estado.remove();
+   const x=d.cadastro;
+   adicionar('Nome',x.nome);adicionar('Telefone',x.telefone||'Não informado');
+   adicionar('E-mail',x.email);adicionar('CPF',x.cpfExibicao||'Não informado');
+   adicionar('E-mail verificado',x.emailVerificado?'Sim':'Pendente');
+   if(Number.isSafeInteger(x.posicoesAtivas))adicionar('Posições ativas',x.posicoesAtivas);
+  }catch{if(modal.open)estado.textContent='Cadastro indisponível nesta sessão.';}
+ }
+ const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$,aoAbrirPosicao:(p,fila)=>void abrirDetalheBolaFila(p,fila)});
  let consultaPedidosEmCurso=0,paginaPedidosReal=0,totalPedidosReal=null;
  const rotulosPedidos={
   AGUARDANDO_PAGAMENTO:['Aguardando pagamento','pendente'],
