@@ -577,6 +577,7 @@
    conteudoFinanceiro:[
     '<h2>Financeiro · Operador</h2>',
     '<div id="adminResumoFinanceiro" class="loop03-admin-dado" role="status">Consultando controle de caixa e catraca…</div>',
+    '<section id="adminFluxoFinanceiroTeste" class="loop03-admin-compras" hidden><h3>Fluxo controlado — dinheiro fictício</h3><div id="adminFluxoFinanceiroDados" class="loop03-compras-colunas" role="status"></div><a href="/escritorio?visao=operador&amp;teste=catraca">Acompanhar a distribuição em tempo real</a></section>',
     '<section id="adminDistribuicaoFinanceira" class="loop03-admin-compras"><h3>Distribuição financeira LOOP</h3><div id="adminDistribuicaoFinanceiraDados" class="loop03-compras-colunas" role="status" aria-live="polite">Consultando livro financeiro e cofres…</div></section>',
     '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarFinanceiro">Atualizar</button><a href="/administrador">Gestão financeira na Central</a></div>'
    ],
@@ -1448,7 +1449,7 @@
  async function carregarAbaOperador(id){
   if(!modoOperadorAtual)return;
   if(id==='abaPosicoes')void carregarIndicadoresComerciaisOperador();
-  if(id==='abaFinanceiro')void carregarDistribuicaoFinanceira();
+  if(id==='abaFinanceiro'){void carregarDistribuicaoFinanceira();void carregarFinanceiroFluxoTeste();}
   const posicoesEmTeste=id==='abaPosicoes'&&visualTesteModulo!==null;
   const rotas={
    abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
@@ -1656,6 +1657,9 @@
   }
   if(parametrosEntrada.get('teste')==='fila'){
    visualTesteModulo='FILA';
+   $('abaTabuleiro')?.click();
+  }else if(parametrosEntrada.get('teste')==='catraca'){
+   visualTesteModulo='CATRACA';
    $('abaTabuleiro')?.click();
   }else visualTesteModulo=null;
   void carregarTabuleiroOperador();
@@ -2582,6 +2586,7 @@
   // O operador mantém seu fluxo de atualização somente no Tabuleiro.
   window.setInterval(()=>{
    if(document.hidden)return;
+   if(modoOperadorAtual&&$('conteudoFinanceiro')?.hidden===false)void carregarFinanceiroFluxoTeste();
    if($('conteudoTabuleiro')?.hidden===false){
     void carregarMotor();
    }else if(modoOperadorAtual&&$('painelConta')?.hidden===false){
@@ -3274,6 +3279,84 @@
    });
   }catch(e){status.textContent='Não foi possível abrir: '+e.message;}
  }
+ function renderizarFinanceiroFluxoTeste(alvo,f){
+  if(!alvo||f?.origem!=='RECEBIMENTOS_FICTICIOS_SQLITE'||f.financeiroReal!==false)return;
+  const linhas=[
+   ['PDFs recebidos',String(f.produtos)],['Caixa inicial',moedaCofres.format(f.recebidoCentavos/100)],
+   ['Caixa restante',moedaCofres.format(f.saldoCentavos/100)],['Eventos executados',String(f.eventos)],
+   ['Titulares contemplados',moedaCofres.format(f.destinos.LOOP_CENTRO/100)],
+   ['Cofre de investimento',moedaCofres.format(f.destinos.LOOP_ESQUERDA/100)],
+   ['Cofre de reserva',moedaCofres.format(f.destinos.LOOP_DIREITA/100)],
+   ['Cofre de douradas',moedaCofres.format(f.destinos.LOOP_DOURADAS/100)],
+   ['Comissões creditadas',moedaCofres.format(f.destinos.BONUS/100)],
+   ['Comissões a cobrir',moedaCofres.format(f.comissoesPendentesCentavos/100)]
+  ];
+  const cards=linhas.map(([titulo,valor])=>{
+   const div=document.createElement('div');div.className='loop03-compras-coluna';
+   const h=document.createElement('h4');h.textContent=titulo;
+   const v=document.createElement('strong');v.className='loop03-compras-total';v.textContent=valor;
+   div.append(h,v);return div;
+  });
+  const hist=document.createElement('div');hist.className='loop03-compras-coluna';
+  const h=document.createElement('h4');h.textContent='Últimos lançamentos';hist.append(h);
+  const nomes={LOOP_CENTRO:'Titular',LOOP_ESQUERDA:'Investimento',LOOP_DIREITA:'Reserva',LOOP_DOURADAS:'Douradas',BONUS:'Comissão'};
+  for(const l of f.ultimos){
+   const p=document.createElement('p');p.textContent='#'+l.posicao+' · '+nomes[l.destino]+' · '+moedaCofres.format(l.valor/100);
+   hist.append(p);
+  }
+  alvo.replaceChildren(...cards,hist);
+ }
+ async function carregarFinanceiroFluxoTeste(){
+  if(!modoOperadorAtual)return;
+  const p=$('adminFluxoFinanceiroTeste');
+  if(!p)return;
+  try{
+   const r=await fetch('/api/admin/loop/testes-modulos',{credentials:'same-origin',cache:'no-store'});
+   if(!r.ok)throw Error('FLUXO_INDISPONIVEL');
+   const d=await r.json();
+   if(!modoOperadorAtual)return;
+   const f=d.catraca?.financeiro;
+   p.hidden=!f;
+   if(f)renderizarFinanceiroFluxoTeste($('adminFluxoFinanceiroDados'),f);
+  }catch{if(modoOperadorAtual){p.hidden=false;$('adminFluxoFinanceiroDados').textContent='Consulta do teste indisponível.';}}
+ }
+ function mostrarControlesFluxoTeste(x){
+  let painel=$('adminFluxoAoVivo');
+  const f=x.financeiro;
+  if(!f||visualTesteModulo!=='CATRACA'){if(painel)painel.hidden=true;return;}
+  if(!painel){
+   painel=document.createElement('section');painel.id='adminFluxoAoVivo';painel.className='loop03-admin-compras';
+   const h=document.createElement('h3');h.textContent='Fluxo controlado · dinheiro fictício';
+   const estado=document.createElement('p');estado.id='adminFluxoAoVivoEstado';estado.setAttribute('role','status');
+   const msg=document.createElement('p');msg.id='adminFluxoAoVivoMensagem';msg.setAttribute('role','status');
+   const botoes=document.createElement('div');botoes.className='loop03-admin-acoes';
+   for(const [id,titulo,acao] of [['adminFluxoStart','START','CATRACA_INICIAR'],['adminFluxoStop','Pausar','CATRACA_PAUSAR']]){
+    const b=document.createElement('button');b.type='button';b.id=id;b.textContent=titulo;
+    b.addEventListener('click',async()=>{
+     if(!modoOperadorAtual||visualTesteModulo!=='CATRACA')return;
+     b.disabled=true;msg.textContent='Enviando comando…';
+     try{
+      const token=await obterCsrfOperadorReal();
+      const r=await fetch('/api/admin/loop/testes-modulos',{method:'POST',credentials:'same-origin',cache:'no-store',
+       headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+       body:JSON.stringify({acao,idOperacao:crypto.randomUUID()})});
+      const d=await r.json();if(!r.ok)throw Error(d.erro||'COMANDO_NAO_CONFIRMADO');
+      msg.textContent=acao==='CATRACA_INICIAR'?'START confirmado pelo servidor.':'Pausa confirmada pelo servidor.';
+      await carregarTabuleiroOperador();
+     }catch(e){msg.textContent='Comando não executado: '+e.message;b.disabled=false;}
+    });botoes.append(b);
+   }
+   const a=document.createElement('a');a.href='/escritorio?visao=operador';a.textContent='Voltar à visão original';botoes.append(a);
+   const dados=document.createElement('div');dados.id='adminFluxoAoVivoDados';dados.className='loop03-compras-colunas';
+   painel.append(h,estado,botoes,msg,dados);$('conteudoTabuleiro').append(painel);
+  }
+  painel.hidden=false;
+  $('adminFluxoAoVivoEstado').textContent=x.catracaAtiva?'EM EXECUÇÃO · intervalo mínimo de 10 segundos':
+   f.saldoCentavos<25000?'ENCERRADO · caixa insuficiente para outro evento':'PARADA · aguardando START';
+  $('adminFluxoStart').disabled=x.catracaAtiva||f.saldoCentavos<25000;
+  $('adminFluxoStop').disabled=!x.catracaAtiva;
+  renderizarFinanceiroFluxoTeste($('adminFluxoAoVivoDados'),f);
+ }
  async function carregarTabuleiroTesteOperador(){
   try{
    const [rt,rc]=await Promise.all([
@@ -3321,6 +3404,7 @@
     ' · '+(x.porteiraAberta?'PORTEIRA ABERTA':'PORTEIRA FECHADA')+
     ' · '+x.tabuleiro.giros+' giros executados no motor';
    $('estadoTabuleiroIntegrado').hidden=false;
+   mostrarControlesFluxoTeste(x);
    void carregarAbaOperador('abaPosicoes');
   }catch(e){
    if(!modoOperadorAtual)return;
@@ -3331,6 +3415,7 @@
  }
  async function carregarTabuleiroOperador(){
   if(visualTesteModulo)return carregarTabuleiroTesteOperador();
+  if($('adminFluxoAoVivo'))$('adminFluxoAoVivo').hidden=true;
   void carregarCofresOperador();
   try{
    // Reutiliza as rotas existentes da mesma sessao administrativa e motor real.
