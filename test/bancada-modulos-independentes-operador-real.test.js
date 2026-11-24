@@ -218,34 +218,18 @@ test('Taísa de teste entra como número um na fila isolada, sem giro nem altera
  assert.equal(c.teste.consultar().fila.filaB.length,1);
 });
 
-test('referencia visual usa numero isolado e nick original sem consultar cadastro real',()=>{
+test('painel real retira as referências temporárias sem alterar posições reais',()=>{
  const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
- const trecho=office.slice(office.indexOf('// Referência temporária solicitada pelo operador'),office.indexOf('mostrarTotaisFilasRodape(d.filaA,d.filaB,true);',office.indexOf('// Referência temporária solicitada pelo operador')));
- assert.match(trecho,/filaVisualB\.length===d\.filaB&&filaVisualB\.length<100/);
- assert.match(trecho,/p\.titular==='ensaio-taisa'/);
- assert.match(trecho,/referenciaVisual=\{ordem:filaVisualB\.length\+1,numero:p\.numero,nome:p\.nome,/);
- assert.match(trecho,/indicacoesVinculadas:5,referenciaBancada:true/);
- assert.match(trecho,/if\(referenciaVisual&&filaVisualA\.length===d\.filaA&&filaVisualA\.length<100\)/);
- assert.match(trecho,/referenciaVisualA=\{\.\.\.referenciaVisual,ordem:filaVisualA\.length\+1,pendente:false\}/);
- assert.match(trecho,/preencherFila\('motorFilaA',\[\.\.\.filaVisualA\.map\(p=>\(\{\.\.\.p,nome:undefined\}\)\),referenciaVisualA\],'A',\{exibirNomesTeste:true\}\)/);
- assert.match(trecho,/preencherFila\('motorFilaB',\[\.\.\.filaVisualB\.map\(p=>\(\{\.\.\.p,nome:undefined\}\)\),referenciaVisual\],'B',\{exibirNomesTeste:true\}\)/);
- assert.match(trecho,/!modoOperadorAtual\|\|visualTesteModulo!==null/);
- assert.match(trecho,/nome:undefined/);
- assert.doesNotMatch(trecho,/method:'POST'|posicaoId:|\(fictícia\)/);
- assert.match(office,/if\(p\.referenciaBancada===true\)return;[\s\S]*?fetch\('\/api\/admin\/contas\/cadastro/);
- assert.match(office,/mostrarTotaisFilasRodape\(d\.filaA,d\.filaB,true\)/);
-});
-
-test('referência menor da distribuição preserva vagas reais e fica só no operador',()=>{
- const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
- const trecho=office.slice(office.indexOf('// Terceira representação isolada:'),office.indexOf('visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);',office.indexOf('// Terceira representação isolada:')));
- assert.ok(trecho.includes('if(referenciaVisual)'));
- assert.ok(trecho.includes('if(!d.tabuleiro.vagas[i])'));
- assert.ok(trecho.includes("classList.contains('posicao-vazia')"));
- assert.ok(trecho.includes("loop03-referencia-distribuicao loop03-bola-interativa loop03-a"));
- assert.ok(trecho.includes("referenciaVisual.numero).padStart(7,'0')"));
- assert.ok(trecho.includes('nick.textContent=referenciaVisual.nome'));
- assert.doesNotMatch(trecho,/fetch\(|method:|preencherVaga\(/);
+ const inicio=office.indexOf('// Apenas posições retornadas pelo motor;');
+ const fim=office.indexOf('visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);',inicio);
+ assert.ok(inicio>=0&&fim>inicio);
+ const trecho=office.slice(inicio,fim);
+ assert.ok(trecho.includes("preencherFila('motorFilaA',filaVisualA,'A',{reservarLugares:9})"));
+ assert.ok(trecho.includes("preencherFila('motorFilaB',filaVisualB,'B',{reservarLugares:9})"));
+ assert.ok(trecho.includes("preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true)"));
+ assert.ok(trecho.includes("d.tabuleiro.vagas[i]"));
+ assert.doesNotMatch(trecho,/referenciaVisual|ensaio-taisa|indicacoesVinculadas:5|fetch\(|method:/);
+ assert.ok(trecho.includes('mostrarTotaisFilasRodape(d.filaA,d.filaB,true)'));
  const css=fs.readFileSync('src/candidato/escritorio-cliente-integrado.css','utf8');
  assert.ok(css.includes('width:70%;aspect-ratio:1;max-width:76px'));
  assert.ok(css.includes('left:50%;top:62%;transform:translate(-50%,-50%)'));

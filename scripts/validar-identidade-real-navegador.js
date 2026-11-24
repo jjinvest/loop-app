@@ -1151,7 +1151,9 @@ async function main(){
     'sem mensagens duplicadas no rodapé do tabuleiro');
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'',
     'esfera vazia não mostra marcador fictício');
-   assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
+   assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),9);
+   assert.equal(await page.locator('#motorFilaB .loop03-bola-interativa').count(),1);
+   assert.equal(await page.locator('#motorFilaB .loop03-fila-ordinal-branca').last().innerText(),'9');
    const linhaFilaB=page.locator('#motorFilaB .loop03-linha-fila').first();
    await linhaFilaB.locator('.loop03-numero-titular').filter({hasText:/^#0000001$/}).waitFor();
    assert.equal(await linhaFilaB.locator('.loop03-fila-ordinal-branca').innerText(),'1',
@@ -1698,7 +1700,9 @@ async function main(){
    assert.equal(await pagina.locator('#motorBolinha6')
     .evaluate(el=>el.classList.contains('loop03-marcador-aceso')),false);
    assert.equal(await pagina.locator('#motorFilaB .loop03-linha-fila').count(),
-    estadoCliente.filaB,'fila deve refletir a contagem real, sem limite fixo de uma pessoa');
+    Math.max(9,Math.min(100,estadoCliente.filaB)),'lugares livres até 9, sem limitar a fila existente');
+   assert.equal(await pagina.locator('#motorFilaB .loop03-bola-interativa').count(),
+    Math.min(100,estadoCliente.filaB),'somente posições existentes têm bola');
    await pagina.screenshot({
     path:path.join(pasta,'integrado-tabuleiro-'+visual.nome+'.png'),
     fullPage:true
