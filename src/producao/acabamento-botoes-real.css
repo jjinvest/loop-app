@@ -1269,3 +1269,14 @@ body.loop03-modo-operador #adminFluxoAoVivoDados>.loop03-distribuicao-largo{
 body.loop03-modo-operador #adminFluxoAoVivoDados>.loop03-distribuicao-largo>.loop03-compras-total{
  font-size:clamp(1.2rem,3vw,1.75rem);
 }
+
+body.loop03-modo-operador #adminFluxoAoVivoDados .loop03-distribuicao-partes{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:0;
+ border-top:1px solid #b79a617d;padding-top:8px;margin-top:5px;
+}
+body.loop03-modo-operador #adminFluxoAoVivoDados .loop03-distribuicao-partes>.loop03-compras-coluna{
+ min-width:0;display:flex;flex-direction:column;gap:5px;align-items:center;padding:4px;
+}
+body.loop03-modo-operador #adminFluxoAoVivoDados .loop03-distribuicao-partes>.loop03-compras-coluna+ .loop03-compras-coluna{
+ border-left:1px solid #b79a617d;
+}
