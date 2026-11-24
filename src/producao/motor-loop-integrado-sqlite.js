@@ -356,8 +356,14 @@ class MotorLoopIntegradoSQLite{
     semMovimento:true,financeiroReal:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
- // Visor administrativo: posição e ordem da fila, SEM nome, CPF ou titular.
+ // Visor administrativo: posição, ordem e nick comercial; SEM nome civil, CPF ou ID de titular.
  // A sessão do operador é conferida exclusivamente no gateway.
+ _identificacaoVisualFila(p,autorizado){
+  if(!autorizado||p.empresa===true||!this.banco)return {};
+  const c=this.banco.prepare('SELECT nick FROM loop_real_contas WHERE id=?').get(p.participanteId);
+  if(typeof c?.nick!=='string'||!/^[A-Za-z]{1,12}$/.test(c.nick))return {};
+  return {nickVisual:c.nick,indicacoesVinculadas:Number.isSafeInteger(p.indicacoesVinculadas)&&p.indicacoesVinculadas>0?p.indicacoesVinculadas:0};
+ }
  consultarFilaOperador({fila,pagina=0}={}){
   if(!['A','B'].includes(fila)||
      !Number.isSafeInteger(pagina)||pagina<0||pagina>1000000)
@@ -368,7 +374,8 @@ class MotorLoopIntegradoSQLite{
   const inicio=pagina*30;
   const linhas=pessoas.slice(inicio,inicio+30).map((p,i)=>({
    numero:p.id,ordem:inicio+i+1,
-   dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE'
+   dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE',
+   ...this._identificacaoVisualFila(p,true)
   }));
   return {fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',
    somenteLeitura:true,fila,total:pessoas.length,
@@ -397,7 +404,8 @@ class MotorLoopIntegradoSQLite{
   const linha=(p,i)=>({
    numero:p.id,ordem:i+1,minha:p.empresa!==true&&
     p.participanteId===titularId,
-   dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE'
+   dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE',
+   ...this._identificacaoVisualFila(p,p.participanteId===titularId)
   });
   // Modo visual: começar do primeiro lugar; o antigo modo ancorado
   // permanece disponível. Somente leitura, sem alterar prioridade 3A:1B.
