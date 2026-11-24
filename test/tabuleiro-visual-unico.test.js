@@ -188,3 +188,21 @@ test('painel responsivo mostra 10 no celular ou 20 no PC, paginados em 30 sem re
  assert.match(real,/d\.janela\.length>20/);
  assert.match(real,/d\.pagina\.length>30/);
 });
+
+ test('lugares livres numerados de 1 a 9 sem bolas ou indicações fictícias',()=>{
+ const {visual,el}=fake();
+ visual.preencherFila('motorFilaA',[],'A',{reservarLugares:9});
+ assert.equal(el.motorFilaA.children.length,9);
+ for(let i=0;i<9;i++){
+  const linha=el.motorFilaA.children[i];
+  assert.equal(linha.children.length,1);
+  assert.equal(linha.children[0].textContent,String(i+1));
+ }
+ visual.preencherFila('motorFilaA',[{numero:123,ordem:1,indicacoesVinculadas:5}],'A',{reservarLugares:9});
+ assert.equal(el.motorFilaA.children.length,9);
+ assert.equal(el.motorFilaA.children[0].children[1].children[0].textContent,'#0000123');
+ assert.equal(el.motorFilaA.children[0].children[2].children[1].textContent,'5');
+ assert.equal(el.motorFilaA.children[1].children.length,1);
+ visual.preencherFila('motorFilaB',[],'B',{reservarLugares:9});
+ assert.equal(el.motorFilaB.children[8].children[0].textContent,'9');
+ });
