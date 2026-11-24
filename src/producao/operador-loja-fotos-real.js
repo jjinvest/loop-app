@@ -879,8 +879,9 @@
   const grade=document.createElement('div');grade.className='akitemm-midia-grade';
   grupo.append(grade);form.append(grupo);
   const slots=Array.from({length:10},(_,i)=>editarFoto(grade,i+1));
+  const video=editarVideo(grupo);
   return {
-   campo:slots[0].campo,temFoto:()=>slots[0].temFoto(),
+   campo:slots[0].campo,temFoto:()=>slots[0].temFoto(),video,
    carregar(fotos){for(const f of fotos||[])slots[f.posicao-1]?.carregar(f);},
    async obterTodas(){
     const arquivos=[];
@@ -891,6 +892,58 @@
      catch(e){e.campoMidia=slots[i].campo;throw e;}
     }
     return arquivos;
+   }
+  };
+ }
+ function editarVideo(grupo){
+  const caixa=document.createElement('section');caixa.className='akitemm-midia-video';
+  const label=document.createElement('label');label.className='akitemm-escolher-foto';
+  label.textContent='＋ Adicionar vídeo do produto (opcional)';
+  const campo=document.createElement('input');campo.type='file';campo.accept='video/mp4,.mp4';
+  label.append(campo);
+  const aviso=linha('MP4 · até 30 segundos · até 20 MB');
+  const previa=document.createElement('video');previa.controls=true;previa.playsInline=true;previa.preload='metadata';previa.hidden=true;
+  const remover=document.createElement('button');remover.type='button';remover.textContent='Cancelar vídeo selecionado';remover.hidden=true;
+  caixa.append(label,aviso,previa,remover);grupo.append(caixa);
+  let arquivo=null,urlLocal=null,urlSalva=null,erro=null;
+  function limparLocal(){
+   if(urlLocal){URL.revokeObjectURL(urlLocal);urlLocal=null;}
+   previa.removeAttribute('src');previa.hidden=true;
+  }
+  function restaurar(){
+   limparLocal();if(urlSalva){previa.src=urlSalva;previa.hidden=false;}
+  }
+  campo.addEventListener('change',()=>{
+   arquivo=null;erro=null;restaurar();
+   const escolhido=campo.files?.[0];if(!escolhido)return;
+   if(!/\.mp4$/i.test(escolhido.name)&&escolhido.type!=='video/mp4'){
+    erro='Escolha um vídeo MP4.';aviso.textContent=erro;remover.hidden=false;return;
+   }
+   if(escolhido.size>20*1024*1024||escolhido.size<128){
+    erro='O vídeo precisa ter até 20 MB.';aviso.textContent=erro;remover.hidden=false;return;
+   }
+   arquivo=escolhido;urlLocal=URL.createObjectURL(escolhido);previa.src=urlLocal;previa.hidden=false;remover.hidden=false;
+   aviso.textContent=escolhido.name+' · pronto para enviar ao salvar';
+  });
+  previa.addEventListener('loadedmetadata',()=>{
+   if(arquivo&&(!Number.isFinite(previa.duration)||previa.duration>30)){
+    erro='O vídeo deve ter até 30 segundos.';aviso.textContent=erro;
+   }
+  });
+  previa.addEventListener('error',()=>{if(arquivo){erro='Não foi possível reproduzir este vídeo. Escolha outro MP4.';aviso.textContent=erro;}});
+  remover.addEventListener('click',()=>{campo.value='';arquivo=null;erro=null;remover.hidden=true;restaurar();aviso.textContent=urlSalva?'Vídeo salvo':'MP4 · até 30 segundos · até 20 MB';});
+  dialogo.addEventListener('close',limparLocal,{once:true});
+  return {
+   campo,validarCampos:()=>erro?[{entrada:campo,mensagem:erro}]:[],
+   carregar(id,d){if(d?.arquivoAnexado){urlSalva='/api/admin/catalogo-midia/produtos/'+id+'/video/arquivo';restaurar();aviso.textContent='Vídeo salvo · toque para trocar';}},
+   async salvar(id,csrf){
+    if(!arquivo)return;
+    if(erro)throw Error(erro);
+    const atual=await fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/video');
+    const r=await fetch('/api/admin/catalogo-midia/produtos/'+id+'/video',{
+     method:'POST',credentials:'same-origin',headers:{'Content-Type':'video/mp4','X-Loop-Admin-Csrf':csrf,'X-Video-Versao-Esperada':String(atual.versao)},body:arquivo});
+    const d=await r.json().catch(()=>({}));if(!r.ok){const e=Error(d.erro||'VIDEO_NAO_GRAVADO');e.campoMidia=campo;throw e;}
+    arquivo=null;campo.value='';remover.hidden=true;this.carregar(id,d);
    }
   };
  }
@@ -1254,7 +1307,7 @@
    if(!ID_NOVO.test(id))
     erros.push({entrada:codigo,mensagem:'Código: use letras minúsculas, números ou hífen (3 a 80 caracteres).'});
    erros.push(...anuncio.validarCampos({paraVitrine:true}));
-   erros.push(...entrega.validarCampos());
+   erros.push(...entrega.validarCampos(),...foto.video.validarCampos());
    if(!foto.temFoto())
     erros.push({entrada:foto.campo,mensagem:
      'Escolha uma foto de capa para publicar; sem foto, salve como rascunho.'});
@@ -1287,6 +1340,7 @@
     await salvarEntrega(id,csrf,entrega,0);
     if(imagens.length){
      for(const {blob,posicao} of imagens)await salvarFoto(id,csrf,blob,posicao);
+     await foto.video.salvar(id,csrf);
      const posicaoSalva=await vincularQuadradinho(indice,id);
      await publicarFoto(id,csrf);
      atualizarLoja();
@@ -1318,6 +1372,7 @@
     editar.addEventListener('click',()=>{dialogo.close();void abrirProduto(id);});
     corpo.append(editar);
    }catch(e){
+    if(e.campoMidia)guia.mostrar([{entrada:e.campoMidia,mensagem:'Não foi possível salvar este arquivo: '+e.message}]);
     const codigo=String(e?.message||'ERRO_DESCONHECIDO');
     const dica=/SESSAO|CSRF|LOGIN|401|403/.test(codigo)?
      'A sessão administrativa não foi confirmada nesta operação. '+
@@ -1404,13 +1459,14 @@
   };
   try{
    travar(true);
-   const [sessao,dados,regras,precos,entregaDados,galeriaSalva]=await Promise.all([
+   const [sessao,dados,regras,precos,entregaDados,galeriaSalva,videoSalvo]=await Promise.all([
     fetchJson('/api/admin/comercial/sessao'),
     fetchJson('/api/admin/catalogo-midia/produtos/'+id),
     fetchJson('/api/admin/comercial/classificacoes'),
     fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio'),
     fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/entrega'),
-    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/fotos')
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/fotos'),
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/video')
    ]);
    if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<24||
       !Number.isSafeInteger(dados.revisao)||dados.revisao<1)
@@ -1419,7 +1475,7 @@
    nome.value=dados.nome;descricao.value=dados.descricao;
    anuncio.preencher(precos);revisaoAnuncio=precos.revisao;
    entrega.preencher(entregaDados);revisaoEntrega=entregaDados.revisao;
-   foto.carregar(galeriaSalva.fotos);
+   foto.carregar(galeriaSalva.fotos);foto.video.carregar(id,videoSalvo);
    estaPublicado=dados.estado==='PUBLICADO';
    const regra=regras.produtos?.find(r=>r.produtoId===id);
    if(regra)cor.s.value=regra.cor;
@@ -1433,7 +1489,8 @@
      await tarefa();
      estado.textContent=mensagem;
      atualizarLoja();
-    }catch(e){estado.textContent='Não foi possível salvar: '+e.message;}
+    }catch(e){if(e.campoMidia)guia.mostrar([{entrada:e.campoMidia,mensagem:'Não foi possível salvar este arquivo: '+e.message}]);
+     estado.textContent='Não foi possível salvar: '+e.message;}
     finally{aberto=false;travar(false);}
    };
    form.addEventListener('submit',ev=>{
@@ -1469,7 +1526,7 @@
      'Classificação comercial salva; os filtros seguem as regras do LOOP.');
    });
    salvarImagem.addEventListener('click',()=>{
-    const erros=[...anuncio.validarCampos({paraVitrine:true}),...entrega.validarCampos()];
+    const erros=[...anuncio.validarCampos({paraVitrine:true}),...entrega.validarCampos(),...foto.video.validarCampos()];
     if(nome.value.trim().length<2)erros.unshift({entrada:nome,mensagem:'Informe o nome do produto.'});
     if(!foto.temFoto()&&!galeriaSalva.fotos?.some(f=>f.posicao===1))erros.push({entrada:foto.campo,mensagem:'Escolha a foto de capa.'});
     if(!guia.mostrar(erros))return;
@@ -1481,6 +1538,7 @@
      const en=await salvarEntrega(id,csrf,entrega,revisaoEntrega);revisaoEntrega=en.revisao;
      await salvarCor(id,csrf,cor.s.value);
      for(const {blob,posicao} of imagens)await salvarFoto(id,csrf,blob,posicao);
+     await foto.video.salvar(id,csrf);
      if(!slotsAtuais.some(x=>x.produtoId===id))
       await vincularQuadradinho(1,id);
      if(!estaPublicado){
