@@ -593,3 +593,10 @@ dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-campo-pendente{borde
   opacity:0;
  }
 }
+
+/* Seletor nativo: toda a superfície do quadrinho recebe o toque, sem depender de rótulo. */
+dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-escolher-foto,
+dialog.akitemm-operador-editor .akitemm-midia-video .akitemm-escolher-foto{position:relative;isolation:isolate;touch-action:manipulation}
+dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-escolher-foto input[type=file],
+dialog.akitemm-operador-editor .akitemm-midia-video .akitemm-escolher-foto input[type=file]{position:absolute;inset:0;inline-size:100%;block-size:100%;width:100%;height:100%;margin:0;opacity:0;z-index:2;cursor:pointer;pointer-events:auto}
+dialog.akitemm-operador-editor .akitemm-escolher-foto:focus-within{outline:2px solid #e6bd73;outline-offset:2px}
