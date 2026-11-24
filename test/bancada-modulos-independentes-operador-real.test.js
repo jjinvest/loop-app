@@ -236,3 +236,51 @@ test('painel real retira as referências temporárias sem alterar posições rea
  assert.equal((css.match(/border:3px solid #9859dc;/g)||[]).length,2);
  assert.ok(css.includes('pointer-events:none;line-height:1.05'));
 });
+
+test('100 PDFs: posições classificadas, caixa separado, START explícito e 100 lançamentos conciliados',t=>{
+ const c=contexto();t.after(()=>c.db.close());
+ const anterior=c.teste.consultar().fila;
+ const lote=c.acao('CATRACA_PREPARAR_100');
+ assert.equal(lote.preparado,true);
+ let estado=c.teste.consultar().catraca;
+ assert.equal(estado.catracaAtiva,false);assert.equal(estado.porteiraAberta,false);
+ assert.equal(estado.filaA.length,10);assert.equal(estado.filaB.length,90);
+ assert.equal(estado.filaB.filter(p=>p.dourada).length,10);
+ assert.equal(estado.filaB.filter(p=>p.pendente).length,5);
+ assert.equal(estado.filaA.reduce((n,p)=>n+p.indicacoesVinculadas,0),75);
+ assert.equal(estado.financeiro.recebidoCentavos,2500000);
+ assert.equal(estado.financeiro.saldoCentavos,2500000);
+ assert.equal(estado.financeiro.comissoesPendentesCentavos,187500);
+ assert.deepEqual(c.teste.consultar().fila,anterior);
+ assert.equal(c.teste.processarRelogio().processado,false);
+ const ts=Date.parse('2026-11-23T12:00:00Z');
+ c.acao('CATRACA_INICIAR');
+ assert.equal(c.teste.consultar().catraca.tabuleiro.vagas.filter(Boolean).length,6);
+ for(let i=1;i<=100;i++){
+  c.mudarTempo(ts+i*10000);
+  const r=c.teste.processarRelogio();assert.equal(r.processado,true,'evento '+i);
+  const f=r.financeiro;
+  assert.equal(f.saldoCentavos,2500000-i*25000);
+  assert.equal(Object.values(f.destinos).reduce((s,x)=>s+x,0)+f.saldoCentavos,2500000);
+  assert.ok(f.destinos.LOOP_DIREITA>=0);
+  assert.equal(c.teste.processarRelogio().processado,false);
+ }
+ estado=c.teste.consultar().catraca;
+ assert.equal(estado.catracaAtiva,false);
+ assert.equal(estado.financeiro.saldoCentavos,0);
+ assert.equal(estado.financeiro.eventos,100);
+ assert.equal(estado.tabuleiro.giros,16);
+ assert.equal(estado.tabuleiro.eventosNoCiclo,4);
+ assert.equal(estado.filaA.length+estado.filaB.length+7+estado.tabuleiro.giros,100);
+ assert.equal(estado.filaB.filter(p=>p.pendente).length,0);
+ assert.ok(estado.financeiro.destinos.LOOP_DOURADAS>0);
+ assert.ok(estado.financeiro.destinos.LOOP_ESQUERDA>0);
+ assert.ok(estado.financeiro.destinos.LOOP_CENTRO>0);
+ assert.equal(estado.financeiro.destinos.BONUS,187500);
+ assert.equal(estado.financeiro.comissoesPendentesCentavos,0);
+ assert.equal(c.db.prepare("SELECT COUNT(*) AS n FROM loop_teste_fluxo_recebimentos").get().n,100);
+ assert.equal(c.db.prepare("SELECT COUNT(*) AS n FROM loop_teste_fluxo_lancamentos WHERE destino!='BONUS'").get().n,100);
+ assert.throws(()=>c.acao('CATRACA_INICIAR'),{codigo:'FLUXO_CAIXA_INSUFICIENTE'});
+ assert.deepEqual(c.teste.consultar().fila,anterior);
+ assert.equal(c.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});

@@ -33,6 +33,20 @@ class BancadaModulosLoopSQLite{
    'CREATE INDEX IF NOT EXISTS loop_teste_modulos_operacoes_ordem',
    'ON loop_teste_modulos_operacoes(modulo,registrado_em);'
   ].join(' '));
+  // Livro exclusivo do SQLite de testes. Nenhuma tabela de identidade/PSP.
+  this.db.exec([
+   'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_lotes(geracao INTEGER PRIMARY KEY,preparado_em INTEGER NOT NULL);',
+   'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_recebimentos(geracao INTEGER NOT NULL,numero INTEGER NOT NULL,',
+   'pedido TEXT NOT NULL UNIQUE,valor INTEGER NOT NULL CHECK(valor=25000),recebido_em INTEGER NOT NULL,',
+   "tipo TEXT NOT NULL CHECK(tipo IN ('DOURADA','AZUL','CONFIRMADA')),PRIMARY KEY(geracao,numero));",
+   'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_indicacoes(geracao INTEGER NOT NULL,referencia TEXT NOT NULL,',
+   'indicador INTEGER NOT NULL,indicado INTEGER NOT NULL,PRIMARY KEY(geracao,referencia),UNIQUE(geracao,indicado));',
+   'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_lancamentos(geracao INTEGER NOT NULL,referencia TEXT NOT NULL,',
+   'destino TEXT NOT NULL,valor INTEGER NOT NULL CHECK(valor>0),posicao INTEGER NOT NULL,',
+   'registrado_em INTEGER NOT NULL,PRIMARY KEY(geracao,referencia));',
+   'CREATE TRIGGER IF NOT EXISTS loop_teste_fluxo_lanc_sem_update BEFORE UPDATE ON loop_teste_fluxo_lancamentos BEGIN SELECT RAISE(ABORT,\'lancamento imutavel\'); END;',
+   'CREATE TRIGGER IF NOT EXISTS loop_teste_fluxo_lanc_sem_delete BEFORE DELETE ON loop_teste_fluxo_lancamentos BEGIN SELECT RAISE(ABORT,\'lancamento imutavel\'); END;'
+  ].join(' '));
   for(const modulo of MODULOS)this.db.prepare([
    'INSERT OR IGNORE INTO loop_teste_modulos_estado',
    '(modulo,snapshot,atualizado_em) VALUES(?,?,?)'
@@ -54,8 +68,8 @@ class BancadaModulosLoopSQLite{
   sim.filas.travaPromocaoAtiva=true;
   // A fronteira permanece FECHADA por padrao: nem mesmo o giro da
   // catraca pode retirar automaticamente uma posicao da fila.
-  sim.tabuleiro.proximoDaFila=()=>
-   row.porteira_aberta===1?sim.filas.proximoDaFila():null;
+  sim.tabuleiro.proximoDaFila=opcoes=>
+   row.porteira_aberta===1?sim.filas.proximoDaFila(opcoes):null;
   return sim;
  }
  _transacao(modulo,idOperacao,payload,executar){
@@ -93,6 +107,98 @@ class BancadaModulosLoopSQLite{
    this.db.exec('COMMIT');
    return {...resultado,repetida:false};
   }catch(e){this.db.exec('ROLLBACK');throw e;}
+ }
+ _fluxo(geracao){
+  if(!this.db.prepare('SELECT 1 FROM loop_teste_fluxo_lotes WHERE geracao=?').get(geracao))return null;
+  const receb=this.db.prepare('SELECT COUNT(*) AS quantidade,COALESCE(SUM(valor),0) AS total FROM loop_teste_fluxo_recebimentos WHERE geracao=?').get(geracao);
+  const destinos={LOOP_CENTRO:0,LOOP_ESQUERDA:0,LOOP_DIREITA:0,LOOP_DOURADAS:0,BONUS:0};
+  const linhas=this.db.prepare('SELECT destino,SUM(valor) AS total FROM loop_teste_fluxo_lancamentos WHERE geracao=? GROUP BY destino').all(geracao);
+  for(const x of linhas){
+   if(!Object.hasOwn(destinos,x.destino))falha('FLUXO_DESTINO_INVALIDO');
+   destinos[x.destino]=x.total;
+  }
+  // BONUS é saída do cofre de reserva, não um segundo débito do caixa de eventos.
+  destinos.LOOP_DIREITA-=destinos.BONUS;
+  if(destinos.LOOP_DIREITA<0)falha('FLUXO_RESERVA_NEGATIVA');
+  const distribuido=Object.values(destinos).reduce((n,v)=>n+v,0),saldo=receb.total-distribuido;
+  if(!Number.isSafeInteger(saldo)||saldo<0)falha('FLUXO_CAIXA_DIVERGENTE');
+  const eventos=this.db.prepare("SELECT COUNT(*) AS n FROM loop_teste_fluxo_lancamentos WHERE geracao=? AND destino!='BONUS'").get(geracao).n;
+  const ultimos=this.db.prepare('SELECT referencia,destino,valor,posicao,registrado_em FROM loop_teste_fluxo_lancamentos WHERE geracao=? ORDER BY rowid DESC LIMIT 12').all(geracao);
+  const indicacoes=this.db.prepare('SELECT COUNT(*) AS n FROM loop_teste_fluxo_indicacoes WHERE geracao=?').get(geracao).n;
+  return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',
+   produtos:receb.quantidade,agoraServidorMs:this.agora(),recebidoCentavos:receb.total,distribuidoCentavos:distribuido,
+   saldoCentavos:saldo,destinos,eventos,ultimos,intervaloSegundos:10,
+   comissoes:indicacoes,comissoesPendentesCentavos:indicacoes*2500-destinos.BONUS,indicadores:10,valorEventoCentavos:25000};
+ }
+ _lancamento(geracao,referencia,destino,valor,posicao){
+  this.db.prepare('INSERT INTO loop_teste_fluxo_lancamentos VALUES(?,?,?,?,?,?)')
+   .run(geracao,referencia,destino,valor,posicao,this.agora());
+ }
+ _prepararFluxo(row,sim){
+  if(row.catraca_ativa===1)falha('BANCADA_CATRACA_ATIVA');
+  if(this._fluxo(row.geracao))return {preparado:true,jaPreparado:true};
+  Object.assign(sim,this._novo());
+  row.geracao++;row.porteira_aberta=0;row.catraca_ativa=0;
+  row.cursor_dia=null;row.cursor_luz=0;
+  sim.tabuleiro.proximoDaFila=()=>null;
+  this.db.prepare('INSERT INTO loop_teste_fluxo_lotes VALUES(?,?)').run(row.geracao,this.agora());
+  const azuis=new Set([2,8,12,18,22]),douradas=new Set([4,14,24,34,44,54,64,74,84,94]);
+  const confirmadas=[];
+  for(let i=1;i<=100;i++){
+   const tipo=douradas.has(i)?'DOURADA':azuis.has(i)?'AZUL':'CONFIRMADA';
+   const id='pdf-teste-'+row.geracao+'-'+i;
+   const recebidoEm=this.agora()-30*86400000+Math.floor((i-1)*30*86400000/100);
+   const p=sim.registrarPosicaoSimulada({nome:tipo==='DOURADA'?'LOOP':'P'+String(i).padStart(3,'0'),
+    participanteId:tipo==='DOURADA'?'LOOP_EMPRESA':'participante-teste-'+i,
+    vendaId:id,adesaoPendente:tipo==='AZUL'});
+   const pos=sim.filas.filaB.find(x=>x.id===p.posicao.id);
+   pos.entrouEm=new Date(recebidoEm).toISOString();
+   if(tipo==='DOURADA')Object.assign(pos,{empresa:true,titularOperacional:'LOOP_EMPRESA',statusAdesao:'POSICAO_LOOP'});
+   if(tipo==='CONFIRMADA')confirmadas.push(pos);
+   this.db.prepare('INSERT INTO loop_teste_fluxo_recebimentos VALUES(?,?,?,?,?,?)')
+    .run(row.geracao,pos.id,id,25000,recebidoEm,tipo);
+  }
+  // Dez indicadores dividem os outros 75 confirmados, cada convite unico.
+  // O direito é registrado na confirmação; o pagamento de teste sai da reserva conforme houver cobertura.
+  for(let i=10;i<confirmadas.length;i++){
+   const indicador=confirmadas[(i-10)%10],indicado=confirmadas[i];
+   const ref='indicacao-'+row.geracao+'-'+indicado.id;
+   sim.registrarIndicacaoSimulada({indicadorId:indicador.participanteId,
+    posicaoAlvoId:indicador.id,eventoId:ref,convidouEm:indicado.entrouEm});
+   this.db.prepare('INSERT INTO loop_teste_fluxo_indicacoes VALUES(?,?,?,?)').run(row.geracao,ref,indicador.id,indicado.id);
+  }
+  return {preparado:true,posicoes:100,douradas:10,azuis:5,confirmadas:85,
+   filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,financeiro:this._fluxo(row.geracao)};
+ }
+ _pulsoFluxo(row,sim){
+  const f=this._fluxo(row.geracao);
+  if(!f||f.saldoCentavos<25000||!sim.tabuleiro.centro){
+   row.catraca_ativa=0;
+   return {processado:false,motivo:'CAIXA_INSUFICIENTE_OU_SEM_CENTRO'};
+  }
+  const recebimento=this.db.prepare('SELECT pedido FROM loop_teste_fluxo_recebimentos WHERE geracao=? ORDER BY numero LIMIT 1 OFFSET ?').get(row.geracao,f.eventos);
+  if(!recebimento)falha('FLUXO_RECEBIMENTO_AUSENTE');
+  const id=recebimento.pedido;
+  const luz=sim.registrarVendaNoCicloSimulada({vendaId:id});
+  this._lancamento(row.geracao,id,luz.venda.destinoCofre,25000,luz.venda.posicaoCentroId);
+  if(luz.venda.destinoCofre==='LOOP_DIREITA'){
+   const saldoReserva=this._fluxo(row.geracao).destinos.LOOP_DIREITA;
+   const pendentes=this.db.prepare([
+    'SELECT i.referencia,i.indicador FROM loop_teste_fluxo_indicacoes i',
+    'LEFT JOIN loop_teste_fluxo_lancamentos l ON l.geracao=i.geracao AND l.referencia=i.referencia',
+    'WHERE i.geracao=? AND l.referencia IS NULL ORDER BY i.indicado LIMIT ?'
+   ].join(' ')).all(row.geracao,Math.floor(saldoReserva/2500));
+   for(const p of pendentes)this._lancamento(row.geracao,p.referencia,'BONUS',2500,p.indicador);
+  }
+  let giro=null;
+  if(luz.estado.vendasNoCiclo===6){
+   sim.abrirCatraca();giro=sim.tentarGiro();sim.pausarCatraca();
+   if(!giro.girou)falha('BANCADA_CATRACA_MOVIMENTO_NEGADO');
+  }
+  const depois=this._fluxo(row.geracao);
+  if(depois.saldoCentavos<25000||!sim.tabuleiro.centro)row.catraca_ativa=0;
+  return {processado:true,ordem:luz.venda.ordem,girou:giro?.girou===true,
+   destino:luz.venda.destinoCofre,financeiro:depois};
  }
  _pulso(sim,id,porteiraAberta=false){
   if(!sim.tabuleiro.centro)falha('BANCADA_CATRACA_SEM_CENTRO');
@@ -141,6 +247,7 @@ class BancadaModulosLoopSQLite{
     pendente:p.statusAdesao==='PENDENTE',indicacoesVinculadas:p.indicacoesVinculadas||0
    });
    result[modulo.toLowerCase()]={
+    ...(modulo==='CATRACA'?{financeiro:this._fluxo(row.geracao)}:{}),
     porteiraAberta:row.porteira_aberta===1,
     catracaAtiva:row.catraca_ativa===1,
     filaA:sim.filas.filaA.map(visualFila),
@@ -150,11 +257,11 @@ class BancadaModulosLoopSQLite{
       numero:sim.tabuleiro.centro.id,
       nickVisual:/^[A-Za-z]{1,12}$/.test(sim.tabuleiro.centro.nome)?
        sim.tabuleiro.centro.nome:null,
-      nome:sim.tabuleiro.centro.nome}:null,
+      nome:sim.tabuleiro.centro.nome,dourada:sim.tabuleiro.centro.empresa===true}:null,
      vagas:sim.tabuleiro.vagas.map(p=>p?.nome||null),
      vagasPosicoes:sim.tabuleiro.vagas.map(p=>p?{
       numero:p.id,nickVisual:/^[A-Za-z]{1,12}$/.test(p.nome)?p.nome:null,
-      nome:p.nome}:null),
+      nome:p.nome,dourada:p.empresa===true}:null),
      eventosNoCiclo:sim.tabuleiro.vendasDoCiclo.length,
      centrosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
      giros:sim.giros},
@@ -180,6 +287,22 @@ class BancadaModulosLoopSQLite{
   const modulo=fila?'FILA':'CATRACA';
   const agenda=catraca?this.consultarAgenda():null;
   return this._transacao(modulo,idOperacao,{acao,nome,posicaoId},({row,sim})=>{
+   if(acao==='CATRACA_PREPARAR_100')return this._prepararFluxo(row,sim);
+   const fluxo=modulo==='CATRACA'?this._fluxo(row.geracao):null;
+   if(fluxo){
+    if(acao==='CATRACA_INICIAR'){
+     if(fluxo.saldoCentavos<25000)falha('FLUXO_CAIXA_INSUFICIENTE');
+     row.porteira_aberta=1;
+     sim.tabuleiro.proximoDaFila=opcoes=>sim.filas.proximoDaFila(opcoes);
+     if(!sim.tabuleiro.centro)sim.prepararTabuleiro();
+     if(!sim.tabuleiro.centro)falha('BANCADA_CATRACA_SEM_CENTRO');
+     row.catraca_ativa=1;row.cursor_luz=0;
+     row.cursor_dia=String(this.agora());
+     return {acao,catracaAtiva:true,porteiraAberta:true,financeiro:fluxo};
+    }
+    if(acao==='CATRACA_PAUSAR'){row.catraca_ativa=0;return {acao,catracaAtiva:false};}
+    if(acao!=='CATRACA_REINICIAR'||row.catraca_ativa===1)falha('FLUXO_COMANDO_NAO_PERMITIDO');
+   }
    if(acao==='FILA_DEMONSTRAR_TAISA'){
     // Somente na bancada isolada, sem sobrescrever ou reciclar posições.
     if(sim.filas.sequencia!==0||sim.tabuleiro.centro||sim.tabuleiro.vagas.some(Boolean))
@@ -284,6 +407,17 @@ class BancadaModulosLoopSQLite{
   const row=this._linha('CATRACA');
   if(row.catraca_ativa!==1)return {processado:false,motivo:'CATRACA_PARADA'};
   const agenda=this.consultarAgenda(),agora=this.agora();
+  const fluxo=this._fluxo(row.geracao);
+  if(fluxo){
+   if(agora-Number(row.cursor_dia)<10000)return {processado:false,motivo:'AGUARDANDO_INTERVALO'};
+   return this._transacao('CATRACA','fluxo:'+row.geracao+':'+(fluxo.eventos+1),
+    {acao:'CATRACA_EVENTO_FINANCEIRO',evento:fluxo.eventos+1},({row:atual,sim})=>{
+     if(atual.catraca_ativa!==1||agora-Number(atual.cursor_dia)<10000)
+      falha('FLUXO_MARCO_NAO_AUTORIZADO');
+     atual.cursor_dia=String(agora);
+     return this._pulsoFluxo(atual,sim);
+    });
+  }
   const p=this._progresso(agenda,agora);
   if(!p)return {processado:false,motivo:'RELOGIO_SEM_JANELA'};
   if(row.cursor_dia===p.dia&&p.luz<=row.cursor_luz)

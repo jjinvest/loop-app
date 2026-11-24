@@ -172,6 +172,15 @@ async function iniciar(ambiente=process.env,opcoes={}){
     console.warn('LOOP_DEMO_TAISA_FILA_JA_UTILIZADA');
    }
   }
+  // Lote autorizado de 24/11: prepara uma única vez, sem START e
+  // exclusivamente no arquivo testes-modulos.sqlite. Não muda contas reais.
+  if(ambiente.LOOP_PREPARAR_FLUXO_100==='1'){
+   try{
+    const lote=bancadaOperacional.comandar({idOperacao:'fluxo-100-20261124',
+     acao:'CATRACA_PREPARAR_100'});
+    console.info('LOOP_FLUXO_100_PREPARADO='+Boolean(lote.preparado));
+   }catch(e){console.error('LOOP_FLUXO_100_NAO_PREPARADO',e.codigo||'ERRO');}
+  }
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
   // Nenhum fornecedor é homologado automaticamente.
   const auditoria=new AuditoriaOperacionalSQLite({

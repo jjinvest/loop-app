@@ -116,5 +116,5 @@ test('rodape exclusivo nao cria 4º cofre, nao invade cliente e usa route proteg
  assert.ok(office.includes('id="adminGanhosCliente"'));
  assert.ok(office.includes('nickCadastroConsultado===x.nick'));
  assert.ok(office.includes('selecionado()'));
- assert.ok(office.includes("if(id==='abaFinanceiro')void carregarDistribuicaoFinanceira()"));
+ assert.ok(office.includes("if(id==='abaFinanceiro'){void carregarDistribuicaoFinanceira();void carregarFinanceiroFluxoTeste();}"));
  });
