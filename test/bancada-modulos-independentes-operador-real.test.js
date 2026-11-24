@@ -306,3 +306,14 @@ test('cenário preparado é selecionado na entrada normal do operador sem outro 
  const visor=fs.readFileSync('src/shared/visor-catraca.js','utf8');
  assert.doesNotMatch(visor,/\+fluxo\.limite\+' do teste'/);
 });
+
+test('escritório do operador protege cartões financeiros e ausência de avisos no layout',()=>{
+ const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+ const css=fs.readFileSync('src/producao/acabamento-botoes-real.css','utf8');
+ assert.doesNotMatch(office,/contadores do motor de teste|Cenário de conferência · dinheiro fictício|CAIXA: pagamentos e giros financeiros ainda não autorizados/);
+ assert.match(css,/body\.loop03-modo-operador :is\(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados\)\{\s*display:grid;grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+ assert.match(css,/@media\(max-width:760px\)\{\s*body\.loop03-modo-operador :is\(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados\)\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.ok(css.includes('#loopOperadorAgendaConfirmada{display:none!important}'));
+ assert.ok(office.includes('loop03-compras-coluna loop03-financeiro-historico'));
+ assert.ok(css.includes('grid-column:1/-1;align-items:stretch;text-align:left'));
+});
