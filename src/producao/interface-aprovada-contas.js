@@ -3299,6 +3299,41 @@
    });
   }catch(e){status.textContent='Não foi possível abrir: '+e.message;}
  }
+ // Distribuição: somente os oito cartões solicitados, na ordem aprovada.
+ // O Financeiro preserva seu detalhamento e histórico independentes.
+ function renderizarQuadroDistribuicao(alvo,f){
+  if(!alvo||f?.origem!=='RECEBIMENTOS_FICTICIOS_SQLITE'||f.financeiroReal!==false)return;
+  const vendas=f.vendasPorTipo;
+  if(!vendas||!['pdfs','cursos','fisicos'].every(k=>Number.isSafeInteger(vendas[k])&&vendas[k]>=0)||
+   vendas.pdfs+vendas.cursos+vendas.fisicos!==f.produtos)
+   throw Error('VENDAS_POR_TIPO_INCONSISTENTES');
+  const dinheiro=n=>{
+   if(!Number.isSafeInteger(n)||n<0)throw Error('VALOR_DISTRIBUICAO_INVALIDO');
+   return moedaCofres.format(n/100);
+  };
+  const cartao=(rotulo,valor,largo=false)=>{
+   const div=document.createElement('div');
+   div.className='loop03-compras-coluna'+(largo?' loop03-distribuicao-largo':'');
+   const h=document.createElement('h4');h.textContent=rotulo;
+   const v=document.createElement('strong');v.className='loop03-compras-total';v.textContent=valor;
+   div.append(h,v);return div;
+  };
+  const digital=cartao('PDFs vendidos',String(vendas.pdfs));
+  const cursos=document.createElement('h4');cursos.textContent='Cursos vendidos';
+  const quantidadeCursos=document.createElement('strong');
+  quantidadeCursos.className='loop03-compras-total';
+  quantidadeCursos.textContent=String(vendas.cursos);
+  digital.append(cursos,quantidadeCursos);
+  alvo.replaceChildren(
+   digital,cartao('Produtos físicos vendidos',String(vendas.fisicos)),
+   cartao('Caixa central',dinheiro(f.saldoCentavos),true),
+   cartao('Cofre de investimento',dinheiro(f.destinos.LOOP_ESQUERDA)),
+   cartao('Cofre de reserva',dinheiro(f.destinos.LOOP_DIREITA)),
+   cartao('Cofre de douradas',dinheiro(f.destinos.LOOP_DOURADAS),true),
+   cartao('Comissões de bônus',dinheiro(f.destinos.BONUS)),
+   cartao('Participação de lucro dos clientes',dinheiro(f.destinos.LOOP_CENTRO))
+  );
+ }
  function renderizarFinanceiroFluxoTeste(alvo,f){
   if(!alvo||f?.origem!=='RECEBIMENTOS_FICTICIOS_SQLITE'||f.financeiroReal!==false)return;
   const linhas=[
@@ -3375,7 +3410,7 @@
    f.saldoCentavos<25000?'ENCERRADO · caixa insuficiente para outro evento':'PARADA · aguardando START';
   $('adminFluxoStart').disabled=x.catracaAtiva||f.saldoCentavos<25000;
   $('adminFluxoStop').disabled=!x.catracaAtiva;
-  renderizarFinanceiroFluxoTeste($('adminFluxoAoVivoDados'),f);
+  renderizarQuadroDistribuicao($('adminFluxoAoVivoDados'),f);
  }
  let leituraTabuleiroTesteEmCurso=false;
  async function carregarTabuleiroTesteOperador(){
