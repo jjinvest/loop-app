@@ -1598,6 +1598,10 @@
    caixas[1].querySelector('small').textContent='CICLOS DE HOJE';
    caixas[2].querySelector('small').textContent='EVENTOS NO CICLO';
   }
+  if(parametrosEntrada.get('teste')==='fila'){
+   visualTesteModulo='FILA';
+   $('abaTabuleiro')?.click();
+  }else visualTesteModulo=null;
   void carregarTabuleiroOperador();
   void atualizarAtalhoOperadorReal();
  }
@@ -2066,7 +2070,10 @@
    const linha=document.createElement('p'),nome=document.createElement('strong');
    nome.textContent=rotulo+': ';linha.append(nome,document.createTextNode(String(valor)));dados.append(linha);
   };
-  const nick=typeof p.nickVisual==='string'&&/^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:'';
+  const emTeste=operador&&visualTesteModulo!==null;
+  const nick=emTeste&&typeof p.nome==='string'?p.nome:
+   typeof p.nickVisual==='string'&&/^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:'';
+  if(emTeste)adicionar('Origem','Bancada operacional — sem dinheiro real');
   if(ouro)adicionar('Posição','Dourada');
   else if(nick)adicionar('Nick',nick);
   if(!ouro&&p.indicadaMinha===true&&!operador)adicionar('Indicação','Sua indicação');
