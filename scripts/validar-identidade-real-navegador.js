@@ -1152,12 +1152,16 @@ async function main(){
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'',
     'esfera vazia não mostra marcador fictício');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
-   const resumoFilaB=await page.locator('#motorFilaB').textContent();
-   assert.ok(resumoFilaB.includes('1º')&&resumoFilaB.includes('Número 1')&&
-    await page.locator('#motorFilaB .loop03-linha-fila').count()===1,
-    'fila B mostra ordem na bolinha e número próprio no texto: '+resumoFilaB);
-   assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'1º',
-    'fila paginada exibe o lugar na porteira, diferente do número próprio');
+   const linhaFilaB=page.locator('#motorFilaB .loop03-linha-fila').first();
+   await linhaFilaB.locator('.loop03-numero-titular').filter({hasText:/^#1$/}).waitFor();
+   assert.equal(await linhaFilaB.locator('.loop03-fila-ordinal-branca').innerText(),'1',
+    'ordem branca independente da identidade');
+   assert.equal(await linhaFilaB.locator('.loop03-inicial-fila').count(),1,
+    'esfera de estado separada da ordem');
+   assert.equal(await linhaFilaB.locator('.loop03-inicial-fila').innerText(),'');
+   assert.equal(await linhaFilaB.locator('.loop03-numero-titular').innerText(),'#1',
+    'ID permanente real');
+   assert.match(await linhaFilaB.innerText(),/dozeletrasab/i);
    assert.equal(await page.locator('#motorBolinha1').getAttribute('aria-label'),
     'Evento 1 aguardando');
    assert.equal(await page.locator('#motorBolinha6')
