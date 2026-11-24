@@ -579,3 +579,7 @@ dialog.akitemm-operador-editor .akitemm-midia-slot [hidden]{display:none!importa
 dialog.akitemm-operador-editor .akitemm-midia-slot p{font-size:12px;overflow-wrap:anywhere}
 dialog.akitemm-operador-editor .akitemm-midia-slot button{min-height:36px;font-size:12px;padding:5px;white-space:normal}
 dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-campo-pendente{border-color:#ff4d55!important}
+
+.akitemm-midia-video{margin-top:12px;padding:12px;border:1px dashed #8b9dac;border-radius:12px;display:grid;gap:8px}
+.akitemm-midia-video video,.akitemm-video-produto{width:100%;max-height:320px;background:#101923;border-radius:10px;object-fit:contain}
+.akitemm-midia-video [hidden]{display:none!important}
