@@ -336,15 +336,32 @@ test('Distribuição: dois cartões por linha, caixa e douradas largos, valores 
   vendasPorTipo:{pdfs:31,cursos:12,fisicos:19},produtos:62,saldoCentavos:250000,
   destinos:{LOOP_ESQUERDA:10000,LOOP_DIREITA:20000,LOOP_DOURADAS:30000,BONUS:40000,LOOP_CENTRO:50000}};
  ctx.renderizarQuadroDistribuicao(alvo,f);
- assert.deepEqual(alvo.children.map(x=>x.children.map(y=>y.textContent)),[
+ assert.deepEqual(alvo.children.map(x=>x.children.filter(y=>y.className!=='loop03-distribuicao-partes').map(y=>y.textContent)),[
   ['PDFs vendidos','31','Cursos vendidos','12'],['Produtos físicos vendidos','19'],
   ['Caixa central','2500'],['Cofre de investimento','100'],['Cofre de reserva','200'],
   ['Cofre de douradas','300'],['Comissões de bônus','400'],['Participação de lucro dos clientes','500'],['Total pago pela empresa','900']
  ]);
  assert.deepEqual(alvo.children.map((x,i)=>x.className.includes('loop03-distribuicao-largo')?i:null).filter(x=>x!==null),[2,5,8]);
+ assert.deepEqual(alvo.children[8].children[2].children.map(x=>x.children.map(y=>y.textContent)),[['Bônus','400'],['Participação de lucro','500']]);
  assert.match(css,/#adminFluxoAoVivoDados\.loop03-compras-colunas\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/#adminFluxoAoVivoDados>\.loop03-distribuicao-largo\{\s*grid-column:1\/-1/);
  assert.ok(office.includes("renderizarQuadroDistribuicao($('adminFluxoAoVivoDados'),f)"));
  assert.ok(office.includes("renderizarFinanceiroFluxoTeste($('adminFluxoFinanceiroDados'),f)"));
  assert.throws(()=>ctx.renderizarQuadroDistribuicao(alvo,{...f,produtos:63}),/VENDAS_POR_TIPO_INCONSISTENTES/);
+});
+
+test('saldos do lote são compartilhados por projeção única, sem prova bancária inventada',()=>{
+ const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+ const ini=office.indexOf(' function conferirSaldoCompartilhado(f){');
+ const fim=office.indexOf(' function aplicarSaldoCompartilhado(f){',ini);
+ assert.ok(ini>=0&&fim>ini);
+ const ctx={};require('node:vm').runInNewContext(office.slice(ini,fim),ctx);
+ const f={origem:'RECEBIMENTOS_FICTICIOS_SQLITE',financeiroReal:false,saldoCentavos:100,
+  recebidoCentavos:150,destinos:{LOOP_ESQUERDA:10,LOOP_DIREITA:10,LOOP_DOURADAS:10,BONUS:10,LOOP_CENTRO:10}};
+ assert.equal(JSON.stringify(ctx.conferirSaldoCompartilhado(f)),JSON.stringify({CENTRAL:100,INVESTIMENTO:10,RESERVA:10,DOURADAS:10,BONUS:10,PARTICIPACAO:10}));
+ assert.throws(()=>ctx.conferirSaldoCompartilhado({...f,saldoCentavos:99}),/SALDOS_DIVERGENTES/);
+ assert.throws(()=>ctx.conferirSaldoCompartilhado({...f,financeiroReal:true}),/SALDOS_DIVERGENTES/);
+ assert.ok(office.includes('if(x.financeiro)aplicarSaldoCompartilhado(x.financeiro)'));
+ assert.ok(office.includes("if(!nick&&visualTesteModulo==='CATRACA')"));
+ assert.ok(office.includes("if(visualTesteModulo==='CATRACA')aplicarSaldoCompartilhado(await consultarSaldoCompartilhado())"));
 });
