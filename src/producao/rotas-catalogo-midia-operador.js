@@ -547,6 +547,35 @@ function montarRotasCatalogoMidiaOperador({
     return res.status(code).json({erro:code===503?'FOTO_REAL_INDISPONIVEL':msg});
    }
   });
+ // Vídeo de demonstração opcional, independente de fotos e de pagamentos.
+ if(catalogoMidia.video){
+  const corpoVideo=express.raw({type:'video/mp4',limit:'20mb',inflate:false});
+  app.get('/api/admin/catalogo-midia/produtos/:produtoId/video',
+   autorizarOperador,verificarId,(req,res)=>{
+    try{if(!existe(req.params.produtoId))return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
+     return res.json(catalogoMidia.video.estado(req.params.produtoId));}
+    catch{return res.status(503).json({erro:'VIDEO_REAL_INDISPONIVEL'});}
+   });
+  app.get('/api/admin/catalogo-midia/produtos/:produtoId/video/arquivo',
+   autorizarOperador,verificarId,(req,res)=>{
+    try{if(!existe(req.params.produtoId))return res.sendStatus(404);
+     const a=catalogoMidia.video.abrir(req.params.produtoId);
+     return res.type('video/mp4').set('Cache-Control','private, no-store').send(a.conteudo);}
+    catch{return res.status(404).json({erro:'VIDEO_NAO_ENCONTRADO'});}
+   });
+  app.post('/api/admin/catalogo-midia/produtos/:produtoId/video',
+   autorizarOperador,validarCsrf,verificarId,corpoVideo,async(req,res)=>{
+    const revisao=req.get('x-video-versao-esperada');
+    if(req.get('content-type')!=='video/mp4'||!Buffer.isBuffer(req.body)||
+       typeof revisao!=='string'||!/^(?:0|[1-9][0-9]{0,8})$/.test(revisao))
+     return res.status(400).json({erro:'VIDEO_PARAMETROS_INVALIDOS'});
+    try{if(!existe(req.params.produtoId))return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
+     const salvo=await catalogoMidia.video.salvar({produtoId:req.params.produtoId,bytes:req.body,revisaoEsperada:Number(revisao)});
+     return res.status(salvo.repetido?200:201).json(salvo);}
+    catch(e){const codigo=e.codigo||'VIDEO_REAL_INDISPONIVEL';
+     return res.status(codigo==='VIDEO_CONFLITO_REVISAO'?409:codigo==='VIDEO_REAL_INDISPONIVEL'?503:400).json({erro:codigo});}
+   });
+ }
  return {ativo:true,origem:'CATALOGO_REAL_PERSISTENTE',
   escopo:'OPERADOR_AUTENTICADO',checkoutReal:false};
 }
