@@ -108,7 +108,7 @@
     inicial.className='loop03-inicial-fila loop03-bola-interativa '+(ouro?'loop03-dourada':pendente(p)?'loop03-azul':aceito(p)?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
     const identificacao=document.createElement('span');
     identificacao.className='loop03-numero-titular';
-    const numeroCompleto=numeroPosicao===null?'':'#'+String(numeroPosicao).padStart(9,'0');
+    const numeroCompleto=numeroPosicao===null?'':'#'+String(numeroPosicao).padStart(7,'0');
     identificacao.textContent=numeroCompleto;
     inicial.append(identificacao);
     if(detalhe){
