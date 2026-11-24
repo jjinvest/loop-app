@@ -39,6 +39,8 @@ class BancadaModulosLoopSQLite{
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_recebimentos(geracao INTEGER NOT NULL,numero INTEGER NOT NULL,',
    'pedido TEXT NOT NULL UNIQUE,valor INTEGER NOT NULL CHECK(valor=25000),recebido_em INTEGER NOT NULL,',
    "tipo TEXT NOT NULL CHECK(tipo IN ('DOURADA','AZUL','CONFIRMADA')),PRIMARY KEY(geracao,numero));",
+   'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_indicacoes(geracao INTEGER NOT NULL,referencia TEXT NOT NULL,',
+   'indicador INTEGER NOT NULL,indicado INTEGER NOT NULL,PRIMARY KEY(geracao,referencia),UNIQUE(geracao,indicado));',
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_lancamentos(geracao INTEGER NOT NULL,referencia TEXT NOT NULL,',
    'destino TEXT NOT NULL,valor INTEGER NOT NULL CHECK(valor>0),posicao INTEGER NOT NULL,',
    'registrado_em INTEGER NOT NULL,PRIMARY KEY(geracao,referencia));',
@@ -115,14 +117,18 @@ class BancadaModulosLoopSQLite{
    if(!Object.hasOwn(destinos,x.destino))falha('FLUXO_DESTINO_INVALIDO');
    destinos[x.destino]=x.total;
   }
+  // BONUS é saída do cofre de reserva, não um segundo débito do caixa de eventos.
+  destinos.LOOP_DIREITA-=destinos.BONUS;
+  if(destinos.LOOP_DIREITA<0)falha('FLUXO_RESERVA_NEGATIVA');
   const distribuido=Object.values(destinos).reduce((n,v)=>n+v,0),saldo=receb.total-distribuido;
   if(!Number.isSafeInteger(saldo)||saldo<0)falha('FLUXO_CAIXA_DIVERGENTE');
   const eventos=this.db.prepare("SELECT COUNT(*) AS n FROM loop_teste_fluxo_lancamentos WHERE geracao=? AND destino!='BONUS'").get(geracao).n;
   const ultimos=this.db.prepare('SELECT referencia,destino,valor,posicao,registrado_em FROM loop_teste_fluxo_lancamentos WHERE geracao=? ORDER BY rowid DESC LIMIT 12').all(geracao);
+  const indicacoes=this.db.prepare('SELECT COUNT(*) AS n FROM loop_teste_fluxo_indicacoes WHERE geracao=?').get(geracao).n;
   return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',
    produtos:receb.quantidade,recebidoCentavos:receb.total,distribuidoCentavos:distribuido,
    saldoCentavos:saldo,destinos,eventos,ultimos,intervaloSegundos:10,
-   comissoes:75,indicadores:10,valorEventoCentavos:25000};
+   comissoes:indicacoes,comissoesPendentesCentavos:indicacoes*2500-destinos.BONUS,indicadores:10,valorEventoCentavos:25000};
  }
  _lancamento(geracao,referencia,destino,valor,posicao){
   this.db.prepare('INSERT INTO loop_teste_fluxo_lancamentos VALUES(?,?,?,?,?,?)')
@@ -153,13 +159,13 @@ class BancadaModulosLoopSQLite{
     .run(row.geracao,pos.id,id,25000,recebidoEm,tipo);
   }
   // Dez indicadores dividem os outros 75 confirmados, cada convite unico.
-  // A comissão é segregada do caixa bruto antes da distribuição.
+  // O direito é registrado na confirmação; o pagamento de teste sai da reserva conforme houver cobertura.
   for(let i=10;i<confirmadas.length;i++){
    const indicador=confirmadas[(i-10)%10],indicado=confirmadas[i];
    const ref='indicacao-'+row.geracao+'-'+indicado.id;
    sim.registrarIndicacaoSimulada({indicadorId:indicador.participanteId,
     posicaoAlvoId:indicador.id,eventoId:ref,convidouEm:indicado.entrouEm});
-   this._lancamento(row.geracao,ref,'BONUS',2500,indicador.id);
+   this.db.prepare('INSERT INTO loop_teste_fluxo_indicacoes VALUES(?,?,?,?)').run(row.geracao,ref,indicador.id,indicado.id);
   }
   return {preparado:true,posicoes:100,douradas:10,azuis:5,confirmadas:85,
    filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,financeiro:this._fluxo(row.geracao)};
@@ -170,9 +176,20 @@ class BancadaModulosLoopSQLite{
    row.catraca_ativa=0;
    return {processado:false,motivo:'CAIXA_INSUFICIENTE_OU_SEM_CENTRO'};
   }
-  const id='evento-fin-'+row.geracao+'-'+(f.eventos+1);
+  const recebimento=this.db.prepare('SELECT pedido FROM loop_teste_fluxo_recebimentos WHERE geracao=? ORDER BY numero LIMIT 1 OFFSET ?').get(row.geracao,f.eventos);
+  if(!recebimento)falha('FLUXO_RECEBIMENTO_AUSENTE');
+  const id=recebimento.pedido;
   const luz=sim.registrarVendaNoCicloSimulada({vendaId:id});
   this._lancamento(row.geracao,id,luz.venda.destinoCofre,25000,luz.venda.posicaoCentroId);
+  if(luz.venda.destinoCofre==='LOOP_DIREITA'){
+   const saldoReserva=this._fluxo(row.geracao).destinos.LOOP_DIREITA;
+   const pendentes=this.db.prepare([
+    'SELECT i.referencia,i.indicador FROM loop_teste_fluxo_indicacoes i',
+    'LEFT JOIN loop_teste_fluxo_lancamentos l ON l.geracao=i.geracao AND l.referencia=i.referencia',
+    'WHERE i.geracao=? AND l.referencia IS NULL ORDER BY i.indicado LIMIT ?'
+   ].join(' ')).all(row.geracao,Math.floor(saldoReserva/2500));
+   for(const p of pendentes)this._lancamento(row.geracao,p.referencia,'BONUS',2500,p.indicador);
+  }
   let giro=null;
   if(luz.estado.vendasNoCiclo===6){
    sim.abrirCatraca();giro=sim.tentarGiro();sim.pausarCatraca();
