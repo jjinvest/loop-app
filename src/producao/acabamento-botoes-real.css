@@ -1206,3 +1206,54 @@ body.loop03-modo-operador #adminDouradasOperador button:disabled{
 body.loop03-modo-operador #adminDouradasOperador strong{
  color:#f6dda8;font-variant-numeric:tabular-nums;font-size:1.05em;
 }
+
+
+/* Financeiro do Escritório do operador — cartões, sem tocar na Central. */
+body.loop03-modo-operador :is(#adminFluxoFinanceiroTeste,#adminDistribuicaoFinanceira,#adminGanhosCliente,#adminFluxoAoVivo){
+ min-width:0;max-width:100%;box-sizing:border-box;
+ margin:14px 0;padding:clamp(10px,2vw,20px);
+ border:1px solid #b79a617d;border-radius:18px;
+ background:linear-gradient(145deg,#1b2834,#222035);
+}
+body.loop03-modo-operador :is(#adminFluxoFinanceiroTeste,#adminDistribuicaoFinanceira,#adminGanhosCliente,#adminFluxoAoVivo)>h3{
+ margin:0 0 12px;color:#f5dfac;font-size:clamp(1rem,2vw,1.18rem);
+ text-align:center;line-height:1.3;overflow-wrap:anywhere;
+}
+body.loop03-modo-operador :is(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados){
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;
+ min-width:0;width:100%;box-sizing:border-box;align-items:stretch;
+}
+body.loop03-modo-operador :is(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados)>.loop03-compras-coluna{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ text-align:center;gap:7px;min-width:0;min-height:104px;
+ box-sizing:border-box;padding:10px 7px;border:1px solid #a98e5e96;
+ border-radius:13px;background:linear-gradient(150deg,#192e32,#222238);
+}
+body.loop03-modo-operador :is(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados) h4{
+ margin:0;font-size:clamp(.73rem,1.5vw,.93rem);font-weight:700;
+ color:#f5dfac;line-height:1.25;overflow-wrap:anywhere;
+}
+body.loop03-modo-operador :is(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados) .loop03-compras-total{
+ margin:0;font-size:clamp(.95rem,2.1vw,1.4rem);line-height:1.3;
+ color:#f8f9fc;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+body.loop03-modo-operador :is(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados) p{
+ margin:0;font-size:.76rem;line-height:1.35;color:#cbd1dc;overflow-wrap:anywhere;
+}
+body.loop03-modo-operador :is(#adminFluxoFinanceiroDados,#adminFluxoAoVivoDados)>.loop03-financeiro-historico{
+ grid-column:1/-1;align-items:stretch;text-align:left;min-height:0;padding:12px;
+}
+body.loop03-modo-operador #adminFluxoAbrirFinanceiro{margin-top:12px}
+@media(max-width:760px){
+ body.loop03-modo-operador :is(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados){
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+ }
+ body.loop03-modo-operador :is(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados)>.loop03-compras-coluna{
+  padding:9px 5px;min-height:90px;
+ }
+}
+body:not(.loop03-modo-operador) :is(#adminFluxoFinanceiroTeste,#adminDistribuicaoFinanceira,#adminGanhosCliente,#adminFluxoAoVivo,#adminCenarioOrigem),
+:is(#adminFluxoFinanceiroTeste,#adminDistribuicaoFinanceira,#adminGanhosCliente,#adminFluxoAoVivo,#adminCenarioOrigem)[hidden]{
+ display:none!important;
+}
+#loopOperadorAgendaConfirmada{display:none!important}
