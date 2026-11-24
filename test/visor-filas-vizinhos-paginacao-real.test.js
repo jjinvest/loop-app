@@ -142,14 +142,17 @@ test('operador: página protegida mostra primeiro, total e somente números',()=
  assert.throws(()=>motor.consultarFilaOperador({fila:'A',pagina:-1}),/FILA_OPERADOR_PARAMETROS_INVALIDOS/);
 });
 
-test('nick e indicações são vinculados somente em leitura autorizada',()=>{
+test('nick e contagem públicos; vínculo de indicação somente para titular autorizado',()=>{
  const {motor,titular}=montar();
- motor.banco={prepare:()=>({get:id=>({nick:id===titular?'MeuNick':'OutroNick'})})};
+ motor.banco={prepare:sql=>({get:(id,indicado)=>sql.includes('loop_real_vinculos_indicacao')?(id===titular&&indicado==='outro'?{vinculo:1}:undefined):({nick:id===titular?'MeuNick':'OutroNick'})})};
  motor._sim=()=>({filas:{filaA:[],filaB:[{id:123,participanteId:titular,indicacoesVinculadas:2},{id:456,participanteId:'outro'},{id:789,empresa:true}]}});
  const r=motor.consultarFilaPaginada({titularId:titular,fila:'B',desdeInicio:true});
  assert.equal(r.pagina[0].nickVisual,'MeuNick');
  assert.equal(r.pagina[0].indicacoesVinculadas,2);
- assert.equal(r.pagina[1].nickVisual,undefined);
+ assert.equal(r.pagina[1].nickVisual,'OutroNick');
+ assert.equal(r.pagina[1].indicadaMinha,true);
+ assert.equal(r.pagina[0].indicadaMinha,undefined);
+ assert.equal(motor.consultarFilaOperador({fila:'B'}).pagina[1].indicadaMinha,undefined);
  assert.equal(r.pagina[2].dourada,true);
  assert.equal(motor.consultarFilaOperador({fila:'B'}).pagina[1].nickVisual,'OutroNick');
 });
