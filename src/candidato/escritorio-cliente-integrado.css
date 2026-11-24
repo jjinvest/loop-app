@@ -1257,11 +1257,9 @@ body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-
  display:block;max-width:100%;font-family:'Barlow Condensed','Arial Narrow','Liberation Sans Narrow',sans-serif;font-size:.65rem;line-height:1.05;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.12px;color:inherit;max-width:none;transform:scale(.72,1.18);
 }
 .cliente-integrado #conteudoTabuleiro .loop03-nick-bola{display:block;max-width:100%;font-size:.59rem;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;line-height:1.1}
-.cliente-integrado #conteudoTabuleiro .loop03-fila-indicacoes{display:flex;align-items:center;gap:3px;color:#f4cf65;font-size:.68rem;font-weight:800;min-width:0}
-.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa{width:12px;height:13px;flex:none;position:relative}
-.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:before,.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:after{content:'';position:absolute;background:#f4cf65}
-.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:before{width:6px;height:6px;border-radius:50%;left:3px;top:0}
-.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:after{width:12px;height:6px;border-radius:7px 7px 2px 2px;bottom:0;left:0}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-indicacoes{display:inline-flex;align-items:center;gap:3px;color:#f4cf65;font-size:.68rem;font-weight:800;min-width:max-content;flex-shrink:0;overflow:visible;white-space:nowrap}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa{display:block;width:13px;height:20px;flex:0 0 13px;position:relative;background:#f4cf65;clip-path:polygon(34% 3%,66% 3%,77% 12%,77% 24%,66% 33%,34% 33%,23% 24%,23% 12%,34% 3%,34% 37%,23% 37%,8% 46%,3% 67%,19% 69%,26% 51%,28% 97%,46% 97%,50% 72%,54% 97%,72% 97%,74% 51%,81% 69%,97% 67%,92% 46%,77% 37%,66% 37%,66% 33%);overflow:visible}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:before,.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:after{content:none}
 .cliente-integrado #conteudoTabuleiro .loop03-bola-interativa:focus-visible{outline:2px solid #eac478;outline-offset:2px}
 #loopDetalheBolaFila{box-sizing:border-box;width:min(90vw,420px);max-height:85vh;overflow:auto;background:#141e29;color:#f4f0e6;border:1px solid #c6a15e;border-radius:16px;padding:20px}
 #loopDetalheBolaFila::backdrop{background:#0009}
