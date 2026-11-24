@@ -536,3 +536,20 @@ dialog.akitemm-operador-editor .akitemm-card-rascunho
 .akitemm-loja .akitemm-banner .akitemm-banner-foto-editavel:not([hidden]){
  object-fit:contain!important;background:transparent!important;z-index:1;
 }
+
+/* Somente as setas do carrossel: retirar os aros, sem mudar as bolinhas. */
+.akitemm-loja .akitemm-banner #akitemmBannerAnterior,
+.akitemm-loja .akitemm-banner #akitemmBannerProximo{
+ border:0!important;background:transparent!important;box-shadow:none!important;
+}
+.akitemm-loja .akitemm-banner #akitemmBannerAnterior:focus-visible,
+.akitemm-loja .akitemm-banner #akitemmBannerProximo:focus-visible{
+ outline:2px solid #e6bd73;outline-offset:2px;
+}
+/* A arte ocupa o maior espaço possível; o fundo lateral fica discreto. */
+.akitemm-loja .akitemm-banner.akitemm-banner-com-foto:has(.akitemm-banner-foto-editavel:not([hidden]))::before{
+ filter:blur(28px) brightness(.38);opacity:.82;
+}
+.akitemm-loja .akitemm-banner .akitemm-banner-foto-editavel:not([hidden]){
+ transform-origin:center;
+}

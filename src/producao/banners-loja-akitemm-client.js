@@ -23,6 +23,65 @@
  foto.className='akitemm-banner-foto-editavel';
  foto.alt='Imagem do banner AKITEMM';foto.hidden=true;
  conteudo.insertAdjacentElement('afterend',foto);
+ // Somente remove margens uniformes produzidas pelo editor anterior (#10141d).
+ // A foto original continua no servidor; nenhuma arte ou configuração é sobrescrita.
+ let margemFoto=null;
+ function ajustarFotoExibida(){
+  foto.style.removeProperty('transform');
+  foto.style.removeProperty('clip-path');
+  if(!margemFoto||foto.hidden||!foto.naturalWidth||!foto.naturalHeight)return;
+  const w=foto.clientWidth,h=foto.clientHeight;
+  if(!w||!h)return;
+  const iw=foto.naturalWidth,ih=foto.naturalHeight;
+  const {l,r,t,b}=margemFoto;
+  const s=Math.min(w/iw,h/ih),dw=iw*s,dh=ih*s;
+  const cw=dw*(1-l-r),ch=dh*(1-t-b);
+  const z=Math.min(w/cw,h/ch);
+  const dx=dw*(r-l)*z/2,dy=dh*(b-t)*z/2;
+  foto.style.clipPath='inset('+[
+   (h-dh)/2+dh*t,(w-dw)/2+dw*r,
+   (h-dh)/2+dh*b,(w-dw)/2+dw*l
+  ].map(v=>Math.max(0,v)+'px').join(' ')+')';
+  foto.style.transform='translate('+dx+'px,'+dy+'px) scale('+z+')';
+ }
+ function identificarMargemFoto(){
+  margemFoto=null;
+  try{
+   if(!foto.hidden&&foto.naturalWidth&&foto.naturalHeight){
+    const n=160,amostra=document.createElement('canvas');
+    amostra.width=n;amostra.height=n;
+    const ctx=amostra.getContext('2d',{willReadFrequently:true});
+    if(ctx){
+     ctx.drawImage(foto,0,0,n,n);
+     const dados=ctx.getImageData(0,0,n,n).data;
+     const neutro=(x,y)=>{
+      const i=(y*n+x)*4;
+      return dados[i+3]<12||(Math.abs(dados[i]-16)<=9&&
+       Math.abs(dados[i+1]-20)<=9&&Math.abs(dados[i+2]-29)<=9);
+     };
+     const faixa=(eixo,inverter)=>{
+      let qtd=0;
+      for(let a=0;a<Math.floor(n*.4);a++){
+       const k=inverter?n-1-a:a;
+       let iguais=0;
+       for(let j=0;j<n;j++)if(eixo==='x'?neutro(k,j):neutro(j,k))iguais++;
+       if(iguais<n*.98)break;
+       qtd++;
+      }
+      return qtd>=4?Math.max(0,qtd-2)/n:0;
+     };
+     const l=faixa('x',false),r=faixa('x',true),t=faixa('y',false),b=faixa('y',true);
+     // Exige margens em lados opostos para evitar recortar arte escura isolada.
+     margemFoto={l:l&&r?l:0,r:l&&r?r:0,t:t&&b?t:0,b:t&&b?b:0};
+     if(!Object.values(margemFoto).some(Boolean))margemFoto=null;
+    }
+   }
+  }catch{margemFoto=null;}
+  ajustarFotoExibida();
+ }
+ foto.addEventListener('load',identificarMargemFoto);
+ if(typeof ResizeObserver==='function')new ResizeObserver(ajustarFotoExibida).observe(area);
+
  const placeholder=document.createElement('div');
  placeholder.className='akitemm-banner-espaco-livre';placeholder.hidden=true;
  foto.insertAdjacentElement('afterend',placeholder);
@@ -243,7 +302,8 @@
   if(imagem){
    const caminho='/api/loja/banners/'+slot.slot+'/imagem?revisao='+
     (slot.atualizadoEm||slot.revisao);
-   if(foto.getAttribute('src')!==caminho)foto.src=caminho;
+   if(foto.getAttribute('src')!==caminho){margemFoto=null;ajustarFotoExibida();foto.src=caminho;}
+   else if(!foto.hidden&&foto.complete)identificarMargemFoto();
    foto.style.objectFit='contain';
    area.style.setProperty('--akitemm-banner-fundo',
     'url('+JSON.stringify(caminho)+')');
