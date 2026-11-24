@@ -843,11 +843,8 @@ async function main(){
     .filter({hasText:'Programação salva e confirmada'}).waitFor();
    assert.match(await modal.locator('.loop-operador-catraca-resumo').innerText(),
     /PROGRAMAÇÃO GRAVADA NO SERVIDOR/);
-   const comprovante=operadorPage.locator('#loopOperadorAgendaConfirmada');
-   await comprovante.waitFor({state:'visible'});
-   assert.match(await comprovante.innerText(),/AGENDADA — AGUARDANDO DATA/);
-   assert.match(await comprovante.innerText(),/22\/11\/2099 · 09:00–18:00/);
-   assert.match(await comprovante.innerText(),/5 centros · 30 luzes/);
+   assert.equal(await operadorPage.locator('#loopOperadorAgendaConfirmada').count(),0,
+    'Programação confirmada não deve recriar aviso na Distribuição');
    await modal.getByRole('button',{name:'Fechar'}).click();
    await modal.waitFor({state:'detached'});
    await operadorPage.locator('#atualizarTabuleiroIntegrado').click();
