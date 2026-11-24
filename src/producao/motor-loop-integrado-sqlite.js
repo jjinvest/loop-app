@@ -358,11 +358,13 @@ class MotorLoopIntegradoSQLite{
  }
  // Visor administrativo: posição, ordem e nick comercial; SEM nome civil, CPF ou ID de titular.
  // A sessão do operador é conferida exclusivamente no gateway.
- _identificacaoVisualFila(p,autorizado){
-  if(!autorizado||p.empresa===true||!this.banco)return {};
+ _identificacaoVisualFila(p,titularId=null){
+  if(p.empresa===true||!this.banco)return {};
   const c=this.banco.prepare('SELECT nick FROM loop_real_contas WHERE id=?').get(p.participanteId);
   if(typeof c?.nick!=='string'||!/^[A-Za-z]{1,12}$/.test(c.nick))return {};
-  return {nickVisual:c.nick,indicacoesVinculadas:Number.isSafeInteger(p.indicacoesVinculadas)&&p.indicacoesVinculadas>0?p.indicacoesVinculadas:0};
+  const dados={nickVisual:c.nick,indicacoesVinculadas:Number.isSafeInteger(p.indicacoesVinculadas)&&p.indicacoesVinculadas>0?p.indicacoesVinculadas:0};
+  if(titularId!==null&&this.banco.prepare('SELECT 1 FROM loop_real_vinculos_indicacao WHERE indicador_id=? AND indicado_id=?').get(titularId,p.participanteId))dados.indicadaMinha=true;
+  return dados;
  }
  consultarFilaOperador({fila,pagina=0}={}){
   if(!['A','B'].includes(fila)||
@@ -375,7 +377,7 @@ class MotorLoopIntegradoSQLite{
   const linhas=pessoas.slice(inicio,inicio+30).map((p,i)=>({
    numero:p.id,ordem:inicio+i+1,
    dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE',
-   ...this._identificacaoVisualFila(p,true)
+   ...this._identificacaoVisualFila(p)
   }));
   return {fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',
    somenteLeitura:true,fila,total:pessoas.length,
@@ -405,7 +407,7 @@ class MotorLoopIntegradoSQLite{
    numero:p.id,ordem:i+1,minha:p.empresa!==true&&
     p.participanteId===titularId,
    dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE',
-   ...this._identificacaoVisualFila(p,p.participanteId===titularId)
+   ...this._identificacaoVisualFila(p,titularId)
   });
   // Modo visual: começar do primeiro lugar; o antigo modo ancorado
   // permanece disponível. Somente leitura, sem alterar prioridade 3A:1B.
