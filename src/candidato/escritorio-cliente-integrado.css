@@ -1248,7 +1248,7 @@ body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-
 .cliente-integrado #conteudoTabuleiro .loop03-bola-interativa.loop03-azul{color:#fff!important}
 .cliente-integrado #conteudoTabuleiro .loop03-bola-interativa.loop03-verde{color:#fff!important}
 .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-bola-interativa .loop03-numero-titular{
- display:block;max-width:100%;font-size:.48rem;line-height:1.05;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.12px;color:inherit;
+ display:block;max-width:100%;font-family:'Barlow Condensed','Arial Narrow','Liberation Sans Narrow',sans-serif;font-size:.65rem;line-height:1.05;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.12px;color:inherit;max-width:none;transform:scale(.72,1.18);
 }
 .cliente-integrado #conteudoTabuleiro .loop03-nick-bola{display:block;max-width:100%;font-size:.59rem;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;line-height:1.1}
 .cliente-integrado #conteudoTabuleiro .loop03-fila-indicacoes{display:flex;align-items:center;gap:3px;color:#f4cf65;font-size:.68rem;font-weight:800;min-width:0}
@@ -1266,7 +1266,7 @@ body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-
  .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB){--fila-linha:64px}
  .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB)>.loop03-linha-fila{height:60px;min-height:60px;gap:3px}
  .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-linha-fila .loop03-bola-interativa{width:52px;height:52px;min-width:52px;flex-basis:52px}
- .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-bola-interativa .loop03-numero-titular{font-size:.42rem}
+ .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-bola-interativa .loop03-numero-titular{font-size:.58rem}
  .cliente-integrado #conteudoTabuleiro .loop03-nick-bola{font-size:.52rem}
  .cliente-integrado #conteudoTabuleiro .loop03-fila-indicacoes{font-size:.6rem;gap:2px}
 }
