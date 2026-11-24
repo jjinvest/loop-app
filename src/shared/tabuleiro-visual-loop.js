@@ -37,11 +37,11 @@
     fundo:'radial-gradient(circle at 28% 17%,#fff2b5 0%,#ebc35d 43%,#d29d28 76%,#8b570e 100%)',
     borda:'#fff0ae'
    }:centro?{
-    fundo:'radial-gradient(circle at 28% 17%,#caffdf 0%,#51d598 42%,#138658 77%,#075237 100%)',
-    borda:'#dbf2db'
+    fundo:'radial-gradient(circle at 28% 17%,#e9d2ff 0%,#a66be5 42%,#6b32b1 77%,#3c176f 100%)',
+    borda:'#ead7ff'
    }:id==='tabuleiroMotorVaga6'?{
-    fundo:'radial-gradient(circle at 28% 17%,#ffb8bd 0%,#ef535c 47%,#ba2439 80%,#761528 100%)',
-    borda:'#ffbec3'
+    fundo:'radial-gradient(circle at 28% 17%,#caffdf 0%,#51d598 47%,#138658 80%,#075237 100%)',
+    borda:'#baf5d3'
    }:{
     fundo:'radial-gradient(circle at 28% 17%,#fff 0%,#f6f8fa 37%,#dce4ec 77%,#a5b0c1 100%)',
     borda:'#f6f9ff'
@@ -63,7 +63,7 @@
    area.classList.toggle('posicao-azul',pendente(p));
    area.classList.toggle('posicao-verde',aceito(p));
    // A classe ACEITE indica estado de adesao, NAO que uma vaga
-   // periferica seja o centro verde. As cores visuais do tabuleiro
+   // periferica seja o centro roxo. As cores visuais do tabuleiro
    // seguem titularidade/filas/pendencia/empresa.
    area.classList.toggle('posicao-cliente',p?.minha===true);
    area.classList.toggle('posicao-fila-a',p?.fila==='A');

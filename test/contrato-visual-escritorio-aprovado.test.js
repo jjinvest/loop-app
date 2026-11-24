@@ -242,8 +242,8 @@ test('CENTRO ganha texto dourado sem trocar a esfera verde; 3.0 recebe acabament
  assert.match(trecho,/text-shadow:none/,'3.0 nao pode herdar a sombra dourada do LOOP');
  assert.match(trecho,/font-size:\.8em/,'3.0 mantem tamanho proporcional');
  assert.match(css,/-webkit-text-fill-color:transparent/);
- // O acabamento novo nao altera a cor do centro nem a classe de status.
- assert.match(css,/\.mapa-tabuleiro-posicoes-demo > \.tabuleiro-centro\{\s*background:radial-gradient\(circle at 28% 17%,#caffdf/);
+ // Centro roxo autorizado; acabamento e classe de status preservados.
+ assert.match(css,/\.mapa-tabuleiro-posicoes-demo > \.tabuleiro-centro\{\s*background:radial-gradient\(circle at 28% 17%,#e9d2ff/);
 });
 
 test('saque por posição usa saldo da posição atual e mantém total agregado separado',async()=>{

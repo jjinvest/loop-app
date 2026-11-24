@@ -550,15 +550,15 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 }
 .cliente-integrado #conteudoTabuleiro .loop03-roda
  .mapa-tabuleiro-posicoes-demo > .tabuleiro-vaga-6{
- background:radial-gradient(circle at 28% 17%,#ffb8bd 0%,#ef535c 47%,#ba2439 80%,#761528 100%);
- border-color:#ffbec3;color:white;
- box-shadow:0 4px 13px #0008,inset -5px -8px 12px #72162a70;
+ background:radial-gradient(circle at 28% 17%,#caffdf 0%,#51d598 47%,#138658 80%,#075237 100%);
+ border-color:#baf5d3;color:white;
+ box-shadow:0 4px 13px #0008,inset -5px -8px 12px #07523770;
 }
 .cliente-integrado #conteudoTabuleiro .loop03-roda
  .mapa-tabuleiro-posicoes-demo > .tabuleiro-centro{
- background:radial-gradient(circle at 28% 17%,#caffdf 0%,#51d598 42%,#138658 77%,#075237 100%);
- border:3px solid #dbf2db;color:#103a29;
- box-shadow:0 0 18px #4fdb9880,inset -5px -8px 12px #07523780;
+ background:radial-gradient(circle at 28% 17%,#e9d2ff 0%,#a66be5 42%,#6b32b1 77%,#3c176f 100%);
+ border:3px solid #ead7ff;color:#321451;
+ box-shadow:0 0 18px #ad72ef80,inset -5px -8px 12px #3c176f80;
 }
 /* A exceção dourada é a ÚLTIMA regra de cor e tem precedência sobre
    branco, vermelho, verde, azul, posição própria e estado de aceite. */
@@ -593,7 +593,7 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado #conteudoTabuleiro .loop03-roda
  .mapa-tabuleiro-posicoes-demo > .tabuleiro-vaga-6 > .selo-posicao-demo{color:white}
 .cliente-integrado #conteudoTabuleiro .loop03-roda
- .mapa-tabuleiro-posicoes-demo > .tabuleiro-centro > .selo-posicao-demo{color:#103a29}
+ .mapa-tabuleiro-posicoes-demo > .tabuleiro-centro > .selo-posicao-demo{color:#321451}
 .cliente-integrado #conteudoTabuleiro .loop03-roda
  .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo > .selo-posicao-demo.posicao-dourado{color:#573a0b}
 .cliente-integrado #conteudoTabuleiro .loop03-roda

@@ -7,7 +7,8 @@
   const $=elemento;
  let agendaVisorCatraca=null,leituraVisorCatracaEm=0;
   let ultimoGiroCatracaVisto=null,ultimaLuzCatracaVista=null,limpezaFestaCatraca=null;
-  let ultimaJanelaVisual=null;
+  let ultimaJanelaVisual=null,ultimoCentroObservado=null,ultimaFonteObservada=null;
+  let festasPendentes=[];
   // Horário vindo do servidor (SQLite do operador), não do fuso do celular.
   const fusoVisual=new Intl.DateTimeFormat('en-US',{
    timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',
@@ -256,13 +257,13 @@
    atualizarMarcadorCatraca();
    window.setInterval(atualizarMarcadorCatraca,1000);
   }
-  function festejarGiroCatraca(){
+  function festejarGiroCatraca(ordem){
    const area=$('celebracaoGiroCatraca');
    if(!area||document.hidden||$('conteudoTabuleiro')?.hidden)return;
    area.replaceChildren();
    if(limpezaFestaCatraca!==null)clearTimeout(limpezaFestaCatraca);
    const selo=document.createElement('span');
-   selo.className='selo';selo.textContent='✨ CICLO CONCLUÍDO · ENSAIO';
+   selo.className='selo';selo.textContent='✨ '+((ordem+1)/2)+'º EVENTO DO TITULAR';
    area.appendChild(selo);
    const reduzido=typeof window.matchMedia==='function'&&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -280,26 +281,41 @@
     }
    }
    limpezaFestaCatraca=setTimeout(()=>{area.replaceChildren();
-    limpezaFestaCatraca=null;},1450);
+    limpezaFestaCatraca=null;
+    if(festasPendentes.length)festejarGiroCatraca(festasPendentes.shift());
+   },1450);
   }
-  function observarCatracaNoVisor(giros,luzes){
+  function observarCatracaNoVisor(giros,luzes,{centro=null,fonte=null}={}){
    if(!Number.isSafeInteger(giros)||giros<0||
       !Number.isSafeInteger(luzes)||luzes<0||luzes>6)return;
-   if(ultimoGiroCatracaVisto!==null&&giros>ultimoGiroCatracaVisto)
-    festejarGiroCatraca();
-   else if(ultimoGiroCatracaVisto===giros&&
-     ultimaLuzCatracaVista!==null&&luzes>ultimaLuzCatracaVista&&
-     !document.hidden&&$('conteudoTabuleiro')?.hidden===false){
+   // Somente eventos do ciclo observados no mesmo centro confirmado.
+   // Não usar LEDs do relógio, saltos de giro, douradas ou referências visuais.
+   const titular=centro?.dourada===false&&Number.isSafeInteger(centro.numero)&&centro.numero>0?
+    centro.numero:null;
+   const mesmaFonte=fonte!==null&&fonte===ultimaFonteObservada;
+   const mesmoCiclo=mesmaFonte&&ultimoGiroCatracaVisto===giros;
+   const visivel=!document.hidden&&$('conteudoTabuleiro')?.hidden===false;
+   if(!mesmoCiclo||titular!==ultimoCentroObservado||!visivel){
+    festasPendentes=[];
+    if(limpezaFestaCatraca!==null){clearTimeout(limpezaFestaCatraca);limpezaFestaCatraca=null;}
+    $('celebracaoGiroCatraca')?.replaceChildren();
+   }
+   if(mesmoCiclo&&ultimaLuzCatracaVista!==null&&luzes<ultimaLuzCatracaVista&&titular===ultimoCentroObservado)return;
+   if(mesmoCiclo&&ultimaLuzCatracaVista!==null&&luzes>ultimaLuzCatracaVista&&visivel){
     for(let i=ultimaLuzCatracaVista+1;i<=luzes;i++){
      const bolinha=$('motorBolinha'+i);
      if(bolinha){bolinha.classList.remove('loop03-pulso-luz');
       void bolinha.offsetWidth;bolinha.classList.add('loop03-pulso-luz');
       setTimeout(()=>bolinha.classList.remove('loop03-pulso-luz'),920);
      }
+     if(titular!==null&&titular===ultimoCentroObservado&&[1,3,5].includes(i))festasPendentes.push(i);
     }
+    if(limpezaFestaCatraca===null&&festasPendentes.length)festejarGiroCatraca(festasPendentes.shift());
    }
    ultimoGiroCatracaVisto=giros;
    ultimaLuzCatracaVista=luzes;
+   ultimoCentroObservado=titular;
+   ultimaFonteObservada=fonte;
   }
   
   let iniciado=false;

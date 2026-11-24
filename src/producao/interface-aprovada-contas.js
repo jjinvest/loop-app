@@ -2510,7 +2510,7 @@
     prepararExpansaoFilasOperador();
    }
    visorCatraca.registrarAgenda(agenda);
-   visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
+   visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo,{centro:d.tabuleiro.centro,fonte:modoOperadorAtual?'OPERADOR':'CLIENTE'});
   }catch{
    // Falha de leitura não altera o painel nem autoriza eventos.
   }finally{placarOperadorConsultando=false;}
@@ -3257,7 +3257,7 @@
    const agenda={...controle.agenda,luzesDoRelogioCompartilhado:false,
     luzesDoRelogioOperador:false};
    visorCatraca.registrarAgenda(agenda);
-   visorCatraca.observar(x.tabuleiro.giros,x.tabuleiro.eventosNoCiclo);
+   visorCatraca.observar(x.tabuleiro.giros,x.tabuleiro.eventosNoCiclo,{fonte:'MODULO_'+visualTesteModulo});
    $('loop03TotalIntegrado').textContent=String(x.filaA.length+x.filaB.length);
    $('loop03NumeroIntegrado').textContent=x.tabuleiro.eventosNoCiclo+' / 6';
    $('estadoTabuleiroIntegrado').textContent='TESTE OPERACIONAL · '+
@@ -3381,7 +3381,7 @@
       controle.agenda.luzesRelogio24h!==controle.luzesRelogio24h)
     throw Error('AGENDA_COMPARTILHADA_DIVERGENTE');
    visorCatraca.registrarAgenda(controle.agenda);
-   visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
+   visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo,{centro:d.tabuleiro.centro,fonte:modoOperadorAtual?'OPERADOR':'CLIENTE'});
    mostrarAgendaOperador(controle);
    // Contador da aba do OPERADOR pertence exclusivamente ao visor do
    // relogio: evitar que leituras HTTP concorrentes substituam a legenda
@@ -3457,7 +3457,7 @@
      !Number.isSafeInteger(d.agenda.luzesRelogio24h)))
     throw Error('AGENDA_CLIENTE_DIVERGENTE');
    visorCatraca.registrarAgenda(d.agenda);
-   visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
+   visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo,{centro:d.tabuleiro.centro,fonte:modoOperadorAtual?'OPERADOR':'CLIENTE'});
    // Mensagem da catraca é atualizada somente pelo visor compartilhado;
    // o evento real continua em d.tabuleiro.eventosNoCiclo.
 
