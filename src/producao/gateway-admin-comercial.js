@@ -590,6 +590,50 @@ function montarGatewayAdminComercial(app,{
     codigo==='DOURADAS_REPLAY_DIVERGENTE'?409:503).json({erro:codigo});
   }
  });
+ // Projeção financeira administrativa: totalizações do livro imutável,
+ // nunca da previsão do relógio nem de posições sem contemplação.
+ app.get('/api/admin/loop/distribuicao-financeira',proteger,async(req,res)=>{
+  res.set('Cache-Control','private, no-store');
+  const nick=req.query.nick;
+  if(Object.keys(req.query).some(k=>k!=='nick')||
+     (nick!==undefined&&(typeof nick!=='string'||!/^[A-Za-z]{1,12}$/.test(nick))))
+   return res.status(400).json({erro:'NICK_INVALIDO'});
+  if(!contas||!motorLoop||contas.banco!==motorLoop.banco)
+   return res.status(503).json({erro:'LIVRO_FINANCEIRO_NAO_CONECTADO'});
+  try{
+   const banco=contas.banco;
+   let titular=null;
+   if(nick!==undefined){
+    titular=banco.prepare('SELECT id FROM loop_real_contas WHERE nick=? COLLATE NOCASE').get(nick);
+    if(!titular)return res.status(404).json({erro:'CADASTRO_NAO_LOCALIZADO'});
+   }
+   const total=banco.prepare([
+    "SELECT COALESCE(SUM(CASE WHEN grupo='POSICAO' AND movimento='CREDITO' THEN valor_centavos ELSE 0 END),0) AS contempladoCentavos,",
+    "COALESCE(SUM(CASE WHEN grupo='BONUS' AND movimento='CREDITO' THEN valor_centavos ELSE 0 END),0) AS bonusCentavos,",
+    "COALESCE(SUM(CASE WHEN movimento='DEBITO' THEN valor_centavos ELSE 0 END),0) AS pagoCentavos,",
+    "COUNT(DISTINCT CASE WHEN grupo='POSICAO' AND movimento='CREDITO' THEN titular_id END) AS titularesContemplados",
+    'FROM loop_real_fin_lancamentos',titular?'WHERE titular_id=?':''
+   ].join(' '));
+   const x=titular?total.get(titular.id):total.get();
+   const saldo=x.contempladoCentavos+x.bonusCentavos-x.pagoCentavos;
+   if(Object.values(x).some(n=>!Number.isSafeInteger(n)||n<0)||
+      !Number.isSafeInteger(saldo)||saldo<0)erro('RELATORIO_FINANCEIRO_DIVERGENTE');
+   const dados={fonte:'LIVRO_FINANCEIRO_REAL',somenteLeitura:true,
+    ...x,saldoRegistradoCentavos:saldo,saqueRealHabilitado:false,
+    financeiroReal:false};
+   if(titular){
+    const {consultarComissoesDivulgacao}=require('./direitos-divulgacao-loop-sqlite');
+    const bonus=consultarComissoesDivulgacao({banco,titularId:titular.id});
+    return res.json({...dados,comissoesAConferirCentavos:bonus.fonteCompleta?
+     bonus.comissaoAConferirCentavos:null,ganhosFuturosGarantidos:false});
+   }
+   const cofres=await consultarCofresOperador({adaptador:consultarSaldosCofres});
+   const ouro=douradas?.consultar()?.cofreDouradas;
+   return res.json({...dados,cofres:cofres.cofres,
+    cofreDouradas:{saldoCentavos:ouro?.saldoCentavos??null,
+     estado:ouro?.estado||'AGUARDANDO_CONCILIACAO_BANCARIA'}});
+  }catch(e){return res.status(503).json({erro:e.codigo||'DISTRIBUICAO_FINANCEIRA_INDISPONIVEL'});}
+ });
  // Cofres exclusivamente do operador: apenas saldos com prova externa.
  // A ausência da integração retorna valores desconhecidos, não R$ 0 fictício.
  // Não expõe comandos de criação, depósito, saída ou saque.

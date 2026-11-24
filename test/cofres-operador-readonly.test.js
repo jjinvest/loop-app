@@ -97,3 +97,24 @@ test('rodape exclusivo nao cria 4º cofre, nao invade cliente e usa route proteg
  assert.match(gate,/app\.get\('\/api\/admin\/loop\/cofres',proteger/);
  assert.doesNotMatch(gate,/app\.post\('\/api\/admin\/loop\/cofres'/);
 });
+
+ test('financeiro e ficha do operador usam a mesma fonte, exclusivamente leitura',()=>{
+ const gate=fonte('src/producao/gateway-admin-comercial.js');
+ const office=fonte('src/producao/interface-aprovada-contas.js');
+ const inicio=gate.indexOf("app.get('/api/admin/loop/distribuicao-financeira',proteger");
+ const fim=gate.indexOf('// Cofres exclusivamente do operador:',inicio);
+ assert.ok(inicio>=0&&fim>inicio);
+ const rota=gate.slice(inicio,fim);
+ assert.ok(rota.includes('FROM loop_real_fin_lancamentos'));
+ assert.ok(rota.includes("titular?'WHERE titular_id=?':''"));
+ assert.ok(rota.includes('total.get(titular.id)'));
+ assert.ok(rota.includes('private, no-store'));
+ assert.ok(rota.includes('saqueRealHabilitado:false'));
+ assert.ok(rota.includes('ganhosFuturosGarantidos:false'));
+ assert.doesNotMatch(rota,/\.run\(|\.exec\(|INSERT INTO|UPDATE |DELETE FROM/);
+ assert.ok(office.includes('id="adminDistribuicaoFinanceira"'));
+ assert.ok(office.includes('id="adminGanhosCliente"'));
+ assert.ok(office.includes('nickCadastroConsultado===x.nick'));
+ assert.ok(office.includes('selecionado()'));
+ assert.ok(office.includes("if(id==='abaFinanceiro')void carregarDistribuicaoFinanceira()"));
+ });
