@@ -174,6 +174,18 @@
     agenda.agoraServidorMs+(Date.now()-leituraVisorCatracaEm):Date.now();
    const visual=horarioVisual({agenda,agoraMs:agoraServidor});
    sincronizarLuzesVisuais(visual);
+   // A visão controlada usa apenas os marcos persistidos do lote.
+   const fluxo=agenda?.fluxoControlado;
+   if(fluxo&&Number.isSafeInteger(fluxo.eventos)&&Number.isSafeInteger(fluxo.total)){
+    const segundos=fluxo.ativa&&Number.isSafeInteger(fluxo.proximoEmMs)?
+     Math.max(0,Math.ceil((fluxo.proximoEmMs-(fluxo.agoraServidorMs+Date.now()-leituraVisorCatracaEm))/1000)):null;
+    visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
+    titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':fluxo.ativa?'PRÓXIMA LUZ · EVENTO':'CATRACA PAUSADA';
+    estado.textContent='Eventos: '+fluxo.eventos+'/6 luzes · '+fluxo.total+'/'+fluxo.limite+' do teste';
+    const contador=$('motorContadorEventos');
+    if(contador)contador.textContent=fluxo.ativa?'FLUXO CONTROLADO — EM ANDAMENTO':'FLUXO CONTROLADO — PARADO';
+    return;
+   }
    if(agenda?.luzesDoRelogioCompartilhado===true||
       agenda?.luzesDoRelogioOperador===true){
     if(visual){
