@@ -74,7 +74,7 @@
     ': '+(p?(dourada(p)?'dourada · ':'')+numero(p).replace('\n',' · '):
     'vazio')+(p?.minha?' · minha posição':''));
   }
-  function preencherFila(id,itens,tipo,{inicio=0,exibirNomesTeste=false}={}){
+  function preencherFila(id,itens,tipo,{inicio=0,exibirNomesTeste=false,reservarLugares=0}={}){
    if(!Number.isSafeInteger(inicio)||inicio<0)throw Error('FILA_INICIO_INVALIDO');
    if(tipo!=='A'&&tipo!=='B')throw Error('FILA_INVALIDA');
    const area=$(id);
@@ -84,7 +84,8 @@
    // anônimo. Nunca inferir ou inventar identidade, ID ou estado de terceiros.
    const contagem=Number.isSafeInteger(itens)&&itens>=0?itens:null;
    if(contagem===null&&!Array.isArray(itens))throw Error('FILA_FONTE_INVALIDA');
-   if(contagem===0||Array.isArray(itens)&&itens.length===0){
+   const reservar=(id==='motorFilaA'||id==='motorFilaB')&&Array.isArray(itens)&&Number.isSafeInteger(reservarLugares)&&reservarLugares>0&&reservarLugares<=100?reservarLugares:0;
+   if(!reservar&&(contagem===0||Array.isArray(itens)&&itens.length===0)){
     const vazio=document.createElement('p');
     vazio.className='subtexto';vazio.textContent='Fila vazia';
     area.append(vazio);return;
@@ -142,6 +143,16 @@
     if(id==='motorFilaA'||id==='motorFilaB'){
      const limite=Math.min(itens.length,100);
      for(let i=0;i<limite;i++)adicionar(itens[i],i);
+     // Lugares livres são apenas números ordinais, sem bola, titular ou indicação.
+     for(let i=limite;i<reservar;i++){
+      const linha=document.createElement('div');
+      linha.className='loop03-linha-fila';
+      const ordemBranca=document.createElement('span');
+      ordemBranca.className='loop03-fila-ordinal-branca';
+      ordemBranca.textContent=String(inicio+i+1);
+      ordemBranca.setAttribute('aria-label','Lugar '+(inicio+i+1)+' livre na fila');
+      linha.append(ordemBranca);area.append(linha);
+     }
      return;
     }
     const LOTE=50;
