@@ -218,14 +218,16 @@ test('Taísa de teste entra como número um na fila isolada, sem giro nem altera
  assert.equal(c.teste.consultar().fila.filaB.length,1);
 });
 
-test('referencia visual do nono lugar do operador nao recebe identificador nem altera contagem real',()=>{
+test('referencia visual usa numero isolado e nick original sem consultar cadastro real',()=>{
  const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
  const trecho=office.slice(office.indexOf('// Referência temporária solicitada pelo operador'),office.indexOf('mostrarTotaisFilasRodape(d.filaA,d.filaB,true);',office.indexOf('// Referência temporária solicitada pelo operador')));
- assert.match(trecho,/d\.filaB===8&&filaVisualB\.length===8/);
+ assert.match(trecho,/filaVisualB\.length===d\.filaB&&filaVisualB\.length<100/);
  assert.match(trecho,/p\.titular==='ensaio-taisa'/);
- assert.match(trecho,/referenciaVisual=\{ordem:9,nome:'Taísa \(fictícia\)'\}/);
+ assert.match(trecho,/referenciaVisual=\{ordem:filaVisualB\.length\+1,numero:p\.numero,nome:p\.nome,/);
+ assert.match(trecho,/referenciaBancada:true/);
  assert.match(trecho,/!modoOperadorAtual\|\|visualTesteModulo!==null/);
  assert.match(trecho,/nome:undefined/);
- assert.doesNotMatch(trecho,/method:'POST'|numero:9|posicaoId:/);
+ assert.doesNotMatch(trecho,/method:'POST'|posicaoId:|\(fictícia\)/);
+ assert.match(office,/if\(p\.referenciaBancada===true\)return;[\s\S]*?fetch\('\/api\/admin\/contas\/cadastro/);
  assert.match(office,/mostrarTotaisFilasRodape\(d\.filaA,d\.filaB,true\)/);
 });

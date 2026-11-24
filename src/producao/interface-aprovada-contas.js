@@ -2070,7 +2070,7 @@
    const linha=document.createElement('p'),nome=document.createElement('strong');
    nome.textContent=rotulo+': ';linha.append(nome,document.createTextNode(String(valor)));dados.append(linha);
   };
-  const emTeste=operador&&visualTesteModulo!==null;
+  const emTeste=operador&&(visualTesteModulo!==null||p.referenciaBancada===true);
   const nick=emTeste&&typeof p.nome==='string'?p.nome:
    typeof p.nickVisual==='string'&&/^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:'';
   if(emTeste)adicionar('Origem','Bancada operacional — sem dinheiro real');
@@ -2083,6 +2083,7 @@
   fechar.addEventListener('click',()=>modal.close());
   modal.addEventListener('close',()=>modal.remove(),{once:true});
   modal.append(titulo,dados,fechar);document.body.append(modal);modal.showModal();
+  if(p.referenciaBancada===true)return;
   if(!operador||ouro||!nick||visualTesteModulo!==null)return;
   const estado=document.createElement('p');estado.textContent='Consultando cadastro…';dados.append(estado);
   try{
@@ -3314,18 +3315,21 @@
    if(!modoOperadorAtual||visualTesteModulo!==null)return;
    visualTabuleiro.preencherFila('motorFilaA',filaVisualA,'A');
    // Referência temporária solicitada pelo operador: apenas apresentação.
-   // Não tem ID de posição real, não participa dos totais nem do motor.
+   // Número proveniente da posição isolada, nunca de uma conta real.
    let referenciaVisual=null;
-   if(d.filaB===8&&filaVisualB.length===8){
+   if(filaVisualB.length===d.filaB&&filaVisualB.length<100){
     try{
      const resposta=await fetch('/api/admin/loop/testes-modulos',{
       credentials:'same-origin',cache:'no-store'});
      if(resposta.ok){
       const bancada=await resposta.json();
       if(bancada.fonte==='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'&&
-       bancada.testandoModulosSeparados===true&&
-       bancada.fila?.filaB?.some(p=>p.nome==='Taísa'&&p.titular==='ensaio-taisa'&&!p.dourada))
-       referenciaVisual={ordem:9,nome:'Taísa (fictícia)'};
+       bancada.testandoModulosSeparados===true){
+       const p=bancada.fila?.filaB?.find(p=>p.nome==='Taísa'&&p.titular==='ensaio-taisa'&&!p.dourada);
+       if(p&&Number.isSafeInteger(p.numero)&&p.numero>0)
+        referenciaVisual={ordem:filaVisualB.length+1,numero:p.numero,nome:p.nome,
+         pendente:p.pendente===true,indicacoesVinculadas:p.indicacoesVinculadas||0,referenciaBancada:true};
+      }
      }
     }catch{/* A fila real continua disponível sem a referência temporária. */}
    }
