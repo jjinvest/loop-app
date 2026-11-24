@@ -224,7 +224,7 @@ test('referencia visual usa numero isolado e nick original sem consultar cadastr
  assert.match(trecho,/filaVisualB\.length===d\.filaB&&filaVisualB\.length<100/);
  assert.match(trecho,/p\.titular==='ensaio-taisa'/);
  assert.match(trecho,/referenciaVisual=\{ordem:filaVisualB\.length\+1,numero:p\.numero,nome:p\.nome,/);
- assert.match(trecho,/referenciaBancada:true/);
+ assert.match(trecho,/indicacoesVinculadas:5,referenciaBancada:true/);
  assert.match(trecho,/!modoOperadorAtual\|\|visualTesteModulo!==null/);
  assert.match(trecho,/nome:undefined/);
  assert.doesNotMatch(trecho,/method:'POST'|posicaoId:|\(fictícia\)/);
