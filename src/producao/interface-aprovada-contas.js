@@ -3317,7 +3317,7 @@
    const v=document.createElement('strong');v.className='loop03-compras-total';v.textContent=valor;
    div.append(h,v);return div;
   });
-  const hist=document.createElement('div');hist.className='loop03-compras-coluna';
+  const hist=document.createElement('div');hist.className='loop03-compras-coluna loop03-financeiro-historico';
   const h=document.createElement('h4');h.textContent='Últimos lançamentos';hist.append(h);
   const nomes={LOOP_CENTRO:'Titular',LOOP_ESQUERDA:'Investimento',LOOP_DIREITA:'Reserva',LOOP_DOURADAS:'Douradas',BONUS:'Comissão'};
   for(const l of f.ultimos){
