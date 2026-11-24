@@ -3331,7 +3331,7 @@
    }
    if(!modoOperadorAtual||visualTesteModulo!==null)return;
    if(referenciaVisual)
-    visualTabuleiro.preencherFila('motorFilaB',[...filaVisualB,referenciaVisual],'B',{exibirNomesTeste:true});
+    visualTabuleiro.preencherFila('motorFilaB',[...filaVisualB.map(p=>({...p,nome:undefined})),referenciaVisual],'B',{exibirNomesTeste:true});
    else visualTabuleiro.preencherFila('motorFilaB',filaVisualB,'B');
    mostrarTotaisFilasRodape(d.filaA,d.filaB,true);
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
