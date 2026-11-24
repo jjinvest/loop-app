@@ -1287,7 +1287,8 @@
  async function consultarFilaTabuleiroOperador(fila,total){
   if(!Number.isSafeInteger(total)||total<0)throw Error('FILA_TOTAL_INVALIDO');
   const posicoes=[];
-  for(let pagina=0;posicoes.length<total;pagina++){
+  const limite=Math.min(total,100);
+  for(let pagina=0;posicoes.length<limite;pagina++){
    const d=await consultarFilaOperador(fila,pagina);
    if(d.total!==total||!d.pagina.length)
     throw Error('FILA_OPERADOR_TOTAL_DIVERGENTE');
@@ -1296,7 +1297,7 @@
       (d.proximaPagina===null&&posicoes.length!==total))
     throw Error('FILA_OPERADOR_PAGINACAO_DIVERGENTE');
   }
-  return posicoes;
+  return posicoes.slice(0,limite);
  }
  async function expandirFilaOperador(fila){
   const painel=$('adminDetalhesFila'+fila);
@@ -2754,8 +2755,16 @@
    try{
     const visao=await consultar(0);
     if(sequencia!==sequenciaLeituraFilas)return;
-    visualTabuleiro.preencherFila(id,visao.janela.slice(
-     0,window.innerWidth<=680?10:20),fila);
+    const limite=Math.min(visao.total,100),posicoes=[...visao.pagina];
+    for(let pagina=1;posicoes.length<limite;pagina++){
+     const d=await consultar(pagina);
+     if(sequencia!==sequenciaLeituraFilas)return;
+     if(d.total!==visao.total||!d.pagina.length)throw Error('FILA_TOTAL_DIVERGENTE');
+     posicoes.push(...d.pagina);
+    }
+    const scrollAnterior=area.scrollTop;
+    visualTabuleiro.preencherFila(id,posicoes.slice(0,limite),fila);
+    area.scrollTop=scrollAnterior;
     if(visao.total===0){
      const vazio=document.createElement('p');
      vazio.className='subtexto';vazio.textContent='Fila vazia.';
@@ -2766,7 +2775,7 @@
     const limiteVisivel=window.innerWidth<=680?10:20;
     situacao.textContent='Primeiros '+Math.min(limiteVisivel,visao.total)+
      ' lugares'+(fila==='A'?' · total '+visao.total+' na Fila A':'');
-    area.append(situacao);
+    painel.append(situacao);
     const titulo=document.createElement('p');
     titulo.className='subtexto';
     titulo.textContent='Fila '+fila+' na ordem de espera (30 lugares por página):';
@@ -2796,8 +2805,8 @@
       linhas.id='paginaFila'+fila+'Linhas'+paginaAtual;
       paginaDiv.append(cabecalho,linhas);
       paginas.append(paginaDiv);
-      if(d.pagina.length)visualTabuleiro.preencherFila(linhas.id,d.pagina,fila);
-      proxima=d.proximaPagina;
+      if(d.pagina.length)visualTabuleiro.preencherFila(linhas.id,d.pagina.filter(p=>p.ordem<=100),fila);
+      proxima=(paginaAtual+1)*30>=100?null:d.proximaPagina;
       mais.hidden=proxima===null;
       estado.textContent=proxima===null?'Fim da fila.':'Página '+(paginaAtual+1)+' carregada.';
      }catch{
@@ -3324,8 +3333,9 @@
    $('estadoTabuleiroIntegrado').hidden=true;
    // Mesmo componente de fila, círculo e luzes usado pelo laboratório.
    // O backend definitivo expõe somente contagens de terceiros.
-   visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
-   visualTabuleiro.preencherFila('motorFilaB',d.filaB,'B');
+   // As listas paginadas fornecem números reais; contagens nunca viram bolas fictícias.
+   if(d.filaA===0)visualTabuleiro.preencherFila('motorFilaA',[],'A');
+   if(d.filaB===0)visualTabuleiro.preencherFila('motorFilaB',[],'B');
    mostrarTotaisFilasRodape(d.filaA,d.filaB,false);
    const titularPorNumero=new Map(
     d.minhasPosicoes.map(p=>[p.numero,p])
