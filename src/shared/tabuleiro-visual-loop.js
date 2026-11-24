@@ -2,7 +2,7 @@
 // Fonte visual única do tabuleiro LOOP: o servidor decide posições e eventos.
 // Nunca completa filas, acende luzes ou identifica terceiros por estimativa.
 (function(){
- function criar({elemento}={}){
+ function criar({elemento,aoAbrirPosicao}={}){
   if(typeof elemento!=='function')
    throw Error('TABULEIRO_ELEMENTO_OBRIGATORIO');
   const $=elemento;
@@ -94,59 +94,48 @@
      p.ordem:inicio+indice+1;
     const linha=document.createElement('div');
     linha.className='loop03-linha-fila';
-    const inicial=document.createElement('span');
-    inicial.className='loop03-inicial-fila '+(contagem!==null?
-     (tipo==='A'?'loop03-a':'loop03-b'):
-     dourada(p)?'loop03-dourada':pendente(p)?'loop03-azul':
-     aceito(p)?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
-    // A esfera indica o lugar na porteira, não o ID permanente da bola.
-    // Até 100, ordinal compacto; depois mantém a ordem sem sufixos longos.
-    inicial.textContent=ordem<=100?ordem+'º':String(ordem);
-    inicial.classList.toggle('loop03-ordem-longa',ordem>=1000);
-    const conteudo=document.createElement('span');
-    conteudo.className='loop03-fila-identificacao';
-    const identificacao=document.createElement('span');
-    identificacao.className='loop03-numero-titular';
-    // Somente a bancada do operador pode revelar os NOMES DE TESTE;
-    // cliente e fila real continuam anonimados por padrao.
-    const nomeTeste=exibirNomesTeste===true&&typeof p?.nome==='string'&&
-     p.nome.trim().length>0&&p.nome.length<=70?p.nome.trim():null;
-    const numeroPosicao=Number.isSafeInteger(p?.numero)&&p.numero>0?
-     p.numero:null;
-    identificacao.textContent=numeroPosicao===null?
-     'Número não disponível':'Número '+numeroPosicao;
-    conteudo.append(identificacao);
-    const nickAutorizado=typeof p?.nickVisual==='string'&&
-     /^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:null;
-    const detalhe=nomeTeste||nickAutorizado;
-    if(detalhe){
-     const identificacaoPessoal=document.createElement('small');
-     identificacaoPessoal.textContent=detalhe;
-     conteudo.append(identificacaoPessoal);
-    }
-    if(contagem===null&&p?.minha===true){
-     const minha=document.createElement('small');
-     minha.textContent='Minha posição nesta ordem';
-     conteudo.append(minha);
-    }
-    linha.setAttribute('aria-label','Fila '+tipo+' · '+ordem+'º lugar · '+
-     (numeroPosicao===null?'número indisponível':'número '+numeroPosicao)+
-     (detalhe?' · '+detalhe:p?.minha===true?' · meu lugar':''));
+    const numeroPosicao=Number.isSafeInteger(p?.numero)&&p.numero>0?p.numero:null;
+    const ouro=dourada(p);
+    const nick=!ouro&&typeof p?.nickVisual==='string'&&/^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:'';
+    const nomeTeste=exibirNomesTeste===true&&!ouro&&typeof p?.nome==='string'?p.nome.trim().slice(0,70):'';
+    const detalhe=nick||nomeTeste;
     const ordemBranca=document.createElement('span');
     ordemBranca.className='loop03-fila-ordinal-branca';
     ordemBranca.textContent=String(ordem);
     ordemBranca.setAttribute('aria-label','Lugar '+ordem+' na fila');
-    inicial.textContent='';
-    inicial.setAttribute('aria-label',dourada(p)?'Bola dourada':'Bola da posição');
-    identificacao.textContent=numeroPosicao===null?'':'#'+numeroPosicao;
-    if(p?.indicacoesVinculadas>0&&Number.isSafeInteger(p.indicacoesVinculadas)){
-     const indicador=document.createElement('small');
-     indicador.className='loop03-fila-indicacoes';
-     indicador.textContent='♟ '+p.indicacoesVinculadas;
-     indicador.setAttribute('aria-label',p.indicacoesVinculadas+' indicações');
-     conteudo.append(indicador);
+    const inicial=document.createElement('button');
+    inicial.type='button';
+    inicial.className='loop03-inicial-fila loop03-bola-interativa '+(ouro?'loop03-dourada':pendente(p)?'loop03-azul':aceito(p)?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
+    const identificacao=document.createElement('span');
+    identificacao.className='loop03-numero-titular';
+    const numeroCompleto=numeroPosicao===null?'':'#'+numeroPosicao;
+    identificacao.textContent=numeroCompleto.length>8?numeroCompleto.slice(0,7)+'…':numeroCompleto;
+    inicial.append(identificacao);
+    if(detalhe){
+     const nome=document.createElement('small');
+     nome.className='loop03-nick-bola';
+     nome.textContent=detalhe;inicial.append(nome);
     }
-    linha.append(ordemBranca,inicial,conteudo);
+    const rotulo=[ouro?'Bola dourada':'Posição',numeroCompleto,detalhe].filter(Boolean).join(' ');
+    inicial.setAttribute('aria-label',rotulo);
+    inicial.setAttribute('title',rotulo);
+    inicial.disabled=numeroPosicao===null||typeof aoAbrirPosicao!=='function';
+    if(!inicial.disabled)inicial.addEventListener('click',evento=>{
+     evento.stopPropagation();aoAbrirPosicao(p,tipo);
+    });
+    linha.classList.toggle('loop03-minha-fila',p?.minha===true&&!ouro);
+    linha.setAttribute('aria-label','Fila '+tipo+' · lugar '+ordem+' · '+rotulo);
+    linha.append(ordemBranca,inicial);
+    if(!ouro&&Number.isSafeInteger(p?.indicacoesVinculadas)&&p.indicacoesVinculadas>0){
+     const indicador=document.createElement('span');
+     indicador.className='loop03-fila-indicacoes';
+     const pessoa=document.createElement('span');
+     pessoa.className='loop03-fila-pessoa';
+     pessoa.setAttribute('aria-hidden','true');
+     const total=document.createElement('span');total.textContent=String(p.indicacoesVinculadas);
+     indicador.setAttribute('aria-label',p.indicacoesVinculadas+' indicações');
+     indicador.append(pessoa,total);linha.append(indicador);
+    }
     area.append(linha);
    };
    if(contagem===null){

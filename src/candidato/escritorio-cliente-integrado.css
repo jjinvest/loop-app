@@ -1227,3 +1227,46 @@ body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-
  .cliente-integrado #conteudoTabuleiro .loop03-fila-ordinal-branca{flex-basis:21px;width:21px;height:21px;font-size:.68rem}
  .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-inicial-fila{width:24px;height:24px;min-width:24px}
 }
+
+/* Padrão aprovado: posição dentro da esfera; ordinal e indicação fora. */
+.cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB){--fila-linha:76px}
+.cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB)>.loop03-linha-fila{
+ height:72px;min-height:72px;gap:4px;justify-content:flex-start;
+}
+.cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-linha-fila .loop03-bola-interativa{
+ box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ width:62px;height:62px;min-width:62px;flex:0 0 62px;border-radius:50%;padding:3px;
+ color:#111827!important;line-height:1.05;overflow:hidden;cursor:pointer;opacity:1;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-bola-interativa.loop03-b{
+ background:radial-gradient(circle at 30% 22%,#fff,#e4e9ef 55%,#a4b1c4)!important;border-color:#fafbff;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-bola-interativa.loop03-dourada,
+.cliente-integrado #conteudoTabuleiro .loop03-bola-interativa.loop03-a{
+ background:radial-gradient(circle at 30% 22%,#fff2b8,#e9ba52 55%,#ac7316)!important;border-color:#ffdf93;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-bola-interativa.loop03-azul{color:#fff!important}
+.cliente-integrado #conteudoTabuleiro .loop03-bola-interativa.loop03-verde{color:#fff!important}
+.cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-bola-interativa .loop03-numero-titular{
+ display:block;max-width:100%;font-size:.65rem;line-height:1.05;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-nick-bola{display:block;max-width:100%;font-size:.59rem;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;line-height:1.1}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-indicacoes{display:flex;align-items:center;gap:3px;color:#f4cf65;font-size:.68rem;font-weight:800;min-width:0}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa{width:12px;height:13px;flex:none;position:relative}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:before,.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:after{content:'';position:absolute;background:#f4cf65}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:before{width:6px;height:6px;border-radius:50%;left:3px;top:0}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-pessoa:after{width:12px;height:6px;border-radius:7px 7px 2px 2px;bottom:0;left:0}
+.cliente-integrado #conteudoTabuleiro .loop03-bola-interativa:focus-visible{outline:2px solid #eac478;outline-offset:2px}
+#loopDetalheBolaFila{box-sizing:border-box;width:min(90vw,420px);max-height:85vh;overflow:auto;background:#141e29;color:#f4f0e6;border:1px solid #c6a15e;border-radius:16px;padding:20px}
+#loopDetalheBolaFila::backdrop{background:#0009}
+#loopDetalheBolaFila h2{margin:0 0 12px;color:#f4cf65}
+#loopDetalheBolaFila p{overflow-wrap:anywhere;margin:7px 0}
+#loopDetalheBolaFila button{margin-top:14px}
+@media(max-width:680px){
+ .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB){--fila-linha:64px}
+ .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB)>.loop03-linha-fila{height:60px;min-height:60px;gap:3px}
+ .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-linha-fila .loop03-bola-interativa{width:52px;height:52px;min-width:52px;flex-basis:52px}
+ .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB) .loop03-bola-interativa .loop03-numero-titular{font-size:.58rem}
+ .cliente-integrado #conteudoTabuleiro .loop03-nick-bola{font-size:.52rem}
+ .cliente-integrado #conteudoTabuleiro .loop03-fila-indicacoes{font-size:.6rem;gap:2px}
+}
