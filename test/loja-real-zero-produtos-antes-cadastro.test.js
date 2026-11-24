@@ -73,7 +73,8 @@ test('loja real sem cadastro de produtos: zero catalogados e 400 espaços, sem c
  // A vitrine aprovada exibe 10 abas de 40 quadradinhos, sem itens inventados.
  const codigo=fs.readFileSync(path.join(__dirname,
   '../src/producao/interface-aprovada-loja.js'),'utf8');
- assert.match(codigo,/const totalAbas=filtrada\?Math.max\(1,Math.ceil\(slotsVisiveis.length\/40\)\):10/);
+ assert.match(codigo,/const totalAbas=operadorAtivo&&!filtrada\?10:Math.max\(1,Math.ceil\(slotsVisiveis.length\/40\)\)/);
+ assert.match(codigo,/if\(!operadorAtivo\|\|termo\)return false/);
  assert.match(codigo,/const linhas=expandida\?4:2/);
  assert.match(codigo,/for\(let indice=inicio;indice<ate;indice\+\+\)/);
  assert.match(codigo,/Aguardando produto cadastrado/);
