@@ -339,9 +339,9 @@ test('Distribuição: dois cartões por linha, caixa e douradas largos, valores 
  assert.deepEqual(alvo.children.map(x=>x.children.map(y=>y.textContent)),[
   ['PDFs vendidos','31','Cursos vendidos','12'],['Produtos físicos vendidos','19'],
   ['Caixa central','2500'],['Cofre de investimento','100'],['Cofre de reserva','200'],
-  ['Cofre de douradas','300'],['Comissões de bônus','400'],['Participação de lucro dos clientes','500']
+  ['Cofre de douradas','300'],['Comissões de bônus','400'],['Participação de lucro dos clientes','500'],['Total pago pela empresa','900']
  ]);
- assert.deepEqual(alvo.children.map((x,i)=>x.className.includes('loop03-distribuicao-largo')?i:null).filter(x=>x!==null),[2,5]);
+ assert.deepEqual(alvo.children.map((x,i)=>x.className.includes('loop03-distribuicao-largo')?i:null).filter(x=>x!==null),[2,5,8]);
  assert.match(css,/#adminFluxoAoVivoDados\.loop03-compras-colunas\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/#adminFluxoAoVivoDados>\.loop03-distribuicao-largo\{\s*grid-column:1\/-1/);
  assert.ok(office.includes("renderizarQuadroDistribuicao($('adminFluxoAoVivoDados'),f)"));
