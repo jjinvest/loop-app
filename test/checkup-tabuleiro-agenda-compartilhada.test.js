@@ -62,7 +62,7 @@ test('operador e cliente recebem o mesmo cronômetro e ciclos representativos se
   'estadoRelogioTabuleiro','motorContadorEventos'
  ])assert.equal(cliente[k].textContent,op[k].textContent,k);
  assert.match(cliente.estadoRelogioTabuleiro.textContent,
-  /Relógio: [0-6]\/6 luzes/);
+  /Eventos: [0-6]\/6 luzes/);
  assert.equal(cliente.loop03StatusPosicao.textContent,'',
   'nenhuma informacao do relogio deve sobrescrever a posicao do cliente');
  assert.equal(op.loop03StatusPosicao.textContent,'');
