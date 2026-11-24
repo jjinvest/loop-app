@@ -143,7 +143,7 @@ test('visao do operador usa movimentos da bancada; cliente preserva privacidade'
   'o placar original nao pode sobrescrever LEDs no modo teste');
  assert.match(browser,/visualTabuleiro\.preencherLuzes\(x\.tabuleiro\.eventosNoCiclo\)/);
  assert.match(browser,/exibirNomesTeste:true/);
- assert.match(browser,/TESTE OPERACIONAL/);
+ assert.doesNotMatch(browser,/textContent='TESTE OPERACIONAL/);
  assert.match(visual,/exibirNomesTeste=false/);
  assert.match(visual,/nomeTeste=exibirNomesTeste===true/);
  assert.match(server,/new DatabaseSync\('\/dados-reais\/testes-modulos\.sqlite'\)/);
@@ -297,8 +297,23 @@ test('cenário preparado é selecionado na entrada normal do operador sem outro 
  assert.match(trecho,/visualTesteModulo='CATRACA'/);
  assert.doesNotMatch(trecho,/CATRACA_INICIAR|method:'POST'|location\./);
  assert.ok(office.includes('void selecionarCenarioPreparado(versao)'));
- assert.ok(office.includes("a.addEventListener('click',()=>alternarCenarioOperador(false))"));
+ assert.ok(office.includes("botao.addEventListener('click',()=>alternarCenarioOperador(visualTesteModulo!=='CATRACA'))"));
  assert.ok(office.includes("adminFluxoAbrirFinanceiro"));
- assert.ok(office.includes('Cenário de conferência · dinheiro fictício'));
- assert.ok(office.includes('Operação comercial · dados reais'));
+ assert.doesNotMatch(office,/Cenário de conferência · dinheiro fictício|Fluxo controlado · dinheiro fictício|CAIXA: pagamentos e giros financeiros ainda não autorizados/);
+ assert.ok(office.includes("$('adminFluxoFinanceiroTeste')?.append(area)"));
+ assert.match(office,/function mostrarAgendaOperador\(\)\{\s*limparAgendaOperador\(\);\s*\}/);
+ assert.ok(office.includes("if($('adminFluxoAoVivo'))$('adminFluxoAoVivo').hidden=true"));
+ const visor=fs.readFileSync('src/shared/visor-catraca.js','utf8');
+ assert.doesNotMatch(visor,/\+fluxo\.limite\+' do teste'/);
+});
+
+test('escritório do operador protege cartões financeiros e ausência de avisos no layout',()=>{
+ const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+ const css=fs.readFileSync('src/producao/acabamento-botoes-real.css','utf8');
+ assert.doesNotMatch(office,/contadores do motor de teste|Cenário de conferência · dinheiro fictício|CAIXA: pagamentos e giros financeiros ainda não autorizados/);
+ assert.match(css,/body\.loop03-modo-operador :is\(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados\)\{\s*display:grid;grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+ assert.match(css,/@media\(max-width:760px\)\{\s*body\.loop03-modo-operador :is\(#adminFluxoFinanceiroDados,#adminDistribuicaoFinanceiraDados,#adminGanhosClienteDados,#adminFluxoAoVivoDados\)\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.ok(css.includes('#loopOperadorAgendaConfirmada{display:none!important}'));
+ assert.ok(office.includes('loop03-compras-coluna loop03-financeiro-historico'));
+ assert.ok(css.includes('grid-column:1/-1;align-items:stretch;text-align:left'));
 });

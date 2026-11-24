@@ -181,9 +181,9 @@
      Math.max(0,Math.ceil((fluxo.proximoEmMs-(fluxo.agoraServidorMs+Date.now()-leituraVisorCatracaEm))/1000)):null;
     visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
     titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':fluxo.ativa?'PRÓXIMA LUZ · EVENTO':'CATRACA PAUSADA';
-    estado.textContent='Eventos: '+fluxo.eventos+'/6 luzes · '+fluxo.total+'/'+fluxo.limite+' do teste';
+    estado.textContent='Eventos: '+fluxo.eventos+'/6 luzes · '+fluxo.total+'/'+fluxo.limite;
     const contador=$('motorContadorEventos');
-    if(contador)contador.textContent=fluxo.ativa?'FLUXO CONTROLADO — EM ANDAMENTO':'FLUXO CONTROLADO — PARADO';
+    if(contador)contador.textContent=fluxo.ativa?'CATRACA EM ANDAMENTO':'CATRACA PAUSADA';
     return;
    }
    if(agenda?.luzesDoRelogioCompartilhado===true||

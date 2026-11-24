@@ -184,23 +184,21 @@ test('a cada consulta ao servidor recupera a posição temporal sem criar giro',
   'pausa mantém apenas os 3 eventos efetivamente contabilizados');
 });
 
-test('agenda de amanha fica registrada no operador sem prometer pagamento',()=>{
+test('agenda permanece no diálogo do operador sem recriar aviso na Distribuição',()=>{
  const ini=interfaceReal.indexOf(' function dataAgendaOperador(d){');
- const fim=interfaceReal.indexOf(' // Mesmo painel de configuracao do relogio aprovado:',ini);
+ const fim=interfaceReal.indexOf(' // Seletor próprio:',ini);
  assert.ok(ini>0&&fim>ini);
- const escopo={};
+ let removidos=0;
+ const escopo={document:{getElementById:id=>({
+  remove:()=>{assert.equal(id,'loopOperadorAgendaConfirmada');removidos++;}
+ })}};
  vm.runInNewContext(interfaceReal.slice(ini,fim),escopo,{timeout:2000});
- const texto=escopo.textoAgendaOperador({
-  modo:'AUTOMATICA',janelaInicio:'09:00',janelaFim:'12:00',
-  metaCentrosDia:5,metaDataAlvo:'2026-11-22',hoje:'2026-11-21',
-  horarioPermitido:false,autorizacaoFinanceiraDosGiros:false
- });
- assert.match(texto,/AGENDADA — AGUARDANDO DATA/);
- assert.match(texto,/22\/11\/2026 · 09:00–12:00/);
- assert.match(texto,/5 centros · 30 luzes/);
- assert.match(texto,/pagamentos e giros financeiros ainda não autorizados/);
+ assert.equal(escopo.dataAgendaOperador('2026-11-22'),'22/11/2026');
+ escopo.mostrarAgendaOperador({});
+ assert.equal(removidos,1);
  assert.match(interfaceReal,/mostrarAgendaOperador\(controle\)/);
- assert.match(interfaceReal,/limparAgendaOperador\(\)/);
+ assert.match(interfaceReal,/Programação salva e confirmada no servidor/);
+ assert.doesNotMatch(interfaceReal,/CAIXA: pagamentos e giros financeiros ainda não autorizados/);
 });
 
 
