@@ -1669,6 +1669,9 @@
   limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
+  visualTesteModulo=null;
+  if($('adminFluxoAoVivo'))$('adminFluxoAoVivo').hidden=true;
+  if($('adminFluxoFinanceiroTeste'))$('adminFluxoFinanceiroTeste').hidden=true;
   revelarCofresOperador(false);
   // Restitui o painel oculto à posição estrutural original ao trocar
   // para cliente, sem expor cofres administrativos no seu escritório.
