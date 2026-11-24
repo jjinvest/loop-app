@@ -127,7 +127,9 @@
     const centrosDia=fonteDia?Math.floor(hoje/6):
      (valido?Math.floor(estado.passadas/6):null);
     const pulsosMeta=agendaVisorCatraca?.metaLotes?.quantidade;
-    const totalMeta=Number.isSafeInteger(pulsosMeta)&&pulsosMeta>=0?
+    // Sem meta salva no relógio, mostrar zero; não reutilizar 60.
+    const totalMeta=agendaVisorCatraca?.metaLotes===null?0:
+     Number.isSafeInteger(pulsosMeta)&&pulsosMeta>=0?
      pulsosMeta*6:(valido?estado.total:null);
     const ciclos=$('loop03Giros24Integrado');
     if(ciclos)ciclos.textContent=centrosDia===null?'—':

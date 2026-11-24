@@ -138,6 +138,32 @@ class OperacaoCatracaAdminSQLite{
   if(process.env.NODE_ENV==='production'&&
      process.env.LOOP_ZERAR_PLACARES_TESTE_20261123==='SIM')
    this.zerarPlacaresDeTesteUmaVez();
+  if(process.env.NODE_ENV==='production'&&
+     process.env.LOOP_ZERAR_META_RELOGIO_20261124==='SIM')
+   this.zerarMetaDoRelogioUmaVez();
+ }
+ // Limpeza pontual da meta de ensaio. Não altera nenhuma posição,
+ // cadastro, fila, giro nem livro financeiro.
+ zerarMetaDoRelogioUmaVez(){
+  this.db.exec('BEGIN IMMEDIATE');
+  try{
+   const acao='ZERAR_META_RELOGIO_20261124';
+   const feito=this.db.prepare(
+    'SELECT 1 FROM loop_real_catraca_admin_historico WHERE acao=? LIMIT 1'
+   ).get(acao);
+   if(feito){this.db.exec('COMMIT');return false;}
+   const ts=horarioLocal(this.agora).ts;
+   this.db.prepare([
+    'UPDATE loop_real_catraca_admin_meta',
+    'SET centros_dia=0,data_alvo=NULL,atualizado_em=? WHERE id=1'
+   ].join(' ')).run(ts);
+   this._log(acao,{
+    escopo:'META_E_CONTADORES_VISUAIS_DO_RELOGIO',
+    metaCentrosDia:0,
+    preserva:'CADASTROS_POSICOES_FILAS_MOTOR_FINANCEIRO'
+   },ts);
+   this.db.exec('COMMIT');return true;
+  }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
  zerarPlacaresDeTesteUmaVez(){
   this.db.exec('BEGIN IMMEDIATE');
@@ -157,7 +183,8 @@ class OperacaoCatracaAdminSQLite{
  _marcoZeramentoPlacar(agoraMs){
   const registro=this.db.prepare([
    'SELECT executado_em AS em FROM loop_real_catraca_admin_historico',
-   "WHERE acao='ZERAR_PLACARES_TESTE_20261123' AND executado_em<=?",
+   "WHERE acao IN ('ZERAR_PLACARES_TESTE_20261123',"+
+    "'ZERAR_META_RELOGIO_20261124') AND executado_em<=?",
    'ORDER BY executado_em DESC,id DESC LIMIT 1'
   ].join(' ')).get(agoraMs);
   return registro?registro.em:null;

@@ -1544,7 +1544,7 @@
     },
     {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
-      "sha": "5efd40fb54126b368dfc43a8505825281074d25c"
+      "sha": "6259139cc431b8df56f098efd4e43bcc91098611"
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
@@ -1860,7 +1860,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "826390afbf13554f2c345cba53dea21d3888d001"
+      "sha": "dedcd16c2a18763e266584004d8d25f3ca9bc4c4"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -3712,7 +3712,7 @@
     },
     {
       "path": "test/zeramento-placares-ensaio-sem-apagar-posicoes-20261123.test.js",
-      "sha": "1058be8e380ff4e1c7aea9c6f540daeb8a0b11e9"
+      "sha": "b19e07e2c3010b87f42eba32f978fd9790b4c43e"
     }
   ],
   "alteracoesPontuaisAutorizadas": [
