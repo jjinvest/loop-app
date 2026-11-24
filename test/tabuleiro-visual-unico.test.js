@@ -102,7 +102,7 @@ test('ordem da fila e IDs próprios permanecem distintos até o milésimo lugar'
  assert.match(el.motorFilaA.children.map(x=>
   x.children[1].children[0].textContent).join(' '),/#0010000/);
 });
-test('roda usa centro verde, periferia branca, sexta vermelha e dourada permanente',()=>{
+test('roda usa centro roxo, periferia branca, sexta verde e dourada permanente',()=>{
  const html=ler('candidato/checkout-candidato-ui.html');
  const css=ler('candidato/escritorio-cliente-integrado.css');
  for(let i=1;i<=6;i++){
@@ -119,9 +119,9 @@ test('roda usa centro verde, periferia branca, sexta vermelha e dourada permanen
  assert.equal(el.tabuleiroMotorVaga2.esfera.nick.textContent,'');
  assert.match(el.tabuleiroMotorVaga2.esfera.style.background,/#f6f8fa/);
  visual.preencherVaga('tabuleiroMotorVaga6',null);
- assert.match(el.tabuleiroMotorVaga6.esfera.style.background,/#ef535c/);
+ assert.match(el.tabuleiroMotorVaga6.esfera.style.background,/#51d598/);
  visual.preencherVaga('tabuleiroMotorCentro',null,true);
- assert.match(el.tabuleiroMotorCentro.esfera.style.background,/#51d598/);
+ assert.match(el.tabuleiroMotorCentro.esfera.style.background,/#a66be5/);
  visual.preencherVaga('tabuleiroMotorVaga2',{numero:23,nickVisual:'Vilela'});
  assert.equal(el.tabuleiroMotorVaga2.esfera.nick.textContent,'Vilela');
  visual.preencherVaga('tabuleiroMotorVaga2',{numero:24,nickVisual:'<script>'});
@@ -130,12 +130,12 @@ test('roda usa centro verde, periferia branca, sexta vermelha e dourada permanen
  assert.equal(el.tabuleiroMotorVaga6.classList.contains('posicao-dourado'),true);
  assert.match(el.tabuleiroMotorVaga6.esfera.style.background,/#ebc35d/);
  visual.preencherVaga('tabuleiroMotorVaga6',{numero:29,dourada:false});
- assert.match(el.tabuleiroMotorVaga6.esfera.style.background,/#ef535c/);
+ assert.match(el.tabuleiroMotorVaga6.esfera.style.background,/#51d598/);
  visual.preencherVaga('tabuleiroMotorCentro',{numero:26,dourada:true},true);
  assert.equal(el.tabuleiroMotorCentro.classList.contains('posicao-dourado'),true);
  assert.match(el.tabuleiroMotorCentro.esfera.style.background,/#ebc35d/);
  visual.preencherVaga('tabuleiroMotorCentro',{numero:27},true);
- assert.match(el.tabuleiroMotorCentro.esfera.style.background,/#51d598/);
+ assert.match(el.tabuleiroMotorCentro.esfera.style.background,/#a66be5/);
 });
 test('tabuleiro circular respeita azul verde dourada e 6 eventos',()=>{
  const {visual,el}=fake();
