@@ -76,7 +76,7 @@ test('AKITEMM preserva cliente mesmo com cookie administrativo antigo',async()=>
   const consultas=[];
   const ctx={
    visaoClienteLoja:visao==='cliente',visaoOperadorLoja:visao==='operador',
-   operadorAtivo:false,operadorAutenticadoLoja:false,
+   operadorAtivo:false,operadorAutenticadoLoja:false,atualizarVisaoVitrine:()=>{},
    document:{querySelector(s){
     if(s==='.akitemm-acesso-operador')return rodape;
     if(s==='.akitemm-voltar')return voltar;
