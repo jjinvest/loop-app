@@ -128,3 +128,10 @@ test('contador do OPERADOR renderiza 90 min por luz em um centro sem criar event
  assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'--:--');
  assert.equal(elementos.tituloRelogioTabuleiro.textContent,'CATRACA PAUSADA');
 });
+
+ test('visor do evento mantém os cálculos e usa os rótulos aprovados',()=>{
+ const source=ler('shared/visor-catraca.js');
+ assert.ok(source.includes("titulo.textContent='PRÓXIMA LUZ · EVENTO'"));
+ assert.ok(source.includes("estado.textContent='Eventos: '+visual.luzes+'/6 luzes · '"));
+ assert.ok(source.includes("visual.passadas+'/'+visual.total+' do dia · '"));
+ });
