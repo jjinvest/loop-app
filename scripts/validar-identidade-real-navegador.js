@@ -1153,19 +1153,19 @@ async function main(){
     'esfera vazia não mostra marcador fictício');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
    const linhaFilaB=page.locator('#motorFilaB .loop03-linha-fila').first();
-   await linhaFilaB.locator('.loop03-numero-titular').filter({hasText:/^#1$/}).waitFor();
+   await linhaFilaB.locator('.loop03-numero-titular').filter({hasText:/^#000000001$/}).waitFor();
    assert.equal(await linhaFilaB.locator('.loop03-fila-ordinal-branca').innerText(),'1',
     'ordem branca independente da identidade');
    assert.equal(await linhaFilaB.locator('.loop03-inicial-fila').count(),1,
     'esfera de estado separada da ordem');
-   assert.equal(await linhaFilaB.locator('.loop03-inicial-fila .loop03-numero-titular').innerText(),'#1');
+   assert.equal(await linhaFilaB.locator('.loop03-inicial-fila .loop03-numero-titular').innerText(),'#000000001');
    await linhaFilaB.locator('.loop03-bola-interativa').click();
    const fichaBola=page.locator('#loopDetalheBolaFila');
    await fichaBola.waitFor({state:'visible'});
    assert.match(await fichaBola.innerText(),/#1/);
    assert.doesNotMatch(await fichaBola.innerText(),/CPF:|Telefone:|E-mail:/);
    await fichaBola.getByRole('button',{name:'Fechar'}).click();
-   assert.equal(await linhaFilaB.locator('.loop03-numero-titular').innerText(),'#1',
+   assert.equal(await linhaFilaB.locator('.loop03-numero-titular').innerText(),'#000000001',
     'ID permanente real');
    assert.match(await linhaFilaB.innerText(),/dozeletrasab/i);
    assert.equal(await page.locator('#motorBolinha1').getAttribute('aria-label'),

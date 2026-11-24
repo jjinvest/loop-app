@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "24/11/2026: proprietário aprovou expressamente a esfera grande com ID e nick internos, dourada somente com ID, ordinal branco separado, bonequinho amarelo externo e abertura de detalhes por perfil. Alteração restrita às filas do Tabuleiro.",
+  "autorizaçãoAtual": "24/11/2026: proprietário autorizou identificadores de posição nas esferas da fila com # e nove dígitos, sem abreviar, para comportar 100 milhões; preserva a geometria das esferas, ordinal, nick e cores. Ajuste CSS exclusivamente tipográfico no número interno.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "b0fe5109883424d4f52f12430fb1a93c7a6b4107"
+      "sha": "7a2501dd113bc0601282eb598d6dc2662e45e447"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -135,6 +135,7 @@
     "22/11/2026: proprietário autorizou diretamente por fotografia corrigir a faixa amarela e sobreposições da vitrine AKITEMM, mantendo filtros, marcas, controles e operações. Mudança visual restrita a src/laboratorio/loja-cliente-demo.css; componentes de suporte em src/candidato/vitrine-horizontal.css e JS do operador, com regressão PC/celular.",
     "23/11/2026: autorizado deslocar exclusivamente o banner da AKITEMM para a primeira linha panorâmica, com 100% da largura da grade; vitrine, carrinho, fotos e zoom permanecem no padrão.",
     "24/11/2026: proprietário autorizou expressamente a separação da esfera branca ordinal e esfera de estado, com 10 linhas no celular, 20 no PC e rolagem até 100 lugares. CSS limitado às filas do tabuleiro.",
-    "24/11/2026: proprietário aprovou expressamente a esfera grande com ID e nick internos, dourada somente com ID, ordinal branco separado, bonequinho amarelo externo e abertura de detalhes por perfil. Alteração restrita às filas do Tabuleiro."
+    "24/11/2026: proprietário aprovou expressamente a esfera grande com ID e nick internos, dourada somente com ID, ordinal branco separado, bonequinho amarelo externo e abertura de detalhes por perfil. Alteração restrita às filas do Tabuleiro.",
+    "24/11/2026: proprietário autorizou identificadores de posição nas esferas da fila com # e nove dígitos, sem abreviar, para comportar 100 milhões; preserva a geometria das esferas, ordinal, nick e cores. Ajuste CSS exclusivamente tipográfico no número interno."
   ]
 }
