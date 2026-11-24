@@ -225,6 +225,10 @@ test('referencia visual usa numero isolado e nick original sem consultar cadastr
  assert.match(trecho,/p\.titular==='ensaio-taisa'/);
  assert.match(trecho,/referenciaVisual=\{ordem:filaVisualB\.length\+1,numero:p\.numero,nome:p\.nome,/);
  assert.match(trecho,/indicacoesVinculadas:5,referenciaBancada:true/);
+ assert.match(trecho,/if\(referenciaVisual&&filaVisualA\.length===d\.filaA&&filaVisualA\.length<100\)/);
+ assert.match(trecho,/referenciaVisualA=\{\.\.\.referenciaVisual,ordem:filaVisualA\.length\+1,pendente:false\}/);
+ assert.match(trecho,/preencherFila\('motorFilaA',\[\.\.\.filaVisualA\.map\(p=>\(\{\.\.\.p,nome:undefined\}\)\),referenciaVisualA\],'A',\{exibirNomesTeste:true\}\)/);
+ assert.match(trecho,/preencherFila\('motorFilaB',\[\.\.\.filaVisualB\.map\(p=>\(\{\.\.\.p,nome:undefined\}\)\),referenciaVisual\],'B',\{exibirNomesTeste:true\}\)/);
  assert.match(trecho,/!modoOperadorAtual\|\|visualTesteModulo!==null/);
  assert.match(trecho,/nome:undefined/);
  assert.doesNotMatch(trecho,/method:'POST'|posicaoId:|\(fictícia\)/);
