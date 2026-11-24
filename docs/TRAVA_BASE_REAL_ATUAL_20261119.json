@@ -2488,7 +2488,7 @@
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
-      "sha": "7d8b20011bc6ed94e33e0b2f23ec9085f0315b0c"
+      "sha": "42b2c7537fa34593f78cd836a98b7479d8f9a982"
     },
     {
       "path": "test/controle-caixa-catraca-loop-sqlite.test.js",
