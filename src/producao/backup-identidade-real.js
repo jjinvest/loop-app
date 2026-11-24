@@ -78,7 +78,9 @@ const TABELAS_CATALOGO_OPERADOR=Object.freeze([
  'loja_real_entrega_local_produto',
  'loja_real_avaliacoes_verificadas',
  'loja_real_banners_akitemm','loja_real_banners_akitemm_extensao',
- 'akitemm_banner_mosaico_layout','akitemm_banner_mosaico_foto'
+ 'akitemm_banner_mosaico_layout','akitemm_banner_mosaico_foto',
+ 'akitemm_banner_mosaico_layout_ampliado',
+ 'akitemm_banner_mosaico_foto_extra'
 ]);
 // Banners LOOP e extensões opcionais: backups antigos continuam restauráveis.
 const TABELAS_BANNERS_LOOP=Object.freeze([
@@ -270,6 +272,42 @@ function validarIdentidade(arquivo){
     layout:'akitemm_banner_mosaico_layout',
     foto:'akitemm_banner_mosaico_foto'
    });
+   // Fotos 4–6: duas tabelas opcionais e indivisíveis no backup cifrado.
+   // Backups antigos sem nenhuma delas continuam válidos.
+   const layoutExtra='akitemm_banner_mosaico_layout_ampliado';
+   const fotoExtra='akitemm_banner_mosaico_foto_extra';
+   const comLayout=lista.includes(layoutExtra),comFoto=lista.includes(fotoExtra);
+   if(comLayout!==comFoto)falha('BACKUP_BANNER_MOSAICO_ESQUEMA_INCOMPLETO');
+   if(comLayout){
+    for(const [tab,campos] of [
+     [layoutExtra,['slot','colunas','modo']],
+     [fotoExtra,['slot','posicao','mime','imagem']]
+    ]){
+     const col=b.prepare('PRAGMA table_info('+tab+')').all().map(x=>x.name);
+     if(campos.some(x=>!col.includes(x)))
+      falha('BACKUP_BANNER_MOSAICO_COLUNAS_INVALIDAS');
+     const orfao=b.prepare([
+      'SELECT x.slot FROM '+tab+' x',
+      'LEFT JOIN loja_real_banners_akitemm b ON b.slot=x.slot',
+      'LEFT JOIN loja_real_banners_akitemm_extensao e ON e.slot=x.slot',
+      'WHERE b.slot IS NULL AND e.slot IS NULL LIMIT 1'
+     ].join(' ')).get();
+     if(orfao)falha('BACKUP_BANNER_MOSAICO_ORFAO');
+    }
+    const layoutInvalido=b.prepare([
+     'SELECT slot FROM '+layoutExtra,
+     'WHERE slot<1 OR slot>10000 OR colunas NOT BETWEEN 4 AND 6',
+     "OR modo NOT IN ('INTEIRA','PREENCHER') LIMIT 1"
+    ].join(' ')).get();
+    if(layoutInvalido)falha('BACKUP_BANNER_MOSAICO_LAYOUT_INVALIDO');
+    const fotoInvalida=b.prepare([
+     'SELECT slot FROM '+fotoExtra,
+     'WHERE slot<1 OR slot>10000 OR posicao NOT BETWEEN 4 AND 6',
+     "OR mime NOT IN ('image/jpeg','image/png','image/webp')",
+     'OR length(imagem)<40 OR length(imagem)>4194304 LIMIT 1'
+    ].join(' ')).get();
+    if(fotoInvalida)falha('BACKUP_BANNER_MOSAICO_FOTO_INVALIDA');
+   }
    // A escolha de destino imutável também integra a mesma cópia cifrada.
   // Backups históricos sem essa tabela continuam recuperáveis.
   if(lista.includes('loop_real_destinos_indicacao')){

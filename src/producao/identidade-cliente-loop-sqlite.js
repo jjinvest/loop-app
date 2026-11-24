@@ -125,11 +125,17 @@ function prepararEstruturaIdentidadeReal({
   const mosaicosReais=[
    'akitemm_banner_mosaico_layout','akitemm_banner_mosaico_foto'
   ];
+  const mosaicosExtras=[
+   'akitemm_banner_mosaico_layout_ampliado',
+   'akitemm_banner_mosaico_foto_extra'
+  ];
   const invasao=banco.prepare([
    "SELECT name FROM sqlite_master WHERE type='table'",
    "AND ((name LIKE 'akitemm_%' AND",
    "name NOT IN ('akitemm_banner_mosaico_layout',",
-   "'akitemm_banner_mosaico_foto')) OR name LIKE 'loop_lab_%') LIMIT 1"
+   "'akitemm_banner_mosaico_foto',",
+   "'akitemm_banner_mosaico_layout_ampliado',",
+   "'akitemm_banner_mosaico_foto_extra')) OR name LIKE 'loop_lab_%') LIMIT 1"
   ].join(' ')).get();
   if(invasao)erro('BANCO_LABORATORIO_NAO_PODE_SER_REAL');
   const presente=banco.prepare([
@@ -148,6 +154,26 @@ function prepararEstruturaIdentidadeReal({
    ]){
     const campos=colunas(nome);
     if(esperadas.some(x=>!campos.includes(x)))
+     erro('BANCO_MOSAICO_REAL_ESTRUTURA_INVALIDA');
+   }
+  }
+  const presentesExtras=banco.prepare([
+   "SELECT name FROM sqlite_master WHERE type='table'",
+   "AND name IN ('akitemm_banner_mosaico_layout_ampliado',",
+   "'akitemm_banner_mosaico_foto_extra')"
+  ].join(' ')).all().map(x=>x.name);
+  if(presentesExtras.length!==0&&
+     (presentesExtras.length!==mosaicosExtras.length||
+      presente.length!==mosaicosReais.length))
+   erro('BANCO_MOSAICO_REAL_INCOMPLETO');
+  if(presentesExtras.length){
+   for(const [nome,colunas] of [
+    [mosaicosExtras[0],['slot','colunas','modo']],
+    [mosaicosExtras[1],['slot','posicao','mime','imagem']]
+   ]){
+    const campos=banco.prepare('PRAGMA table_info('+nome+')')
+     .all().map(x=>x.name);
+    if(colunas.some(x=>!campos.includes(x)))
      erro('BANCO_MOSAICO_REAL_ESTRUTURA_INVALIDA');
    }
   }

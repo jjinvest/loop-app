@@ -62,7 +62,8 @@
  const colunas=document.createElement('select');
  colunas.id='akitemmBannerColunasReal';
  for(const [valor,t] of [['1','1 foto comprida'],['2','2 quadros lado a lado'],
-  ['3','3 quadros lado a lado']]){
+  ['3','3 quadros lado a lado'],['4','4 quadrinhos'],
+  ['5','5 quadrinhos'],['6','6 quadrinhos']]){
   const op=document.createElement('option');op.value=valor;op.textContent=t;
   colunas.append(op);
  }
@@ -90,7 +91,7 @@
  previa.id='akitemmBannerPreviaReal';previa.className='banner-real-previa';
  previa.alt='Prévia do banner AKITEMM';previa.hidden=true;
  previa.classList.add('banner-editor-previa-oculta');
- const fotosExtras=[2,3].map(n=>{
+ const fotosExtras=[2,3,4,5,6].map(n=>{
   const linha=document.createElement('label');
   linha.className='banner-real-arquivo banner-foto-extra';
   linha.dataset.posicao=String(n);
@@ -148,7 +149,8 @@
  controles.querySelector('[data-acao="remover"]').classList.add('banner-editor-acoes-excluir-oculto');
  const fotosEditor=fotosNoProprioQuadro({dialogo,antes:rotulo,
   inputs:[escolher,...fotosExtras.map(x=>x.arquivo)],colunas,status:estado,
-  razao:2.2,slot:()=>current(),
+  razao:()=>Math.max(1,area.clientWidth)/Math.max(1,area.clientHeight),
+  slot:()=>current(),
   urlFoto:pos=>'/api/loja/banners/'+current()?.slot+'/foto/'+pos+
    '?rev='+(current()?.revisao||0),
   apagar:pos=>removerFotoIndividual(current()?.slot,pos)});
@@ -242,9 +244,12 @@
    const caminho='/api/loja/banners/'+slot.slot+'/imagem?revisao='+
     (slot.atualizadoEm||slot.revisao);
    if(foto.getAttribute('src')!==caminho)foto.src=caminho;
-   foto.style.objectFit=slot.modo==='PREENCHER'?'cover':'contain';
+   foto.style.objectFit='contain';
+   area.style.setProperty('--akitemm-banner-fundo',
+    'url('+JSON.stringify(caminho)+')');
    foto.alt='Banner '+slot.slot+' da AKITEMM';
-  }else foto.removeAttribute('src');
+  }else{foto.removeAttribute('src');
+   area.style.removeProperty('--akitemm-banner-fundo');}
   conteudo.style.display=(imagem||slot.slot!==1||adicionando)?'none':'';
   placeholder.hidden=exibirMosaico||imagem||(!adicionando&&slot.slot===1);
   if(!placeholder.hidden){
@@ -647,11 +652,12 @@
    const im=new Image();im.src=await dataURL(b);await im.decode();
    if(ticket!==seq)return;
    if(!im.naturalWidth||!im.naturalHeight)throw Error('Imagem inválida.');
-   canvas.width=1000;canvas.height=Math.round(1000*Number(colunas.value)/razao);
+   const razaoAtual=typeof razao==='function'?razao():razao;
+   canvas.width=1000;canvas.height=Math.max(1,Math.round(1000*Number(colunas.value)/razaoAtual));
    zoom.value='100';
    crop={pos,imagem:im,original:b,zoom:1,x:0,y:0,arrasto:null};
    painel.hidden=false;desenhar();
-   const aspecto=im.naturalWidth/im.naturalHeight,alvo=razao/Number(colunas.value);
+   const aspecto=im.naturalWidth/im.naturalHeight,alvo=razaoAtual/Number(colunas.value);
    status.textContent=Math.min(aspecto/alvo,alvo/aspecto)<0.52?
     "A foto inteira não ocupa este quadro sem cortes. Escolha outra imagem se quiser preencher tudo.":
     "Foto inteira enquadrada, sem cortes e sem deformação."; 

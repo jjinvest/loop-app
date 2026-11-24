@@ -516,7 +516,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "40b33ba158619b54a8c5e6c6f536140be7cdd452"
+      "sha": "140bbdefae25f5fd30fadf5b1cf0593df8566d2f"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -1324,7 +1324,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "58ade13412e99a217802c3b19c62cd2ecad77277"
+      "sha": "79f2069bc4e8b27e688d87659aa34025ed3179d0"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1340,7 +1340,7 @@
     },
     {
       "path": "src/producao/banner-mosaico-sqlite.js",
-      "sha": "6e271556faeb83ebfa9c4935bc71de336e0fbde0"
+      "sha": "59be5df81549c3f8504ddd748fcde1454fefb189"
     },
     {
       "path": "src/producao/banners-editor-real.css",
@@ -1356,7 +1356,7 @@
     },
     {
       "path": "src/producao/banners-loja-akitemm-client.js",
-      "sha": "57345717ccecb9fbb06289565a8e91da8328ac95"
+      "sha": "ca6ea2f513d55a636101638184a7bb21f4e06f63"
     },
     {
       "path": "src/producao/banners-loja-akitemm-real-sqlite.js",
@@ -1476,7 +1476,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "bafff3bf200b41114042e806089172d9c76198fd"
+      "sha": "86d921a0dc9e242a1ab8689e0dc40c0c862d6dd5"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -2215,12 +2215,16 @@
       "sha": "2a701ebc4b73607485cb1c42f2050a2fa434eb40"
     },
     {
+      "path": "test/banner-akitemm-4-6-fotos-inteiras-20261124.test.js",
+      "sha": "71da3d5078fd9f0ef50f2aee48ce4df92c1560f8"
+    },
+    {
       "path": "test/banners-ajuste-direto-fotos.test.js",
       "sha": "2622fb0cbae328045233083098ea1686fd058661"
     },
     {
       "path": "test/banners-dinamicos-composicao-real.test.js",
-      "sha": "494b2510f988ca40fe7c4a6a84e81c571701e958"
+      "sha": "4f91139f0d6686a4f4f463d66b6f33c568cd1298"
     },
     {
       "path": "test/banners-escritorio-excluir-espacos-extras.test.js",
@@ -2812,7 +2816,7 @@
     },
     {
       "path": "test/identidade-real-mosaico-banners-guard.test.js",
-      "sha": "f1c77463309c1254bd45eaf24312d6c818ded74a"
+      "sha": "3d95dc718c308a1ad91fb82689e4f081782a8c5a"
     },
     {
       "path": "test/identidade-real-persistencia.test.js",

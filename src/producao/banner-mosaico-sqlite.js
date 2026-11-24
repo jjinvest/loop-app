@@ -1,5 +1,5 @@
 'use strict';
-// Mosaico opcional por banner: 1 foto panorâmica, 2 ou 3 quadros.
+// Mosaico: LOOP até 3 fotos; AKITEMM até 6 fotos independentes.
 // Os arquivos dos quatro banners originais permanecem intactos.
 const CONFIGS={
  loop:{
@@ -33,6 +33,23 @@ class BannerMosaicoSQLite{
    'mime TEXT NOT NULL,imagem BLOB NOT NULL,',
    'PRIMARY KEY(slot,posicao));'
   ].join(' '));
+  if(area==='akitemm')banco.exec([
+   'CREATE TABLE IF NOT EXISTS '+p+'_layout_ampliado(',
+   'slot INTEGER PRIMARY KEY CHECK(slot>=1),',
+   'colunas INTEGER NOT NULL CHECK(colunas BETWEEN 4 AND 6),',
+   "modo TEXT NOT NULL CHECK(modo IN ('INTEIRA','PREENCHER')));",
+   'CREATE TABLE IF NOT EXISTS '+p+'_foto_extra(',
+   'slot INTEGER NOT NULL CHECK(slot>=1),',
+   'posicao INTEGER NOT NULL CHECK(posicao BETWEEN 4 AND 6),',
+   'mime TEXT NOT NULL,imagem BLOB NOT NULL,',
+   'PRIMARY KEY(slot,posicao));'
+  ].join(' '));
+ }
+ _fotoTabela(n){
+  if(!Number.isSafeInteger(n)||n<2||
+     n>(this.cfg===CONFIGS.akitemm?6:3))
+   falhar('BANNER_MOSAICO_POSICAO_INVALIDA');
+  return this.cfg.prefixo+(n>3?'_foto_extra':'_foto');
  }
  _principal(slot){
   if(!Number.isSafeInteger(slot)||slot<1||slot>10000)
@@ -40,7 +57,7 @@ class BannerMosaicoSQLite{
   return slot<=4?this.cfg.primeira:this.cfg.extensao;
  }
  _colunas(n){
-  if(!Number.isInteger(n)||n<1||n>3)falhar('BANNER_MOSAICO_LAYOUT_INVALIDO');
+  if(!Number.isInteger(n)||n<1||n>(this.cfg===CONFIGS.akitemm?6:3))falhar('BANNER_MOSAICO_LAYOUT_INVALIDO');
   return n;
  }
  _revisao(n){
@@ -53,14 +70,22 @@ class BannerMosaicoSQLite{
   const layouts=new Map(this.banco.prepare(
    'SELECT slot,colunas,modo FROM '+p+'_layout'
   ).all().map(x=>[x.slot,{colunas:x.colunas,modo:x.modo}]));
+  if(this.cfg===CONFIGS.akitemm)
+   for(const x of this.banco.prepare('SELECT slot,colunas,modo FROM '+
+    p+'_layout_ampliado').all())
+    layouts.set(x.slot,{colunas:x.colunas,modo:x.modo});
   const imagens=new Set(this.banco.prepare(
    'SELECT slot,posicao FROM '+p+'_foto'
   ).all().map(x=>x.slot+':'+x.posicao));
+  if(this.cfg===CONFIGS.akitemm)
+   for(const x of this.banco.prepare('SELECT slot,posicao FROM '+
+    p+'_foto_extra').all())imagens.add(x.slot+':'+x.posicao);
   return slots.map(s=>{
    const op=layouts.get(s.slot),colunas=op?.colunas||1;
    const modo=op?.modo||s.enquadramento||(colunas===1?'INTEIRA':'PREENCHER');
-   const fotos=[{posicao:1,temImagem:s.temImagem},2,3].map((x,i)=>
-    i===0?x:{posicao:i+1,temImagem:imagens.has(s.slot+':'+(i+1))});
+   const fotos=Array.from({length:this.cfg===CONFIGS.akitemm?6:3},
+    (_,i)=>i===0?{posicao:1,temImagem:s.temImagem}:
+    {posicao:i+1,temImagem:imagens.has(s.slot+':'+(i+1))});
    // Cada moldura é publicada ao receber a primeira foto; as demais são opcionais.
    const publicado=fotos.slice(0,colunas).some(x=>x.temImagem);
    return {...s,colunas,modo,fotos,publicado};
@@ -88,29 +113,33 @@ class BannerMosaicoSQLite{
   if(!['INTEIRA','PREENCHER'].includes(modo))
    falhar('BANNER_MOSAICO_MODO_INVALIDO');
   this._mutar(slot,revisaoEsperada,()=>{
+   const ampliado=this.cfg===CONFIGS.akitemm&&cols>3;
+   const destino=p+(ampliado?'_layout_ampliado':'_layout');
    this.banco.prepare(
-    'INSERT INTO '+p+'_layout(slot,colunas,modo) VALUES(?,?,?) '+
+    'INSERT INTO '+destino+'(slot,colunas,modo) VALUES(?,?,?) '+
     'ON CONFLICT(slot) DO UPDATE SET colunas=excluded.colunas,modo=excluded.modo'
    ).run(slot,cols,modo);
+   if(this.cfg===CONFIGS.akitemm)this.banco.prepare(
+    'DELETE FROM '+p+(ampliado?'_layout':'_layout_ampliado')+
+    ' WHERE slot=?').run(slot);
   });
  }
  salvarFoto({slot,posicao,mime,bytes,revisaoEsperada}={}){
-  if(![2,3].includes(posicao))falhar('BANNER_MOSAICO_POSICAO_INVALIDA');
+  const tabela=this._fotoTabela(posicao);
   this.validarImagem(mime,bytes);
   const p=this.cfg.prefixo;
   this._mutar(slot,revisaoEsperada,()=>{
    this.banco.prepare(
-    'INSERT INTO '+p+'_foto(slot,posicao,mime,imagem) VALUES(?,?,?,?) '+
+    'INSERT INTO '+tabela+'(slot,posicao,mime,imagem) VALUES(?,?,?,?) '+
     'ON CONFLICT(slot,posicao) DO UPDATE SET '+
     'mime=excluded.mime,imagem=excluded.imagem'
    ).run(slot,posicao,mime,bytes);
   });
  }
  removerFoto({slot,posicao,revisaoEsperada}={}){
-  if(![2,3].includes(posicao))falhar('BANNER_MOSAICO_POSICAO_INVALIDA');
-  const p=this.cfg.prefixo;
+  const tabela=this._fotoTabela(posicao);
   this._mutar(slot,revisaoEsperada,()=>{
-   this.banco.prepare('DELETE FROM '+p+'_foto WHERE slot=? AND posicao=?')
+   this.banco.prepare('DELETE FROM '+tabela+' WHERE slot=? AND posicao=?')
     .run(slot,posicao);
   });
  }
@@ -137,12 +166,28 @@ class BannerMosaicoSQLite{
   const oposto=x=>x===origem?destino:origem;
   for(const l of layouts)inserirLayout.run(oposto(l.slot),l.colunas,l.modo);
   for(const f of fotos)inserirFoto.run(oposto(f.slot),f.posicao,f.mime,f.imagem);
+  if(this.cfg===CONFIGS.akitemm){
+   const ll=this.banco.prepare('SELECT slot,colunas,modo FROM '+
+    p+'_layout_ampliado WHERE slot IN (?,?)').all(origem,destino);
+   const ff=this.banco.prepare('SELECT slot,posicao,mime,imagem FROM '+
+    p+'_foto_extra WHERE slot IN (?,?)').all(origem,destino);
+   this.banco.prepare('DELETE FROM '+p+
+    '_layout_ampliado WHERE slot IN (?,?)').run(origem,destino);
+   this.banco.prepare('DELETE FROM '+p+
+    '_foto_extra WHERE slot IN (?,?)').run(origem,destino);
+   const il=this.banco.prepare('INSERT INTO '+p+
+    '_layout_ampliado(slot,colunas,modo) VALUES(?,?,?)');
+   const iff=this.banco.prepare('INSERT INTO '+p+
+    '_foto_extra(slot,posicao,mime,imagem) VALUES(?,?,?,?)');
+   for(const l of ll)il.run(oposto(l.slot),l.colunas,l.modo);
+   for(const f of ff)iff.run(oposto(f.slot),f.posicao,f.mime,f.imagem);
+  }
  }
  imagem({slot,posicao}={}){
   this._principal(slot);
-  if(![2,3].includes(posicao))falhar('BANNER_MOSAICO_POSICAO_INVALIDA');
+  const tabela=this._fotoTabela(posicao);
   const r=this.banco.prepare(
-   'SELECT mime,imagem FROM '+this.cfg.prefixo+'_foto WHERE slot=? AND posicao=?'
+   'SELECT mime,imagem FROM '+tabela+' WHERE slot=? AND posicao=?'
   ).get(slot,posicao);
   if(!r)falhar('BANNER_MOSAICO_SEM_IMAGEM');
   return {mime:r.mime,bytes:Buffer.from(r.imagem)};
