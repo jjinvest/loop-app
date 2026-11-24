@@ -1257,3 +1257,15 @@ body:not(.loop03-modo-operador) :is(#adminFluxoFinanceiroTeste,#adminDistribuica
  display:none!important;
 }
 #loopOperadorAgendaConfirmada{display:none!important}
+
+
+/* Ordem e largura do quadro da Distribuição: não alterar o Financeiro. */
+body.loop03-modo-operador #adminFluxoAoVivoDados.loop03-compras-colunas{
+ grid-template-columns:repeat(2,minmax(0,1fr));
+}
+body.loop03-modo-operador #adminFluxoAoVivoDados>.loop03-distribuicao-largo{
+ grid-column:1/-1;min-height:104px;
+}
+body.loop03-modo-operador #adminFluxoAoVivoDados>.loop03-distribuicao-largo>.loop03-compras-total{
+ font-size:clamp(1.2rem,3vw,1.75rem);
+}
