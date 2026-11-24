@@ -540,7 +540,7 @@
     '<p>Azuis aguardando confirmação: <strong id="adminAzuisPendentes">—</strong></p>',
     '<h4>COFRE DAS DOURADAS</h4>',
     '<p>Posições destinadas: <strong id="adminCofreDouradasPosicoes">—</strong></p>',
-    '<p>Saldo bancário: <strong id="adminCofreDouradasSaldo">—</strong></p>',
+    '<p>Saldo: <strong id="adminCofreDouradasSaldo">—</strong></p>',
     '<small id="adminCofreDouradasEstado">Aguardando conciliação bancária</small>',
     '<button id="adminDouradasAtualizar" type="button">Atualizar contagem</button>',
     '</div></div></section>'
@@ -1555,6 +1555,7 @@
  function aplicarSaldoCompartilhado(f){
   if(!modoOperadorAtual||visualTesteModulo!=='CATRACA')return;
   const saldos=conferirSaldoCompartilhado(f);
+  if(ultimoFluxoCompartilhado&&f.agoraServidorMs<ultimoFluxoCompartilhado.agoraServidorMs)return;
   ultimoFluxoCompartilhado=f;
   for(const [codigo,id] of Object.entries(cofresIds)){
    if($('loop03Cofre'+id))$('loop03Cofre'+id).textContent=moedaCofres.format(saldos[codigo]/100);
@@ -1677,6 +1678,9 @@
   ++versaoEntradaOperador;
   visualTesteModulo=ativo?'CATRACA':null;
   ultimoFluxoCompartilhado=null;ultimaConsultaCofres=0;limparCofresOperador();
+  if($('adminCofreDouradasSaldo'))$('adminCofreDouradasSaldo').textContent='—';
+  if($('adminCofreDouradasEstado'))$('adminCofreDouradasEstado').textContent='';
+  $('adminDistribuicaoFinanceiraDados')?.replaceChildren();
   void carregarCofresOperador({forcar:true});
   void carregarDistribuicaoFinanceira();
   atualizarSeletorCenarioOperador();
