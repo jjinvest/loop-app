@@ -284,3 +284,21 @@ test('100 PDFs: posições classificadas, caixa separado, START explícito e 100
  assert.deepEqual(c.teste.consultar().fila,anterior);
  assert.equal(c.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
+
+test('cenário preparado é selecionado na entrada normal do operador sem outro endereço e sem START automático',()=>{
+ const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+ const inicio=office.indexOf('async function selecionarCenarioPreparado(versao)');
+ const fim=office.indexOf('function abrirPainelOperador()',inicio);
+ assert.ok(inicio>=0&&fim>inicio);
+ const trecho=office.slice(inicio,fim);
+ assert.match(trecho,/modoOperadorAtual/);
+ assert.match(trecho,/versao!==versaoEntradaOperador/);
+ assert.match(trecho,/RECEBIMENTOS_FICTICIOS_SQLITE/);
+ assert.match(trecho,/visualTesteModulo='CATRACA'/);
+ assert.doesNotMatch(trecho,/CATRACA_INICIAR|method:'POST'|location\./);
+ assert.ok(office.includes('void selecionarCenarioPreparado(versao)'));
+ assert.ok(office.includes("a.addEventListener('click',()=>alternarCenarioOperador(false))"));
+ assert.ok(office.includes("adminFluxoAbrirFinanceiro"));
+ assert.ok(office.includes('Cenário de conferência · dinheiro fictício'));
+ assert.ok(office.includes('Operação comercial · dados reais'));
+});

@@ -102,6 +102,7 @@
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
  let modoOperadorAtual=false,visualTesteModulo=null;
+ let versaoEntradaOperador=0,cenarioDisponivel=false;
  let captchaCadastroId=null,captchaObrigatorio=false;
  let captchaLoginAtivo=false,captchaLoginId=null;
  const parametrosEntrada=new URLSearchParams(location.search);
@@ -577,7 +578,7 @@
    conteudoFinanceiro:[
     '<h2>Financeiro · Operador</h2>',
     '<div id="adminResumoFinanceiro" class="loop03-admin-dado" role="status">Consultando controle de caixa e catraca…</div>',
-    '<section id="adminFluxoFinanceiroTeste" class="loop03-admin-compras" hidden><h3>Fluxo controlado — dinheiro fictício</h3><div id="adminFluxoFinanceiroDados" class="loop03-compras-colunas" role="status"></div><a href="/escritorio?visao=operador&amp;teste=catraca">Acompanhar a distribuição em tempo real</a></section>',
+    '<section id="adminFluxoFinanceiroTeste" class="loop03-admin-compras" hidden><h3>Fluxo controlado — dinheiro fictício</h3><div id="adminFluxoFinanceiroDados" class="loop03-compras-colunas" role="status"></div><button type="button" id="adminFluxoAbrirFinanceiro">Acompanhar a distribuição em tempo real</button></section>',
     '<section id="adminDistribuicaoFinanceira" class="loop03-admin-compras"><h3>Distribuição financeira LOOP</h3><div id="adminDistribuicaoFinanceiraDados" class="loop03-compras-colunas" role="status" aria-live="polite">Consultando livro financeiro e cofres…</div></section>',
     '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarFinanceiro">Atualizar</button><a href="/administrador">Gestão financeira na Central</a></div>'
    ],
@@ -817,6 +818,7 @@
   void carregarBancadaOperador();
   $('adminAtualizarPosicoes')?.addEventListener('click',()=>void carregarAbaOperador('abaPosicoes'));
   $('adminAtualizarFinanceiro')?.addEventListener('click',()=>void carregarAbaOperador('abaFinanceiro'));
+  $('adminFluxoAbrirFinanceiro')?.addEventListener('click',()=>alternarCenarioOperador(true));
   $('adminAtualizarPedidos')?.addEventListener('click',()=>void carregarAbaOperador('abaMeusPedidos'));
   let nickCadastroConsultado=null,consultaCadastroVersao=0;
   let temporizadorSugestaoCadastro=null;
@@ -1604,7 +1606,51 @@
    if(botao)botao.disabled=false;
   }
  }
+ function atualizarSeletorCenarioOperador(){
+  let area=$('adminCenarioOrigem');
+  if(!modoOperadorAtual||!cenarioDisponivel){if(area)area.hidden=true;return;}
+  if(!area){
+   area=document.createElement('div');area.id='adminCenarioOrigem';area.className='loop03-admin-acoes';
+   const texto=document.createElement('span');texto.id='adminCenarioOrigemTexto';texto.setAttribute('role','status');
+   const botao=document.createElement('button');botao.id='adminCenarioAlternar';botao.type='button';
+   botao.addEventListener('click',()=>alternarCenarioOperador(visualTesteModulo!=='CATRACA'));
+   area.append(texto,botao);
+   $('conteudoTabuleiro').prepend(area);
+  }
+  area.hidden=false;
+  $('adminCenarioOrigemTexto').textContent=visualTesteModulo==='CATRACA'?
+   'Cenário de conferência · dinheiro fictício':'Operação comercial · dados reais';
+  $('adminCenarioAlternar').textContent=visualTesteModulo==='CATRACA'?
+   'Ver operação comercial':'Ver cenário de conferência';
+ }
+ function alternarCenarioOperador(ativo){
+  if(!modoOperadorAtual||!cenarioDisponivel)return;
+  ++versaoEntradaOperador;
+  visualTesteModulo=ativo?'CATRACA':null;
+  atualizarSeletorCenarioOperador();
+  $('abaTabuleiro')?.click();
+  void carregarTabuleiroOperador();
+ }
+ async function selecionarCenarioPreparado(versao){
+  try{
+   const r=await fetch('/api/admin/loop/testes-modulos',{credentials:'same-origin',cache:'no-store'});
+   if(!r.ok)return;
+   const d=await r.json();
+   if(!modoOperadorAtual||versao!==versaoEntradaOperador)return;
+   const f=d.catraca?.financeiro;
+   cenarioDisponivel=d.fonte==='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'&&
+    f?.origem==='RECEBIMENTOS_FICTICIOS_SQLITE'&&f.financeiroReal===false;
+   if(cenarioDisponivel&&f.saldoCentavos>=25000){
+    visualTesteModulo='CATRACA';
+    atualizarSeletorCenarioOperador();
+    $('abaTabuleiro')?.click();
+    void carregarTabuleiroOperador();
+   }else atualizarSeletorCenarioOperador();
+  }catch{/* Sem fonte confirmada, manter a operação comercial. */}
+ }
  function abrirPainelOperador(){
+  const versao=++versaoEntradaOperador;
+  cenarioDisponivel=false;visualTesteModulo=null;
   modoOperadorAtual=true;csrf=null;
   direcionarAcessosAkitemm('operador');
   posicionarCampoFotoPerfil(true);
@@ -1661,7 +1707,8 @@
   }else if(parametrosEntrada.get('teste')==='catraca'){
    visualTesteModulo='CATRACA';
    $('abaTabuleiro')?.click();
-  }else visualTesteModulo=null;
+  }else{visualTesteModulo=null;void selecionarCenarioPreparado(versao);}
+  atualizarSeletorCenarioOperador();
   void carregarTabuleiroOperador();
   void atualizarAtalhoOperadorReal();
  }
@@ -1669,7 +1716,8 @@
   limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
-  visualTesteModulo=null;
+  ++versaoEntradaOperador;cenarioDisponivel=false;visualTesteModulo=null;
+  atualizarSeletorCenarioOperador();
   if($('adminFluxoAoVivo'))$('adminFluxoAoVivo').hidden=true;
   if($('adminFluxoFinanceiroTeste'))$('adminFluxoFinanceiroTeste').hidden=true;
   revelarCofresOperador(false);
@@ -2532,7 +2580,7 @@
    const [d,controle]=await Promise.all([
     respostaMotor.json(),respostaControle.json()
    ]);
-   if(!modoOperadorAtual||$('painelConta')?.hidden!==false)return;
+   if(!modoOperadorAtual||visualTesteModulo!==null||$('painelConta')?.hidden!==false)return;
    const agenda=controle.agenda;
    if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
       d.financeiroReal!==false||controle.financeiroReal!==false||
@@ -3326,7 +3374,8 @@
    if(!modoOperadorAtual)return;
    const f=d.catraca?.financeiro;
    p.hidden=!f;
-   if(f)renderizarFinanceiroFluxoTeste($('adminFluxoFinanceiroDados'),f);
+   if(f){cenarioDisponivel=f.origem==='RECEBIMENTOS_FICTICIOS_SQLITE'&&f.financeiroReal===false;
+    atualizarSeletorCenarioOperador();renderizarFinanceiroFluxoTeste($('adminFluxoFinanceiroDados'),f);}
   }catch{if(modoOperadorAtual){p.hidden=false;$('adminFluxoFinanceiroDados').textContent='Consulta do teste indisponível.';}}
  }
  function mostrarControlesFluxoTeste(x){
@@ -3355,7 +3404,8 @@
      }catch(e){msg.textContent='Comando não executado: '+e.message;b.disabled=false;}
     });botoes.append(b);
    }
-   const a=document.createElement('a');a.href='/escritorio?visao=operador';a.textContent='Voltar à visão original';botoes.append(a);
+   const a=document.createElement('button');a.type='button';a.textContent='Voltar à visão comercial';
+   a.addEventListener('click',()=>alternarCenarioOperador(false));botoes.append(a);
    const dados=document.createElement('div');dados.id='adminFluxoAoVivoDados';dados.className='loop03-compras-colunas';
    painel.append(h,estado,botoes,msg,dados);$('conteudoTabuleiro').append(painel);
   }
@@ -3385,6 +3435,9 @@
       !['FILA','CATRACA'].includes(visualTesteModulo))
     throw Error('ORIGEM_DO_TESTE_INVALIDA');
    const x=d[visualTesteModulo.toLowerCase()];
+   if(x?.financeiro?.origem==='RECEBIMENTOS_FICTICIOS_SQLITE'&&x.financeiro.financeiroReal===false){
+    cenarioDisponivel=true;atualizarSeletorCenarioOperador();
+   }
    if(!x||!Array.isArray(x.filaA)||!Array.isArray(x.filaB)||
       !Array.isArray(x.tabuleiro?.vagasPosicoes)||
       x.tabuleiro.vagasPosicoes.length!==6||
@@ -3393,9 +3446,10 @@
       !Number.isSafeInteger(x.tabuleiro.giros))
     throw Error('SNAPSHOT_TESTE_INVALIDO');
    visualTabuleiro.preencherFila('motorFilaA',x.filaA,'A',
-    {exibirNomesTeste:true});
+    {exibirNomesTeste:true,reservarLugares:9});
    visualTabuleiro.preencherFila('motorFilaB',x.filaB,'B',
-    {exibirNomesTeste:true});
+    {exibirNomesTeste:true,reservarLugares:9});
+   mostrarTotaisFilasRodape(x.filaA.length,x.filaB.length,true);
    visualTabuleiro.preencherVaga('tabuleiroMotorCentro',
     x.tabuleiro.centroPosicao,true);
    for(let i=0;i<6;i++)
@@ -3446,7 +3500,7 @@
    const [d,controle]=await Promise.all([
     respostaMotor.json(),respostaControle.json()
    ]);
-   if(!modoOperadorAtual)return;
+   if(!modoOperadorAtual||visualTesteModulo!==null)return;
    if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
       d.financeiroReal!==false||
       !Array.isArray(d.minhasPosicoes)||d.minhasPosicoes.length!==0||
