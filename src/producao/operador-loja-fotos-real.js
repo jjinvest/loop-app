@@ -376,21 +376,23 @@
   const ir=entrada=>{
    const detalhe=entrada.closest('details');
    if(detalhe)detalhe.open=true;
-   entrada.scrollIntoView({block:'center',behavior:'smooth'});
-   try{entrada.focus({preventScroll:true});}
-   catch{entrada.focus();}
+   const alvo=entrada.type==='file'?(entrada.closest('label')||entrada):entrada;
+   alvo.scrollIntoView({block:'center',behavior:'instant'});
+   if(entrada.type==='file')alvo.tabIndex=-1;
+   try{alvo.focus({preventScroll:true});}catch{alvo.focus();}
   };
   const mostrar=erros=>{
    limpar();
+   erros=[...new Map(erros.filter(x=>x.entrada).map(x=>[x.entrada,x])).values()];
    if(!erros.length)return true;
    const titulo=document.createElement('strong');
-   titulo.textContent='Confira '+erros.length+' campo(s) marcado(s):';
+   titulo.textContent='Falta corrigir '+erros.length+' campo(s) destacado(s) em vermelho:';
    const lista=document.createElement('ol');
    resumo.append(titulo,lista);
    for(const {entrada,mensagem} of erros){
     if(!entrada)continue;
     entrada.setAttribute('aria-invalid','true');
-    entrada.style.outline='2px solid #ff8c74';
+    entrada.style.outline='2px solid #ff4444';
     const label=entrada.closest('label');
     if(label){
      label.classList.add('akitemm-campo-pendente');
@@ -759,19 +761,20 @@
   });
  }
  // Recorte quadrado feito no aparelho. Não modifica cores nem o original salvo.
- function editarFoto(form){
-  const caixa=document.createElement('section');
+ function editarFoto(form,posicao=1){
+  const caixa=document.createElement('section');caixa.className='akitemm-midia-slot';
   const label=document.createElement('label');
   label.className='akitemm-escolher-foto';
-  label.textContent='Escolher foto do celular';
+  label.textContent=posicao===1?'＋ Foto de capa':'＋ Foto '+posicao;
+  const existente=document.createElement('img');existente.hidden=true;existente.alt='Foto '+posicao+' salva';
   const input=document.createElement('input');
   input.type='file';input.accept='image/jpeg,image/png,image/webp';
   input.dataset.recorteNativo='sim';
-  label.append(input);caixa.append(label);
-  const aviso=linha('JPEG, PNG ou WebP. Você pode ajustar o enquadramento antes de salvar.');
+  label.append(input);caixa.append(label,existente);
+  const aviso=linha(posicao===1?'Obrigatória · JPG, PNG ou WebP':'Opcional');
   caixa.append(aviso);
   const previa=document.createElement('canvas');
-  previa.width=640;previa.height=640;
+  previa.width=1200;previa.height=1200;
   previa.className='akitemm-foto-previa';previa.hidden=true;
   caixa.append(previa);
   // Foto inteira por padrão; só um botão opcional para cortar a capa.
@@ -800,19 +803,20 @@
    if(!imagem)return;
    const contexto=previa.getContext('2d');
    if(!contexto)throw Error('EDICAO_FOTO_INDISPONIVEL');
-   contexto.fillStyle='#ffffff';contexto.fillRect(0,0,640,640);
+   const tamanho=previa.width;
+   contexto.fillStyle='#ffffff';contexto.fillRect(0,0,tamanho,tamanho);
    if(!recorteAtivo){
     // Padrao: imagem inteira dentro da moldura, sem cortar o produto.
-    const escala=Math.min(640/imagem.naturalWidth,640/imagem.naturalHeight);
+    const escala=Math.min(tamanho/imagem.naturalWidth,tamanho/imagem.naturalHeight);
     const largura=imagem.naturalWidth*escala,altura=imagem.naturalHeight*escala;
-    contexto.drawImage(imagem,(640-largura)/2,(640-altura)/2,largura,altura);
+    contexto.drawImage(imagem,(tamanho-largura)/2,(tamanho-altura)/2,largura,altura);
     return;
    }
    const zoom=Number(controles[0].value);
    const lado=Math.min(imagem.naturalWidth,imagem.naturalHeight)/zoom;
    const x=(imagem.naturalWidth-lado)*Number(controles[1].value)/100;
    const y=(imagem.naturalHeight-lado)*Number(controles[2].value)/100;
-   contexto.drawImage(imagem,x,y,lado,lado,0,0,640,640);
+   contexto.drawImage(imagem,x,y,lado,lado,0,0,tamanho,tamanho);
   };
   recortar.addEventListener('click',()=>{
    if(!imagem)return;
@@ -823,7 +827,7 @@
   });
   for(const x of controles)x.addEventListener('input',redesenhar);
   input.addEventListener('change',()=>{
-   imagem=null;previa.hidden=true;ajustes.hidden=true;recorteAtivo=false;
+   imagem=null;carregando=null;previa.hidden=true;ajustes.hidden=true;recorteAtivo=false;
    recortar.hidden=true;recortar.textContent='Ajustar corte da foto (opcional)';
    const foto=input.files?.[0];
    if(!foto)return;
@@ -841,7 +845,7 @@
      if(img.naturalWidth<50||img.naturalHeight<50){
       reject(Error('FOTO_RESOLUCAO_BAIXA'));return;
      }
-     imagem=img;previa.hidden=false;ajustes.hidden=true;
+     imagem=img;existente.hidden=true;previa.hidden=false;ajustes.hidden=true;
      recortar.hidden=false;
      redesenhar();aviso.textContent='Foto enquadrada automaticamente. Se precisar, use Ajustar corte.';
      resolve();
@@ -855,6 +859,7 @@
   });
   return {
    campo:input,
+   carregar(f){if(f){existente.src=f.url;existente.hidden=false;aviso.textContent='Foto salva · toque para trocar';}},
    temFoto:()=>Boolean(input.files?.length),
    obter:async()=>{
     if(carregando)await carregando;
@@ -864,6 +869,28 @@
     if(!blob||blob.size<40||blob.size>3*1024*1024)
      throw Error('FOTO_PROCESSADA_INVALIDA');
     return blob;
+   }
+  };
+ }
+ function editarGaleria(form){
+  const grupo=document.createElement('section');grupo.className='akitemm-midia-grupo';
+  const titulo=document.createElement('h3');titulo.textContent='Fotos do produto';
+  grupo.append(titulo,linha('Toque em cada quadrinho para adicionar ou trocar. Apenas a capa é obrigatória.'));
+  const grade=document.createElement('div');grade.className='akitemm-midia-grade';
+  grupo.append(grade);form.append(grupo);
+  const slots=Array.from({length:10},(_,i)=>editarFoto(grade,i+1));
+  return {
+   campo:slots[0].campo,temFoto:()=>slots[0].temFoto(),
+   carregar(fotos){for(const f of fotos||[])slots[f.posicao-1]?.carregar(f);},
+   async obterTodas(){
+    const arquivos=[];
+    for(let i=0;i<slots.length;i++){
+     if(!slots[i].temFoto())continue;
+     try{const blob=await slots[i].obter();if(!blob)throw Error('FOTO_NAO_ABRIU');
+      arquivos.push({posicao:i+1,blob});}
+     catch(e){e.campoMidia=slots[i].campo;throw e;}
+    }
+    return arquivos;
    }
   };
  }
@@ -1073,7 +1100,7 @@
   const entrega=camposEntrega(form);
   const cor=escolhaCor();
   form.append(cor.label);
-  const foto=editarFoto(form);
+  const foto=editarGaleria(form);
   const opcoes=document.createElement('details');
   const resumo=document.createElement('summary');
   resumo.textContent='Código do produto (opcional)';
@@ -1236,13 +1263,14 @@
     void salvarRascunho().catch(falhaRascunho);
     return;
    }
-   // Para cadastro válido, confirmar o rascunho primeiro, depois criar.
-   try{await salvarRascunho();}
-   catch(e){falhaRascunho(e);aberto=false;return;}
+   // Validar a mídia antes de qualquer cadastro; rascunho auxiliar não bloqueia publicação.
+   let imagens;
+   try{imagens=await foto.obterTodas();}
+   catch(e){guia.mostrar([{entrada:e.campoMidia||foto.campo,mensagem:'Não foi possível preparar esta foto. Escolha outra imagem.'}]);aberto=false;return;}
+   try{await salvarRascunho();}catch(e){falhaRascunho(e);}
    criar.disabled=true;estado.textContent='Salvando no catálogo real...';
    let criado=false;
    try{
-    const imagem=await foto.obter();
     const sessao=await fetchJson('/api/admin/comercial/sessao');
     const csrf=sessao.csrfToken;
     if(typeof csrf!=='string')throw Error('OPERADOR_SESSAO_INVALIDA');
@@ -1257,8 +1285,8 @@
     await salvarCor(id,csrf,cor.s.value);
     await salvarAnuncio(id,csrf,anuncio,0);
     await salvarEntrega(id,csrf,entrega,0);
-    if(imagem){
-     await salvarFoto(id,csrf,imagem,1);
+    if(imagens.length){
+     for(const {blob,posicao} of imagens)await salvarFoto(id,csrf,blob,posicao);
      const posicaoSalva=await vincularQuadradinho(indice,id);
      await publicarFoto(id,csrf);
      atualizarLoja();
@@ -1324,13 +1352,10 @@
    tipo:'textarea',maxLength:2000
   });
   const anuncio=camposAnuncio(form);
+  const entrega=camposEntrega(form);
   const cor=escolhaCor();
   form.append(cor.label);
-  const foto=editarFoto(form);
-  const galeriaFotos=select('Foto do produto',Array.from({length:10},(_,i)=>[
-   String(i+1),i===0?'Foto principal':'Foto '+(i+1)
-  ]));
-  form.append(galeriaFotos.label);
+  const foto=editarGaleria(form);
   const salvarDados=document.createElement('button');
   salvarDados.type='submit';
   salvarDados.textContent='Salvar dados, preços e cor física';
@@ -1379,12 +1404,13 @@
   };
   try{
    travar(true);
-   const [sessao,dados,regras,precos,entregaDados]=await Promise.all([
+   const [sessao,dados,regras,precos,entregaDados,galeriaSalva]=await Promise.all([
     fetchJson('/api/admin/comercial/sessao'),
     fetchJson('/api/admin/catalogo-midia/produtos/'+id),
     fetchJson('/api/admin/comercial/classificacoes'),
     fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio'),
-    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/entrega')
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/entrega'),
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/fotos')
    ]);
    if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<24||
       !Number.isSafeInteger(dados.revisao)||dados.revisao<1)
@@ -1393,6 +1419,7 @@
    nome.value=dados.nome;descricao.value=dados.descricao;
    anuncio.preencher(precos);revisaoAnuncio=precos.revisao;
    entrega.preencher(entregaDados);revisaoEntrega=entregaDados.revisao;
+   foto.carregar(galeriaSalva.fotos);
    estaPublicado=dados.estado==='PUBLICADO';
    const regra=regras.produtos?.find(r=>r.produtoId===id);
    if(regra)cor.s.value=regra.cor;
@@ -1418,6 +1445,7 @@
     if(descricao.value.length>2000)
      erros.push({entrada:descricao,mensagem:'A descrição aceita até 2.000 caracteres.'});
     erros.push(...anuncio.validarCampos());
+    erros.push(...entrega.validarCampos());
     if(!guia.mostrar(erros))return;
     void botoesAtualizar(async()=>{
      const res=await fetchJson('/api/admin/catalogo-midia/produtos/'+id,{
@@ -1441,15 +1469,18 @@
      'Classificação comercial salva; os filtros seguem as regras do LOOP.');
    });
    salvarImagem.addEventListener('click',()=>{
+    const erros=[...anuncio.validarCampos({paraVitrine:true}),...entrega.validarCampos()];
+    if(nome.value.trim().length<2)erros.unshift({entrada:nome,mensagem:'Informe o nome do produto.'});
+    if(!foto.temFoto()&&!galeriaSalva.fotos?.some(f=>f.posicao===1))erros.push({entrada:foto.campo,mensagem:'Escolha a foto de capa.'});
+    if(!guia.mostrar(erros))return;
     void botoesAtualizar(async()=>{
-     const imagem=await foto.obter();
-     if(!imagem){estado.textContent='Selecione uma foto antes de publicar. O botão de foto está no formulário.';
-      const campo=form.querySelector('.akitemm-escolher-foto');
-      campo?.scrollIntoView({block:'center',behavior:'smooth'});
-      campo?.focus();throw Error('ESCOLHA_UMA_FOTO');
-     }
-     const posicaoFoto=Number(galeriaFotos.s.value);
-     await salvarFoto(id,csrf,imagem,posicaoFoto);
+     let imagens;try{imagens=await foto.obterTodas();}catch(e){guia.mostrar([{entrada:e.campoMidia||foto.campo,mensagem:'Escolha outra imagem para este campo.'}]);throw e;}
+     const res=await fetchJson('/api/admin/catalogo-midia/produtos/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':csrf},body:JSON.stringify({titulo:nome.value.trim(),descricao:descricao.value.trim(),revisaoEsperada:revisaoAtual})});
+     revisaoAtual=res.revisao;
+     const a=await salvarAnuncio(id,csrf,anuncio,revisaoAnuncio);revisaoAnuncio=a.revisao;
+     const en=await salvarEntrega(id,csrf,entrega,revisaoEntrega);revisaoEntrega=en.revisao;
+     await salvarCor(id,csrf,cor.s.value);
+     for(const {blob,posicao} of imagens)await salvarFoto(id,csrf,blob,posicao);
      if(!slotsAtuais.some(x=>x.produtoId===id))
       await vincularQuadradinho(1,id);
      if(!estaPublicado){
