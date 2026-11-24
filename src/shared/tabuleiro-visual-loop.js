@@ -97,7 +97,7 @@
     const numeroPosicao=Number.isSafeInteger(p?.numero)&&p.numero>0?p.numero:null;
     const ouro=dourada(p);
     const nick=!ouro&&typeof p?.nickVisual==='string'&&/^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:'';
-    const nomeTeste=!ouro&&exibirNomesTeste===true&&typeof p?.nome==='string'?p.nome.trim().slice(0,70):'';
+    const nomeTeste=exibirNomesTeste===true&&!ouro&&typeof p?.nome==='string'?p.nome.trim().slice(0,70):'';
     const detalhe=nick||nomeTeste;
     const ordemBranca=document.createElement('span');
     ordemBranca.className='loop03-fila-ordinal-branca';
