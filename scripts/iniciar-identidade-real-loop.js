@@ -314,7 +314,9 @@ async function iniciar(ambiente=process.env,opcoes={}){
    listarVitrinePreparacao:args=>catalogoMidia.listarVitrinePreparacao(args),
    listarFotosProdutoCompartilhado:args=>
     catalogoMidia.listarFotosProdutoCompartilhado(args),
-   abrirFotoPublicada:args=>catalogoMidia.abrirFotoPublicada(args)
+   abrirFotoPublicada:args=>catalogoMidia.abrirFotoPublicada(args),
+   listarVideoProdutoCompartilhado:args=>catalogoMidia.listarVideoProdutoCompartilhado(args),
+   abrirVideoPublicado:args=>catalogoMidia.abrirVideoPublicado(args)
   }):null;
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
