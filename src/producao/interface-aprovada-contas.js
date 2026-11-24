@@ -566,6 +566,7 @@
     '<div id="adminAvulsasClienteLista" hidden></div>',
     '<button type="button" id="adminMaisAvulsasCliente" hidden>Ver mais compras avulsas</button></div>',
     '</div></section>',
+    '<section id="adminGanhosCliente" class="loop03-admin-compras" hidden><h3>Dados financeiros do titular</h3><div id="adminGanhosClienteDados" class="loop03-compras-colunas" role="status" aria-live="polite"></div></section>',
     '<form id="adminCorrigeCadastro" class="loop03-admin-campos" hidden>',
     '<label for="adminNomeCadastro">Nome</label><input id="adminNomeCadastro" maxlength="90" autocomplete="off" required>',
     '<label for="adminTelefoneCadastro">Telefone</label><input id="adminTelefoneCadastro" inputmode="tel" autocomplete="off" maxlength="24">',
@@ -576,6 +577,7 @@
    conteudoFinanceiro:[
     '<h2>Financeiro · Operador</h2>',
     '<div id="adminResumoFinanceiro" class="loop03-admin-dado" role="status">Consultando controle de caixa e catraca…</div>',
+    '<section id="adminDistribuicaoFinanceira" class="loop03-admin-compras"><h3>Distribuição financeira LOOP</h3><div id="adminDistribuicaoFinanceiraDados" class="loop03-compras-colunas" role="status" aria-live="polite">Consultando livro financeiro e cofres…</div></section>',
     '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarFinanceiro">Atualizar</button><a href="/administrador">Gestão financeira na Central</a></div>'
    ],
    conteudoMeusPedidos:[
@@ -824,6 +826,8 @@
    historicoCadastroNick=null;historicoCadastroOffset=0;
    avulsasCadastroNick=null;avulsasCadastroOffset=0;avulsasRequisitando=false;
    if(comprasPainel)comprasPainel.hidden=true;
+   if($('adminGanhosCliente'))$('adminGanhosCliente').hidden=true;
+   $('adminGanhosClienteDados')?.replaceChildren();
    $('adminComprasClienteLista')?.replaceChildren();
    $('adminAvulsasClienteLista')?.replaceChildren();
    if($('adminResumoUnidadesCliente'))$('adminResumoUnidadesCliente').textContent='';
@@ -1047,6 +1051,7 @@
     $('adminMotivoCadastro').value='';
     $('adminCorrigeCadastro').hidden=false;
     void carregarComprasCadastro(x.nick);
+    void carregarDistribuicaoFinanceira({nick:x.nick,selecionado:()=>versao===consultaCadastroVersao&&nickCadastroConsultado===x.nick});
    }catch(err){
     if(versao!==consultaCadastroVersao)return;
     estado.textContent='Consulta não realizada: '+err.message;
@@ -1390,9 +1395,60 @@
     'Contadores comerciais indisponíveis: '+e.message;
   }
  }
+ // O quadro geral e a ficha privada usam a mesma fonte financeira.
+ async function carregarDistribuicaoFinanceira({nick=null,selecionado=()=>true}={}){
+  if(!modoOperadorAtual)return;
+  const painel=$(nick?'adminGanhosCliente':'adminDistribuicaoFinanceira');
+  const alvo=$(nick?'adminGanhosClienteDados':'adminDistribuicaoFinanceiraDados');
+  if(!painel||!alvo)return;
+  const atual=()=>modoOperadorAtual&&(!nick||selecionado());
+  if(!atual())return;
+  painel.hidden=false;alvo.textContent='Consultando livro financeiro…';
+  const dinheiro=n=>Number.isSafeInteger(n)&&n>=0?moedaCofres.format(n/100):'—';
+  const cartao=(rotulo,valor,nota)=>{
+   const div=document.createElement('div');div.className='loop03-compras-coluna';
+   const h=document.createElement('h4');h.textContent=rotulo;
+   const v=document.createElement('strong');v.className='loop03-compras-total';v.textContent=valor;
+   const p=document.createElement('p');p.className='loop03-compras-aviso';p.textContent=nota;
+   div.append(h,v,p);return div;
+  };
+  try{
+   const r=await fetch('/api/admin/loop/distribuicao-financeira'+
+    (nick?'?nick='+encodeURIComponent(nick):''),{credentials:'same-origin',cache:'no-store'});
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok||d.fonte!=='LIVRO_FINANCEIRO_REAL'||d.somenteLeitura!==true||
+      d.saqueRealHabilitado!==false||!['contempladoCentavos','bonusCentavos',
+       'pagoCentavos','saldoRegistradoCentavos','titularesContemplados'].every(
+       k=>Number.isSafeInteger(d[k])&&d[k]>=0))
+    throw Error(d.erro||'FONTE_FINANCEIRA_INVALIDA');
+   if(!atual())return;
+   const cards=[cartao(nick?'Ganhos em posições':'Titulares contemplados',
+    dinheiro(d.contempladoCentavos),d.titularesContemplados+' titular(es) com crédito registrado'),
+    cartao('Comissões por indicação',dinheiro(d.bonusCentavos),'Créditos registrados no livro'),
+    cartao('Valores pagos',dinheiro(d.pagoCentavos),'Débitos registrados'),
+    cartao('Saldo registrado',dinheiro(d.saldoRegistradoCentavos),'Não equivale a saldo bancário liberado')];
+   if(nick){
+    cards.push(cartao('Comissões a conferir',dinheiro(d.comissoesAConferirCentavos),
+     'Apuração pendente; não é promessa de ganho nem saldo disponível'));
+    cards.push(cartao('Ganhos futuros','—','Dependem de eventos válidos e comprovação financeira'));
+   }else{
+    if(!Array.isArray(d.cofres)||d.cofres.length!==3)throw Error('COFRES_FONTE_INVALIDA');
+    for(const [codigo,nome] of [['INVESTIMENTO','Cofre de investimento'],
+      ['RESERVA','Cofre de reserva'],['CENTRAL','Cofre central']]){
+     const cofre=d.cofres.find(x=>x.codigo===codigo);
+     if(!cofre)throw Error('COFRE_AUSENTE');
+     cards.push(cartao(nome,cofre.estado==='CONCILIADO'?dinheiro(cofre.saldoCentavos):'—',
+      cofre.estado==='CONCILIADO'?'Saldo bancário conciliado':'Aguardando conciliação bancária'));
+    }
+    cards.push(cartao('Cofre de douradas','—','Aguardando conciliação bancária'));
+   }
+   alvo.replaceChildren(...cards);
+  }catch(e){if(atual())alvo.textContent='Dados financeiros indisponíveis: '+e.message;}
+ }
  async function carregarAbaOperador(id){
   if(!modoOperadorAtual)return;
   if(id==='abaPosicoes')void carregarIndicadoresComerciaisOperador();
+  if(id==='abaFinanceiro')void carregarDistribuicaoFinanceira();
   const posicoesEmTeste=id==='abaPosicoes'&&visualTesteModulo!==null;
   const rotas={
    abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
