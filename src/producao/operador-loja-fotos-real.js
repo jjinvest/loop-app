@@ -553,16 +553,16 @@
        !fornecedorSku.value.trim()||
        (modo==='FORNECEDOR_MANUAL'&&!fornecedorContato.value.trim())))
      throw Error('INFORME_DADOS_DO_FORNECEDOR');
-    if(fornecedorSku.value.trim()&&
+    if(modo!=='PROPRIO'&&fornecedorSku.value.trim()&&
        !ID.test(fornecedorSku.value.trim()))
      throw Error('SKU_DO_FORNECEDOR_INVALIDO');
     return {origem:modo==='PROPRIO'?'PROPRIO':'API',
      categoria:categoria.value.trim(),marca:marca.value.trim(),
      corDescricao:corDescricao.value.trim(),
      precoCentavos,promocaoCentavos,quantidade,
-     canal:{canal:modo,fornecedorNome:fornecedorNome.value.trim(),
-      fornecedorSku:fornecedorSku.value.trim(),
-      fornecedorContato:fornecedorContato.value.trim(),
+     canal:{canal:modo,fornecedorNome:modo==='PROPRIO'?'':fornecedorNome.value.trim(),
+      fornecedorSku:modo==='PROPRIO'?'':fornecedorSku.value.trim(),
+      fornecedorContato:modo==='PROPRIO'?'':fornecedorContato.value.trim(),
       revisaoEsperada:revisaoCanal}};
    },
    canalGravado(revisao){revisaoCanal=revisao;},
@@ -1169,6 +1169,7 @@
   let revisaoRascunho=rascunhoInicial?.revisao||0;
   let salvarEmCurso=Promise.resolve(),temporizadorRascunho=null;
   let formularioFinalizado=false,formularioAlterado=false;
+  const idAutomatico=slugManual();let produtoJaCriado=null;
   const avisoRascunho=linha('Os campos digitados são salvos como rascunho. '+
    'A foto ainda não enviada precisa ser selecionada novamente.');
   avisoRascunho.className='akitemm-estado-rascunho';
@@ -1300,7 +1301,7 @@
    // Mostrar cada campo errado imediatamente, sem esperar uma requisição.
    // O salvamento do rascunho não bloqueia a correção visual.
    const titulo=nome.value.trim();
-   const informado=codigo.value.trim(),id=informado||slugManual();
+   const informado=codigo.value.trim(),id=produtoJaCriado||informado||idAutomatico;
    const erros=[];
    if(titulo.length<2||titulo.length>150)
     erros.push({entrada:nome,mensagem:'Digite o nome do produto (2 a 150 caracteres).'});
@@ -1322,11 +1323,12 @@
    catch(e){guia.mostrar([{entrada:e.campoMidia||foto.campo,mensagem:'Não foi possível preparar esta foto. Escolha outra imagem.'}]);aberto=false;return;}
    try{await salvarRascunho();}catch(e){falhaRascunho(e);}
    criar.disabled=true;estado.textContent='Salvando no catálogo real...';
-   let criado=false;
+   let criado=Boolean(produtoJaCriado);
    try{
     const sessao=await fetchJson('/api/admin/comercial/sessao');
     const csrf=sessao.csrfToken;
     if(typeof csrf!=='string')throw Error('OPERADOR_SESSAO_INVALIDA');
+    if(!produtoJaCriado){
     const produto=await fetchJson('/api/admin/comercial/produtos-cadastrar',{
      method:'POST',headers:{'Content-Type':'application/json',
       'X-Loop-Admin-Csrf':csrf},
@@ -1334,10 +1336,16 @@
     });
     if(produto.produtoId!==id||produto.ativo!==false)
      throw Error('CADASTRO_NAO_CONFIRMADO');
-    criado=true;
+    criado=true;produtoJaCriado=id;codigo.disabled=true;
+    }else{
+     const anterior=await fetchJson('/api/admin/catalogo-midia/produtos/'+id);
+     await fetchJson('/api/admin/catalogo-midia/produtos/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':csrf},body:JSON.stringify({titulo,descricao:desc.value.trim(),revisaoEsperada:anterior.revisao})});
+    }
     await salvarCor(id,csrf,cor.s.value);
-    await salvarAnuncio(id,csrf,anuncio,0);
-    await salvarEntrega(id,csrf,entrega,0);
+    const [aAnterior,eAnterior]=await Promise.all([fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio'),fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/entrega')]);
+    anuncio.canalGravado(aAnterior.canalFornecedor?.revisao??0);
+    await salvarAnuncio(id,csrf,anuncio,aAnterior.revisao);
+    await salvarEntrega(id,csrf,entrega,eAnterior.revisao);
     if(imagens.length){
      for(const {blob,posicao} of imagens)await salvarFoto(id,csrf,blob,posicao);
      await foto.video.salvar(id,csrf);
@@ -1380,14 +1388,9 @@
      codigo;
     estado.textContent=(criado?'Produto registrado, mas há etapas pendentes: ':
      'Não foi possível concluir o cadastro: ')+dica;
-    if(criado){
-     formularioFinalizado=true;
-     const continuar=document.createElement('button');
-     continuar.type='button';continuar.className='akitemm-editor-secundario';
-     continuar.textContent='Corrigir e concluir este produto';
-     continuar.addEventListener('click',()=>{dialogo.close();void abrirProduto(id);});
-     corpo.append(continuar);
-    }else criar.disabled=false;
+    // Continuar na mesma ficha e manter a mídia selecionada, sem duplicar produto.
+    criar.disabled=false;
+    if(criado)criar.textContent='Corrigir e concluir este produto';
    }finally{aberto=false;}
   });
  }
