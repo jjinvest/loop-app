@@ -76,7 +76,7 @@ test('filas mostram ordem na esfera e numero proprio ao lado',()=>{
  visual.preencherFila('motorFilaB',21,'B');
  assert.equal(el.motorFilaB.children.length,21,
   'cada lugar existente deve aparecer, nao reduzir fila a um resumo');
- assert.equal(el.motorFilaB.children[0].children[0].textContent,'1º');
+ assert.equal(el.motorFilaB.children[0].children[0].textContent,'1');
  assert.equal(el.motorFilaB.children[20].children[0].textContent,'21');
  assert.equal(el.motorFilaB.children[0].children[2].children[0].textContent,
   '');
