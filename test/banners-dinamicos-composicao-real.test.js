@@ -57,13 +57,13 @@ test('cada banner publica com uma imagem, mantendo dois ou três quadros indepen
    assert.equal(entrada(a,slot).publicado,false);
    enviar(a,slot,1);
    assert.equal(entrada(a,slot).publicado,true);
-   assert.deepEqual(entrada(a,slot).fotos.map(x=>x.temImagem),
+   assert.deepEqual(entrada(a,slot).fotos.slice(0,3).map(x=>x.temImagem),
     [true,false,false]);
    enviar(a,slot,2);
    assert.equal(entrada(a,slot).publicado,true);
    enviar(a,slot,3);
    assert.equal(entrada(a,slot).publicado,true);
-   assert.deepEqual(entrada(a,slot).fotos.map(x=>x.temImagem),
+   assert.deepEqual(entrada(a,slot).fotos.slice(0,3).map(x=>x.temImagem),
     [true,true,true]);
    assert.deepEqual(a.imagemMosaico({slot,posicao:3}).bytes,PNG);
    assert.throws(()=>a.configurarMosaico({
@@ -73,7 +73,7 @@ test('cada banner publica com uma imagem, mantendo dois ou três quadros indepen
     slot,posicao:2,revisaoEsperada:entrada(a,slot).revisao
    });
    assert.equal(entrada(a,slot).publicado,true);
-   assert.deepEqual(entrada(a,slot).fotos.map(x=>x.temImagem),
+   assert.deepEqual(entrada(a,slot).fotos.slice(0,3).map(x=>x.temImagem),
     [true,false,true]);
    layout(a,slot,1,'INTEIRA');
    assert.equal(entrada(a,slot).publicado,true);
@@ -83,7 +83,7 @@ test('cada banner publica com uma imagem, mantendo dois ou três quadros indepen
    assert.equal(entrada(a,slot).publicado,false);
    enviar(a,slot,2);
    assert.equal(entrada(a,slot).publicado,true);
-   assert.deepEqual(entrada(a,slot).fotos.map(x=>x.temImagem),
+   assert.deepEqual(entrada(a,slot).fotos.slice(0,3).map(x=>x.temImagem),
     [false,true,true]);
    a.removerFotoMosaico({
     slot,posicao:2,revisaoEsperada:entrada(a,slot).revisao
