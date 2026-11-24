@@ -416,7 +416,7 @@
     },
     {
       "path": "scripts/validar-conta-unica-candidato-browser.js",
-      "sha": "a097c241e7e7dcd89f57b3105faf351f6462e35d"
+      "sha": "91daa294aa3a67e280e3ca04cff2489a47f5faca"
     },
     {
       "path": "scripts/validar-convergencia-psp-candidato-browser.js",
