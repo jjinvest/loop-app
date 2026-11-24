@@ -123,7 +123,7 @@
     if(!inicial.disabled)inicial.addEventListener('click',evento=>{
      evento.stopPropagation();aoAbrirPosicao(p,tipo);
     });
-    if(p?.minha===true&&!ouro)linha.classList.add('loop03-minha-fila');
+    linha.classList.toggle('loop03-minha-fila',p?.minha===true&&!ouro);
     linha.setAttribute('aria-label','Fila '+tipo+' · lugar '+ordem+' · '+rotulo);
     linha.append(ordemBranca,inicial);
     if(!ouro&&Number.isSafeInteger(p?.indicacoesVinculadas)&&p.indicacoesVinculadas>0){
