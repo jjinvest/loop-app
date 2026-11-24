@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "23/11/2026: proprietário solicitou expressamente que o banner comprido da AKITEMM ocupe toda a largura da loja, acima da vitrine e do carrinho, mantendo altura compacta e enquadramento.",
+  "autorizaçãoAtual": "24/11/2026: proprietário autorizou expressamente a separação da esfera branca ordinal e esfera de estado, com 10 linhas no celular, 20 no PC e rolagem até 100 lugares. CSS limitado às filas do tabuleiro.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -133,6 +133,7 @@
     "22/11/2026: complemento da mesma autorização de filtros AKITEMM: padronizar exclusivamente a altura dos três controles Todos/Busca/Ofertas em 44px após a validação de navegador identificar diferença vertical; manter todos os rótulos, cores e cliques.",
     "23/11/2026: o proprietário autorizou apenas quatro ajustes na aba Tabuleiro do LOOP, sem mudar regras: título visível totalmente em maiúsculas 'PARTICIPAÇÃO DE LUCRO / LOOP 3.0'; ampliar em computador e celular a altura dos quadros das filas A e B para acomodar dez ou mais posições, com rolagem; eliminar dentro da catraca a mensagem numérica redundante 'eventos confirmados', '0 de 6' e '6 de 6'; manter a frase existente 'A catraca completa um ciclo...' e substituí-la apenas quanto ao estado do relógio por 'RELÓGIO DE PARTICIPAÇÃO DE LUCRO — FORA DO TURNO OU PAUSADO' (ou 'EM ANDAMENTO'/'MODO LIVRE' conforme status), sem exibir rótulos de teste. Mudança visual limitada a src/candidato/checkout-candidato-ui.html e src/candidato/escritorio-cliente-integrado.css. Os outros 22 arquivos visuais permanecem protegidos.",
     "22/11/2026: proprietário autorizou diretamente por fotografia corrigir a faixa amarela e sobreposições da vitrine AKITEMM, mantendo filtros, marcas, controles e operações. Mudança visual restrita a src/laboratorio/loja-cliente-demo.css; componentes de suporte em src/candidato/vitrine-horizontal.css e JS do operador, com regressão PC/celular.",
-    "23/11/2026: autorizado deslocar exclusivamente o banner da AKITEMM para a primeira linha panorâmica, com 100% da largura da grade; vitrine, carrinho, fotos e zoom permanecem no padrão."
+    "23/11/2026: autorizado deslocar exclusivamente o banner da AKITEMM para a primeira linha panorâmica, com 100% da largura da grade; vitrine, carrinho, fotos e zoom permanecem no padrão.",
+    "24/11/2026: proprietário autorizou expressamente a separação da esfera branca ordinal e esfera de estado, com 10 linhas no celular, 20 no PC e rolagem até 100 lugares. CSS limitado às filas do tabuleiro."
   ]
 }
