@@ -91,7 +91,7 @@ test('LEDs e 3 indicadores compartilhados recomeçam em zero no marco',()=>{
  assert.equal(elem('loop03Giros24Integrado').textContent,'0');
  assert.equal(elem('loop03LuzesHoraIntegrado').textContent,'0 / 60');
  assert.equal(elem('loop03NumeroIntegrado').textContent,'0 / 6');
- assert.match(elem('estadoRelogioTabuleiro').textContent,/Relógio: 0\/6 luzes · 0\/60 do dia/);
+ assert.match(elem('estadoRelogioTabuleiro').textContent,/Eventos: 0\/6 luzes · 0\/60 do dia/);
  for(let i=1;i<=6;i++)
   assert.equal(elem('motorBolinha'+i).classList.contains('loop03-relogio-luz-visual'),false);
 });
