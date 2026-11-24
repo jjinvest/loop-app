@@ -639,17 +639,20 @@
      ['adminAzuisPendentes','azuisPendentes']])
      $(id).textContent=String(d[k]);
     $('adminCofreDouradasPosicoes').textContent=String(d.douradasTotal);
-    $('adminCofreDouradasSaldo').textContent='—';
-    $('adminCofreDouradasEstado').textContent=
-     'Todas as douradas destinadas ao cofre · valor aguardando prova bancária';
+    if(!modoOperadorAtual)return;
+    if(visualTesteModulo==='CATRACA')aplicarSaldoCompartilhado(await consultarSaldoCompartilhado());
+    else{
+     $('adminCofreDouradasSaldo').textContent='—';
+     $('adminCofreDouradasEstado').textContent='Aguardando conciliação bancária';
+    }
     ultimaLeituraDouradas=Date.now();
    }catch{
     for(const id of ['adminDouradasTotal','adminDouradasManuais',
      'adminDouradasConvertidas','adminDouradasDesistentes',
      'adminAzuisPendentes','adminCofreDouradasPosicoes',
      'adminCofreDouradasSaldo'])if($(id))$(id).textContent='—';
-    $('adminCofreDouradasEstado').textContent=
-     'Contagem indisponível; sem saldo bancário presumido.';
+    $('adminCofreDouradasEstado').textContent='Contagem indisponível.';
+    if(visualTesteModulo==='CATRACA'&&ultimoFluxoCompartilhado)aplicarSaldoCompartilhado(ultimoFluxoCompartilhado);
    }finally{douradasBusy=false;}
   }
   $('adminDouradasAtualizar')?.addEventListener('click',()=>
@@ -1406,7 +1409,13 @@
   if(!painel||!alvo)return;
   const atual=()=>modoOperadorAtual&&(!nick||selecionado());
   if(!atual())return;
-  painel.hidden=false;alvo.textContent='Consultando livro financeiro…';
+  painel.hidden=false;
+  if(!nick&&visualTesteModulo==='CATRACA'){
+   try{aplicarSaldoCompartilhado(await consultarSaldoCompartilhado());}
+   catch{if(modoOperadorAtual&&visualTesteModulo==='CATRACA')alvo.textContent='Saldos indisponíveis.';}
+   return;
+  }
+  alvo.textContent='Consultando livro financeiro…';
   const dinheiro=n=>Number.isSafeInteger(n)&&n>=0?moedaCofres.format(n/100):'—';
   const cartao=(rotulo,valor,nota)=>{
    const div=document.createElement('div');div.className='loop03-compras-coluna';
@@ -1424,7 +1433,7 @@
        'pagoCentavos','saldoRegistradoCentavos','titularesContemplados'].every(
        k=>Number.isSafeInteger(d[k])&&d[k]>=0))
     throw Error(d.erro||'FONTE_FINANCEIRA_INVALIDA');
-   if(!atual())return;
+   if(!atual()||(!nick&&visualTesteModulo==='CATRACA'))return;
    const cards=[cartao(nick?'Ganhos em posições':'Titulares contemplados',
     dinheiro(d.contempladoCentavos),d.titularesContemplados+' titular(es) com crédito registrado'),
     cartao('Comissões por indicação',dinheiro(d.bonusCentavos),'Créditos registrados no livro'),
@@ -1533,6 +1542,48 @@
   style:'currency',currency:'BRL'
  });
  let consultaCofresEmCurso=false,ultimaConsultaCofres=0;
+ let ultimoFluxoCompartilhado=null;
+ function conferirSaldoCompartilhado(f){
+  if(f?.origem!=='RECEBIMENTOS_FICTICIOS_SQLITE'||f.financeiroReal!==false||
+   ![f.saldoCentavos,f.recebidoCentavos,...['LOOP_ESQUERDA','LOOP_DIREITA','LOOP_DOURADAS','BONUS','LOOP_CENTRO'].map(k=>f.destinos?.[k])].every(n=>Number.isSafeInteger(n)&&n>=0)||
+   f.saldoCentavos+Object.values(f.destinos).reduce((n,v)=>n+v,0)!==f.recebidoCentavos)
+   throw Error('SALDOS_DIVERGENTES');
+  return {CENTRAL:f.saldoCentavos,INVESTIMENTO:f.destinos.LOOP_ESQUERDA,
+   RESERVA:f.destinos.LOOP_DIREITA,DOURADAS:f.destinos.LOOP_DOURADAS,
+   BONUS:f.destinos.BONUS,PARTICIPACAO:f.destinos.LOOP_CENTRO};
+ }
+ function aplicarSaldoCompartilhado(f){
+  if(!modoOperadorAtual||visualTesteModulo!=='CATRACA')return;
+  const saldos=conferirSaldoCompartilhado(f);
+  ultimoFluxoCompartilhado=f;
+  for(const [codigo,id] of Object.entries(cofresIds)){
+   if($('loop03Cofre'+id))$('loop03Cofre'+id).textContent=moedaCofres.format(saldos[codigo]/100);
+   if($('loop03Cofre'+id+'Estado'))$('loop03Cofre'+id+'Estado').textContent='Saldo interno';
+  }
+  if($('loop03CofresEstado'))$('loop03CofresEstado').textContent='';
+  if($('adminCofreDouradasSaldo'))$('adminCofreDouradasSaldo').textContent=moedaCofres.format(saldos.DOURADAS/100);
+  if($('adminCofreDouradasEstado'))$('adminCofreDouradasEstado').textContent='Saldo interno';
+  const resumo=$('adminDistribuicaoFinanceiraDados');
+  if(resumo){
+   const cards=Object.entries({CENTRAL:'Caixa central',INVESTIMENTO:'Cofre de investimento',
+    RESERVA:'Cofre de reserva',DOURADAS:'Cofre de douradas',BONUS:'Comissões de bônus',
+    PARTICIPACAO:'Participação de lucro dos clientes'}).map(([k,nome])=>{
+     const div=document.createElement('div');div.className='loop03-compras-coluna';
+     const h=document.createElement('h4');h.textContent=nome;
+     const v=document.createElement('strong');v.className='loop03-compras-total';v.textContent=moedaCofres.format(saldos[k]/100);
+     div.append(h,v);return div;
+    });
+   resumo.replaceChildren(...cards);
+  }
+ }
+ async function consultarSaldoCompartilhado(){
+  const r=await fetch('/api/admin/loop/testes-modulos',{credentials:'same-origin',cache:'no-store'});
+  if(!r.ok)throw Error('SALDOS_INDISPONIVEIS');
+  const d=await r.json();
+  if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE')throw Error('ORIGEM_INVALIDA');
+  const f=d.catraca?.financeiro;
+  conferirSaldoCompartilhado(f);return f;
+ }
  function limparCofresOperador(){
   for(const id of Object.values(cofresIds)){
    if($('loop03Cofre'+id))$('loop03Cofre'+id).textContent='—';
@@ -1554,6 +1605,11 @@
  async function carregarCofresOperador({forcar=false}={}){
   const painel=$('loop03CofresOperador'),botao=$('loop03CofresAtualizar');
   if(!modoOperadorAtual||!painel||painel.hidden||consultaCofresEmCurso)return;
+  if(visualTesteModulo==='CATRACA'){
+   try{aplicarSaldoCompartilhado(await consultarSaldoCompartilhado());}
+   catch{if(modoOperadorAtual&&visualTesteModulo==='CATRACA')limparCofresOperador();}
+   return;
+  }
   if(!forcar&&Date.now()-ultimaConsultaCofres<60000)return;
   consultaCofresEmCurso=true;
   if(botao)botao.disabled=true;
@@ -1575,7 +1631,7 @@
          !Number.isSafeInteger(cofre.atualizadoEm)):
         cofre.saldoCentavos!==null)))
     throw Error('COFRES_FONTE_NAO_CONFIAVEL');
-   if(!modoOperadorAtual||painel.hidden)return;
+   if(!modoOperadorAtual||painel.hidden||visualTesteModulo==='CATRACA')return;
    let confirmados=0;
    for(const cofre of d.cofres){
     const id=cofresIds[cofre.codigo];
@@ -1593,7 +1649,7 @@
     'Aguardando conciliação externa. Nenhum saldo bancário confirmado.';
    ultimaConsultaCofres=Date.now();
   }catch{
-   if(!modoOperadorAtual||painel?.hidden)return;
+   if(!modoOperadorAtual||painel?.hidden||visualTesteModulo==='CATRACA')return;
    limparCofresOperador();
    $('loop03CofresEstado').textContent=
     'Saldos indisponíveis. Nenhum valor não comprovado será mostrado.';
@@ -1620,6 +1676,9 @@
   if(!modoOperadorAtual||!cenarioDisponivel)return;
   ++versaoEntradaOperador;
   visualTesteModulo=ativo?'CATRACA':null;
+  ultimoFluxoCompartilhado=null;ultimaConsultaCofres=0;limparCofresOperador();
+  void carregarCofresOperador({forcar:true});
+  void carregarDistribuicaoFinanceira();
   atualizarSeletorCenarioOperador();
   $('abaTabuleiro')?.click();
   void carregarTabuleiroOperador();
@@ -1709,7 +1768,7 @@
   limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
-  ++versaoEntradaOperador;cenarioDisponivel=false;visualTesteModulo=null;
+  ++versaoEntradaOperador;cenarioDisponivel=false;visualTesteModulo=null;ultimoFluxoCompartilhado=null;
   atualizarSeletorCenarioOperador();
   if($('adminFluxoAoVivo'))$('adminFluxoAoVivo').hidden=true;
   if($('adminFluxoFinanceiroTeste'))$('adminFluxoFinanceiroTeste').hidden=true;
@@ -3324,6 +3383,11 @@
   quantidadeCursos.className='loop03-compras-total';
   quantidadeCursos.textContent=String(vendas.cursos);
   digital.append(cursos,quantidadeCursos);
+  const total=cartao('Total pago pela empresa',dinheiro(f.destinos.BONUS+f.destinos.LOOP_CENTRO),true);
+  const partes=document.createElement('div');partes.className='loop03-distribuicao-partes';
+  partes.append(cartao('Bônus',dinheiro(f.destinos.BONUS)),
+   cartao('Participação de lucro',dinheiro(f.destinos.LOOP_CENTRO)));
+  total.append(partes);
   alvo.replaceChildren(
    digital,cartao('Produtos físicos vendidos',String(vendas.fisicos)),
    cartao('Caixa central',dinheiro(f.saldoCentavos),true),
@@ -3332,7 +3396,7 @@
    cartao('Cofre de douradas',dinheiro(f.destinos.LOOP_DOURADAS),true),
    cartao('Comissões de bônus',dinheiro(f.destinos.BONUS)),
    cartao('Participação de lucro dos clientes',dinheiro(f.destinos.LOOP_CENTRO)),
-   cartao('Total pago pela empresa',dinheiro(f.destinos.BONUS+f.destinos.LOOP_CENTRO),true)
+   total
   );
  }
  function renderizarFinanceiroFluxoTeste(alvo,f){
@@ -3374,7 +3438,8 @@
    const f=d.catraca?.financeiro;
    p.hidden=!f;
    if(f){cenarioDisponivel=f.origem==='RECEBIMENTOS_FICTICIOS_SQLITE'&&f.financeiroReal===false;
-    atualizarSeletorCenarioOperador();renderizarFinanceiroFluxoTeste($('adminFluxoFinanceiroDados'),f);}
+    atualizarSeletorCenarioOperador();renderizarFinanceiroFluxoTeste($('adminFluxoFinanceiroDados'),f);
+    if(visualTesteModulo==='CATRACA')aplicarSaldoCompartilhado(f);}
   }catch{if(modoOperadorAtual){p.hidden=false;$('adminFluxoFinanceiroDados').textContent='Consulta do teste indisponível.';}}
  }
  function mostrarControlesFluxoTeste(x){
@@ -3470,6 +3535,7 @@
    $('estadoTabuleiroIntegrado').textContent='';
    $('estadoTabuleiroIntegrado').hidden=true;
    mostrarControlesFluxoTeste(x);
+   if(x.financeiro)aplicarSaldoCompartilhado(x.financeiro);
    void carregarAbaOperador('abaPosicoes');
   }catch(e){
    if(!modoOperadorAtual||visualTesteModulo===null)return;
