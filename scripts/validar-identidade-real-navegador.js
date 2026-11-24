@@ -1463,20 +1463,28 @@ async function main(){
    assert.equal(await page.locator('#akitemmBusca').isDisabled(),false);
    assert.match(await page.locator('#statusPedidoLoja').innerText(),
     /checkout real ainda não foi liberado/i);
-   // Cliente não recebe os espaços de cadastro nem páginas vazias do operador.
+   // Cliente vê os mesmos espaços e cores, sem ferramentas administrativas.
    await page.locator('#catalogoLojaLoop[data-perfil-vitrine="cliente"]').waitFor({state:'attached'});
-   assert.equal(await page.locator('#akitemmAbasProdutos').isHidden(),true);
-   assert.equal(await page.locator('#akitemmCarregarMais').isHidden(),true);
+   assert.equal(await page.locator('#akitemmAbasProdutos').isHidden(),false);
+   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
+   assert.equal(await page.locator('#akitemmCarregarMais').isHidden(),false);
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-alca-arrastar').count(),0);
+   await page.locator('#akitemmCarregarMais').click();
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),40);
+   await page.locator('#akitemmCarregarMais').click();
    await conferirFiltrosAkitemmResponsivos(page);
    for(const filtro of ['#akitemmFiltroOfertas',...['CINZA','VERDE','DOURADO','ROXO'].map(c=>'[data-akitemm-cor="'+c+'"]'),...['cursos','fisicos','novidades','mais-vendidos'].map(c=>'[data-akitemm-categoria="'+c+'"]')]){
     const b=page.locator(filtro);
     assert.equal(await b.isDisabled(),false);
     await b.click();
     assert.equal(await b.getAttribute('aria-pressed'),'true');
-    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),0);
+    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+    const corFiltro=filtro.match(/data-akitemm-cor="([A-Z]+)"/);
+    if(corFiltro)assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-'+corFiltro[1].toLowerCase()).count(),20);
     await page.locator('#akitemmFiltroTodos').click();
    }
-   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),0);
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
    assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'vitrine sem transbordamento');
    assert.match(await page.locator('#estadoLojaLoop').innerText(),
