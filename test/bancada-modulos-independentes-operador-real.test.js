@@ -249,6 +249,6 @@ test('referência menor da distribuição preserva vagas reais e fica só no ope
  const css=fs.readFileSync('src/candidato/escritorio-cliente-integrado.css','utf8');
  assert.ok(css.includes('width:70%;aspect-ratio:1;max-width:76px'));
  assert.ok(css.includes('left:50%;top:62%;transform:translate(-50%,-50%)'));
- assert.equal((css.match(/border:2px solid #9859dc;/g)||[]).length,2);
+ assert.equal((css.match(/border:3px solid #9859dc;/g)||[]).length,2);
  assert.ok(css.includes('pointer-events:none;line-height:1.05'));
 });
