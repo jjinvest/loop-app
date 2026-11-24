@@ -198,6 +198,10 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-estado:empty{display:none}
 .akitemm-grade-pagina{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,280px);align-items:start;gap:16px}
 .akitemm-vitrine-principal,.akitemm-coluna-direita{min-width:0}
+/* Banner panoramico independente da coluna da vitrine e do carrinho. */
+.akitemm-loja .akitemm-grade-pagina > .akitemm-banner{
+ grid-column:1/-1;width:100%;min-width:0;box-sizing:border-box;
+}
 .akitemm-banner{position:relative;min-height:212px;overflow:hidden;border-radius:12px;border:1px solid #313439;background:radial-gradient(ellipse at 69% 38%,#7c5325a3 0%,#281c19aa 34%,transparent 65%),linear-gradient(109deg,#040505 16%,#1b1310 64%,#070807 100%)}
 .akitemm-banner-conteudo{height:100%;min-height:212px;display:grid;grid-template-columns:minmax(180px,1fr) 1fr auto;gap:8px;align-items:center;padding:23px 3.2%}
 .akitemm-banner-texto h1{font-size:clamp(2.1rem,4.4vw,3.2rem);font-weight:600;letter-spacing:.025em;line-height:1;margin:0 0 1px;color:#f2ca84}
