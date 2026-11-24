@@ -91,6 +91,15 @@ function validarAcervoMidia(arquivo){
      falha('BACKUP_MIDIA_HASH_DIVERGENTE');
    }
   }
+  const tv='akitemm_video_produto_versoes_real',ta='akitemm_video_produto_atual_real';
+  if(tabelas.has(tv)!==tabelas.has(ta))falha('BACKUP_MIDIA_VIDEO_ESQUEMA_INCOMPLETO');
+  if(tabelas.has(tv)){
+   for(const v of banco.prepare('SELECT sha256,bytes,conteudo FROM '+tv).iterate()){
+    if(!(v.conteudo instanceof Uint8Array)||v.bytes!==v.conteudo.length||hash(v.conteudo)!==v.sha256)falha('BACKUP_MIDIA_VIDEO_CORROMPIDO');
+   }
+   const ausentes=banco.prepare('SELECT COUNT(*) AS n FROM '+ta+' a LEFT JOIN '+tv+' v ON a.produto_id=v.produto_id AND a.versao=v.versao WHERE v.produto_id IS NULL').get().n;
+   if(ausentes)falha('BACKUP_MIDIA_VIDEO_VERSAO_AUSENTE');
+  }
   if(tabelas.has('admin_akitemm_banner_arquivos_v1')){
    for(const b of banco.prepare(
     'SELECT mime,imagem FROM admin_akitemm_banner_arquivos_v1'

@@ -154,8 +154,11 @@ function criarGatewayPublicoReal(opcoes={}){
   if(!mutacao&&req.headers.origin&&
      req.headers.origin!==origemPublica)
    return responder(403,'Origem não autorizada');
+  // Limite maior apenas no envio MP4 de produto por operador; upstream exige sessão e CSRF.
+  const videoOperador=req.method==='POST'&&/^\/api\/admin\/catalogo-midia\/produtos\/[A-Za-z0-9_-]{1,80}\/video$/.test(url.pathname)&&req.headers['content-type']==='video/mp4'&&typeof req.headers['x-loop-admin-csrf']==='string'&&/(?:^|;\s*)akitemm_real_admin_v1=[a-f0-9]{64}(?:;|$)/.test(req.headers.cookie||'');
+  const limiteCorpo=videoOperador?20*1024*1024:MAX_BODY;
   if(typeof req.headers['content-length']==='string'&&
-     Number(req.headers['content-length'])>MAX_BODY)
+     Number(req.headers['content-length'])>limiteCorpo)
    return responder(413,'Envio muito grande');
   let cookies;
   try{cookies=cookiesReais(req.headers.cookie);}
@@ -205,7 +208,7 @@ function criarGatewayPublicoReal(opcoes={}){
   let recebidos=0,excesso=false;
   req.on('data',bloco=>{
    recebidos+=bloco.length;
-   if(recebidos>MAX_BODY&&!excesso){
+   if(recebidos>limiteCorpo&&!excesso){
     excesso=true;req.unpipe(upstream);upstream.destroy();
     responder(413,'Envio muito grande');
    }

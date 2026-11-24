@@ -326,21 +326,29 @@ async function principal(){
    await m.getByLabel('Classificação comercial LOOP (não é cor física)').selectOption(cor);
    // Faltou capa: NÃO criar produto nem redirecionar para login.
    await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
-   assert.equal(await m.locator('.akitemm-escolher-foto input').getAttribute('aria-invalid'),'true');
+   const capa=m.locator('.akitemm-midia-slot').first();
+   assert.equal(await m.locator('.akitemm-midia-slot').count(),10);
+   assert.equal(await m.locator('.akitemm-midia-video input[type=file]').count(),1);
+   assert.equal(await capa.locator('input[type=file]').getAttribute('aria-invalid'),'true');
    assert.match(await m.locator('.akitemm-editor-status').textContent(),
     /Escolha uma foto de capa para publicar/);
    assert.equal(await m.locator('.akitemm-recorte-opcional input[type=checkbox]').count(),0);
-   await m.locator('input[type=file]').setInputFiles({
+   await capa.locator('input[type=file]').setInputFiles({
     name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
    });
    await conferirAcoesSemSobreposicao(page,'#akitemmOperadorFotosReal');
    // Enquadramento automático; recorte só se o operador pedir.
-   const corte=m.getByRole('button',{name:'Ajustar corte da foto (opcional)'});
+   const corte=capa.getByRole('button',{name:'Ajustar corte da foto (opcional)'});
    await corte.waitFor({state:'visible'});
-   assert.equal(await m.locator('.akitemm-foto-ajustes').isHidden(),true);
+   assert.equal(await capa.locator('.akitemm-foto-ajustes').isHidden(),true);
    await corte.click();
-   await m.getByRole('button',{name:'Usar foto inteira'}).click();
-   assert.equal(await m.locator('.akitemm-foto-ajustes').isHidden(),true);
+   await capa.getByRole('button',{name:'Usar foto inteira'}).click();
+   assert.equal(await capa.locator('.akitemm-foto-ajustes').isHidden(),true);
+   if(slot===1){
+    const adicional=m.locator('.akitemm-midia-slot').nth(1);
+    await adicional.locator('input[type=file]').setInputFiles({name:'detalhe.png',mimeType:'image/png',buffer:FOTO});
+    await adicional.locator('canvas:not([hidden])').waitFor({state:'visible'});
+   }
    await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
    await m.getByText('Produto e foto salvos na posição ',{exact:false}).waitFor({
     timeout:15000
@@ -364,7 +372,7 @@ async function principal(){
   });
   assert.equal(produto.titulo,'Produto de ensaio de operador');
   assert.equal(produto.ativo,true);
-  assert.equal(midia.fotos.listar('primeiro-produto').fotos.length,1);
+  assert.equal(midia.fotos.listar('primeiro-produto').fotos.length,2);
   assert.equal(midia.fotos.listar('primeiro-produto').fotos[0].posicao,1);
   const imagemOperador=page.locator(
    '#catalogoLojaLoop [data-produto-id="primeiro-produto"] .akitemm-imagem-produto img');

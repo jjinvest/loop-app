@@ -6,6 +6,7 @@ const path=require('node:path');
 const {createHmac,timingSafeEqual}=require('node:crypto');
 const {RepositorioCatalogoSQLite}=require('../domain/repositorio-catalogo-sqlite');
 const {FotosProdutoCandidatoSQLite}=require('../domain/fotos-produto-candidato-sqlite');
+const {VideoProdutoRealSQLite}=require('./video-produto-real-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
 const {MaterialPdfCursosReal}=require('./material-pdf-cursos-real');
 const ID=/^[a-z0-9-]{3,80}$/;
@@ -74,6 +75,7 @@ function criarCatalogoMercadoriasReal({
   banco:repo.banco,catalogo:{buscar:async id=>buscarProduto(id)},
   permitirIdComercial:true
  });
+ const video=new VideoProdutoRealSQLite({banco:repo.banco,catalogo:{buscar:async id=>buscarProduto(id)}});
  const config=new AkitemmConfigLojaDemoSQLite({banco:repo.banco});
  const pdf=new MaterialPdfCursosReal({banco:repo.banco,catalogo:repo});
  function listarPublicos(){
@@ -114,6 +116,7 @@ function criarCatalogoMercadoriasReal({
      posicao:x.posicao,versao:x.versao,
      url:'/api/loja/produtos/'+p.id+'/foto/'+x.posicao
     })),
+    videoUrl:video.estado(p.id).arquivoAnexado?'/api/loja/produtos/'+p.id+'/video':null,
     precoCentavos:null,estoqueConfirmado:false,
     compravel:false,checkoutReal:false,
     estado:'AGUARDANDO_HOMOLOGACAO_FORNECEDOR'
@@ -150,6 +153,21 @@ function criarCatalogoMercadoriasReal({
    posicao:x.posicao,versao:x.versao,
    url:'/api/loja/produtos/'+produtoId+'/foto/'+x.posicao
   }));
+ }
+ function listarVideoProdutoCompartilhado({produtoId}={}){
+  if(typeof produtoId!=='string'||!ID_COMERCIAL.test(produtoId))return null;
+  return video.estado(produtoId).arquivoAnexado?'/api/loja/produtos/'+produtoId+'/video':null;
+ }
+ function abrirVideoPublicado({produtoId}={}){
+  if(typeof produtoId!=='string'||!ID_COMERCIAL.test(produtoId))throw Error('VIDEO_NAO_PUBLICADO');
+  const local=ID.test(produtoId)?repo.buscar(produtoId):null;
+  if(local){
+   if(local.estado!=='PUBLICADO'||local.tipo!=='FISICO')throw Error('VIDEO_NAO_PUBLICADO');
+  }else{
+   const outro=buscarProdutoCompartilhado?.(produtoId);
+   if(!outro||outro.ativo!==true||outro.tipo!=='FISICO')throw Error('VIDEO_NAO_PUBLICADO');
+  }
+  return video.abrir(produtoId);
  }
  async function atender(req,res){
   const url=new URL(req.url,'http://internal.catalogo');
@@ -320,8 +338,8 @@ function criarCatalogoMercadoriasReal({
    return true;
   }
  }
- return {atender,repo,fotos,config,pdf,listarVitrinePreparacao,
+ return {atender,repo,fotos,video,config,pdf,listarVitrinePreparacao,
   buscarProdutoCompartilhado,listarFotosProdutoCompartilhado,
-  abrirFotoPublicada,fechar:()=>repo.fechar()};
+  abrirFotoPublicada,listarVideoProdutoCompartilhado,abrirVideoPublicado,fechar:()=>repo.fechar()};
 }
 module.exports={criarCatalogoMercadoriasReal,tokenCatalogo};

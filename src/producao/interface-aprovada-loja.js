@@ -942,6 +942,12 @@
      aviso.textContent='Fotografias ainda não disponíveis.';
      galeria.append(aviso);
     }
+    if(p.videoUrl==='/api/loja/produtos/'+p.produtoId+'/video'){
+     const video=document.createElement('video');video.controls=true;video.playsInline=true;
+     video.preload='metadata';video.src=p.videoUrl;video.className='akitemm-video-produto';
+     video.setAttribute('aria-label','Vídeo de apresentação do produto');
+     galeria.append(video);
+    }
     const dados=document.createElement('div');
     dados.className='akitemm-detalhe-dados';
     const valor=document.createElement('div');

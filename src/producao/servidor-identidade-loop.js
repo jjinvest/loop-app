@@ -147,7 +147,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    'Strict-Transport-Security':'max-age=31536000; includeSubDomains',
    'X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY',
    'Referrer-Policy':'no-referrer',
-   'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+   'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
   });
   next();
  });
@@ -833,7 +833,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     central.map(p=>Object.freeze({
      ...p,fotos:catalogoMidiaLeitura.listarFotosProdutoCompartilhado({
       produtoId:p.produtoId
-     })
+     }),videoUrl:catalogoMidiaLeitura.listarVideoProdutoCompartilhado?.({produtoId:p.produtoId})||null
     })):central;
    const midia=catalogoMidiaLeitura?
     catalogoMidiaLeitura.listarVitrinePreparacao({limite:400}):[];
@@ -909,6 +909,27 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     return res.status(503).json({erro:'FOTO_PUBLICA_INDISPONIVEL'});
    }
   });
+ app.get('/api/loja/produtos/:produtoId/video',(req,res)=>{
+  const id=req.params.produtoId;
+  if(!/^[A-Za-z0-9_-]{1,80}$/.test(id)||!catalogoMidiaLeitura?.abrirVideoPublicado)
+   return res.status(404).json({erro:'VIDEO_NAO_ENCONTRADO'});
+  try{
+   const a=catalogoMidiaLeitura.abrirVideoPublicado({produtoId:id});
+   if(!Buffer.isBuffer(a.conteudo))throw Error('VIDEO_INTEGRIDADE_INVALIDA');
+   const total=a.conteudo.length,range=req.get('Range');
+   res.type('video/mp4').set({'Cache-Control':'private, no-store','Accept-Ranges':'bytes'});
+   if(range){
+    const m=/^bytes=(\d*)-(\d*)$/.exec(range);
+    let ini=m&&m[1]?Number(m[1]):0,fim=m&&m[2]?Number(m[2]):total-1;
+    if(m&&!m[1]&&m[2]){ini=Math.max(0,total-Number(m[2]));fim=total-1;}
+    if(!m||(!m[1]&&!m[2])||!Number.isSafeInteger(ini)||!Number.isSafeInteger(fim)||ini>fim||ini>=total)
+     return res.status(416).set('Content-Range','bytes */'+total).end();
+    fim=Math.min(fim,total-1);
+    return res.status(206).set('Content-Range','bytes '+ini+'-'+fim+'/'+total).send(a.conteudo.subarray(ini,fim+1));
+   }
+   return res.send(a.conteudo);
+  }catch(e){return res.status(['VIDEO_NAO_PUBLICADO','VIDEO_NAO_ENCONTRADO'].includes(e?.message)?404:503).json({erro:'VIDEO_NAO_DISPONIVEL'});}
+ });
  // Consulta de capacidade da loja vinculada à mesma conta. Sem produto
  // real aprovado ou integração de fornecedor, nenhum carrinho pode pagar.
  app.get('/api/loja/estado',protegido,(_req,res)=>res.json({
