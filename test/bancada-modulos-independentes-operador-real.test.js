@@ -143,7 +143,7 @@ test('visao do operador usa movimentos da bancada; cliente preserva privacidade'
   'o placar original nao pode sobrescrever LEDs no modo teste');
  assert.match(browser,/visualTabuleiro\.preencherLuzes\(x\.tabuleiro\.eventosNoCiclo\)/);
  assert.match(browser,/exibirNomesTeste:true/);
- assert.match(browser,/TESTE OPERACIONAL/);
+ assert.doesNotMatch(browser,/textContent='TESTE OPERACIONAL/);
  assert.match(visual,/exibirNomesTeste=false/);
  assert.match(visual,/nomeTeste=exibirNomesTeste===true/);
  assert.match(server,/new DatabaseSync\('\/dados-reais\/testes-modulos\.sqlite'\)/);
@@ -297,8 +297,12 @@ test('cenário preparado é selecionado na entrada normal do operador sem outro 
  assert.match(trecho,/visualTesteModulo='CATRACA'/);
  assert.doesNotMatch(trecho,/CATRACA_INICIAR|method:'POST'|location\./);
  assert.ok(office.includes('void selecionarCenarioPreparado(versao)'));
- assert.ok(office.includes("a.addEventListener('click',()=>alternarCenarioOperador(false))"));
+ assert.ok(office.includes("botao.addEventListener('click',()=>alternarCenarioOperador(visualTesteModulo!=='CATRACA'))"));
  assert.ok(office.includes("adminFluxoAbrirFinanceiro"));
- assert.ok(office.includes('Cenário de conferência · dinheiro fictício'));
- assert.ok(office.includes('Operação comercial · dados reais'));
+ assert.doesNotMatch(office,/Cenário de conferência · dinheiro fictício|Fluxo controlado · dinheiro fictício|CAIXA: pagamentos e giros financeiros ainda não autorizados/);
+ assert.ok(office.includes("$('adminFluxoFinanceiroTeste')?.append(area)"));
+ assert.match(office,/function mostrarAgendaOperador\(\)\{\s*limparAgendaOperador\(\);\s*\}/);
+ assert.ok(office.includes("if($('adminFluxoAoVivo'))$('adminFluxoAoVivo').hidden=true"));
+ const visor=fs.readFileSync('src/shared/visor-catraca.js','utf8');
+ assert.doesNotMatch(visor,/\+fluxo\.limite\+' do teste'/);
 });
