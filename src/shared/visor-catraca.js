@@ -182,6 +182,13 @@
     visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
     titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':fluxo.ativa?'PRÓXIMA LUZ · EVENTO':'CATRACA PAUSADA';
     estado.textContent='Eventos: '+fluxo.eventos+'/6 luzes · '+fluxo.total+'/'+fluxo.limite;
+    const c=fluxo.contadores;
+    if(c&&Number.isSafeInteger(c.centrosHoje)&&Number.isSafeInteger(c.eventosHoje)){
+     const ciclos=$('loop03Giros24Integrado');
+     if(ciclos)ciclos.textContent=String(c.centrosHoje);
+     const luzes=$('loop03LuzesHoraIntegrado');
+     if(luzes)luzes.textContent=String(c.eventosHoje)+' / '+fluxo.limite;
+    }
     const contador=$('motorContadorEventos');
     if(contador)contador.textContent=fluxo.ativa?'CATRACA EM ANDAMENTO':'CATRACA PAUSADA';
     return;
