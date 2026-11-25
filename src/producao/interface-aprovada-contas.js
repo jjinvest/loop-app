@@ -4495,5 +4495,8 @@
    mostrarLogin('cadastro');
    void carregarDocumentos();
   }else mostrarLogin('login');
+ }).finally(()=>{
+  // Só liberar a pintura após selecionar o painel da sessão ou do visitante.
+  document.body.removeAttribute('data-loop-sessao');
  });
 })();
