@@ -1202,6 +1202,7 @@
   const eventos=d?.tabuleiro?.eventosNoCiclo;
   const centros=d?.tabuleiro?.ciclosConcluidos;
   const relogio=d?.relogio??null;
+  const fluxo=d?.contadoresFluxo??null;
   if(![totalA,totalB,eventos,centros].every(x=>
       Number.isSafeInteger(x)&&x>=0)||eventos>6)
    throw Error('RESUMO_POSICOES_MOTOR_INVALIDO');
@@ -1269,14 +1270,14 @@
   tabuleiro.append(linha(
    metade('Eventos no ciclo',progressoDia+' / 6'),
    metade('Eventos acumulados',relogio?
-    relogio.luzesRelogioAcumuladas:'—')));
+    relogio.luzesRelogioAcumuladas:fluxo?.eventosAcumulados??'—')));
   if(relogio)tabuleiro.append(criar('small','loop03-luzes-hoje',
    'Luzes acesas hoje: '+luzesDia));
   tabuleiro.append(linha(
    metade('Centros concluídos hoje',relogio?
-    relogio.ciclosRelogioHoje:'—'),
+    relogio.ciclosRelogioHoje:fluxo?.centrosHoje??'—'),
    metade('Ciclos concluídos no total',relogio?
-    relogio.ciclosRelogioAcumulados:'—')));
+    relogio.ciclosRelogioAcumulados:fluxo?.centrosAcumulados??'—')));
   destino.replaceChildren(filas,tabuleiro);
  }
  async function consultarFilaOperador(fila,pagina=0){
@@ -1310,10 +1311,20 @@
   }
   return posicoes.slice(0,limite);
  }
+ async function consultarPaginaFilaCenario(fila,pagina,modulo){
+  const r=await fetch('/api/admin/loop/testes-modulos',{credentials:'same-origin',cache:'no-store'});
+  if(!r.ok)throw Error('FILA_INDISPONIVEL');
+  const d=await r.json(),lista=d[modulo.toLowerCase()]?.['fila'+fila];
+  if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||!Array.isArray(lista))throw Error('FILA_FONTE_INVALIDA');
+  return {pagina:lista.slice(pagina*30,(pagina+1)*30),
+   proximaPagina:lista.length>(pagina+1)*30?pagina+1:null};
+ }
  async function expandirFilaOperador(fila){
   const painel=$('adminDetalhesFila'+fila);
   const botao=document.querySelector('[data-admin-fila="'+fila+'"]');
-  if(!modoOperadorAtual||visualTesteModulo!==null||!painel||!botao)return;
+  if(!modoOperadorAtual||!painel||!botao)return;
+  const modulo=visualTesteModulo;
+  const versao=versaoEntradaOperador;
   const abrir=painel.hidden;
   for(const tipo of ['A','B']){
    const area=$('adminDetalhesFila'+tipo);
@@ -1330,7 +1341,8 @@
    try{
     if(mostrados>=itens.length&&proxima!==null){
      const paginaAtual=proxima;
-     const d=await consultarFilaOperador(fila,paginaAtual);
+     const d=modulo?await consultarPaginaFilaCenario(fila,paginaAtual,modulo):await consultarFilaOperador(fila,paginaAtual);
+     if(!modoOperadorAtual||versao!==versaoEntradaOperador||modulo!==visualTesteModulo)return;
      itens=itens.concat(d.pagina);
      proxima=d.proximaPagina;
     }
@@ -1461,7 +1473,8 @@
   if(!modoOperadorAtual)return;
   if(id==='abaPosicoes')void carregarIndicadoresComerciaisOperador();
   if(id==='abaFinanceiro'){void carregarDistribuicaoFinanceira();void carregarFinanceiroFluxoTeste();}
-  const posicoesEmTeste=id==='abaPosicoes'&&visualTesteModulo!==null;
+  const modulo=visualTesteModulo,versao=versaoEntradaOperador;
+  const posicoesEmTeste=id==='abaPosicoes'&&modulo!==null;
   const rotas={
    abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
    abaFinanceiro:['/api/admin/loop/controle','adminResumoFinanceiro'],
@@ -1476,18 +1489,14 @@
    const r=await fetch(info[0],{credentials:'same-origin',cache:'no-store'});
    const d=await r.json().catch(()=>({}));
    if(!r.ok)throw Error(d.erro||'Consulta indisponível.');
-   if(!modoOperadorAtual)return;
+   if(!modoOperadorAtual||versao!==versaoEntradaOperador||modulo!==visualTesteModulo)return;
    if(id==='abaPosicoes'){
     if(posicoesEmTeste){
-     const x=d[visualTesteModulo.toLowerCase()];
+     const x=d[modulo.toLowerCase()];
      if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
         !Array.isArray(x?.filaA)||!Array.isArray(x?.filaB))
       throw Error('RESUMO_POSICOES_TESTE_INVALIDO');
-     mostrarResumoPosicoesOperador(destino,{
-      filaA:x.filaA.length,filaB:x.filaB.length,
-      tabuleiro:{eventosNoCiclo:x.tabuleiro.eventosNoCiclo,
-       ciclosConcluidos:x.tabuleiro.centrosConcluidos}
-     });
+     aplicarResumoCenario(x);
     }else{
      // Os LEDs do relógio não são giros do motor. A leitura do mesmo
      // controle compartilhado alimenta os eventos/centros VISUAIS.
@@ -1517,6 +1526,13 @@
      prepararExpansaoFilasOperador();
     }
    }else if(id==='abaFinanceiro'){
+    if(modulo==='CATRACA'){
+     const f=await consultarSaldoCompartilhado();
+     if(!modoOperadorAtual||versao!==versaoEntradaOperador||visualTesteModulo!==modulo)return;
+     aplicarSaldoCompartilhado(f);
+     destino.textContent='Eventos de hoje: '+f.contadores.eventosHoje+'\nCentros concluídos hoje: '+f.contadores.centrosHoje;
+     return;
+    }
     destino.textContent='Modo da catraca: '+d.modo+
      '\nGiros de hoje: '+d.girosHoje+
      '\nMeta: '+d.metaCentrosDia+' centros'+
@@ -1531,7 +1547,7 @@
      '\nEstrutura: '+d.statusEstrutural+
      '\nA consulta não comprova liquidação bancária.';
    }
-  }catch(e){destino.textContent='Dados indisponíveis: '+e.message;}
+  }catch(e){if(modoOperadorAtual&&versao===versaoEntradaOperador&&modulo===visualTesteModulo)destino.textContent='Dados indisponíveis: '+e.message;}
  }
  // Cofres do LOOP: apenas leitura de banco/PSP conciliado no servidor.
  // O operador pode atualizar; o cliente nunca recebe dados destes cofres.
@@ -1557,6 +1573,12 @@
   const saldos=conferirSaldoCompartilhado(f);
   if(ultimoFluxoCompartilhado&&f.agoraServidorMs<ultimoFluxoCompartilhado.agoraServidorMs)return;
   ultimoFluxoCompartilhado=f;
+  const dados=$('adminFluxoFinanceiroDados');
+  if(dados)renderizarFinanceiroFluxoTeste(dados,f);
+  const quadro=$('adminFluxoAoVivoDados');
+  if(quadro)renderizarQuadroDistribuicao(quadro,f);
+  const financeiro=$('adminResumoFinanceiro');
+  if(financeiro&&f.contadores)financeiro.textContent='Eventos de hoje: '+f.contadores.eventosHoje+'\nCentros concluídos hoje: '+f.contadores.centrosHoje;
   for(const [codigo,id] of Object.entries(cofresIds)){
    if($('loop03Cofre'+id))$('loop03Cofre'+id).textContent=moedaCofres.format(saldos[codigo]/100);
    if($('loop03Cofre'+id+'Estado'))$('loop03Cofre'+id+'Estado').textContent='Saldo interno';
@@ -2692,13 +2714,14 @@
   // Somente a vista do teste recebe atualização mais rápida.
   window.setInterval(()=>{
    if(document.hidden||!modoOperadorAtual)return;
-   if(visualTesteModulo==='CATRACA'&&$('conteudoTabuleiro')?.hidden===false)
+   if(visualTesteModulo==='CATRACA'&&$('painelConta')?.hidden===false)
     void carregarTabuleiroTesteOperador();
   },2000);
   // Sem reproduzir os cartões ao atualizar o placar nas outras abas.
   // O operador mantém seu fluxo de atualização somente no Tabuleiro.
   window.setInterval(()=>{
    if(document.hidden)return;
+   if(modoOperadorAtual&&visualTesteModulo==='CATRACA')return;
    if(modoOperadorAtual&&$('conteudoFinanceiro')?.hidden===false)void carregarFinanceiroFluxoTeste();
    if($('conteudoTabuleiro')?.hidden===false){
     void carregarMotor();
@@ -3482,10 +3505,23 @@
   $('adminFluxoStop').disabled=!x.catracaAtiva;
   renderizarQuadroDistribuicao($('adminFluxoAoVivoDados'),f);
  }
+ function aplicarResumoCenario(x){
+  const destino=$('adminResumoPosicoes');
+  if(!destino||$('adminDetalhesFilaA')?.hidden===false||$('adminDetalhesFilaB')?.hidden===false)return;
+  const resumo=lista=>({total:lista.length,primeiro:lista[0]??null});
+  mostrarResumoPosicoesOperador(destino,{
+   filaA:x.filaA.length,filaB:x.filaB.length,
+   filasResumo:{A:resumo(x.filaA),B:resumo(x.filaB)},
+   tabuleiro:{eventosNoCiclo:x.tabuleiro.eventosNoCiclo,ciclosConcluidos:x.tabuleiro.centrosConcluidos},
+   contadoresFluxo:x.financeiro?.contadores
+  });
+  prepararExpansaoFilasOperador();
+ }
  let leituraTabuleiroTesteEmCurso=false;
  async function carregarTabuleiroTesteOperador(){
   if(leituraTabuleiroTesteEmCurso)return;
   leituraTabuleiroTesteEmCurso=true;
+  const modulo=visualTesteModulo,versao=versaoEntradaOperador;
   try{
    const [rt,rc]=await Promise.all([
     fetch('/api/admin/loop/testes-modulos',{
@@ -3495,7 +3531,7 @@
    ]);
    if(!rt.ok||!rc.ok)throw Error('TESTE_MOTOR_INDISPONIVEL');
    const [d,controle]=await Promise.all([rt.json(),rc.json()]);
-   if(!modoOperadorAtual||!visualTesteModulo)return;
+   if(!modoOperadorAtual||!modulo||modulo!==visualTesteModulo||versao!==versaoEntradaOperador)return;
    if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
       d.testandoModulosSeparados!==true||
       !['FILA','CATRACA'].includes(visualTesteModulo))
@@ -3529,6 +3565,7 @@
     luzesDoRelogioOperador:false,...(x.financeiro?{fluxoControlado:{
      ativa:x.catracaAtiva,proximoEmMs:x.catracaAtiva?Number(x.cursorDia)+10000:null,
      eventos:x.tabuleiro.eventosNoCiclo,total:x.financeiro.eventos,
+     contadores:x.financeiro.contadores,
      limite:x.financeiro.produtos,encerrado:x.financeiro.saldoCentavos<25000,
      agoraServidorMs:x.financeiro.agoraServidorMs
     }}:{})};
@@ -3540,7 +3577,7 @@
    $('estadoTabuleiroIntegrado').hidden=true;
    mostrarControlesFluxoTeste(x);
    if(x.financeiro)aplicarSaldoCompartilhado(x.financeiro);
-   void carregarAbaOperador('abaPosicoes');
+   aplicarResumoCenario(x);
   }catch(e){
    if(!modoOperadorAtual||visualTesteModulo===null)return;
    $('estadoTabuleiroIntegrado').textContent=
