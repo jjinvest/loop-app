@@ -43,6 +43,11 @@ function recursoRecorteFoto(){
 }
 function renderizarInterfaceAprovada(){
  let html=htmlOriginal;
+ // Nunca desenhar a tela de entrada antes de consultar a sessão autenticada.
+ html=trocarExato(html,'<body>','<body data-loop-sessao="consultando">');
+ html=trocarExato(html,
+  'id="painelLogin" aria-labelledby="tituloLogin">',
+  'id="painelLogin" aria-labelledby="tituloLogin" hidden>');
  for(const [antes,depois] of [
  ['/staging/assets/cliente.css','/identidade/assets/cliente.css'],
  ['/staging/assets/loop03-aprovado.css','/identidade/assets/loop03-aprovado.css'],
