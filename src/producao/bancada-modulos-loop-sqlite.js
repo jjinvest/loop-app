@@ -122,14 +122,28 @@ class BancadaModulosLoopSQLite{
   if(destinos.LOOP_DIREITA<0)falha('FLUXO_RESERVA_NEGATIVA');
   const distribuido=Object.values(destinos).reduce((n,v)=>n+v,0),saldo=receb.total-distribuido;
   if(!Number.isSafeInteger(saldo)||saldo<0)falha('FLUXO_CAIXA_DIVERGENTE');
-  const eventos=this.db.prepare("SELECT COUNT(*) AS n FROM loop_teste_fluxo_lancamentos WHERE geracao=? AND destino!='BONUS'").get(geracao).n;
+  const agora=this.agora(),dia=agoraLocal(agora).dia;
+  const registros=this.db.prepare("SELECT registrado_em FROM loop_teste_fluxo_lancamentos WHERE geracao=? AND destino!='BONUS' ORDER BY rowid").all(geracao);
+  const eventos=registros.length;
+  const contadores={eventosHoje:0,eventos24h:0,centrosHoje:0,centros24h:0,
+   eventosAcumulados:eventos,centrosAcumulados:Math.floor(eventos/6)};
+  registros.forEach((r,i)=>{
+   const hoje=agoraLocal(r.registrado_em).dia===dia;
+   const em24h=r.registrado_em>agora-86400000&&r.registrado_em<=agora;
+   if(hoje)contadores.eventosHoje++;
+   if(em24h)contadores.eventos24h++;
+   if((i+1)%6===0){
+    if(hoje)contadores.centrosHoje++;
+    if(em24h)contadores.centros24h++;
+   }
+  });
   const ultimos=this.db.prepare('SELECT referencia,destino,valor,posicao,registrado_em FROM loop_teste_fluxo_lancamentos WHERE geracao=? ORDER BY rowid DESC LIMIT 12').all(geracao);
   const indicacoes=this.db.prepare('SELECT COUNT(*) AS n FROM loop_teste_fluxo_indicacoes WHERE geracao=?').get(geracao).n;
   return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',
    // Este lote persistido contém exclusivamente vendas de PDFs.
    // Cursos e físicos não fazem parte deste cenário; não inferir vendas reais.
    vendasPorTipo:{pdfs:receb.quantidade,cursos:0,fisicos:0},
-   produtos:receb.quantidade,agoraServidorMs:this.agora(),recebidoCentavos:receb.total,distribuidoCentavos:distribuido,
+   produtos:receb.quantidade,agoraServidorMs:agora,contadores,recebidoCentavos:receb.total,distribuidoCentavos:distribuido,
    saldoCentavos:saldo,destinos,eventos,ultimos,intervaloSegundos:10,
    comissoes:indicacoes,comissoesPendentesCentavos:indicacoes*2500-destinos.BONUS,indicadores:10,valorEventoCentavos:25000};
  }
