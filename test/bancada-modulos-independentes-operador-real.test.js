@@ -270,6 +270,10 @@ test('100 PDFs: posições classificadas, caixa separado, START explícito e 100
  assert.equal(estado.catracaAtiva,false);
  assert.equal(estado.financeiro.saldoCentavos,0);
  assert.equal(estado.financeiro.eventos,100);
+ assert.equal(estado.financeiro.contadores.eventosAcumulados,100);
+ assert.equal(estado.financeiro.contadores.centrosAcumulados,16);
+ assert.equal(estado.financeiro.contadores.eventosHoje,100);
+ assert.equal(estado.financeiro.contadores.centrosHoje,16);
  assert.equal(estado.tabuleiro.giros,16);
  assert.equal(estado.tabuleiro.eventosNoCiclo,4);
  assert.equal(estado.filaA.length+estado.filaB.length+7+estado.tabuleiro.giros,100);
