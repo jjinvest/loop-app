@@ -1880,11 +1880,14 @@ async function main(){
     await pagina.locator('#limiteCatracaAdmin').fill('');
     await pagina.locator('#inicioCatracaAdmin').fill('00:00');
     await pagina.locator('#fimCatracaAdmin').fill('00:00');
+    const salvou=pagina.waitForResponse(r=>r.url().endsWith('/api/admin/loop/controle')&&r.request().method()==='POST');
     await pagina.locator('#salvarCatracaAdmin').click();
+    assert.equal((await salvou).status(),200);
     await pagina.locator('#estadoCatracaAdmin').filter({hasText:/Política.*salva/}).waitFor();
     const {OperacaoCatracaAdminSQLite}=require('../src/producao/operacao-catraca-admin-sqlite');
     const executor=new OperacaoCatracaAdminSQLite({banco,motor:motorLoop});
-    assert.equal(integradorComercialEnsaio.processarDistribuicao({controle:executor}).processado,true);
+    const executou=integradorComercialEnsaio.processarDistribuicao({controle:executor});
+    assert.equal(executou.processado,true,JSON.stringify({resultado:executou,controle:executor.consultar()}));
     await pagina.locator('#atualizarIntegracaoLoop').click();
     await integrado.filter({hasText:/Eventos: 1\/6/}).waitFor();
     await pagina.locator('#pausarCatracaAdmin').click();

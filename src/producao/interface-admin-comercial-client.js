@@ -765,9 +765,15 @@
  async function alterarCatraca(body){
   if(!csrf||catracaOcupada)throw Error('Comando indisponível.');
   catracaOcupada=true;botoesCatraca();
+  $('estadoCatracaAdmin').textContent=body.acao==='GIRAR'?
+   'Enviando comando…':'Salvando programação…';
   try{
    const resultado=await apiCatraca(body);
    await atualizarCatracaAdmin();await atualizarMotorAdministrativo();
+   if(body.acao==='CONFIGURAR'&&(!politicaCatraca||
+      ['modo','janelaInicio','janelaFim','limiteDiario','metaCentrosDia','metaDataAlvo']
+       .some(k=>(politicaCatraca[k]??null)!==(body[k]??null))))
+    throw Error('Programação não confirmada na leitura do servidor.');
    $('estadoCatracaAdmin').textContent=body.acao==='GIRAR'?
     (resultado.girou?'Giro efetuado no mesmo motor.':
      'Giro não efetuado: '+resultado.motivo):
