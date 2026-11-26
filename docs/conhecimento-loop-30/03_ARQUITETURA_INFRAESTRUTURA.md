@@ -6,7 +6,7 @@ AKITEMM comercializa → qualificação/pagamento confirmado cria posição → 
 
 Domínio operacional observado: akitemmloop.com.br. Links do proprietário: /escritorio/VILELA e /loja/VILELA. AKITEMM é a marca; outros domínios citados no histórico não são certificados por este inventário.
 
-Railway: projeto 8 c 1 ab 327-16 f 0-409 a-90 ac-8 f 02 a 3 f 5 eae 0, ambiente e 5 c 30 d 7 f-086 f-4845-93 ad-7 d 1 a 5 ca 5 e 31 b (nome técnico homologacao). Gateway akitemm-escritorio-preview serve o domínio e encaminha ao loop-identidade-real. O nome legado preview não determina a procedência dos dados. Terceiro serviço asaas-webhook-staging é isolado e usa revisão histórica.
+Railway: projeto `8c1ab327-16f0-409a-90ac-8f02a3f5eae0`, ambiente `e5c30d7f-086f-4845-93ad-7d1a5ca5e31b` (nome técnico homologacao). Gateway akitemm-escritorio-preview serve o domínio e encaminha ao loop-identidade-real. O nome legado preview não determina a procedência dos dados. Terceiro serviço asaas-webhook-staging é isolado e usa revisão histórica.
 
 A identidade usa /dados-reais/clientes.sqlite; catálogo/mídia /dados-reais/catalogo-produtos.sqlite; lote de conferência /dados-reais/testes-modulos.sqlite separado. Volumes /dados-preview e /loop-staging também existem. Não copiar SQLite aberto com simples cp: usar os mecanismos de snapshot consistente existentes. Não anexar volume real em testes.
 
@@ -14,8 +14,8 @@ Runtime Node 24, CommonJS, SQLite, Express. Inventário JSON captura configuraç
 
 ## Fontes integrais preservadas
 
-- [LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21 NOV 2026.md](../LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md)
-- [CONTINUIDADE_UNICA_REAL_LOOP_AKITEMM_17 NOV 2026.md](../CONTINUIDADE_UNICA_REAL_LOOP_AKITEMM_17NOV2026.md)
+- [LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21 NOV2026.md](../LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md)
+- [CONTINUIDADE_UNICA_REAL_LOOP_AKITEMM_17 NOV2026.md](../CONTINUIDADE_UNICA_REAL_LOOP_AKITEMM_17NOV2026.md)
 - [Código: scripts/iniciar-gateway-publico-real-loop.js](../../scripts/iniciar-gateway-publico-real-loop.js)
 - [Código: scripts/iniciar-cadastro-publico-release.js](../../scripts/iniciar-cadastro-publico-release.js)
 - [Código: scripts/iniciar-identidade-real-loop.js](../../scripts/iniciar-identidade-real-loop.js)

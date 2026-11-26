@@ -15,7 +15,7 @@ A conferência visual pública anterior estava bloqueada por ERR_BLOCKED_BY_CLIE
 ## Fontes integrais preservadas
 
 - [AUDITORIA_PONTA_A_PONTA_LOOP_24 OUT 2026.md](../AUDITORIA_PONTA_A_PONTA_LOOP_24OUT2026.md)
-- [REGISTRO_CONTINUIDADE_CONCLUSAO_E_ACERVO_16 NOV 2026.md](../REGISTRO_CONTINUIDADE_CONCLUSAO_E_ACERVO_16NOV2026.md)
+- [REGISTRO_CONTINUIDADE_CONCLUSAO_E_ACERVO_16 NOV2026.md](../REGISTRO_CONTINUIDADE_CONCLUSAO_E_ACERVO_16NOV2026.md)
 - [Código: test/bancada-modulos-independentes-operador-real.test.js](../../test/bancada-modulos-independentes-operador-real.test.js)
 - [Código: test/backup-identidade-real-restauracao.test.js](../../test/backup-identidade-real-restauracao.test.js)
 - [Código: test/recuperacao-independente-offsite.test.js](../../test/recuperacao-independente-offsite.test.js)

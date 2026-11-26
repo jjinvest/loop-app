@@ -9,7 +9,7 @@
 | Backend loop-identidade-real | mesmoSHA ativo; deploy `7db15a89-4a20-48fd-b601-e8f1bc18b3f5` SUCCESS | Metadado e logs, não prova bancária |
 | Gateway akitemm-escritorio-preview | deploy `fa8b78cf-6c62-48aa-984c-f11861d9ecfe` SUCCESS | Metadado do deploy confirma SHA `75ca81142dc7e801529a3e7123707364a3fa6f5c`; pacote do gateway próprio |
 | Asaas staging | `605468458dda798b723bfcae06350ae038772705`, deploy `5041ed22-2447-44bb-ba50-f38fe131b399` SUCCESS | Histórico sandbox, não usar como branch principal |
-| Domínio | akitemmloop.com.br verificado, TLS válido; CNAME exigido uacfujj 7.up.railway.app | currentValue vazio no conector, status PROPAGATED; não inventar exportação DNS autoritativa |
+| Domínio | akitemmloop.com.br verificado, TLS válido; CNAME exigido `uacfujj7.up.railway.app` | currentValue vazio no conector, status PROPAGATED; não inventar exportação DNS autoritativa |
 | Preservação | branch docs/preservacao-integral-20261126 a partir do ativo | Sem merge/deploy autorizado nesta missão |
 
 ## Contradições resolvidas por fonte posterior
@@ -18,7 +18,7 @@
 |---|---|---|
 | V 5 cinco vagas, limites 5/6 | Essência 21/11 e Núcleo 18/11: centro+6, limite 10 por titular/2 na Distribuição | Não reduzir limites nem descartar posições |
 | Uma A por titular, desbloqueio vaga 1–6 (18/10) | Núcleo 18/11 permite todas qualificadas em A; motor-filas.liberarEscalonadas confirma coexistência | Não reinstalar trava histórica; manter 3 A:1 B |
-| Dourada recebe apenas 1/3/5 (transição 16/10) | Essência 17/11 e DOURADA_INTEGRAL_V 2 atual:6 eventos; V 1 legado preservado | Novos ciclos V 2, sem recalcular legados |
+| Dourada recebe apenas 1/3/5 (transição 16/10) | Essência 17/11 e DOURADA_INTEGRAL_V2 atual:6 eventos; V1 legado preservado | Novos ciclos V2, sem recalcular legados |
 | Saque 3%, mínimoR$ 100 | Decisão 21/10 taxa 0%; regra 23/11 mínimoR$ 25 | Preservar lançamentos históricos |
 | Qualquer compra libera link, inclusivecinza | Complemento 23/11:cinza só venda; habilitadores têm política própria | Não criar vínculo/comissão de cinza |
 | Campanhas 20–100%, comissão do preço total | Complemento 23/11:10% deR$ 250 por ativação válida =R$ 25 | Campanhas antigas não são padrão vigente |

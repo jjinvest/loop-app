@@ -16,9 +16,9 @@ Não confundir cadastro pelo link com ativação elegível. Comissão requer qua
 
 - [Núcleo original e atualizações 18/11](../NUCLEO_ORIGINAL_LINHA_DE_RACIOCINIO_LOOP_20261118.md)
 
-- [REGRA_PRIORIDADE_3 A 1 B_POR_POSICAO_LOOP_V 6.md](../REGRA_PRIORIDADE_3A1B_POR_POSICAO_LOOP_V6.md)
+- [REGRA_PRIORIDADE_3 A 1 B_POR_POSICAO_LOOP_V6.md](../REGRA_PRIORIDADE_3A1B_POR_POSICAO_LOOP_V6.md)
 - [REGRAS_FILAS.md](../REGRAS_FILAS.md)
-- [CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23 NOV 2026.md](../CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23NOV2026.md)
+- [CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23 NOV2026.md](../CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23NOV2026.md)
 - [Código: src/domain/motor-filas.js](../../src/domain/motor-filas.js)
 - [Código: src/producao/projecao-filas-relacional-sqlite.js](../../src/producao/projecao-filas-relacional-sqlite.js)
 - [Código: src/producao/visao-escritorio-unificada-sqlite.js](../../src/producao/visao-escritorio-unificada-sqlite.js)

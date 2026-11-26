@@ -9,7 +9,7 @@ Preservação documental de 26/11/2026. Reaproveita o acervo integral; os segmen
 | 01 | [Comando Mestre](01_COMANDO_MESTRE.md) |
 | 02 | [Índice Geral de Continuidade](02_INDICE_GERAL_CONTINUIDADE.md) |
 | 03 | [Arquitetura e Infraestrutura](03_ARQUITETURA_INFRAESTRUTURA.md) |
-| 04 | [Motor V 6 e Distribuição](04_MOTOR_V6_DISTRIBUICAO.md) |
+| 04 | [Motor V6 e Distribuição](04_MOTOR_V6_DISTRIBUICAO.md) |
 | 05 | [Filas e Indicações](05_FILAS_INDICACOES.md) |
 | 06 | [Estrutura Financeira](06_ESTRUTURA_FINANCEIRA.md) |
 | 07 | [Loja AKITEMM](07_LOJA_AKITEMM.md) |

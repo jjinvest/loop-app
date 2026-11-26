@@ -16,3 +16,10 @@ A migração do conhecimento documentado pode ser feita com Git e cópia recuper
 
 
 [Voltar ao índice geral](README.md).
+
+
+## Ampliação comprovada do acervo fora do Git
+
+Foram identificados e materializados 139 arquivos relacionados ao projeto, incluindo artes, logos, banners, capturas e comandos históricos, sem substituir arquivos originais. Incluem as quatro referências visuais oficiais históricas. Cada arquivo tem tamanho e SHA256 no manifesto privado. Conteúdos e detalhes permanecem no pacote cifrado; não são publicados no GitHub. A preservação não reaprova imagens antigas e não executa scripts arquivados.
+
+A busca por título não garante todos os anexos sem nome nem a mídia presente nos volumes. A história pessoal completa do ChatGPT continua para exportação posterior pelo proprietário. [Resumo de integridade sem conteúdo privado](PROVA_ACERVO_PRIVADO.json).

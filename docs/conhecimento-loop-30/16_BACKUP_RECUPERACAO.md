@@ -14,8 +14,8 @@ Cópia privada independente desta missão é pacote AES-256-GCM das fontes+docum
 
 ## Fontes integrais preservadas
 
-- [RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07 NOV 2026.md](../RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07NOV2026.md)
-- [BACKUP_OFFSITE_SQLITE_UNICO_06 NOV 2026.md](../BACKUP_OFFSITE_SQLITE_UNICO_06NOV2026.md)
+- [RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07 NOV2026.md](../RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07NOV2026.md)
+- [BACKUP_OFFSITE_SQLITE_UNICO_06 NOV2026.md](../BACKUP_OFFSITE_SQLITE_UNICO_06NOV2026.md)
 - [RELATORIO_SQLITE_RECUPERACAO_BACKUP_21 OUT 2026.md](../RELATORIO_SQLITE_RECUPERACAO_BACKUP_21OUT2026.md)
 - [Código: src/producao/backup-identidade-real.js](../../src/producao/backup-identidade-real.js)
 - [Código: src/producao/backup-identidade-offsite.js](../../src/producao/backup-identidade-offsite.js)
@@ -25,3 +25,10 @@ Cópia privada independente desta missão é pacote AES-256-GCM das fontes+docum
 - [Código: scripts/assinar-manifesto-dr-offline.js](../../scripts/assinar-manifesto-dr-offline.js)
 
 [Voltar ao índice geral](README.md).
+
+
+## Ampliação comprovada do acervo fora do Git
+
+Foram identificados e materializados 139 arquivos relacionados ao projeto, incluindo artes, logos, banners, capturas e comandos históricos, sem substituir arquivos originais. Incluem as quatro referências visuais oficiais históricas. Cada arquivo tem tamanho e SHA256 no manifesto privado. Conteúdos e detalhes permanecem no pacote cifrado; não são publicados no GitHub. A preservação não reaprova imagens antigas e não executa scripts arquivados.
+
+A busca por título não garante todos os anexos sem nome nem a mídia presente nos volumes. A história pessoal completa do ChatGPT continua para exportação posterior pelo proprietário. [Resumo de integridade sem conteúdo privado](PROVA_ACERVO_PRIVADO.json).

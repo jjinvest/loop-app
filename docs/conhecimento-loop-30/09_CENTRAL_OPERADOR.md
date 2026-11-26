@@ -14,8 +14,8 @@ Nesta preservação nenhum comando funcional foi alterado. Inventário conserva 
 
 ## Fontes integrais preservadas
 
-- [INTEGRACAO_INTERNA_START_VENDAS_RELOGIO_26 NOV 2026.md](../INTEGRACAO_INTERNA_START_VENDAS_RELOGIO_26NOV2026.md)
-- [BONUS_CONFIRMACAO_RESERVA_26 NOV 2026.md](../BONUS_CONFIRMACAO_RESERVA_26NOV2026.md)
+- [INTEGRACAO_INTERNA_START_VENDAS_RELOGIO_26 NOV2026.md](../INTEGRACAO_INTERNA_START_VENDAS_RELOGIO_26NOV2026.md)
+- [BONUS_CONFIRMACAO_RESERVA_26 NOV2026.md](../BONUS_CONFIRMACAO_RESERVA_26NOV2026.md)
 - [Código: src/producao/interface-admin-comercial-client.js](../../src/producao/interface-admin-comercial-client.js)
 - [Código: src/producao/gateway-admin-comercial.js](../../src/producao/gateway-admin-comercial.js)
 - [Código: src/producao/operacao-catraca-admin-sqlite.js](../../src/producao/operacao-catraca-admin-sqlite.js)

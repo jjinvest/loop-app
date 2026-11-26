@@ -12,9 +12,9 @@ Painéis de cliente e operador devem compartilhar programação operacional perm
 
 ## Fontes integrais preservadas
 
-- [CONTINUIDADE_DOCUMENTOS_CADASTRO_E_POSICAO_16 NOV 2026.md](../CONTINUIDADE_DOCUMENTOS_CADASTRO_E_POSICAO_16NOV2026.md)
-- [CONTINUIDADE_MINHA_EQUIPE_15 NOV 2026.md](../CONTINUIDADE_MINHA_EQUIPE_15NOV2026.md)
-- [CONTINUIDADE_ACEITE_INDIVIDUAL_POSICOES_05 NOV 2026.md](../CONTINUIDADE_ACEITE_INDIVIDUAL_POSICOES_05NOV2026.md)
+- [CONTINUIDADE_DOCUMENTOS_CADASTRO_E_POSICAO_16 NOV2026.md](../CONTINUIDADE_DOCUMENTOS_CADASTRO_E_POSICAO_16NOV2026.md)
+- [CONTINUIDADE_MINHA_EQUIPE_15 NOV2026.md](../CONTINUIDADE_MINHA_EQUIPE_15NOV2026.md)
+- [CONTINUIDADE_ACEITE_INDIVIDUAL_POSICOES_05 NOV2026.md](../CONTINUIDADE_ACEITE_INDIVIDUAL_POSICOES_05NOV2026.md)
 - [Código: src/producao/identidade-cliente-loop-sqlite.js](../../src/producao/identidade-cliente-loop-sqlite.js)
 - [Código: src/producao/visao-escritorio-unificada-sqlite.js](../../src/producao/visao-escritorio-unificada-sqlite.js)
 - [Código: src/producao/interface-aprovada-contas.js](../../src/producao/interface-aprovada-contas.js)

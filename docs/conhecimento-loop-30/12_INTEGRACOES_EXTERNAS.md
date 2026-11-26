@@ -12,9 +12,9 @@ A confirmação de pagamentos reais, Pix, split, fornecedor, tributos e conformi
 
 ## Fontes integrais preservadas
 
-- [INTEGRACAO_INTERNA_START_VENDAS_RELOGIO_26 NOV 2026.md](../INTEGRACAO_INTERNA_START_VENDAS_RELOGIO_26NOV2026.md)
-- [RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07 NOV 2026.md](../RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07NOV2026.md)
-- [AKITEMM_LOOP_PIX_SANDBOX_V 6.md](../AKITEMM_LOOP_PIX_SANDBOX_V6.md)
+- [INTEGRACAO_INTERNA_START_VENDAS_RELOGIO_26 NOV2026.md](../INTEGRACAO_INTERNA_START_VENDAS_RELOGIO_26NOV2026.md)
+- [RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07 NOV2026.md](../RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07NOV2026.md)
+- [AKITEMM_LOOP_PIX_SANDBOX_V6.md](../AKITEMM_LOOP_PIX_SANDBOX_V6.md)
 - [Código: src/producao/portas-financeiras-modulares.js](../../src/producao/portas-financeiras-modulares.js)
 - [Código: src/producao/conciliacao-financeira-externa-readonly.js](../../src/producao/conciliacao-financeira-externa-readonly.js)
 - [Código: src/producao/pedidos-fornecedor-outbox.js](../../src/producao/pedidos-fornecedor-outbox.js)

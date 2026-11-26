@@ -17,9 +17,16 @@ A base limpa não substitui a versão aprovada publicada automaticamente. Conser
 - [REGRA_IMUTABILIDADE_TELAS_LOOP.md](../REGRA_IMUTABILIDADE_TELAS_LOOP.md)
 - [CONTRATO_VISUAL_LOOP_APROVADO.json](../CONTRATO_VISUAL_LOOP_APROVADO.json)
 - [TRAVA_BASE_REAL_ATUAL_20261119.json](../TRAVA_BASE_REAL_ATUAL_20261119.json)
-- [DECISOES_VISUAIS_PROPRIETARIO_05 NOV 2026.md](../DECISOES_VISUAIS_PROPRIETARIO_05NOV2026.md)
+- [DECISOES_VISUAIS_PROPRIETARIO_05 NOV2026.md](../DECISOES_VISUAIS_PROPRIETARIO_05NOV2026.md)
 - [Código: src/producao/interface-aprovada-contas.js](../../src/producao/interface-aprovada-contas.js)
 - [Código: src/producao/acabamento-botoes-real.css](../../src/producao/acabamento-botoes-real.css)
 - [Código: src/shared/tabuleiro-visual-loop.js](../../src/shared/tabuleiro-visual-loop.js)
 
 [Voltar ao índice geral](README.md).
+
+
+## Ampliação comprovada do acervo fora do Git
+
+Foram identificados e materializados 139 arquivos relacionados ao projeto, incluindo artes, logos, banners, capturas e comandos históricos, sem substituir arquivos originais. Incluem as quatro referências visuais oficiais históricas. Cada arquivo tem tamanho e SHA256 no manifesto privado. Conteúdos e detalhes permanecem no pacote cifrado; não são publicados no GitHub. A preservação não reaprova imagens antigas e não executa scripts arquivados.
+
+A busca por título não garante todos os anexos sem nome nem a mídia presente nos volumes. A história pessoal completa do ChatGPT continua para exportação posterior pelo proprietário. [Resumo de integridade sem conteúdo privado](PROVA_ACERVO_PRIVADO.json).

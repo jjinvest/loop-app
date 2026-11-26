@@ -15,7 +15,7 @@ Visual: preservar carrosséis, filtros, upload/editor, crop e molduras existente
 ## Fontes integrais preservadas
 
 - [REGRAS_POSICOES_POR_COR_AKITEMM_20261105.md](../REGRAS_POSICOES_POR_COR_AKITEMM_20261105.md)
-- [CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23 NOV 2026.md](../CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23NOV2026.md)
+- [CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23 NOV2026.md](../CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23NOV2026.md)
 - [Código: src/producao/interface-aprovada-loja.js](../../src/producao/interface-aprovada-loja.js)
 - [Código: src/producao/pedidos-comerciais-sqlite.js](../../src/producao/pedidos-comerciais-sqlite.js)
 - [Código: src/producao/avaliador-qualificacao-pedidos-real.js](../../src/producao/avaliador-qualificacao-pedidos-real.js)

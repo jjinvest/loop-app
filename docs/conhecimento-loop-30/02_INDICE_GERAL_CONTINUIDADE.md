@@ -11,6 +11,6 @@ Distinguir estado de regra (aprovada/proposta/histórica) e estado técnico (có
 ## Fontes integrais preservadas
 
 - [LEIA_PRIMEIRO_LOOP_30_INDICE_VIGENTE.md](../LEIA_PRIMEIRO_LOOP_30_INDICE_VIGENTE.md)
-- [HUB_CONTINUIDADE_MARCO_ZERO_07 NOV 2026.md](../HUB_CONTINUIDADE_MARCO_ZERO_07NOV2026.md)
+- [HUB_CONTINUIDADE_MARCO_ZERO_07 NOV2026.md](../HUB_CONTINUIDADE_MARCO_ZERO_07NOV2026.md)
 
 [Voltar ao índice geral](README.md).
