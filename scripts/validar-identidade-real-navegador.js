@@ -1890,7 +1890,7 @@ async function main(){
     const executou=integradorComercialEnsaio.processarDistribuicao({controle:executor});
     assert.equal(executou.processado,true,JSON.stringify({resultado:executou,controle:executor.consultar()}));
     await pagina.locator('#atualizarIntegracaoLoop').click();
-    await integrado.filter({hasText:/Eventos: 1\/6/}).waitFor();
+    await integrado.filter({hasText:/Luzes: 1\/6/}).waitFor();
     await pagina.locator('#pausarCatracaAdmin').click();
     await pagina.waitForFunction(()=>document.getElementById('modoCatracaAdmin').value==='PAUSADA');
     await pagina.locator('#estadoCatracaAdmin').filter({hasText:/Política.*salva/}).waitFor();
