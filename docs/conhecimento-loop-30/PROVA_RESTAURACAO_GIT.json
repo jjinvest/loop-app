@@ -1,0 +1,15 @@
+{
+  "origem": "Mirror GitHub de todas as refs anunciadas",
+  "referencias": 297,
+  "branches": 152,
+  "tags": 0,
+  "commits": 6858,
+  "bundleSha256": "989ad786b6011650ed8c2f4c163455948ada6e0c42de0062595fd0a22a9bbea0",
+  "bundleBytes": 9411279,
+  "refsRestauradasIguais": true,
+  "fsckOrigemSemErros": true,
+  "fsckRestauradoSemErros": true,
+  "baseSha": "6e22deb194ec7f1cd1e0ce596cb1f3ed1f0e2f89",
+  "baseTreeSha": "4bc56d489de2fe60b3428561f28ab776802b7e17",
+  "limite": "Não inclui LFS externos, dados vivos, secrets, issues, PR reviews, artifacts expirados ou conversas fora do Git."
+}

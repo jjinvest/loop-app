@@ -1,0 +1,82 @@
+{
+  "capturadoEm": "2026-11-26T22:45:46.067Z",
+  "origem": "ChatGPT",
+  "automacoes": [
+    {
+      "id": "Automation_78596f5e39188191b21a87e604535e93",
+      "title": "Base limpa LOOP 3.0",
+      "prompt": "Confira no GitHub `jjinvest/loop-app` a branch de construção `feature/unificar-escritorio-real-20261105`, a base separada `base-limpa/loop-3-0-marco-zero-v0-20261121` e a revisão efetivamente publicada no Railway. Mantenha a base de apresentação independente atualizada apenas com telas REAIS em uso, código efetivamente necessário e regras vigentes já aprovadas e verificadas; não sincronize tentativas, arquivos abandonados, documentos históricos contraditórios, telas antigas ou dependências fictícias. Compare revisões, registre origem SHA/manifesto e pendências, verifique hashes/imports/testes e preserve versões anteriores. Se uma melhoria foi comprovada na aplicação real e preserva a aparência aprovada, incorpore-a com validação, sem tocar no serviço publicado nem liberar operações financeiras, sem apagar dados ou enfraquecer travas; se a dependência ou equivalência ainda for incerta, deixe pendente, NÃO declare pronto. Registre honestamente que a escala de 100 mil usuários precisa ser comprovada por testes reais específicos. Não envie links de download ou mensagens de rotina ao proprietário: ele só deseja baixar a cópia FINAL; avise apenas se houver bloqueio essencial que dependa de aprovação dele ou quando houver marco relevante comprovado. Não confundir rascunho, prova real e cópia limpa.",
+      "schedule": "BEGIN:VEVENT\nDTSTART:20261122T090000\nRRULE:FREQ=DAILY\nEND:VEVENT",
+      "is_enabled": true,
+      "timezone": "America/Sao_Paulo",
+      "last_run_time": "2026-11-26T11:53:54.531226+00:00"
+    },
+    {
+      "id": "6adcc81ac984819188a24f2082a09ded",
+      "title": "Conclusão da auditoria LOOP",
+      "prompt": "Verifique no GitHub jjinvest/loop-app a branch ATIVA de integração feature/unificar-escritorio-real-20261105 (não use fix/teste-escrita-catraca-20261014 como fonte principal). Faça auditoria ponta a ponta LOOP 3.0/AKITEMM: autenticação do operador, editor de produtos, upload de fotos, persistência e exibição na vitrine, integração com escritório LOOP, filas, catraca e cofres em simulação isolada sem dinheiro real. Confira commits recentes, GitHub Actions, testes e relatórios, correlacione falhas com a publicação Railway do serviço 7114bc9a-8d39-477b-ad67-6a625b5aebd5 no ambiente e5c30d7f-086f-4845-93ad-7d1a5ca5e31b. Não confunda CI verde com conclusão; identifique precisamente bloqueios e evidências. Não faça merge ou deploy por esta tarefa. Notifique somente quando houver conclusão integral comprovada ou bloqueio concreto novo que exija intervenção.",
+      "schedule": "BEGIN:VEVENT\nDTSTART:20261024T150142Z\nRRULE:FREQ=HOURLY\nEND:VEVENT",
+      "is_enabled": true,
+      "timezone": "America/Sao_Paulo",
+      "last_run_time": "2026-11-26T21:59:55.910861+00:00"
+    },
+    {
+      "id": "Automation_da2bbdc299248191b60afd52e46cbc72",
+      "title": "Publicação AKITEMM",
+      "prompt": "Confira no Railway o deployment do serviço 7114bc9a-8d39-477b-ad67-6a625b5aebd5, projeto 8c1ab327-16f0-409a-90ac-8f02a3f5eae0, ambiente e5c30d7f-086f-4845-93ad-7d1a5ca5e31b, branch feature/unificar-escritorio-real-20261105, e os ajustes visuais solicitados na AKITEMM. Se falhar, examine logs, corrija somente falhas claramente identificadas com segurança, teste e republique. Confirme status SUCCESS e integridade do site antes de informar que pode conferir. Informe bloqueios concretos e não declare pronto prematuramente. Não alterar as telas LOOP já aprovadas.",
+      "schedule": "BEGIN:VEVENT\nDTSTART:20261116T191835Z\nRRULE:FREQ=HOURLY\nEND:VEVENT",
+      "is_enabled": true,
+      "timezone": "America/Sao_Paulo",
+      "last_run_time": "2026-11-26T22:00:10.993193+00:00"
+    },
+    {
+      "id": "Automation_716e509a40308191a9f3c98371591214",
+      "title": "Alerta de armazenamento AKITEMM",
+      "prompt": "Confira o uso de DISK_USAGE_GB dos volumes Railway do projeto LOOP/AKITEMM `8c1ab327-16f0-409a-90ac-8f02a3f5eae0` em `homologacao` (`e5c30d7f-086f-4845-93ad-7d1a5ca5e31b`): serviço `loop-identidade-real` (`ac28edec-50ad-4187-99e2-8f7014735b63`) com volume de 5 GB e `akitemm-escritorio-preview` (`7114bc9a-8d39-477b-ad67-6a625b5aebd5`) com volume de 1 GB. Calcule utilização e alerte a pessoa se algum volume chegar a 70%, 85% ou 95%, ou se houver crescimento abrupto em comparação com dados verificáveis anteriores. Não confunda armazenamento alocado, uso do disco ou custos reais; não diga que monitorou a fatura, porque esta fonte não a expõe. Todo primeiro dia do mês, independentemente dos limiares, lembre também de conferir a fatura e o consumo do Cloudflare R2, pois este serviço não está conectado para leitura de cobrança. Caso não haja nenhum gatilho e não seja o primeiro dia do mês, não envie aviso.",
+      "schedule": "BEGIN:VEVENT\nDTSTART:20261116T090000\nRRULE:FREQ=DAILY\nEND:VEVENT",
+      "is_enabled": true,
+      "timezone": "America/Sao_Paulo",
+      "last_run_time": "2026-11-26T12:26:51.899367+00:00"
+    },
+    {
+      "id": "Automation_1cf98669dd1c81918a67fd284cddf65c",
+      "title": "Liberar conferência LOOP",
+      "prompt": "Confira o deployment cd4e10c1-1c5b-494e-8474-8008d7d07490 no Railway projeto 8c1ab327-16f0-409a-90ac-8f02a3f5eae0 ambiente e5c30d7f-086f-4845-93ad-7d1a5ca5e31b serviço ac28edec-50ad-4187-99e2-8f7014735b63, SHA c9c16ba0b9d955e9a86802c121650e9e7352c4dd. Confirme SUCCESS, log de deploy LOOP_FLUXO_100_PREPARADO=true sem falha de preparação, e sucesso dos checks GitHub jjinvest/loop-app SHA 3dd86b3a96ef83c594a9c6b82253b3d8bb66b10b. Somente quando todos confirmados envie: 'OK ✅ Pode abrir o teste: https://akitemmloop.com.br/escritorio?visao=operador&teste=catraca . A catraca está preparada para seu START.' Nunca dê START, nunca movimente dinheiro ou altere registros. Se falha comprovada informe o bloqueio, não envie OK. Se ainda estiver em andamento não notifique. Após notificação final, desative este monitor.",
+      "schedule": "BEGIN:VEVENT\nDTSTART:20261124T140146Z\nRRULE:FREQ=HOURLY\nEND:VEVENT",
+      "is_enabled": false,
+      "timezone": "America/Sao_Paulo",
+      "last_run_time": "2026-11-24T14:02:15.941817+00:00"
+    },
+    {
+      "id": "6b058d7a41dc819199bfe17b82066a12",
+      "title": "Confirmação das cores LOOP",
+      "prompt": "Confira o Railway projeto 8c1ab327-16f0-409a-90ac-8f02a3f5eae0 ambiente e5c30d7f-086f-4845-93ad-7d1a5ca5e31b serviço ac28edec-50ad-4187-99e2-8f7014735b63, deployment bb0c6579-fa53-4896-8405-d205a4d63c77 commit 4b5e78b8faccead222ba9d2bca527cf612c2c347. Quando estiver SUCCESS e servindo o painel, avise apenas 'OK ✅ Pode conferir o centro roxo e a posição 6 verde no painel real.' Se falhar, avise o bloqueio real. Se ainda estiver em publicação, não envie mensagem. Não altere nada. Após a primeira notificação final, desative esta própria tarefa para evitar repetição.",
+      "schedule": "BEGIN:VEVENT\nDTSTART:20261124T131430Z\nRRULE:FREQ=HOURLY\nEND:VEVENT",
+      "is_enabled": false,
+      "timezone": "America/Sao_Paulo",
+      "last_run_time": "2026-11-24T13:25:18.552108+00:00"
+    },
+    {
+      "id": "Automation_eb44d847c21081918cac3741ea40db6b",
+      "title": "Publicar bloco LOOP AKITEMM",
+      "prompt": "Conclua a publicação real autorizada do PR #124 do GitHub jjinvest/loop-app, base feature/unificar-escritorio-real-20261105 (base conferida 5be517b603cce394d9318632eaef75653d52f2ae), revisão atual autorizada b61d70dd3f7db26b1c7f334c7fe6a88f0f2dddc7. Confira todos os checks aplicáveis, incluindo operador, navegacao-completa-pc-celular e validar-pc-celular. Não ignore falhas, proteções, testes pendentes nem divergência de revisão. Se aprovado, integre via merge squash com expected_head_sha e confirme o manifesto docs/TRAVA_BASE_REAL_ATUAL_20261119.json blob bca47e53010b7896c8505191d3101c4ae99649cf. No Railway projeto 8c1ab327-16f0-409a-90ac-8f02a3f5eae0, ambiente e5c30d7f-086f-4845-93ad-7d1a5ca5e31b, serviço loop-identidade-real ac28edec-50ad-4187-99e2-8f7014735b63, confira e preserve preDeployCommand e âncora do verificador 1293533137895ef600c5d6847b58beac08e8665a; substitua somente âncora anterior f4b6f2b4edb23cc28d409967d85cd5f61a537442 pela nova bca47e53010b7896c8505191d3101c4ae99649cf após confirmar a revisão integrada, acione a publicação da branch ativa se necessário. Confirme deployment SUCCESS da revisão correta. Não altere dados, volumes, PSPs, checkout, outros serviços nem proteções. Se já publicado, apenas confira. Se houver falha de teste, identifique o erro específico e corrija somente se for uma incompatibilidade clara com a alteração autorizada, preservando os testes e as travas, senão reporte bloqueio. Se ainda em execução, reporte estado exato. Responda curto, sem commits.",
+      "schedule": "BEGIN:VEVENT\nDTSTART:20261124T041116Z\nEND:VEVENT",
+      "is_enabled": false,
+      "timezone": "America/Sao_Paulo",
+      "last_run_time": "2026-11-24T04:11:39.676673+00:00"
+    },
+    {
+      "id": "Automation_c7778be9c8708191bfd21f32a402b37e",
+      "title": "Confirmar publicação LOOP",
+      "prompt": "Verifique no Railway projeto 8c1ab327-16f0-409a-90ac-8f02a3f5eae0 ambiente e5c30d7f-086f-4845-93ad-7d1a5ca5e31b serviço 7114bc9a-8d39-477b-ad67-6a625b5aebd5 se o commit 6d43e7391554703559116ec8ff70356c979b7fbc foi publicado com SUCCESS. Confirme também o healthcheck de akitemmloop.com.br. Só notifique o usuário quando a publicação e a verificação estiverem confirmadas, com o link https://akitemmloop.com.br/minha-conta. Se falhar, investigue os logs e tente corrigir o problema com segurança antes de avisar. Não declare sucesso apenas com testes ou BUILDING.",
+      "schedule": "BEGIN:VEVENT\nDTSTART:20261116T172027Z\nRRULE:FREQ=HOURLY\nEND:VEVENT",
+      "is_enabled": false,
+      "timezone": "America/Sao_Paulo",
+      "last_run_time": "2026-11-16T18:24:38.027997+00:00"
+    }
+  ],
+  "railway": {
+    "consultado": true,
+    "erro": "Railway Automations is not enabled for this user."
+  }
+}
