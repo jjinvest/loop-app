@@ -1870,7 +1870,28 @@ async function main(){
    }).waitFor();
    if(visual.nome==='pc'){
     await pagina.locator('#prepararTabuleiroLoop').click();
+    await integrado.filter({hasText:/Eventos: 0\/6/}).waitFor();
+    assert.equal(motorLoop.consultar().tabuleiro.eventosNoCiclo,0,
+     'preparar centro não executa eventos da Distribuição');
+    // O operador autoriza no controle existente; só então o worker consome.
+    await pagina.locator('#modoCatracaAdmin').selectOption('MANUAL');
+    await pagina.locator('#metaCentrosDiaAdmin').fill('0');
+    await pagina.locator('#metaDataAlvoAdmin').fill('');
+    await pagina.locator('#limiteCatracaAdmin').fill('');
+    await pagina.locator('#inicioCatracaAdmin').fill('00:00');
+    await pagina.locator('#fimCatracaAdmin').fill('00:00');
+    await pagina.locator('#salvarCatracaAdmin').click();
+    await pagina.locator('#estadoCatracaAdmin').filter({hasText:/Política.*salva/}).waitFor();
+    const {OperacaoCatracaAdminSQLite}=require('../src/producao/operacao-catraca-admin-sqlite');
+    const executor=new OperacaoCatracaAdminSQLite({banco,motor:motorLoop});
+    assert.equal(integradorComercialEnsaio.processarDistribuicao({controle:executor}).processado,true);
+    await pagina.locator('#atualizarIntegracaoLoop').click();
     await integrado.filter({hasText:/Eventos: 1\/6/}).waitFor();
+    await pagina.locator('#pausarCatracaAdmin').click();
+    await pagina.locator('#estadoCatracaAdmin').filter({hasText:/Política.*salva/}).waitFor();
+    assert.equal(integradorComercialEnsaio.processarDistribuicao({controle:executor}).processado,false);
+    assert.equal(motorLoop.consultar().tabuleiro.eventosNoCiclo,1,
+     'Pausar mantém evento anterior e bloqueia nova execução');
    }else{
     await pagina.locator('#atualizarLoopAdmin').click();
     await pagina.locator('#loopAdminEstado').filter({hasText:/Fila B:/}).waitFor();
