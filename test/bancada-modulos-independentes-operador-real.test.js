@@ -240,6 +240,7 @@ test('painel real retira as referências temporárias sem alterar posições rea
 test('100 PDFs: posições classificadas, caixa separado, START explícito e 100 lançamentos conciliados',t=>{
  const c=contexto();t.after(()=>c.db.close());
  const anterior=c.teste.consultar().fila;
+ c.agenda.metaCentrosDia=0;
  const lote=c.acao('CATRACA_PREPARAR_100');
  assert.equal(lote.preparado,true);
  let estado=c.teste.consultar().catraca;
@@ -412,6 +413,7 @@ test('mil posições: composição autorizada, geração anterior preservada e n
 
 test('mil recebimentos percorrem o mesmo livro em execução isolada, com conservação de caixa',t=>{
  const c=contexto();t.after(()=>c.db.close());
+ c.agenda.metaCentrosDia=0;
  c.acao('CATRACA_PREPARAR_1000');
  c.acao('CATRACA_INICIAR'); // Somente nesta instância em memória, nunca no serviço.
  const ts=Date.parse('2026-11-23T12:00:00Z');
@@ -429,5 +431,42 @@ test('mil recebimentos percorrem o mesmo livro em execução isolada, com conser
  assert.equal(x.financeiro.destinos.BONUS,1875000);
  assert.equal(x.financeiro.comissoesPendentesCentavos,0);
  assert.equal(x.catracaAtiva,false);
+ assert.equal(c.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+
+test('START governa só Distribuição: livre por vendas 09–18, pausa, programação e retomada sem rajada',t=>{
+ const c=contexto('MANUAL');t.after(()=>c.db.close());
+ c.agenda.metaCentrosDia=0;
+ c.mudarTempo(Date.parse('2026-11-26T08:59:00-03:00'));
+ c.acao('CATRACA_PREPARAR_100');
+ const fila=c.teste.consultar().fila;
+ c.acao('CATRACA_INICIAR');
+ assert.equal(c.teste.processarRelogio().motivo,'FORA_DO_HORARIO');
+ c.mudarTempo(Date.parse('2026-11-26T09:00:00-03:00'));
+ assert.equal(c.teste.processarRelogio().processado,true);
+ assert.equal(c.teste.consultar().catraca.financeiro.eventos,1);
+ c.mudarTempo(Date.parse('2026-11-26T09:00:01-03:00'));
+ assert.equal(c.teste.processarRelogio().processado,true,'livre não espera dez segundos');
+ c.acao('CATRACA_PAUSAR');
+ c.mudarTempo(Date.parse('2026-11-26T09:10:00-03:00'));
+ assert.equal(c.teste.processarRelogio().processado,false);
+ assert.equal(c.teste.consultar().catraca.financeiro.eventos,2);
+ c.agenda.modo='AUTOMATICA';c.agenda.metaCentrosDia=1;
+ c.agenda.janelaFim='10:00';
+ c.acao('CATRACA_INICIAR');
+ c.mudarTempo(Date.parse('2026-11-26T09:19:59-03:00'));
+ assert.equal(c.teste.processarRelogio().processado,false);
+ c.mudarTempo(Date.parse('2026-11-26T09:20:00-03:00'));
+ assert.equal(c.teste.processarRelogio().processado,true);
+ c.acao('CATRACA_PAUSAR');
+ c.mudarTempo(Date.parse('2026-11-26T09:45:00-03:00'));
+ c.acao('CATRACA_INICIAR');
+ assert.equal(c.teste.processarRelogio().processado,false,'START não recupera 09:30 nem 09:40');
+ const reiniciado=new BancadaModulosLoopSQLite({banco:c.db,agora:()=>Date.parse('2026-11-26T09:50:00-03:00'),consultarAgenda:()=>c.agenda});
+ assert.equal(reiniciado.processarRelogio().processado,true);
+ assert.equal(reiniciado.processarRelogio().processado,false,'mesmo marco não duplica evento');
+ c.mudarTempo(Date.parse('2026-11-26T10:01:00-03:00'));
+ assert.equal(c.teste.processarRelogio().motivo,'FORA_DO_HORARIO');
+ assert.deepEqual(c.teste.consultar().fila,fila);
  assert.equal(c.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });

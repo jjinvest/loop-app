@@ -127,7 +127,8 @@ test('três contas e administrador veem o mesmo motor, sem acesso cruzado',async
   chaveAdmin:randomBytes(32),credencialAdmin:senhaAdmin});
  const app=criarAppIdentidadeLoop({
   contas,motorLoop:motor,origemHttps:ORIGEM,permitirCadastro:true,
-  adminComercial:{catalogo,controle,sessoes,auditoria,manutencao}
+  adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
+   operacaoCatraca:new OperacaoCatracaAdminSQLite({banco:db,motor})}
  });
  const server=app.listen(0,'127.0.0.1');
  await once(server,'listening');
@@ -213,6 +214,24 @@ test('três contas e administrador veem o mesmo motor, sem acesso cruzado',async
  assert.equal((await naoGira.json()).girou,false);
  assert.equal(motor.consultar().catraca.giros,0);
  assert.equal(motor.verificar().compras,3);
+ // Mesmo POST do botão Salvar, seguido das leituras dos dois perfis.
+ const programacao={acao:'CONFIGURAR',modo:'AUTOMATICA',
+  janelaInicio:'09:00',janelaFim:'18:00',metaCentrosDia:5,
+  metaDataAlvo:null,limiteDiario:null,revisaoEsperada:estado.revisao+1,
+  motivo:'CONFERIR_RELOGIO_DUAS_VISOES'};
+ assert.equal((await chamada(programacao,cab)).status,200);
+ const operador=await (await fetch(base+ctrl,{headers:{Cookie:adminCookie}})).json();
+ const cliente=await (await fetch(base+'/api/loop/estado',{
+  headers:{Cookie:cookies[0]}})).json();
+ for(const agenda of [operador.agenda,cliente.agenda]){
+  assert.equal(agenda.abertura,'09:00');
+  assert.equal(agenda.fechamento,'18:00');
+  assert.equal(agenda.metaLotes.quantidade,5);
+  assert.equal(agenda.metaLotes.intervaloLuzSegundos,1080);
+  assert.equal(agenda.metaLotes.proximaLuzPrevistaEmMs,
+   operador.proximaLuzPrevistaEmMs);
+ }
+ assert.equal(motor.consultar().catraca.giros,0);
 });
 
 test('agenda, limite diario e pausas controlam giros; filas entram mesmo pausada e resistem ao reinicio',async t=>{

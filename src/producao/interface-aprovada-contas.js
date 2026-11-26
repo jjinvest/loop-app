@@ -3476,7 +3476,12 @@
    painel.append(h,estado,botoes,msg,dados);$('conteudoTabuleiro').append(painel);
   }
   painel.hidden=false;
-  $('adminFluxoAoVivoEstado').textContent=x.catracaAtiva?'EM EXECUÇÃO · intervalo mínimo de 10 segundos':
+  $('adminFluxoAoVivoEstado').textContent=x.catracaAtiva?
+   (f.execucao?.motivo==='DISTRIBUICAO_PAUSADA'?'PAUSADA · programação do operador':
+    f.execucao?.motivo==='FORA_DO_HORARIO'?'AGUARDANDO HORÁRIO':
+    f.execucao?.motivo==='FORA_DA_DATA'?'AGUARDANDO DATA':
+    f.intervaloSegundos===null?'EM EXECUÇÃO · fluxo de vendas':
+    'EM EXECUÇÃO · programação do operador'):
    f.saldoCentavos<25000?'ENCERRADO · caixa insuficiente para outro evento':'PARADA · aguardando START';
   $('adminFluxoStart').disabled=x.catracaAtiva||f.saldoCentavos<25000;
   $('adminFluxoStop').disabled=!x.catracaAtiva;
@@ -3527,7 +3532,10 @@
    mostrarAgendaOperador(controle);
    const agenda={...controle.agenda,luzesDoRelogioCompartilhado:false,
     luzesDoRelogioOperador:false,...(x.financeiro?{fluxoControlado:{
-     ativa:x.catracaAtiva,proximoEmMs:x.catracaAtiva?Number(x.cursorDia)+10000:null,
+     ativa:x.catracaAtiva,modo:x.financeiro.execucao?.modo,
+     abertura:controle.janelaInicio,fechamento:controle.janelaFim,
+     motivo:x.financeiro.execucao?.motivo,
+     proximoEmMs:x.financeiro.execucao?.proximaLuzPrevistaEmMs??null,
      eventos:x.tabuleiro.eventosNoCiclo,total:x.financeiro.eventos,
      limite:x.financeiro.produtos,encerrado:x.financeiro.saldoCentavos<25000,
      agoraServidorMs:x.financeiro.agoraServidorMs

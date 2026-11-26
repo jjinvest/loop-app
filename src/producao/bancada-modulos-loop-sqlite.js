@@ -4,6 +4,7 @@
 // A porteira da fila e o andamento da catraca sao comandos separados.
 // Nunca importar contas, pedidos, saldos ou posicoes de clientes.
 const {SimuladorLoop}=require('../domain/simulador-loop');
+const {avaliarExecucaoDistribuicao}=require('../domain/politica-execucao-distribuicao-loop');
 const {agoraLocal,minutos}=require('../domain/agenda-catraca-loop');
 const {createHash}=require('node:crypto');
 const MODULOS=Object.freeze(['FILA','CATRACA']);
@@ -36,6 +37,7 @@ class BancadaModulosLoopSQLite{
   // Livro exclusivo do SQLite de testes. Nenhuma tabela de identidade/PSP.
   this.db.exec([
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_lotes(geracao INTEGER PRIMARY KEY,preparado_em INTEGER NOT NULL);',
+   'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_execucao(geracao INTEGER PRIMARY KEY,programacao TEXT NOT NULL,marco INTEGER NOT NULL,ultimo_evento INTEGER);',
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_arquivo(geracao INTEGER PRIMARY KEY,snapshot TEXT NOT NULL,registrado_em INTEGER NOT NULL);',
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_recebimentos(geracao INTEGER NOT NULL,numero INTEGER NOT NULL,',
    'pedido TEXT NOT NULL UNIQUE,valor INTEGER NOT NULL CHECK(valor=25000),recebido_em INTEGER NOT NULL,',
@@ -91,6 +93,7 @@ class BancadaModulosLoopSQLite{
    }
    const row=this._linha(modulo),sim=this._restaurar(row);
    const resultado=executar({row,sim})||{};
+   if(resultado.persistirOperacao===false){this.db.exec('COMMIT');return resultado;}
    const ts=this.agora();
    if(!Number.isSafeInteger(ts)||ts<1)
     falha('BANCADA_HORARIO_INVALIDO');
@@ -101,7 +104,7 @@ class BancadaModulosLoopSQLite{
    ].join(' ')).run(JSON.stringify(sim.exportarSnapshot()),
     row.porteira_aberta,row.catraca_ativa,row.geracao,row.cursor_dia,
     row.cursor_luz,ts,modulo);
-   this.db.prepare([
+   if(resultado.persistirOperacao!==false)this.db.prepare([
     'INSERT INTO loop_teste_modulos_operacoes',
     '(id,modulo,payload_hash,resultado,registrado_em) VALUES(?,?,?,?,?)'
    ].join(' ')).run(idOperacao,modulo,hash,JSON.stringify(resultado),ts);
@@ -126,12 +129,19 @@ class BancadaModulosLoopSQLite{
   const eventos=this.db.prepare("SELECT COUNT(*) AS n FROM loop_teste_fluxo_lancamentos WHERE geracao=? AND destino!='BONUS'").get(geracao).n;
   const ultimos=this.db.prepare('SELECT referencia,destino,valor,posicao,registrado_em FROM loop_teste_fluxo_lancamentos WHERE geracao=? ORDER BY rowid DESC LIMIT 12').all(geracao);
   const indicacoes=this.db.prepare('SELECT COUNT(*) AS n FROM loop_teste_fluxo_indicacoes WHERE geracao=?').get(geracao).n;
-  return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',
+  const row=this._linha('CATRACA'),agenda=this.consultarAgenda();
+  const cadencia=this.db.prepare('SELECT * FROM loop_teste_fluxo_execucao WHERE geracao=?').get(geracao);
+  const execucao=avaliarExecucaoDistribuicao({agenda,agoraMs:this.agora(),
+   ativa:row.catraca_ativa===1,ultimoEventoEm:cadencia?.ultimo_evento??null,
+   marcoExecucaoEm:cadencia?.marco??this.agora()});
+  return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',execucao,
    // Este lote persistido contém exclusivamente vendas de PDFs.
    // Cursos e físicos não fazem parte deste cenário; não inferir vendas reais.
    vendasPorTipo:{pdfs:receb.quantidade,cursos:0,fisicos:0},
    produtos:receb.quantidade,agoraServidorMs:this.agora(),recebidoCentavos:receb.total,distribuidoCentavos:distribuido,
-   saldoCentavos:saldo,destinos,eventos,ultimos,intervaloSegundos:10,
+   saldoCentavos:saldo,destinos,eventos,ultimos,
+   intervaloSegundos:(()=>{const a=this.consultarAgenda();
+    return a.metaCentrosDia>0?(((minutos(a.janelaFim)-minutos(a.janelaInicio)+1440)%1440)||1440)*60/(a.metaCentrosDia*6):null;})(),
    comissoes:indicacoes,comissoesPendentesCentavos:indicacoes*2500-destinos.BONUS,indicadores:this.db.prepare('SELECT COUNT(DISTINCT indicador) AS n FROM loop_teste_fluxo_indicacoes WHERE geracao=?').get(geracao).n,valorEventoCentavos:25000};
  }
  _lancamento(geracao,referencia,destino,valor,posicao){
@@ -307,8 +317,8 @@ class BancadaModulosLoopSQLite{
      sim.tabuleiro.proximoDaFila=opcoes=>sim.filas.proximoDaFila(opcoes);
      if(!sim.tabuleiro.centro)sim.prepararTabuleiro();
      if(!sim.tabuleiro.centro)falha('BANCADA_CATRACA_SEM_CENTRO');
-     row.catraca_ativa=1;row.cursor_luz=0;
-     row.cursor_dia=String(this.agora());
+     row.catraca_ativa=1;
+     this._marcarProgramacaoFluxo(row,agenda,true);
      return {acao,catracaAtiva:true,porteiraAberta:true,financeiro:fluxo};
     }
     if(acao==='CATRACA_PAUSAR'){row.catraca_ativa=0;return {acao,catracaAtiva:false};}
@@ -414,21 +424,44 @@ class BancadaModulosLoopSQLite{
    falha('BANCADA_ACAO_INVALIDA');
   });
  }
+ _marcarProgramacaoFluxo(row,agenda,retomada=false){
+  const chave=JSON.stringify([agenda.modo,agenda.janelaInicio,agenda.janelaFim,
+   agenda.metaCentrosDia,agenda.metaDataAlvo??null,agenda.limiteDiario??null]);
+  let e=this.db.prepare('SELECT * FROM loop_teste_fluxo_execucao WHERE geracao=?').get(row.geracao);
+  if(!e||e.programacao!==chave||retomada){
+   this.db.prepare('INSERT INTO loop_teste_fluxo_execucao VALUES(?,?,?,?) ON CONFLICT(geracao) DO UPDATE SET programacao=excluded.programacao,marco=excluded.marco')
+    .run(row.geracao,chave,this.agora(),e?.ultimo_evento??null);
+   e=this.db.prepare('SELECT * FROM loop_teste_fluxo_execucao WHERE geracao=?').get(row.geracao);
+  }
+  return e;
+ }
+ _avaliarFluxo(row,sim,agenda,agora){
+  const e=this._marcarProgramacaoFluxo(row,agenda);
+  const local=agoraLocal(agora);
+  const girosHoje=sim.tabuleiro.ciclosConcluidos.filter(c=>{
+   const em=Date.parse(c.concluidoEm||c.registradoEm||'');
+   return Number.isFinite(em)&&agoraLocal(em).dia===local.dia;
+  }).length;
+  return avaliarExecucaoDistribuicao({agenda,agoraMs:agora,
+   ativa:row.catraca_ativa===1,girosHoje,
+   ultimoEventoEm:e.ultimo_evento,marcoExecucaoEm:e.marco});
+ }
  processarRelogio(){
   const row=this._linha('CATRACA');
   if(row.catraca_ativa!==1)return {processado:false,motivo:'CATRACA_PARADA'};
   const agenda=this.consultarAgenda(),agora=this.agora();
   const fluxo=this._fluxo(row.geracao);
   if(fluxo){
-   if(agora-Number(row.cursor_dia)<10000)return {processado:false,motivo:'AGUARDANDO_INTERVALO'};
    return this._transacao('CATRACA','fluxo:'+row.geracao+':'+(fluxo.eventos+1),
     {acao:'CATRACA_EVENTO_FINANCEIRO',evento:fluxo.eventos+1},({row:atual,sim})=>{
-     if(atual.catraca_ativa!==1||agora-Number(atual.cursor_dia)<10000)
-      falha('FLUXO_MARCO_NAO_AUTORIZADO');
-     atual.cursor_dia=String(agora);
-     return this._pulsoFluxo(atual,sim);
+     const decisao=this._avaliarFluxo(atual,sim,agenda,agora);
+     if(!decisao.podeExecutar)return {processado:false,motivo:decisao.motivo,persistirOperacao:false};
+     const resultado=this._pulsoFluxo(atual,sim);
+     if(resultado.processado)this.db.prepare('UPDATE loop_teste_fluxo_execucao SET ultimo_evento=? WHERE geracao=?').run(agora,atual.geracao);
+     return resultado;
     });
   }
+
   const p=this._progresso(agenda,agora);
   if(!p)return {processado:false,motivo:'RELOGIO_SEM_JANELA'};
   if(row.cursor_dia===p.dia&&p.luz<=row.cursor_luz)
