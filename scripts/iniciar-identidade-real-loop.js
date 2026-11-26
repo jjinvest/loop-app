@@ -174,12 +174,27 @@ async function iniciar(ambiente=process.env,opcoes={}){
   }
   // Lote autorizado de 24/11: prepara uma única vez, sem START e
   // exclusivamente no arquivo testes-modulos.sqlite. Não muda contas reais.
-  if(ambiente.LOOP_PREPARAR_FLUXO_100==='1'){
+  if(ambiente.LOOP_PREPARAR_FLUXO_100==='1'&&ambiente.LOOP_PREPARAR_FLUXO_1000!=='1'){
    try{
     const lote=bancadaOperacional.comandar({idOperacao:'fluxo-100-20261124',
      acao:'CATRACA_PREPARAR_100'});
     console.info('LOOP_FLUXO_100_PREPARADO='+Boolean(lote.preparado));
    }catch(e){console.error('LOOP_FLUXO_100_NAO_PREPARADO',e.codigo||'ERRO');}
+  }
+  // Lote de mil autorizado em 26/11; conserva o lote anterior e não executa START.
+  if(ambiente.LOOP_PREPARAR_FLUXO_1000==='1'){
+   bancadaOperacional.comandar({idOperacao:'fluxo-1000-20261126',
+    acao:'CATRACA_PREPARAR_1000'});
+   const x=bancadaOperacional.consultar().catraca;
+   const resumo={posicoes:x.filaA.length+x.filaB.length,
+    amarelas:x.filaA.length,douradas:x.filaB.filter(p=>p.dourada).length,
+    azuis:x.filaB.filter(p=>p.pendente).length,
+    brancas:x.filaB.filter(p=>!p.dourada&&!p.pendente).length,
+    recebidoCentavos:x.financeiro.recebidoCentavos,saldoCentavos:x.financeiro.saldoCentavos,
+    indicadores:x.financeiro.indicadores,indicacoes:x.financeiro.comissoes,
+    eventos:x.financeiro.eventos,giros:x.tabuleiro.giros,
+    catracaAtiva:x.catracaAtiva,porteiraAberta:x.porteiraAberta};
+   console.info('LOOP_FLUXO_1000_VERIFICADO='+JSON.stringify(resumo));
   }
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
   // Nenhum fornecedor é homologado automaticamente.

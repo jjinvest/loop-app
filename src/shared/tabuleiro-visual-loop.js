@@ -141,7 +141,7 @@
    };
    if(contagem===null){
     if(id==='motorFilaA'||id==='motorFilaB'){
-     const limite=Math.min(itens.length,100);
+     const limite=exibirNomesTeste===true?itens.length:Math.min(itens.length,100);
      for(let i=0;i<limite;i++)adicionar(itens[i],i);
      // Lugares livres são apenas números ordinais, sem bola, titular ou indicação.
      for(let i=limite;i<reservar;i++){

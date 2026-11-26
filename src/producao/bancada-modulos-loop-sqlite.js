@@ -36,6 +36,7 @@ class BancadaModulosLoopSQLite{
   // Livro exclusivo do SQLite de testes. Nenhuma tabela de identidade/PSP.
   this.db.exec([
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_lotes(geracao INTEGER PRIMARY KEY,preparado_em INTEGER NOT NULL);',
+   'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_arquivo(geracao INTEGER PRIMARY KEY,snapshot TEXT NOT NULL,registrado_em INTEGER NOT NULL);',
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_recebimentos(geracao INTEGER NOT NULL,numero INTEGER NOT NULL,',
    'pedido TEXT NOT NULL UNIQUE,valor INTEGER NOT NULL CHECK(valor=25000),recebido_em INTEGER NOT NULL,',
    "tipo TEXT NOT NULL CHECK(tipo IN ('DOURADA','AZUL','CONFIRMADA')),PRIMARY KEY(geracao,numero));",
@@ -131,15 +132,19 @@ class BancadaModulosLoopSQLite{
    vendasPorTipo:{pdfs:receb.quantidade,cursos:0,fisicos:0},
    produtos:receb.quantidade,agoraServidorMs:this.agora(),recebidoCentavos:receb.total,distribuidoCentavos:distribuido,
    saldoCentavos:saldo,destinos,eventos,ultimos,intervaloSegundos:10,
-   comissoes:indicacoes,comissoesPendentesCentavos:indicacoes*2500-destinos.BONUS,indicadores:10,valorEventoCentavos:25000};
+   comissoes:indicacoes,comissoesPendentesCentavos:indicacoes*2500-destinos.BONUS,indicadores:this.db.prepare('SELECT COUNT(DISTINCT indicador) AS n FROM loop_teste_fluxo_indicacoes WHERE geracao=?').get(geracao).n,valorEventoCentavos:25000};
  }
  _lancamento(geracao,referencia,destino,valor,posicao){
   this.db.prepare('INSERT INTO loop_teste_fluxo_lancamentos VALUES(?,?,?,?,?,?)')
    .run(geracao,referencia,destino,valor,posicao,this.agora());
  }
- _prepararFluxo(row,sim){
+ _prepararFluxo(row,sim,total=100){
   if(row.catraca_ativa===1)falha('BANCADA_CATRACA_ATIVA');
-  if(this._fluxo(row.geracao))return {preparado:true,jaPreparado:true};
+  const anterior=this._fluxo(row.geracao);
+  if(anterior&&(anterior.produtos===total||total===100))
+   return {preparado:true,jaPreparado:true,posicoes:anterior.produtos};
+  if(anterior)this.db.prepare('INSERT INTO loop_teste_fluxo_arquivo VALUES(?,?,?)')
+   .run(row.geracao,JSON.stringify(sim.exportarSnapshot()),this.agora());
   Object.assign(sim,this._novo());
   row.geracao++;row.porteira_aberta=0;row.catraca_ativa=0;
   row.cursor_dia=null;row.cursor_luz=0;
@@ -147,10 +152,11 @@ class BancadaModulosLoopSQLite{
   this.db.prepare('INSERT INTO loop_teste_fluxo_lotes VALUES(?,?)').run(row.geracao,this.agora());
   const azuis=new Set([2,8,12,18,22]),douradas=new Set([4,14,24,34,44,54,64,74,84,94]);
   const confirmadas=[];
-  for(let i=1;i<=100;i++){
-   const tipo=douradas.has(i)?'DOURADA':azuis.has(i)?'AZUL':'CONFIRMADA';
+  for(let i=1;i<=total;i++){
+   const indice=(i-1)%100+1;
+   const tipo=douradas.has(indice)?'DOURADA':azuis.has(indice)?'AZUL':'CONFIRMADA';
    const id='pdf-teste-'+row.geracao+'-'+i;
-   const recebidoEm=this.agora()-30*86400000+Math.floor((i-1)*30*86400000/100);
+   const recebidoEm=this.agora()-30*86400000+Math.floor((i-1)*30*86400000/total);
    const p=sim.registrarPosicaoSimulada({nome:tipo==='DOURADA'?'LOOP':'P'+String(i).padStart(3,'0'),
     participanteId:tipo==='DOURADA'?'LOOP_EMPRESA':'participante-teste-'+i,
     vendaId:id,adesaoPendente:tipo==='AZUL'});
@@ -161,16 +167,17 @@ class BancadaModulosLoopSQLite{
    this.db.prepare('INSERT INTO loop_teste_fluxo_recebimentos VALUES(?,?,?,?,?,?)')
     .run(row.geracao,pos.id,id,25000,recebidoEm,tipo);
   }
-  // Dez indicadores dividem os outros 75 confirmados, cada convite unico.
+  // Dez indicadores a cada 100 posições dividem os demais confirmados; convite único.
+  const indicadores=total/10;
   // O direito é registrado na confirmação; o pagamento de teste sai da reserva conforme houver cobertura.
-  for(let i=10;i<confirmadas.length;i++){
-   const indicador=confirmadas[(i-10)%10],indicado=confirmadas[i];
+  for(let i=indicadores;i<confirmadas.length;i++){
+   const indicador=confirmadas[(i-indicadores)%indicadores],indicado=confirmadas[i];
    const ref='indicacao-'+row.geracao+'-'+indicado.id;
    sim.registrarIndicacaoSimulada({indicadorId:indicador.participanteId,
     posicaoAlvoId:indicador.id,eventoId:ref,convidouEm:indicado.entrouEm});
    this.db.prepare('INSERT INTO loop_teste_fluxo_indicacoes VALUES(?,?,?,?)').run(row.geracao,ref,indicador.id,indicado.id);
   }
-  return {preparado:true,posicoes:100,douradas:10,azuis:5,confirmadas:85,
+  return {preparado:true,posicoes:total,douradas:total/10,azuis:total/20,confirmadas:total*85/100,
    filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,financeiro:this._fluxo(row.geracao)};
  }
  _pulsoFluxo(row,sim){
@@ -291,6 +298,7 @@ class BancadaModulosLoopSQLite{
   const agenda=catraca?this.consultarAgenda():null;
   return this._transacao(modulo,idOperacao,{acao,nome,posicaoId},({row,sim})=>{
    if(acao==='CATRACA_PREPARAR_100')return this._prepararFluxo(row,sim);
+   if(acao==='CATRACA_PREPARAR_1000')return this._prepararFluxo(row,sim,1000);
    const fluxo=modulo==='CATRACA'?this._fluxo(row.geracao):null;
    if(fluxo){
     if(acao==='CATRACA_INICIAR'){
