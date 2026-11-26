@@ -470,3 +470,71 @@ test('START governa só Distribuição: livre por vendas 09–18, pausa, program
  assert.deepEqual(c.teste.consultar().fila,fila);
  assert.equal(c.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
+
+test('bônus confirmado é devido antes do START e só é pago com reserva, uma única vez',t=>{
+ const c=contexto();t.after(()=>c.db.close());c.agenda.metaCentrosDia=0;
+ c.acao('CATRACA_PREPARAR_1000');
+ let f=c.teste.consultar().catraca.financeiro;
+ assert.equal(f.comissoesDevidasCentavos,1875000);
+ assert.equal(f.comissoesPendentesCentavos,1875000);
+ assert.equal(f.destinos.BONUS,0);
+ assert.equal(f.destinos.LOOP_DIREITA,0);
+ assert.equal(f.saldoCentavos,25000000);
+ assert.equal(f.bonusPorPosicao.length,100);
+ assert.equal(f.bonusPorPosicao.reduce((n,p)=>n+p.devidoCentavos,0),1875000);
+ assert.ok(f.bonusPorPosicao.every(p=>p.bonusCentavos===0&&p.pendenteCentavos===p.devidoCentavos));
+ assert.equal(c.acao('CATRACA_CONCILIAR_BONUS').creditados,0);
+ assert.equal(c.teste.consultar().catraca.catracaAtiva,false);
+ // START é chamado exclusivamente nesta base em memória.
+ c.acao('CATRACA_INICIAR');
+ for(let i=1;i<=4;i++){
+  c.mudarTempo(Date.parse('2026-11-23T12:00:00Z')+i*10000);
+  assert.equal(c.teste.processarRelogio().processado,true);
+ }
+ f=c.teste.consultar().catraca.financeiro;
+ assert.equal(f.destinos.BONUS,25000);
+ assert.equal(f.destinos.LOOP_DIREITA,0);
+ assert.equal(f.comissoesPendentesCentavos,1850000);
+ assert.equal(f.saldoCentavos,24900000); // somente os quatro eventos de R$250
+ assert.equal(f.bonusPorPosicao.reduce((n,p)=>n+p.bonusCentavos,0),25000);
+ const antes=JSON.stringify(f.bonusPorPosicao);
+ assert.equal(c.acao('CATRACA_CONCILIAR_BONUS').creditados,0);
+ assert.equal(JSON.stringify(c.teste.consultar().catraca.financeiro.bonusPorPosicao),antes);
+ assert.equal(f.saldoCentavos+Object.values(f.destinos).reduce((n,v)=>n+v,0),25000000);
+});
+
+test('confirmação com indicação registra direito persistente e rejeita azul, dourada e outro titular',t=>{
+ const c=contexto();t.after(()=>c.db.close());c.acao('CATRACA_PREPARAR_100');
+ const x=c.teste.consultar().catraca;
+ const [indicador,indicado,outro]=x.filaA;
+ const registrar=(id,a,b)=>c.teste.registrarIndicacaoConfirmada({idOperacao:id,indicadorPosicaoId:a,indicadoPosicaoId:b});
+ const r=registrar('indicacao-confirmada-001',indicador.id,indicado.id);
+ assert.equal(r.creditados,0);
+ assert.equal(r.financeiro.comissoesDevidasCentavos,190000);
+ assert.equal(r.financeiro.saldoCentavos,2500000);
+ registrar('indicacao-confirmada-001',indicador.id,indicado.id);
+ registrar('indicacao-confirmada-002',indicador.id,indicado.id);
+ assert.equal(c.teste.consultar().catraca.financeiro.comissoes,76);
+ assert.throws(()=>registrar('indicacao-confirmada-003',outro.id,indicado.id),/FLUXO_INDICACAO_TITULAR_DIVERGENTE/);
+ for(const p of [x.filaB.find(p=>p.pendente),x.filaB.find(p=>p.dourada),indicador])
+  assert.throws(()=>registrar('indicacao-invalida-'+p.id,indicador.id,p.id),/FLUXO_INDICACAO_NAO_CONFIRMADA/);
+ const reiniciado=new BancadaModulosLoopSQLite({banco:c.db,consultarAgenda:()=>c.agenda});
+ assert.equal(reiniciado.consultar().catraca.financeiro.comissoesPendentesCentavos,190000);
+ assert.equal(reiniciado.consultar().catraca.financeiro.destinos.BONUS,0);
+});
+
+test('cartão representa bônus devido sem confundir pendente com total pago',t=>{
+ const c=contexto();t.after(()=>c.db.close());c.acao('CATRACA_PREPARAR_1000');
+ const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
+ const inicio=office.indexOf(' function renderizarQuadroDistribuicao(alvo,f){');
+ const fim=office.indexOf(' function renderizarFinanceiroFluxoTeste(alvo,f){',inicio);
+ const elemento=()=>({children:[],className:'',textContent:'',append(...xs){this.children.push(...xs);},replaceChildren(...xs){this.children=xs;}});
+ const ctx={document:{createElement:elemento},moedaCofres:{format:n=>String(n)}};
+ require('node:vm').runInNewContext(office.slice(inicio,fim),ctx);
+ const alvo=elemento();ctx.renderizarQuadroDistribuicao(alvo,c.teste.consultar().catraca.financeiro);
+ assert.equal(alvo.children[6].children[1].textContent,'18750');
+ assert.equal(alvo.children[6].children[2].textContent,'Pago: 0 · A pagar: 18750');
+ assert.equal(alvo.children[7].children[1].textContent,'0');
+ assert.equal(alvo.children[8].children[1].textContent,'0');
+ assert.equal(alvo.children[2].children[1].textContent,'250000');
+});

@@ -121,7 +121,7 @@ class BancadaModulosLoopSQLite{
    if(!Object.hasOwn(destinos,x.destino))falha('FLUXO_DESTINO_INVALIDO');
    destinos[x.destino]=x.total;
   }
-  // BONUS é saída do cofre de reserva, não um segundo débito do caixa de eventos.
+  // O direito nasce na confirmação. Pagamento consome apenas a reserva disponível.
   destinos.LOOP_DIREITA-=destinos.BONUS;
   if(destinos.LOOP_DIREITA<0)falha('FLUXO_RESERVA_NEGATIVA');
   const distribuido=Object.values(destinos).reduce((n,v)=>n+v,0),saldo=receb.total-distribuido;
@@ -140,6 +140,8 @@ class BancadaModulosLoopSQLite{
    vendasPorTipo:{pdfs:receb.quantidade,cursos:0,fisicos:0},
    produtos:receb.quantidade,agoraServidorMs:this.agora(),recebidoCentavos:receb.total,distribuidoCentavos:distribuido,
    saldoCentavos:saldo,destinos,eventos,ultimos,
+   comissoesDevidasCentavos:indicacoes*2500,
+   bonusPorPosicao:this.db.prepare("SELECT i.indicador AS posicaoId,COUNT(*) AS indicacoes,COUNT(*)*2500 AS devidoCentavos,COALESCE(SUM(l.valor),0) AS bonusCentavos,COUNT(*)*2500-COALESCE(SUM(l.valor),0) AS pendenteCentavos FROM loop_teste_fluxo_indicacoes i LEFT JOIN loop_teste_fluxo_lancamentos l ON l.geracao=i.geracao AND l.referencia=i.referencia AND l.destino='BONUS' WHERE i.geracao=? GROUP BY i.indicador ORDER BY i.indicador").all(geracao),
    intervaloSegundos:(()=>{const a=this.consultarAgenda();
     return a.metaCentrosDia>0?(((minutos(a.janelaFim)-minutos(a.janelaInicio)+1440)%1440)||1440)*60/(a.metaCentrosDia*6):null;})(),
    comissoes:indicacoes,comissoesPendentesCentavos:indicacoes*2500-destinos.BONUS,indicadores:this.db.prepare('SELECT COUNT(DISTINCT indicador) AS n FROM loop_teste_fluxo_indicacoes WHERE geracao=?').get(geracao).n,valorEventoCentavos:25000};
@@ -147,6 +149,52 @@ class BancadaModulosLoopSQLite{
  _lancamento(geracao,referencia,destino,valor,posicao){
   this.db.prepare('INSERT INTO loop_teste_fluxo_lancamentos VALUES(?,?,?,?,?,?)')
    .run(geracao,referencia,destino,valor,posicao,this.agora());
+ }
+ _vincularIndicacaoConfirmada(row,sim,indicadorId,indicadoId){
+  const receb=this.db.prepare('SELECT tipo FROM loop_teste_fluxo_recebimentos WHERE geracao=? AND numero=?');
+  const posicoes=[...sim.filas.vendasRegistradas.values()];
+  const indicador=posicoes.find(p=>p.id===indicadorId),indicado=posicoes.find(p=>p.id===indicadoId);
+  if(!indicador||!indicado||indicador.participanteId===indicado.participanteId||
+     indicador.empresa===true||indicado.empresa===true||
+     indicador.statusAdesao==='PENDENTE'||indicado.statusAdesao==='PENDENTE'||
+     receb.get(row.geracao,indicadorId)?.tipo!=='CONFIRMADA'||
+     receb.get(row.geracao,indicadoId)?.tipo!=='CONFIRMADA')
+   falha('FLUXO_INDICACAO_NAO_CONFIRMADA');
+  const ref='indicacao-'+row.geracao+'-'+indicadoId;
+  const anterior=this.db.prepare('SELECT indicador FROM loop_teste_fluxo_indicacoes WHERE geracao=? AND indicado=?').get(row.geracao,indicadoId);
+  if(anterior){
+   if(anterior.indicador!==indicadorId)falha('FLUXO_INDICACAO_TITULAR_DIVERGENTE');
+   return {referencia:ref,repetida:true};
+  }
+  sim.registrarIndicacaoSimulada({indicadorId:indicador.participanteId,
+   posicaoAlvoId:indicadorId,eventoId:ref,convidouEm:indicado.entrouEm});
+  this.db.prepare('INSERT INTO loop_teste_fluxo_indicacoes VALUES(?,?,?,?)')
+   .run(row.geracao,ref,indicadorId,indicadoId);
+  return {referencia:ref,repetida:false};
+ }
+ _creditarBonusConfirmados(row){
+  const f=this._fluxo(row.geracao);
+  if(!f)falha('FLUXO_LOTE_NAO_PREPARADO');
+  let reserva=f.destinos.LOOP_DIREITA,creditados=0;
+  const pendentes=this.db.prepare([
+   'SELECT i.referencia,i.indicador FROM loop_teste_fluxo_indicacoes i',
+   'JOIN loop_teste_fluxo_recebimentos r ON r.geracao=i.geracao AND r.numero=i.indicado',
+   'JOIN loop_teste_fluxo_recebimentos autor ON autor.geracao=i.geracao AND autor.numero=i.indicador',
+   'LEFT JOIN loop_teste_fluxo_lancamentos l ON l.geracao=i.geracao AND l.referencia=i.referencia',
+   "WHERE i.geracao=? AND r.tipo='CONFIRMADA' AND autor.tipo='CONFIRMADA' AND i.indicador!=i.indicado AND l.referencia IS NULL ORDER BY i.indicado"
+  ].join(' ')).all(row.geracao);
+  for(const p of pendentes){
+   if(reserva<2500)break;
+   this._lancamento(row.geracao,p.referencia,'BONUS',2500,p.indicador);
+   reserva-=2500;creditados++;
+  }
+  return {creditados,financeiro:this._fluxo(row.geracao)};
+ }
+ registrarIndicacaoConfirmada({idOperacao,indicadorPosicaoId,indicadoPosicaoId}={}){
+  return this._transacao('CATRACA',idOperacao,{acao:'INDICACAO_CONFIRMADA',indicadorPosicaoId,indicadoPosicaoId},({row,sim})=>{
+   const vinculo=this._vincularIndicacaoConfirmada(row,sim,indicadorPosicaoId,indicadoPosicaoId);
+   return {...vinculo,...this._creditarBonusConfirmados(row)};
+  });
  }
  _prepararFluxo(row,sim,total=100){
   if(row.catraca_ativa===1)falha('BANCADA_CATRACA_ATIVA');
@@ -179,14 +227,12 @@ class BancadaModulosLoopSQLite{
   }
   // Dez indicadores a cada 100 posições dividem os demais confirmados; convite único.
   const indicadores=total/10;
-  // O direito é registrado na confirmação; o pagamento de teste sai da reserva conforme houver cobertura.
+  // Cada confirmação gera um direito; o pagamento sai uma única vez da reserva disponível.
   for(let i=indicadores;i<confirmadas.length;i++){
    const indicador=confirmadas[(i-indicadores)%indicadores],indicado=confirmadas[i];
-   const ref='indicacao-'+row.geracao+'-'+indicado.id;
-   sim.registrarIndicacaoSimulada({indicadorId:indicador.participanteId,
-    posicaoAlvoId:indicador.id,eventoId:ref,convidouEm:indicado.entrouEm});
-   this.db.prepare('INSERT INTO loop_teste_fluxo_indicacoes VALUES(?,?,?,?)').run(row.geracao,ref,indicador.id,indicado.id);
+   this._vincularIndicacaoConfirmada(row,sim,indicador.id,indicado.id);
   }
+  this._creditarBonusConfirmados(row);
   return {preparado:true,posicoes:total,douradas:total/10,azuis:total/20,confirmadas:total*85/100,
    filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,financeiro:this._fluxo(row.geracao)};
  }
@@ -201,15 +247,7 @@ class BancadaModulosLoopSQLite{
   const id=recebimento.pedido;
   const luz=sim.registrarVendaNoCicloSimulada({vendaId:id});
   this._lancamento(row.geracao,id,luz.venda.destinoCofre,25000,luz.venda.posicaoCentroId);
-  if(luz.venda.destinoCofre==='LOOP_DIREITA'){
-   const saldoReserva=this._fluxo(row.geracao).destinos.LOOP_DIREITA;
-   const pendentes=this.db.prepare([
-    'SELECT i.referencia,i.indicador FROM loop_teste_fluxo_indicacoes i',
-    'LEFT JOIN loop_teste_fluxo_lancamentos l ON l.geracao=i.geracao AND l.referencia=i.referencia',
-    'WHERE i.geracao=? AND l.referencia IS NULL ORDER BY i.indicado LIMIT ?'
-   ].join(' ')).all(row.geracao,Math.floor(saldoReserva/2500));
-   for(const p of pendentes)this._lancamento(row.geracao,p.referencia,'BONUS',2500,p.indicador);
-  }
+  this._creditarBonusConfirmados(row);
   let giro=null;
   if(luz.estado.vendasNoCiclo===6){
    sim.abrirCatraca();giro=sim.tentarGiro();sim.pausarCatraca();
@@ -309,6 +347,7 @@ class BancadaModulosLoopSQLite{
   return this._transacao(modulo,idOperacao,{acao,nome,posicaoId},({row,sim})=>{
    if(acao==='CATRACA_PREPARAR_100')return this._prepararFluxo(row,sim);
    if(acao==='CATRACA_PREPARAR_1000')return this._prepararFluxo(row,sim,1000);
+   if(acao==='CATRACA_CONCILIAR_BONUS')return this._creditarBonusConfirmados(row);
    const fluxo=modulo==='CATRACA'?this._fluxo(row.geracao):null;
    if(fluxo){
     if(acao==='CATRACA_INICIAR'){

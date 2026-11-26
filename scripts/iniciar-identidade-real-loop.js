@@ -185,6 +185,8 @@ async function iniciar(ambiente=process.env,opcoes={}){
   if(ambiente.LOOP_PREPARAR_FLUXO_1000==='1'){
    bancadaOperacional.comandar({idOperacao:'fluxo-1000-20261126',
     acao:'CATRACA_PREPARAR_1000'});
+   bancadaOperacional.comandar({idOperacao:'bonus-confirmados-1000-20261126',
+    acao:'CATRACA_CONCILIAR_BONUS'});
    const x=bancadaOperacional.consultar().catraca;
    const resumo={posicoes:x.filaA.length+x.filaB.length,
     amarelas:x.filaA.length,douradas:x.filaB.filter(p=>p.dourada).length,
@@ -192,6 +194,9 @@ async function iniciar(ambiente=process.env,opcoes={}){
     brancas:x.filaB.filter(p=>!p.dourada&&!p.pendente).length,
     recebidoCentavos:x.financeiro.recebidoCentavos,saldoCentavos:x.financeiro.saldoCentavos,
     indicadores:x.financeiro.indicadores,indicacoes:x.financeiro.comissoes,
+    bonusCentavos:x.financeiro.destinos.BONUS,participacaoCentavos:x.financeiro.destinos.LOOP_CENTRO,
+    totalPagoCentavos:x.financeiro.destinos.BONUS+x.financeiro.destinos.LOOP_CENTRO,
+    bonusPendentesCentavos:x.financeiro.comissoesPendentesCentavos,
     eventos:x.financeiro.eventos,giros:x.tabuleiro.giros,
     catracaAtiva:x.catracaAtiva,porteiraAberta:x.porteiraAberta};
    console.info('LOOP_FLUXO_1000_VERIFICADO='+JSON.stringify(resumo));
