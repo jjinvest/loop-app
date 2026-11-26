@@ -30,7 +30,7 @@ No deploybackend `7db15a89-4a20-48fd-b601-e8f1bc18b3f5`, inicialização 26/11 r
 
 O pacote privado cifrado desta missão contém bundleGitintegral e documentação/inventários; NÃO contém bancos vivos/segredos de produção. Chave deAES 256 GCM em arquivo privado separado, jamais no GitHub. Hashes finais, localização privada e prova dedecifração ficam no recibo entregue ao proprietário, fora do Git, evitando autorreferência dehash.
 
-Aguardar confirmação de armazenamento durável e do pacote antes de tratar a cópia como entregue. O proprietário deve baixar pacote e chave eguardá-los separadamente antes de abandonar aconta atual. Isso não transfere contas nem garante custódia em outra jurisdição/região.
+Cópia cifrada e kit separado foram salvos no armazenamento privado do proprietário. O pacote foi relido e seu SHA256 conferido. O proprietário deve baixar pacote e chave eguardá-los separadamente antes de abandonar aconta atual. Isso não transfere contas nem garante custódia em outra jurisdição/região.
 
 ## Validação e continuidade
 
@@ -42,3 +42,10 @@ Aguardar confirmação de armazenamento durável e do pacote antes de tratar a c
 Foram identificados e materializados 139 arquivos relacionados ao projeto, incluindo artes, logos, banners, capturas e comandos históricos, sem substituir arquivos originais. Incluem as quatro referências visuais oficiais históricas. Cada arquivo tem tamanho e SHA256 no manifesto privado. Conteúdos e detalhes permanecem no pacote cifrado; não são publicados no GitHub. A preservação não reaprova imagens antigas e não executa scripts arquivados.
 
 A busca por título não garante todos os anexos sem nome nem a mídia presente nos volumes. A história pessoal completa do ChatGPT continua para exportação posterior pelo proprietário. [Resumo de integridade sem conteúdo privado](PROVA_ACERVO_PRIVADO.json).
+
+
+## Finalização comprovada do pacote
+
+[Prova criptográfica e de recuperação](PROVA_PACOTE_CIFRADO.json): AES-256-GCM, decifração idêntica, adulteração rejeitada,139 arquivos externos com hashes iguais, Git restaurado com300 referências e6.861 commits sem erros. O pacote durável foi relido e seu SHA256 coincidiu. Snapshot documental incluído:`600206e696f2c6da590bc0b8c2919c22a99ca0bc`; esta prova é posterior e não altera o produto. Kit de recuperação testado; destino existente rejeitado sem sobrescrita.
+
+Pacote, chave separada e recibo foram salvos privadamente para o proprietário. Nenhum segredo foi adicionado ao GitHub. Ainda é necessário baixar ambos antes de abandonar a conta atual; os bancos vivos continuam fora do pacote.

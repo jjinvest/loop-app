@@ -33,6 +33,7 @@ Preservação documental de 26/11/2026. Reaproveita o acervo integral; os segmen
 - [Inventário Railway, volumes, buckets, configurações e DNS sem segredos](INVENTARIO_INFRA_20261126.json).
 - [Inventário das automações](INVENTARIO_AUTOMACOES_20261126.json).
 - [Manifesto das fontes originais](MANIFESTO_FONTES_ORIGINAIS.json).
+- [Prova do pacote cifrado, restauração e releitura durável](PROVA_PACOTE_CIFRADO.json).
 - [Relatório de integridade e limites](RELATORIO_INTEGRIDADE.md).
 - [Parecer de continuidade sem memória](VALIDACAO_CONTINUIDADE.md).
 

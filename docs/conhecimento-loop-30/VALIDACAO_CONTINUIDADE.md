@@ -27,7 +27,7 @@ A revisão ocorreu após gravação GitHub no commit `ff7ec45189da5fbbadd65c8cf8
 - Corrigida normalização editorial de V6, V1/V2, identificadores DOURADA_*, UUIDs e CNAME. JSONs originais e código mantiveram dados exatos.
 - Distinção entre várias posições na A (atual) e uma única A (histórico) explicitada. Promoção automática de todas por um único vínculo não foi criada como regra; divergência permanece identificada.
 - Acrescentado resumo de139 arquivos externos identificados para preservação cifrada; isso não certifica mídia dos volumes nem totalidade do histórico pessoal.
-- Recibo de criptografia/decifração, hashes e disponibilidade privada será entregue somente após a execução, com escopo declarado. Não presumir backup dos bancos vivos.
+- Criptografia/decifração, hashes e disponibilidade privada foram executados e comprovados pelo executor em PROVA_PACOTE_CIFRADO.json; o revisor documental não realizou a operação privada. Não presumir backup dos bancos vivos.
 
 ## Limites que permanecem
 
