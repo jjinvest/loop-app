@@ -428,7 +428,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "941660f9e02796fd5a03974b1db84789c2a18a21"
+      "sha": "55b6b0881ec878c1d6b60a2d9f4e786775733c20"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1492,7 +1492,7 @@
     },
     {
       "path": "src/producao/interface-admin-comercial-client.js",
-      "sha": "7fd8d0cdcd917df444366f3d02d933f8206b7626"
+      "sha": "8b082372b16ef0dd1cb0cf4e05b62bfa96c7107b"
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
@@ -3508,7 +3508,7 @@
     },
     {
       "path": "test/relogio-catraca-previsao-imediata-admin.test.js",
-      "sha": "ddaf5e342a05c00ab167bffb1855a11fa5835533"
+      "sha": "6af16edabc7d4c92ec3f7f9b7123754cf005937a"
     },
     {
       "path": "test/repositorio-catalogo-sqlite.test.js",

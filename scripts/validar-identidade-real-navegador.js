@@ -1870,6 +1870,7 @@ async function main(){
    }).waitFor();
    if(visual.nome==='pc'){
     await pagina.locator('#prepararTabuleiroLoop').click();
+    await pagina.waitForFunction(()=>!document.getElementById('prepararTabuleiroLoop').disabled);
     await integrado.filter({hasText:/Eventos: 0\/6/}).waitFor();
     assert.equal(motorLoop.consultar().tabuleiro.eventosNoCiclo,0,
      'preparar centro não executa eventos da Distribuição');
