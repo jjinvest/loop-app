@@ -551,7 +551,7 @@ test('seis compras qualificadas ficam registradas na fila com catraca pausada; s
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
 
-test('compra confirmada aciona integracao interna automaticamente; cinza nao entra no LOOP, verdes geram posicoes e seis luzes',async t=>{
+test('compra confirmada enfileira sem START; somente Distribuição autorizada contabiliza eventos',async t=>{
  const x=await fixture(t);
  x.produto({nome:'integracaoCinza',preco:30000,cor:'CINZA'});
  x.produto({nome:'integracaoVerde',preco:25000,cor:'VERDE'});
@@ -577,25 +577,30 @@ test('compra confirmada aciona integracao interna automaticamente; cinza nao ent
  assert.equal(x.integracao.sincronizar().novasPosicoes,0);
  const preparado=x.integracao.prepararTabuleiro();
  assert.ok(preparado.centro>0);
- assert.equal(preparado.eventosNoCiclo,6);
- assert.equal(preparado.esperandoSeisEventos,1);
+ assert.equal(preparado.eventosNoCiclo,0);
+ assert.equal(preparado.esperandoSeisEventos,7);
  assert.equal(x.integracao.sincronizar().novosEventos,0);
- const catraca=new OperacaoCatracaAdminSQLite({banco:x.db,motor:x.motor});
+ let instante=Date.parse('2026-11-26T09:00:00-03:00');
+ const catraca=new OperacaoCatracaAdminSQLite({banco:x.db,motor:x.motor,agora:()=>new Date(instante)});
+ assert.equal(x.integracao.processarDistribuicao({controle:catraca}).processado,false);
  assert.equal(catraca.executarGiro().girou,false);
  catraca.configurar({modo:'MANUAL',janelaInicio:'00:00',
   janelaFim:'00:00',limiteDiario:null,revisaoEsperada:1,
   motivo:'GIRO_AUDITADO_POR_VENDAS'});
- assert.equal(catraca.executarGiro().girou,true);
- const recarga=x.integracao.sincronizar();
- assert.equal(recarga.novosEventos,1);
+ for(let i=0;i<6;i++){instante+=1000;assert.equal(x.integracao.processarDistribuicao({controle:catraca}).processado,true);}
+ assert.equal(x.motor.consultar().catraca.giros,1);
+ assert.equal(x.integracao.sincronizar().novosEventos,0);
+ instante+=1000;
+ const recarga=x.integracao.processarDistribuicao({controle:catraca});
+ assert.equal(recarga.processado,true);
  assert.equal(recarga.eventosNoCiclo,1);
  for(let i=0;i<5;i++){
   const p=await x.criarPedido({nome:'integracaoVerde',preco:25000,cliente:x.outro});
   const confirmado=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
   assert.equal(confirmado.integracaoInternaEnsaio.novasPosicoes,1);
  }
- assert.equal(x.integracao.consultar().eventosNoCiclo,6);
- assert.equal(catraca.executarGiro().girou,true);
+ assert.equal(x.integracao.consultar().eventosNoCiclo,1);
+ for(let i=0;i<5;i++){instante+=1000;assert.equal(x.integracao.processarDistribuicao({controle:catraca}).processado,true);}
  assert.equal(x.motor.verificar().giros,2);
  assert.equal(x.producao.verificar().promocoesEnsaio,12);
  assert.equal(x.evento.verificar().eventos,13);
@@ -839,8 +844,8 @@ test('tres unidades douradas do mesmo pedido criam tres azuis e apenas uma luz',
  }).consultarEstado({titularId:x.titular.titularId});
  assert.equal(visao.minhasPosicoes.length,3);
  assert.ok(visao.minhasPosicoes.every(pos=>pos.pedidoDeOrigemEnsaio===p.pedidoId));
- assert.equal(x.integracao.prepararTabuleiro().eventosNoCiclo,1);
- assert.equal(x.motor.verificar().eventos,1);
+ assert.equal(x.integracao.prepararTabuleiro().eventosNoCiclo,0);
+ assert.equal(x.motor.verificar().eventos,0);
  assert.equal(x.integracao.sincronizar().novosEventos,0);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
@@ -882,8 +887,8 @@ test('roxo com cinco posicoes e carrinho verde/dourado/roxo respeitam soma e lim
  assert.equal(s.posicoesAzuisPendentes,6);
  assert.equal(s.minhasPosicoes.filter(p=>p.estadoAdesao==='ACEITE_ENSAIO').length,2);
  assert.equal(x.lotes.verificar().aceitesIndividuaisEnsaio,2);
- assert.equal(x.integracao.prepararTabuleiro().eventosNoCiclo,1);
- assert.equal(x.motor.verificar().eventos,1);
+ assert.equal(x.integracao.prepararTabuleiro().eventosNoCiclo,0);
+ assert.equal(x.motor.verificar().eventos,0);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
 test('compra com onze posicoes especiais e rejeitada sem inclusao parcial',async t=>{

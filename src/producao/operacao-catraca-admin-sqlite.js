@@ -3,6 +3,7 @@
 // Sem liberar creditos ou pagamentos; o motor de ensaio e vedado em producao.
 const {calcularIntervaloMeta,proximaJanelaMetaRelogio}=
  require('../domain/meta-lotes-catraca-loop');
+const {avaliarExecucaoDistribuicao}=require('../domain/politica-execucao-distribuicao-loop');
 const {ControleCaixaCatracaLoopSQLite}=require('./controle-caixa-catraca-loop-sqlite');
 const TABELAS_CATRACA_ADMIN=Object.freeze([
  'loop_real_catraca_admin_meta',
@@ -205,7 +206,7 @@ class OperacaoCatracaAdminSQLite{
  }
  _politica(){
   const p=this.db.prepare(
-   'SELECT revisao,modo,inicio,fim,limite_diario FROM loop_real_catraca_admin_politica WHERE id=1'
+   'SELECT revisao,modo,inicio,fim,limite_diario,atualizado_em FROM loop_real_catraca_admin_politica WHERE id=1'
   ).get();
   if(!p||!horaOk(p.inicio)||!horaOk(p.fim)||
      !['PAUSADA','MANUAL','AUTOMATICA'].includes(p.modo)||
@@ -312,7 +313,9 @@ class OperacaoCatracaAdminSQLite{
  consultar(){
   const p=this._politica(),tempo=horarioLocal(this.agora);
   const meta=this._meta();
-  const metaAplicavel=meta.dataAlvo===null||meta.dataAlvo===tempo.dia;
+  const diaTurno=p.inicio>=p.fim&&tempo.hora<p.fim?
+   new Date(Date.parse(tempo.dia+'T12:00:00Z')-86400000).toISOString().slice(0,10):tempo.dia;
+  const metaAplicavel=meta.dataAlvo===null||meta.dataAlvo===diaTurno;
   const calculo=calcularIntervaloMeta({
    abertura:p.inicio,fechamento:p.fim,
    quantidade:metaAplicavel?meta.centrosDia:0
@@ -328,10 +331,10 @@ class OperacaoCatracaAdminSQLite{
   const dentroDaMeta=metaAplicavel&&meta.centrosDia>0&&
    girosDia<meta.centrosDia;
   const permitido=(p.limite_diario===null||girosDia<p.limite_diario)&&
-   (p.modo!=='AUTOMATICA'||dentroDaMeta);
+   (meta.centrosDia===0||dentroDaMeta);
   // O relogio e apenas uma previsao autenticada, independente de novas
   // vendas, sem autorizar um unico giro ate a prova bancaria real.
-  const proximaLuzPrevistaEmMs=p.modo==='AUTOMATICA'&&
+  const proximaLuzPrevistaEmMs=p.modo!=='PAUSADA'&&
    dentro&&permitido&&dentroDaMeta?
     proximaJanelaMetaRelogio({abertura:p.inicio,fechamento:p.fim,
      quantidade:meta.centrosDia,agoraMs:tempo.ts,horarioLocal:tempo.hora}):null;
@@ -428,7 +431,7 @@ class OperacaoCatracaAdminSQLite{
  }
  executarGiro({origem='OPERADOR'}={}){
   this._ensaio();
-  if(!['OPERADOR','AGENDA'].includes(origem))
+  if(!['OPERADOR','AGENDA','FLUXO'].includes(origem))
    falha('CATRACA_ADMIN_ORIGEM_INVALIDA');
   return this.motor._transacao(sim=>{
    const p=this._politica(),t=horarioLocal(this.agora);
@@ -440,9 +443,9 @@ class OperacaoCatracaAdminSQLite{
    if(p.limite_diario!==null&&this._girosDia(t.dia)>=p.limite_diario)
     return {girou:false,motivo:'LIMITE_DIARIO_DEFINIDO_PELO_ADMINISTRADOR'};
    const meta=this._meta();
-   if(origem==='AGENDA'&&
+   if((origem==='AGENDA'||(origem==='FLUXO'&&meta.centrosDia>0))&&
       (meta.centrosDia===0||
-       (meta.dataAlvo!==null&&meta.dataAlvo!==t.dia)||
+       (meta.dataAlvo!==null&&meta.dataAlvo!==avaliarExecucaoDistribuicao({agenda:{modo:p.modo,janelaInicio:p.inicio,janelaFim:p.fim,metaCentrosDia:meta.centrosDia},agoraMs:t.ts}).dia)||
        this._girosDia(t.dia)>=meta.centrosDia))
     return {girou:false,motivo:'META_DIARIA_NAO_AUTORIZADA'};
    const vendas=sim.tabuleiro.vendasDoCiclo;
@@ -470,8 +473,38 @@ class OperacaoCatracaAdminSQLite{
    return {girou:true,giro:sim.giros,girosHoje:this._girosDia(t.dia)};
   });
  }
- processarAgenda(){
+ registrarEventoDaDistribuicao({pedidoId}={}){
+  this._ensaio();
+  try{
+   const x=this.motor.registrarEventoEnsaio({pedidoId,antesDeGravar:()=>{
+    const p=this._politica(),meta=this._meta(),t=horarioLocal(this.agora);
+    const ultimo=this.db.prepare("SELECT executado_em FROM loop_real_catraca_admin_historico WHERE acao='EVENTO_DISTRIBUICAO' ORDER BY id DESC LIMIT 1").get();
+    let decisao=avaliarExecucaoDistribuicao({agenda:{modo:p.modo,
+     janelaInicio:p.inicio,janelaFim:p.fim,limiteDiario:p.limite_diario,
+     metaCentrosDia:meta.centrosDia,metaDataAlvo:meta.dataAlvo},
+     agoraMs:t.ts,ativa:p.modo!=='PAUSADA',girosHoje:this._girosDia(t.dia),
+     ultimoEventoEm:ultimo?.executado_em??null,marcoExecucaoEm:p.atualizado_em});
+    const girosTurno=this.db.prepare('SELECT COUNT(*) AS n FROM loop_real_catraca_admin_giros WHERE executado_em>=? AND executado_em<?')
+     .get(decisao.aberturaEmMs,decisao.fechamentoEmMs+60000).n;
+    if(meta.centrosDia>0&&girosTurno>=meta.centrosDia)
+     falha('DISTRIBUICAO_META_DIARIA_ATINGIDA');
+    if(!decisao.podeExecutar)falha('DISTRIBUICAO_'+decisao.motivo);
+    this._log('EVENTO_DISTRIBUICAO',{pedidoId},t.ts);
+   }});
+   return {processado:!x.repetida,...x};
+  }catch(e){
+   if(e.codigo?.startsWith('DISTRIBUICAO_'))return {processado:false,motivo:e.codigo};
+   throw e;
+  }
+ }
+ processarAgenda({integrador=null}={}){
   // Quem define se a agenda esta ativa e o operador, nao a compra.
+  if(integrador!==null){
+   if(integrador.db!==this.db||integrador.motor!==this.motor)falha('CATRACA_INTEGRADOR_DIVERGENTE');
+   if(process.env.NODE_ENV==='production')return {girou:false,motivo:'COMPROVACAO_EXTERNA_PENDENTE'};
+   integrador.sincronizar();
+   return integrador.processarDistribuicao({controle:this});
+  }
   if(process.env.NODE_ENV==='production')return {girou:false,motivo:'NAO_HOMOLOGADO'};
   if(this._politica().modo!=='AUTOMATICA')
    return {girou:false,motivo:'AGENDA_NAO_HABILITADA'};

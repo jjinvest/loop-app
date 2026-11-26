@@ -149,26 +149,31 @@ class SincronizadorComercialLoopEnsaioSQLite{
     }
    }else{especiais++;continue;}
   }
-  // Registrar luzes apenas de posicoes efetivamente enfileiradas.
-  // Sem centro, vendas aguardam sem virar ciclo ficticio.
-  const s=this.motor.consultar();
-  if(s.tabuleiro.centro!==null&&s.tabuleiro.eventosNoCiclo<6){
-   const pendentes=this.db.prepare([
-    'SELECT m.pedido_id FROM loop_real_motor_compras m',
-    'JOIN loop_real_eventos_comerciais e ON e.pedido_id=m.pedido_id',
-    "WHERE e.estado='AGUARDANDO_CONCILIACAO'",
-    'AND NOT EXISTS(SELECT 1 FROM loop_real_motor_eventos ev',
-    "WHERE ev.chave='e:'||m.pedido_id)",
-    'ORDER BY e.registrado_em ASC,m.pedido_id ASC'
-   ].join(' ')).all();
-   for(const p of pendentes){
-    if(this.motor.consultar().tabuleiro.eventosNoCiclo===6)break;
-    const x=this.motor.registrarEventoEnsaio({pedidoId:p.pedido_id});
-    if(!x.repetida)novosEventos++;
-   }
-  }
+  // A loja só enfileira. START/Pausar e relógio pertencem à Distribuição.
   return {novasPosicoes,novosEventos,ignoradas,especiais,
    lotesCriados,aguardandoCapacidade,...this.consultar()};
+ }
+ processarDistribuicao({controle}={}){
+  this._ensaio();
+  if(controle?.db!==this.db||controle.motor!==this.motor||
+     typeof controle.registrarEventoDaDistribuicao!=='function')
+   falha('INTEGRACAO_CONTROLE_DISTRIBUICAO_INVALIDO');
+  const estado=this.motor.consultar();
+  if(estado.tabuleiro.centro===null)return {processado:false,motivo:'AGUARDANDO_START_E_CENTRO'};
+  if(estado.tabuleiro.eventosNoCiclo===6)return controle.executarGiro({origem:'FLUXO'});
+  const pedido=this.db.prepare([
+   'SELECT m.pedido_id FROM loop_real_motor_compras m',
+   'JOIN loop_real_eventos_comerciais e ON e.pedido_id=m.pedido_id',
+   "WHERE e.estado='AGUARDANDO_CONCILIACAO'",
+   'AND NOT EXISTS(SELECT 1 FROM loop_real_motor_eventos ev',
+   "WHERE ev.chave='e:'||m.pedido_id)",
+   'ORDER BY e.registrado_em ASC,m.pedido_id ASC LIMIT 1'
+  ].join(' ')).get();
+  if(!pedido)return {processado:false,motivo:'AGUARDANDO_VENDA_CONFIRMADA'};
+  const evento=controle.registrarEventoDaDistribuicao({pedidoId:pedido.pedido_id});
+  if(!evento.processado)return evento;
+  const giro=evento.eventosNoCiclo===6?controle.executarGiro({origem:'FLUXO'}):null;
+  return {...evento,girou:giro?.girou===true};
  }
  prepararTabuleiro(){
   this._ensaio();

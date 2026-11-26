@@ -208,7 +208,7 @@ class MotorLoopIntegradoSQLite{
   this._ensaio();
   return this._transacao(sim=>sim.prepararTabuleiro());
  }
- registrarEventoEnsaio({pedidoId}={}){
+ registrarEventoEnsaio({pedidoId,antesDeGravar=null}={}){
   this._ensaio();
   if(typeof pedidoId!=='string'||!ID.test(pedidoId))
    falha('LOOP_EVENTO_INVALIDO');
@@ -221,6 +221,10 @@ class MotorLoopIntegradoSQLite{
    if(this.banco.prepare(
     'SELECT 1 FROM loop_real_motor_eventos WHERE chave=?'
    ).get(chave))return {repetida:true};
+   if(antesDeGravar!==null){
+    if(typeof antesDeGravar!=='function')falha('LOOP_AUTORIZACAO_INTERNA_INVALIDA');
+    antesDeGravar();
+   }
    const r=sim.registrarVendaNoCicloSimulada({vendaId:chave});
    this.banco.prepare(
     "INSERT INTO loop_real_motor_eventos(chave,tipo,pedido_id) VALUES(?,'EVENTO',?)"

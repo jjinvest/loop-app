@@ -37,7 +37,7 @@ function projetarAgendaTabuleiroCompartilhada(estado){
   origem:'CATRACA_REAL_MESMO_SQLITE',
   somenteLeitura:true,financeiroReal:false,
   modoExecucao:estado.modo==='PAUSADA'?'STOP':
-   estado.modo==='MANUAL'?'NATURAL':'AGENDADA',
+   estado.metaCentrosDia>0?'AGENDADA':'NATURAL',
   pausaManual:estado.modo==='PAUSADA',
   dentroDoHorario:estado.horarioPermitido===true,
   abertura:estado.janelaInicio,fechamento:estado.janelaFim,

@@ -22,7 +22,7 @@ function previa({quantidade='5',abertura='09:00',fechamento='18:00'}={}){
  for(const x of Object.values(elementos))
   x.addEventListener=function(tipo,callback){this.listeners[tipo]=callback};
  const inicio=client.indexOf(' function atualizarPrevisaoLuzesAdmin(){');
- const fim=client.indexOf(' async function atualizarCatracaAdmin(){',inicio);
+ const fim=client.indexOf(' async function atualizarCatracaAdmin(',inicio);
  assert.ok(inicio>0&&fim>inicio,'função cliente deve existir');
  const codigo=client.slice(inicio,fim);
  const contexto={$:id=>elementos[id]};
@@ -100,4 +100,27 @@ test('painel sugere horário padrão apenas em política ainda não configurada'
  assert.match(client,/d\.janelaInicio==='00:00'&&d\.janelaFim==='00:00'/);
  assert.match(client,/semHorarioConfigurado\?'09:00':d\.janelaInicio/);
  assert.match(client,/semHorarioConfigurado\?'18:00':d\.janelaFim/);
+});
+
+test('releitura preserva rascunho e revisão até Salvar ou Atualizar explícito',async()=>{
+ const ids=['modoCatracaAdmin','inicioCatracaAdmin','fimCatracaAdmin',
+  'limiteCatracaAdmin','metaCentrosDiaAdmin','metaDataAlvoAdmin','estadoCatracaAdmin'];
+ const elementos=Object.fromEntries(ids.map(id=>[id,{value:'RASCUNHO',textContent:''}]));
+ const salvo={revisao:7,modo:'AUTOMATICA',financeiroReal:false,janelaInicio:'09:00',janelaFim:'18:00',
+  metaCentrosDia:5,metaDataAlvo:'2099-11-22',limiteDiario:null};
+ const contexto={$:id=>elementos[id],apiCatraca:async()=>salvo,
+  rascunhoCatracaSujo:true,politicaCatraca:{revisao:6},
+  botoesCatraca:()=>{},atualizarPrevisaoLuzesAdmin:()=>{}};
+ const inicio=client.indexOf(' async function atualizarCatracaAdmin(');
+ const fim=client.indexOf(' function configurarCatraca(',inicio);
+ runInNewContext(client.slice(inicio,fim),contexto);
+ await contexto.atualizarCatracaAdmin();
+ assert.equal(elementos.modoCatracaAdmin.value,'RASCUNHO');
+ assert.equal(elementos.metaDataAlvoAdmin.value,'RASCUNHO');
+ assert.equal(contexto.politicaCatraca.revisao,6,'a revisão do rascunho não encobre edição concorrente');
+ await contexto.atualizarCatracaAdmin({forcar:true});
+ assert.equal(elementos.modoCatracaAdmin.value,'AUTOMATICA');
+ assert.equal(elementos.metaDataAlvoAdmin.value,'2099-11-22');
+ assert.equal(contexto.politicaCatraca.revisao,7);
+ assert.equal(contexto.rascunhoCatracaSujo,false);
 });

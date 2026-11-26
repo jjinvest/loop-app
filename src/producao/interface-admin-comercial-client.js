@@ -658,6 +658,11 @@
   if(!res.ok)throw Error(dados.erro||'CATRACA_INDISPONIVEL');
   return dados;
  }
+ let rascunhoCatracaSujo=false;
+ for(const id of ['modoCatracaAdmin','limiteCatracaAdmin','inicioCatracaAdmin',
+  'fimCatracaAdmin','metaCentrosDiaAdmin','metaDataAlvoAdmin'])
+  for(const evento of ['input','change'])
+   $(id).addEventListener(evento,()=>{rascunhoCatracaSujo=true;});
  function botoesCatraca(){
   const ativo=!!csrf&&!!politicaCatraca&&
    politicaCatraca.politicaOperacionalConfiguravel===true&&!catracaOcupada;
@@ -713,12 +718,13 @@
   $(id).addEventListener('input',atualizarPrevisaoLuzesAdmin);
   $(id).addEventListener('change',atualizarPrevisaoLuzesAdmin);
  }
- async function atualizarCatracaAdmin(){
+ async function atualizarCatracaAdmin({forcar=false}={}){
   try{
    const d=await apiCatraca();
    if(!Number.isSafeInteger(d.revisao)||
       !['PAUSADA','MANUAL','AUTOMATICA'].includes(d.modo)||
       d.financeiroReal!==false)throw Error('Estado administrativo inválido.');
+   if(forcar||!rascunhoCatracaSujo){
    politicaCatraca=d;
    $('modoCatracaAdmin').value=d.modo;
    // Base legada sem agenda salva: sugerir 09–18 apenas na tela, sem
@@ -730,6 +736,8 @@
    $('limiteCatracaAdmin').value=d.limiteDiario===null?'':String(d.limiteDiario);
    $('metaCentrosDiaAdmin').value=String(d.metaCentrosDia||0);
    $('metaDataAlvoAdmin').value=d.metaDataAlvo||'';
+   rascunhoCatracaSujo=false;
+   }
    atualizarPrevisaoLuzesAdmin();
    $('estadoCatracaAdmin').textContent='Modo: '+d.modo+
     ' · Horário: '+d.horaLocal+' · Giros hoje: '+d.girosHoje+
@@ -765,9 +773,15 @@
  async function alterarCatraca(body){
   if(!csrf||catracaOcupada)throw Error('Comando indisponível.');
   catracaOcupada=true;botoesCatraca();
+  $('estadoCatracaAdmin').textContent=body.acao==='GIRAR'?
+   'Enviando comando…':'Salvando programação…';
   try{
    const resultado=await apiCatraca(body);
-   await atualizarCatracaAdmin();await atualizarMotorAdministrativo();
+   await atualizarCatracaAdmin({forcar:true});await atualizarMotorAdministrativo();
+   if(body.acao==='CONFIGURAR'&&(!politicaCatraca||
+      ['modo','janelaInicio','janelaFim','limiteDiario','metaCentrosDia','metaDataAlvo']
+       .some(k=>(politicaCatraca[k]??null)!==(body[k]??null))))
+    throw Error('Programação não confirmada na leitura do servidor.');
    $('estadoCatracaAdmin').textContent=body.acao==='GIRAR'?
     (resultado.girou?'Giro efetuado no mesmo motor.':
      'Giro não efetuado: '+resultado.motivo):
@@ -788,7 +802,7 @@
    });}catch(e){$('estadoCatracaAdmin').textContent=e.message;}
   });
  }
- $('atualizarCatracaAdmin').addEventListener('click',()=>void atualizarCatracaAdmin());
+ $('atualizarCatracaAdmin').addEventListener('click',()=>void atualizarCatracaAdmin({forcar:true}));
  async function atualizarMotorAdministrativo(){
   const area=$('loopAdminEstado');
   try{

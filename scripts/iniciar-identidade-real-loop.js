@@ -427,7 +427,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
    try{bancadaOperacional.processarRelogio();}
    catch(e){console.error('BANCADA_CATRACA_RELOGIO_FALHOU',
     e.codigo||'ERRO_OPERACIONAL');}
-  },10000);
+  },1000);
   timerBancada.unref?.();
   const encerrar=()=>{
    clearInterval(timerBancada);
