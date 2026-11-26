@@ -1888,6 +1888,7 @@ async function main(){
     await pagina.locator('#atualizarIntegracaoLoop').click();
     await integrado.filter({hasText:/Eventos: 1\/6/}).waitFor();
     await pagina.locator('#pausarCatracaAdmin').click();
+    await pagina.waitForFunction(()=>document.getElementById('modoCatracaAdmin').value==='PAUSADA');
     await pagina.locator('#estadoCatracaAdmin').filter({hasText:/Política.*salva/}).waitFor();
     assert.equal(integradorComercialEnsaio.processarDistribuicao({controle:executor}).processado,false);
     assert.equal(motorLoop.consultar().tabuleiro.eventosNoCiclo,1,
