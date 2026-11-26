@@ -3387,6 +3387,12 @@
   quantidadeCursos.className='loop03-compras-total';
   quantidadeCursos.textContent=String(vendas.cursos);
   digital.append(cursos,quantidadeCursos);
+  const bonus=cartao('Comissões de bônus',dinheiro(f.comissoesDevidasCentavos??f.destinos.BONUS));
+  if(Number.isSafeInteger(f.comissoesPendentesCentavos)){
+   const situacao=document.createElement('h4');
+   situacao.textContent='Pago: '+dinheiro(f.destinos.BONUS)+' · A pagar: '+dinheiro(f.comissoesPendentesCentavos);
+   bonus.append(situacao);
+  }
   const total=cartao('Total pago pela empresa',dinheiro(f.destinos.BONUS+f.destinos.LOOP_CENTRO),true);
   const partes=document.createElement('div');partes.className='loop03-distribuicao-partes';
   partes.append(cartao('Bônus',dinheiro(f.destinos.BONUS)),
@@ -3398,7 +3404,7 @@
    cartao('Cofre de investimento',dinheiro(f.destinos.LOOP_ESQUERDA)),
    cartao('Cofre de reserva',dinheiro(f.destinos.LOOP_DIREITA)),
    cartao('Cofre de douradas',dinheiro(f.destinos.LOOP_DOURADAS),true),
-   cartao('Comissões de bônus',dinheiro(f.destinos.BONUS)),
+   bonus,
    cartao('Participação de lucro dos clientes',dinheiro(f.destinos.LOOP_CENTRO)),
    total
   );
