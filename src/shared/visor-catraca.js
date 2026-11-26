@@ -40,18 +40,22 @@
      .map(x=>[x.type,x.value]));
    const atual=Number(partes.hour)*60+Number(partes.minute);
    const dia=partes.year+'-'+partes.month+'-'+partes.day;
-   const diaTurno=atual<inicio?diaAnterior(dia):dia;
+   // Antes da abertura diurna, a agenda pertence a hoje. Só a
+   // continuação de um turno noturno pertence ao dia anterior.
+   let diaTurno=inicio>=fim&&atual<inicio?diaAnterior(dia):dia;
+   if(meta.dataAlvo&&meta.dataAlvo>diaTurno)diaTurno=meta.dataAlvo;
    if(meta.dataAlvo!==null&&meta.dataAlvo!==undefined&&
       meta.dataAlvo!==diaTurno)return null;
    const duracaoMin=((fim-inicio+1440)%1440)||1440;
    const duracaoMs=duracaoMin*60000;
-   const decorrido=((atual-inicio+1440)%1440)*60000+
-    Number(partes.second)*1000+(agoraMs%1000);
+   const inicioTurno=Date.parse(diaTurno+'T'+agenda.abertura+':00-03:00');
+   const decorrido=agoraMs-inicioTurno;
+   const aguardando=decorrido<0;
    // A projeção visual permanece consultável após o fechamento do turno.
    // Ela não cria movimentação de dinheiro ou registros do motor.
    const finalizado=decorrido>=duracaoMs;
    const total=meta.quantidade*6;
-   const passadasOriginais=Math.min(total,Math.floor(decorrido*total/duracaoMs));
+   const passadasOriginais=Math.max(0,Math.min(total,Math.floor(decorrido*total/duracaoMs)));
    // O placar começa do zero no marco registrado, sem reescrever o turno.
    // A agenda permanece com a programação original e os LEDs acompanham
    // apenas os marcos posteriores à limpeza operacional de ensaio.
@@ -69,15 +73,14 @@
     null;
    // Quantidade de LUZES desta hora, não giros financeiros nem total do dia.
    // Mantém o mesmo cálculo por intervalos do relógio do tabuleiro.
-   const emTurno=inicio<fim?atual>=inicio&&atual<fim:
-    inicio>fim?atual>=inicio||atual<fim:true;
+   const emTurno=!aguardando&&!finalizado;
    const decorridoAntesHora=decorrido-
     (Number(partes.minute)*60000+Number(partes.second)*1000+agoraMs%1000);
    const passadasNoInicioHora=Math.min(total,Math.floor(
     Math.max(0,decorridoAntesHora)*total/duracaoMs));
    const luzesHora=emTurno&&!finalizado?
     Math.max(0,passadasOriginais-passadasNoInicioHora):0;
-   return {luzes,passadas,total,proxima,diaTurno,finalizado,emTurno,luzesHora,
+   return {luzes,passadas,total,proxima,diaTurno,finalizado,aguardando,emTurno,luzesHora,
     intervalo:Math.max(1,Math.round(duracaoMs/total/1000))};
   }
   function sincronizarLuzesVisuais(estado){
@@ -190,6 +193,8 @@
       agenda?.luzesDoRelogioOperador===true){
     if(visual){
      const proxima=visual.proxima;
+     const programacao=(meta?.dataAlvo?meta.dataAlvo+' · ':'')+
+      agenda.abertura+'–'+agenda.fechamento;
      if(visual.finalizado){
       visor.textContent='00:00';
       titulo.textContent='TURNO ENCERRADO';
@@ -206,12 +211,14 @@
       visual.passadas+'/'+visual.total+' do dia · '+
       Math.floor(visual.intervalo/60)+' min'+
       (visual.intervalo%60?' '+visual.intervalo%60+' s':'')+
-      '/luz · execução visual';
+      '/luz · execução visual · '+programacao;
     }else{
      visor.textContent='--:--';
      titulo.textContent=modo==='STOP'||agenda?.pausaManual===true?
       'CATRACA PAUSADA':modo==='NATURAL'?'MODO MANUAL':'FORA DO TURNO';
-     estado.textContent='Luzes do relógio aguardando horário e meta ativa';
+     estado.textContent=(meta?.dataAlvo?meta.dataAlvo+' · ':'')+
+      agenda.abertura+'–'+agenda.fechamento+
+      ' · Luzes do relógio aguardando horário e meta ativa';
     }
     return;
    }

@@ -312,7 +312,9 @@ class OperacaoCatracaAdminSQLite{
  consultar(){
   const p=this._politica(),tempo=horarioLocal(this.agora);
   const meta=this._meta();
-  const metaAplicavel=meta.dataAlvo===null||meta.dataAlvo===tempo.dia;
+  const diaTurno=p.inicio>=p.fim&&tempo.hora<p.fim?
+   new Date(Date.parse(tempo.dia+'T12:00:00Z')-86400000).toISOString().slice(0,10):tempo.dia;
+  const metaAplicavel=meta.dataAlvo===null||meta.dataAlvo===diaTurno;
   const calculo=calcularIntervaloMeta({
    abertura:p.inicio,fechamento:p.fim,
    quantidade:metaAplicavel?meta.centrosDia:0

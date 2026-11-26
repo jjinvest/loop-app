@@ -241,3 +241,51 @@ test('placar superior e inferior usam 48 luzes do dia, nao janela movel de 24h',
  assert.equal(agenda.girosReaisHoje,0);
  assert.equal(agenda.financeiroReal,false);
 });
+
+test('agenda salva no SQLite reaparece nos dois visores antes de abrir, durante e após meia-noite',t=>{
+ const {DatabaseSync}=require('node:sqlite');
+ const {OperacaoCatracaAdminSQLite}=require('../src/producao/operacao-catraca-admin-sqlite');
+ const banco=new DatabaseSync(':memory:');
+ t.after(()=>banco.close());
+ let instante=Date.parse('2026-11-26T08:00:00-03:00');
+ const motor={banco,_transacao:fn=>{
+  banco.exec('BEGIN IMMEDIATE');
+  try{const r=fn(null);banco.exec('COMMIT');return r;}
+  catch(e){banco.exec('ROLLBACK');throw e;}
+ },consultar:()=>({tabuleiro:{eventosNoCiclo:0,ciclosConcluidos:0},
+  catraca:{giros:0},filaA:0,filaB:0})};
+ const novo=()=>new OperacaoCatracaAdminSQLite({banco,motor,
+  agora:()=>new Date(instante)});
+ let c=novo();
+ const salvar=(inicio,fim,data)=>c.configurar({modo:'AUTOMATICA',
+  janelaInicio:inicio,janelaFim:fim,metaCentrosDia:5,
+  metaDataAlvo:data,limiteDiario:null,revisaoEsperada:c.consultar().revisao,
+  motivo:'VERIFICAR_PROGRAMACAO_SALVA'});
+ const conferir=(esperado,horario)=>{
+  // Nova instância relê a gravação; o visor não recebe o formulário.
+  c=novo();
+  const estado=c.consultar(),agenda=projetarAgendaTabuleiroCompartilhada(estado);
+  for(const perfil of ['operador','cliente']){
+   const painel=criarVisor(perfil,agenda,instante);
+   assert.equal(painel.relogioTabuleiroIntegrado.textContent,esperado);
+   assert.match(painel.estadoRelogioTabuleiro.textContent,horario);
+  }
+  assert.equal(estado.girosTotais,0);
+  assert.equal(estado.eventosNoCiclo,0);
+  assert.equal(estado.autorizacaoFinanceiraDosGiros,false);
+  return estado;
+ };
+ salvar('09:00','18:00','2026-11-26');
+ conferir('78:00',/09:00–18:00/); // primeira luz às 09:18
+ instante=Date.parse('2026-11-26T09:05:00-03:00');
+ const dia=conferir('13:00',/09:00–18:00/);
+ assert.equal(dia.proximaLuzPrevistaEmMs,Date.parse('2026-11-26T09:18:00-03:00'));
+ salvar('22:00','02:00','2026-11-26');
+ instante=Date.parse('2026-11-27T00:01:00-03:00');
+ const noite=conferir('07:00',/22:00–02:00/);
+ assert.equal(noite.metaAplicavelHoje,true);
+ assert.equal(noite.proximaLuzPrevistaEmMs,Date.parse('2026-11-27T00:08:00-03:00'));
+ instante=Date.parse('2026-11-27T08:00:00-03:00');
+ salvar('09:00','18:00','2026-11-28');
+ conferir('1518:00',/2026-11-28 · 09:00–18:00/);
+});
