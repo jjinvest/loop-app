@@ -177,7 +177,7 @@ test('tabuleiro circular respeita azul verde dourada e 6 eventos',()=>{
  assert.throws(()=>visual.preencherLuzes(7),/EVENTOS_TABULEIRO_INVALIDOS/);
 });
 
-test('painel responsivo mostra 10 no celular ou 20 no PC, paginados em 30 sem reordenar',()=>{
+test('painel responsivo preserva paginação em 30 sem reordenar as filas',()=>{
  const client=ler('candidato/checkout-candidato-ui.js');
  const real=ler('producao/interface-aprovada-contas.js');
  assert.match(client,/validas\.slice\(0,10\)/);

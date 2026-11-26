@@ -1213,7 +1213,7 @@ body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-
  border:1px solid #fff;font:750 .75rem system-ui; font-variant-numeric:tabular-nums;
 }
 .cliente-integrado #conteudoTabuleiro #motorFilaA,.cliente-integrado #conteudoTabuleiro #motorFilaB{
- --fila-linha:44px;display:block;flex:0 0 auto;max-height:calc(20 * var(--fila-linha));overflow-y:auto;
+ --fila-linha:44px;display:block;flex:0 0 auto;max-height:calc(10 * var(--fila-linha));overflow-y:auto;
 }
 .cliente-integrado #conteudoTabuleiro :is(#motorFilaA,#motorFilaB)>.loop03-linha-fila{
  box-sizing:border-box;height:40px;min-height:40px;margin:0 0 4px;padding:3px!important;gap:5px;
