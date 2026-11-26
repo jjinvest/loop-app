@@ -365,3 +365,69 @@ test('saldos do lote são compartilhados por projeção única, sem prova bancá
  assert.ok(office.includes("if(!nick&&visualTesteModulo==='CATRACA')"));
  assert.ok(office.includes("if(visualTesteModulo==='CATRACA')aplicarSaldoCompartilhado(await consultarSaldoCompartilhado())"));
 });
+
+test('mil posições: composição autorizada, geração anterior preservada e nenhum START',t=>{
+ const c=contexto();t.after(()=>c.db.close());
+ c.acao('CATRACA_PREPARAR_100');
+ const livroAntigo=c.db.prepare('SELECT * FROM loop_teste_fluxo_recebimentos ORDER BY numero').all();
+ const filaOriginal=c.teste.consultar().fila;
+ const lote=c.acao('CATRACA_PREPARAR_1000');
+ assert.equal(lote.posicoes,1000);
+ const verificar=teste=>{
+  const x=teste.consultar().catraca;
+  assert.equal(x.filaA.length,100);
+  assert.equal(x.filaB.length,900);
+  assert.equal(x.filaB.filter(p=>p.dourada).length,100);
+  assert.equal(x.filaB.filter(p=>p.pendente).length,50);
+  assert.equal(x.filaB.filter(p=>!p.dourada&&!p.pendente).length,750);
+  assert.equal(x.financeiro.indicadores,100);
+  assert.equal(x.financeiro.comissoes,750);
+  assert.equal(x.financeiro.comissoesPendentesCentavos,1875000);
+  assert.equal(x.financeiro.recebidoCentavos,25000000);
+  assert.equal(x.financeiro.saldoCentavos,25000000);
+  assert.equal(x.financeiro.eventos,0);
+  assert.equal(x.tabuleiro.giros,0);
+  assert.equal(x.catracaAtiva,false);
+  assert.equal(x.porteiraAberta,false);
+  assert.equal(x.tabuleiro.centro,null);
+  return x;
+ };
+ const antes=verificar(c.teste);
+ assert.equal(c.teste.processarRelogio().processado,false);
+ c.mudarTempo(Date.parse('2026-11-24T12:00:00Z'));
+ assert.equal(c.teste.processarRelogio().processado,false);
+ assert.equal(c.acao('CATRACA_PREPARAR_1000').jaPreparado,true);
+ assert.equal(c.acao('CATRACA_PREPARAR_100').jaPreparado,true);
+ const reiniciado=new BancadaModulosLoopSQLite({banco:c.db,
+  consultarAgenda:()=>c.agenda,agora:()=>Date.parse('2026-11-24T12:00:00Z')});
+ const depois=verificar(reiniciado);
+ assert.deepEqual(depois.filaA,antes.filaA);
+ assert.deepEqual(depois.filaB,antes.filaB);
+ assert.deepEqual(c.teste.consultar().fila,filaOriginal);
+ assert.deepEqual(c.db.prepare('SELECT * FROM loop_teste_fluxo_recebimentos WHERE geracao=1 ORDER BY numero').all(),livroAntigo);
+ assert.equal(c.db.prepare('SELECT COUNT(*) AS n FROM loop_teste_fluxo_arquivo').get().n,1);
+ assert.equal(c.db.prepare('SELECT COUNT(*) AS n FROM loop_teste_fluxo_recebimentos').get().n,1100);
+ assert.equal(c.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+
+test('mil recebimentos percorrem o mesmo livro em execução isolada, com conservação de caixa',t=>{
+ const c=contexto();t.after(()=>c.db.close());
+ c.acao('CATRACA_PREPARAR_1000');
+ c.acao('CATRACA_INICIAR'); // Somente nesta instância em memória, nunca no serviço.
+ const ts=Date.parse('2026-11-23T12:00:00Z');
+ for(let i=1;i<=1000;i++){
+  c.mudarTempo(ts+i*10000);
+  const r=c.teste.processarRelogio();
+  assert.equal(r.processado,true,'evento '+i);
+  assert.equal(r.financeiro.saldoCentavos,25000000-i*25000);
+  assert.equal(Object.values(r.financeiro.destinos).reduce((n,v)=>n+v,0)+r.financeiro.saldoCentavos,25000000);
+ }
+ const x=c.teste.consultar().catraca;
+ assert.equal(x.financeiro.eventos,1000);
+ assert.equal(x.tabuleiro.giros,166);
+ assert.equal(x.tabuleiro.eventosNoCiclo,4);
+ assert.equal(x.financeiro.destinos.BONUS,1875000);
+ assert.equal(x.financeiro.comissoesPendentesCentavos,0);
+ assert.equal(x.catracaAtiva,false);
+ assert.equal(c.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});

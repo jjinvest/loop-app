@@ -206,3 +206,12 @@ test('painel responsivo preserva paginação em 30 sem reordenar as filas',()=>{
  visual.preencherFila('motorFilaB',[],'B',{reservarLugares:9});
  assert.equal(el.motorFilaB.children[8].children[0].textContent,'9');
  });
+
+test('fila do lote de mil não oculta posições após o centésimo lugar',()=>{
+ const {visual,el}=fake();
+ const itens=Array.from({length:900},(_,i)=>({numero:i+101,nome:'P'+(i+101)}));
+ visual.preencherFila('motorFilaB',itens,'B',{exibirNomesTeste:true});
+ assert.equal(el.motorFilaB.children.length,900);
+ assert.equal(el.motorFilaB.children.at(-1).children[0].textContent,'900');
+ assert.equal(el.motorFilaB.children.at(-1).children[1].children[0].textContent,'#0001000');
+});
