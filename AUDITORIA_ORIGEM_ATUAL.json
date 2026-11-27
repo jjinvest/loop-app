@@ -1,153 +1,317 @@
 {
-  "dataUTC": "2026-11-24T12:10:42Z",
+  "dataUTC": "2026-11-27",
   "construcao": {
     "branch": "feature/unificar-escritorio-real-20261105",
-    "sha": "3053d9aa077d2966ee9471bc1f08dff14b96f5e3",
-    "arquivos": 1730
+    "sha": "6e22deb194ec7f1cd1e0ce596cb1f3ed1f0e2f89",
+    "arquivos": 1734
   },
   "railway": {
-    "projeto": "8c1ab327-16f0-409a-90ac-8f02a3f5eae0",
-    "ambiente": "e5c30d7f-086f-4845-93ad-7d1a5ca5e31b",
     "servico": "ac28edec-50ad-4187-99e2-8f7014735b63",
-    "deploymentId": "805d0cb3-9873-4976-9721-814b37b76e71",
-    "deployment": "2026-11-24T12:01:13.858Z",
+    "deploymentId": "7db15a89-4a20-48fd-b601-e8f1bc18b3f5",
+    "deployment": "2026-11-26T17:51:30.829Z",
     "status": "SUCCESS",
-    "sha": "3c400d081285160a4c11ea7ab9e0a0c7b648b9b0",
-    "observacao": "SUCCESS comprova o deployment declarado pelo Railway, nao certifica equivalencia visual, login no dispositivo, liquidação, caixa, ou desempenho sob carga.",
-    "buildEmAndamento": {
-      "sha": "3053d9aa077d2966ee9471bc1f08dff14b96f5e3",
-      "status": "BUILDING"
-    }
+    "sha": "6e22deb194ec7f1cd1e0ce596cb1f3ed1f0e2f89"
   },
   "base": {
     "branch": "base-limpa/loop-3-0-marco-zero-v0-20261121",
-    "shaAntes": "2c4d6c71abc7b62be7830c430b6cc1932dc22f84",
+    "shaAntes": "a87dd45e63972ea72acddd6cfc75429e9f5329f6",
     "arquivos": 153,
-    "ci": {
-      "conclusao": "failure",
-      "runId": 45172257755
-    },
     "manifestoFonteCongelada": "e88a14601b3b20475098f489d44fac01acedf2c9",
-    "observacao": "147 hashes de arquivos congelados conferidos; unica divergencia no registro de auditoria mutavel. Corrigir seu hash atomicamente no manifesto."
+    "hashesConferidos": 148
   },
   "comparacao": {
-    "construcao": {
-      "comuns": 149,
-      "identicos": 106,
-      "divergentes": 43,
-      "paths": [
-        "README.md",
-        "docs/CONTRATO_VISUAL_LOOP_APROVADO.json",
-        "package.json",
-        "scripts/iniciar-gateway-publico-real-loop.js",
-        "scripts/iniciar-identidade-real-loop.js",
-        "scripts/validar-identidade-real-navegador.js",
-        "src/candidato/checkout-candidato-ui.html",
-        "src/candidato/escritorio-cliente-integrado.css",
-        "src/candidato/vitrine-horizontal.css",
-        "src/domain/repositorio-catalogo-sqlite.js",
-        "src/laboratorio/loja-cliente-demo.css",
-        "src/laboratorio/loja-cliente-demo.html",
-        "src/producao/acabamento-botoes-real.css",
-        "src/producao/auditoria-operacional-sqlite.js",
-        "src/producao/backup-identidade-real.js",
-        "src/producao/backup-midia-offsite.js",
-        "src/producao/backup-midia-real-offsite.js",
-        "src/producao/catalogo-mercadorias-real.js",
-        "src/producao/catalogo-multidistribuidores-sqlite.js",
-        "src/producao/gateway-admin-comercial.js",
-        "src/producao/identidade-cliente-loop-sqlite.js",
-        "src/producao/interface-admin-comercial-aprovada.js",
-        "src/producao/interface-admin-comercial-client.js",
-        "src/producao/interface-aprovada-contas.js",
-        "src/producao/interface-aprovada-loja.js",
-        "src/producao/interface-aprovada-loop.js",
-        "src/producao/livro-financeiro-real-sqlite.js",
-        "src/producao/motor-loop-integrado-sqlite.js",
-        "src/producao/operacao-catraca-admin-sqlite.js",
-        "src/producao/operador-loja-fotos-real.js",
-        "src/producao/posicoes-vitrine-real-sqlite.js",
-        "src/producao/rotas-catalogo-midia-operador.js",
-        "src/producao/servidor-identidade-loop.js",
-        "src/producao/visao-escritorio-unificada-sqlite.js",
-        "src/shared/tabuleiro-visual-loop.js",
-        "src/shared/visor-catraca.js",
-        "test/contrato-links-definitivos-real.test.js",
-        "test/contrato-papeis-operador-real.test.js",
-        "test/gateway-publico-real-integracao-conta-operador.test.js",
-        "test/interface-aprovada-identidade-real.test.js",
-        "test/luzes-relogio-operador-com-motor-preservado.test.js",
-        "test/operador-fotos-conta-real-unificada.test.js",
-        "test/varredura-visual-publicacao-real.test.js"
-      ]
-    },
-    "publicada": {
-      "comuns": 149,
-      "identicos": 106,
-      "divergentes": 43,
-      "paths": [
-        "README.md",
-        "docs/CONTRATO_VISUAL_LOOP_APROVADO.json",
-        "package.json",
-        "scripts/iniciar-gateway-publico-real-loop.js",
-        "scripts/iniciar-identidade-real-loop.js",
-        "scripts/validar-identidade-real-navegador.js",
-        "src/candidato/checkout-candidato-ui.html",
-        "src/candidato/escritorio-cliente-integrado.css",
-        "src/candidato/vitrine-horizontal.css",
-        "src/domain/repositorio-catalogo-sqlite.js",
-        "src/laboratorio/loja-cliente-demo.css",
-        "src/laboratorio/loja-cliente-demo.html",
-        "src/producao/acabamento-botoes-real.css",
-        "src/producao/auditoria-operacional-sqlite.js",
-        "src/producao/backup-identidade-real.js",
-        "src/producao/backup-midia-offsite.js",
-        "src/producao/backup-midia-real-offsite.js",
-        "src/producao/catalogo-mercadorias-real.js",
-        "src/producao/catalogo-multidistribuidores-sqlite.js",
-        "src/producao/gateway-admin-comercial.js",
-        "src/producao/identidade-cliente-loop-sqlite.js",
-        "src/producao/interface-admin-comercial-aprovada.js",
-        "src/producao/interface-admin-comercial-client.js",
-        "src/producao/interface-aprovada-contas.js",
-        "src/producao/interface-aprovada-loja.js",
-        "src/producao/interface-aprovada-loop.js",
-        "src/producao/livro-financeiro-real-sqlite.js",
-        "src/producao/motor-loop-integrado-sqlite.js",
-        "src/producao/operacao-catraca-admin-sqlite.js",
-        "src/producao/operador-loja-fotos-real.js",
-        "src/producao/posicoes-vitrine-real-sqlite.js",
-        "src/producao/rotas-catalogo-midia-operador.js",
-        "src/producao/servidor-identidade-loop.js",
-        "src/producao/visao-escritorio-unificada-sqlite.js",
-        "src/shared/tabuleiro-visual-loop.js",
-        "src/shared/visor-catraca.js",
-        "test/contrato-links-definitivos-real.test.js",
-        "test/contrato-papeis-operador-real.test.js",
-        "test/gateway-publico-real-integracao-conta-operador.test.js",
-        "test/interface-aprovada-identidade-real.test.js",
-        "test/luzes-relogio-operador-com-motor-preservado.test.js",
-        "test/operador-fotos-conta-real-unificada.test.js",
-        "test/varredura-visual-publicacao-real.test.js"
-      ]
-    },
-    "promocaoAutomatica": false,
-    "motivo": "Equivalencia independente pendente; nao incorporar esfera ficticia nem dependencias exclusivas."
+    "comuns": 149,
+    "identicos": 104,
+    "divergentes": 45,
+    "paths": [
+      {
+        "path": "README.md",
+        "base": "eecc859265d5ece93a8c36ee9515b9945239ffdc",
+        "publicada": "75e2dad3b3ad283d0a300a4418262b8ddd4f8f75"
+      },
+      {
+        "path": "docs/CONTRATO_VISUAL_LOOP_APROVADO.json",
+        "base": "0fec2f93ffe861fc2a4ae416b67dce4357e1c67b",
+        "publicada": "a8644bc8af7a983499547f37118319573403309c"
+      },
+      {
+        "path": "package.json",
+        "base": "521f7e0e7fcfdb7c4de095fe67876473173effc9",
+        "publicada": "f0a29bbeae22ffe710a14d624459006bf1d24748"
+      },
+      {
+        "path": "scripts/iniciar-gateway-publico-real-loop.js",
+        "base": "491547de71b897bb006afacd6778cbf53781bbc0",
+        "publicada": "ad2a88ac612268a4e3fde4e1d41e829cd33daa3b"
+      },
+      {
+        "path": "scripts/iniciar-identidade-real-loop.js",
+        "base": "c3a0d422f7c5fe7162f4abed4234b45bf299d6cb",
+        "publicada": "978ee858a9470a0706ce35c258041ca38f5fb4f7"
+      },
+      {
+        "path": "scripts/validar-identidade-real-navegador.js",
+        "base": "d42f81c80c4fac853800c19176fd943f02b30dbc",
+        "publicada": "d78e1cc55626d450bb11de17f61c45e93f8fa162"
+      },
+      {
+        "path": "src/candidato/checkout-candidato-ui.html",
+        "base": "bd4f54a33ee59dc44e613f12fbf223b06d86d62c",
+        "publicada": "20bebda731b2387b11ee97b0d8de26a43584c73b"
+      },
+      {
+        "path": "src/candidato/escritorio-cliente-integrado.css",
+        "base": "79f6b8f97238ae8a81e8a340fdf4234521d82491",
+        "publicada": "6eae2c4adebe0a786fc808466e20ed9438c599f4"
+      },
+      {
+        "path": "src/candidato/vitrine-horizontal.css",
+        "base": "42a0c1730d88890de8aa8607f26f6dcc31cc9d53",
+        "publicada": "4f191081ae79032af897a6255aee2fc2a8e80495"
+      },
+      {
+        "path": "src/domain/repositorio-catalogo-sqlite.js",
+        "base": "4146682439ba6c2a30219038361e6caca37297ce",
+        "publicada": "511a2e2d51beadb6801807acf26efbe1d95bbb2b"
+      },
+      {
+        "path": "src/laboratorio/loja-cliente-demo.css",
+        "base": "e211889af7534d25f27e6c4fd79668a11153c69d",
+        "publicada": "44753cf86d7d61f6a23bbada6aab3bd039a155c4"
+      },
+      {
+        "path": "src/laboratorio/loja-cliente-demo.html",
+        "base": "c69bfc690a93922baec4aa16fe3e0e306220331b",
+        "publicada": "2ff5869aa2e90181f14533f7e7b6bdb41276474c"
+      },
+      {
+        "path": "src/producao/acabamento-botoes-real.css",
+        "base": "c743e599ac87bd2f83cef81e076658b843a91606",
+        "publicada": "b83c6fb3ba5d509e9eefbaf549e1a92ffbc95b45"
+      },
+      {
+        "path": "src/producao/auditoria-operacional-sqlite.js",
+        "base": "4e5ec07654a8449a832719aacc2f42a379dab97f",
+        "publicada": "ce112c08e0b55fc9aa0a427a98bd92d377f4ef77"
+      },
+      {
+        "path": "src/producao/backup-identidade-real.js",
+        "base": "4334e85ccd8e2601aaa99ded322988a99b888cdf",
+        "publicada": "79f2069bc4e8b27e688d87659aa34025ed3179d0"
+      },
+      {
+        "path": "src/producao/backup-midia-offsite.js",
+        "base": "d3e4bfda90c7a7af54c369fc5bb46387577ad045",
+        "publicada": "e968a3039b3f314a69a1ee4256ee015382d5484a"
+      },
+      {
+        "path": "src/producao/backup-midia-real-offsite.js",
+        "base": "68d04cf053e39b644a9f2db789cea5d112d2feb6",
+        "publicada": "20e2380b4cc04d687a12647704d4ac80da0b7051"
+      },
+      {
+        "path": "src/producao/catalogo-mercadorias-real.js",
+        "base": "e5cd1550f4d029460e12418d0dfb8cb0e32d3706",
+        "publicada": "bc6267f00d188a8a6be1ae7af9a346374bed0971"
+      },
+      {
+        "path": "src/producao/catalogo-multidistribuidores-sqlite.js",
+        "base": "6cb65bbb66fff26c70e8cb3e04c4a99609f819b9",
+        "publicada": "442c9d665d81d3be418c4c959299567c55a34f6d"
+      },
+      {
+        "path": "src/producao/gateway-admin-comercial.js",
+        "base": "f5038dcf7af1c0f8875d000ba6e9875036e42012",
+        "publicada": "e6abbbd24f617e54efc871dee08087c62a804f63"
+      },
+      {
+        "path": "src/producao/identidade-cliente-loop-sqlite.js",
+        "base": "cbaa31b441b03e9976bc76950212a7ca44d41a9c",
+        "publicada": "86d921a0dc9e242a1ab8689e0dc40c0c862d6dd5"
+      },
+      {
+        "path": "src/producao/interface-admin-comercial-aprovada.js",
+        "base": "73da75d51d70bd808dc5fe0ca923961de5bee21f",
+        "publicada": "b00cb7e59d7c1d4988d15fc98a5ccca78c9e01d5"
+      },
+      {
+        "path": "src/producao/interface-admin-comercial-client.js",
+        "base": "7e825b8c42893dc544ad038e8b49ed7a543d4f82",
+        "publicada": "8b082372b16ef0dd1cb0cf4e05b62bfa96c7107b"
+      },
+      {
+        "path": "src/producao/interface-aprovada-contas.js",
+        "base": "87cf21871e179b055e2b2017c8f24a01bc76a5c8",
+        "publicada": "11192e4a7ebb817d5e2d1da06826ec934c5a027b"
+      },
+      {
+        "path": "src/producao/interface-aprovada-loja.js",
+        "base": "f65080b63a665b9b7e9e734d38ab35800a94db0a",
+        "publicada": "6edb790e04285502224718077a40508faa4c5579"
+      },
+      {
+        "path": "src/producao/interface-aprovada-loop.js",
+        "base": "39d61f2fc9260b8dfcf0041916d15be040f0a9d9",
+        "publicada": "10fb357aaac7a4a35b2f01cf9d9bf40a03b07db8"
+      },
+      {
+        "path": "src/producao/livro-financeiro-real-sqlite.js",
+        "base": "80a099daf927e532dd6064c52c2f40b286a4051f",
+        "publicada": "22d37c955dd701841a021b1e898e0ff3708a51bd"
+      },
+      {
+        "path": "src/producao/motor-loop-integrado-sqlite.js",
+        "base": "768e3031a304c71f4a39d6805807efb8451d2736",
+        "publicada": "792b31d14cc5260a09f3b0029698d57790ba9b82"
+      },
+      {
+        "path": "src/producao/operacao-catraca-admin-sqlite.js",
+        "base": "4a71962bd2da8614171fc9127627227e3fce63fa",
+        "publicada": "d484ac9ce10f7eed521475897f5c17f0055b99c5"
+      },
+      {
+        "path": "src/producao/operador-loja-fotos-real.js",
+        "base": "db2ac1fb31389f2626df4c4ed05c30e02e16ab3b",
+        "publicada": "e84de2116f46ae9571e75e9422de443f1f23b0d8"
+      },
+      {
+        "path": "src/producao/posicoes-vitrine-real-sqlite.js",
+        "base": "6fd585c2e171c5f40e277758cad85663a9867f8f",
+        "publicada": "2092239455d08d60e733611a35d67bf3469acff3"
+      },
+      {
+        "path": "src/producao/rotas-catalogo-midia-operador.js",
+        "base": "6abc4defd7e3f10ab250c2970fd759e535fed7f3",
+        "publicada": "60ee9ca8e7a5ccb6ee822c5afbf434904338be78"
+      },
+      {
+        "path": "src/producao/servidor-identidade-loop.js",
+        "base": "aaffa60296d954e55c390a1982be2c4def2749ae",
+        "publicada": "39e6ea714f7c375cf27b89b623d09775e1eb0951"
+      },
+      {
+        "path": "src/producao/sincronizador-comercial-loop-ensaio-sqlite.js",
+        "base": "089b133c4022dbe982a12a3664a8ac819cfad670",
+        "publicada": "30d84657ec6fd2e4b835198a9da3a3e5f322e48a"
+      },
+      {
+        "path": "src/producao/visao-escritorio-unificada-sqlite.js",
+        "base": "eec55123b10a87f9fe56a774e52f6392f82e1449",
+        "publicada": "b8b0624ef7ff615f9cdf172e6c8239632df8dd7a"
+      },
+      {
+        "path": "src/shared/tabuleiro-visual-loop.js",
+        "base": "6ab3d189c0bc05e0b9dd50fa3e1b354e861b78da",
+        "publicada": "18f4771bbc0bb20e878bd1ed098ff612b0202b04"
+      },
+      {
+        "path": "src/shared/visor-catraca.js",
+        "base": "85082a4ca842426a296da2b60dcc2dcf1d9290b9",
+        "publicada": "124f33c56571f218586d9e0223e22c62fe9361a4"
+      },
+      {
+        "path": "test/contrato-links-definitivos-real.test.js",
+        "base": "858bf9494c4adc380f636c693fdca37b595cadf7",
+        "publicada": "2e2e7135e0181504f9a55b63244582f3b8a28d96"
+      },
+      {
+        "path": "test/contrato-papeis-operador-real.test.js",
+        "base": "c64a0d9ac4bafa616f7dfa321d4867b948332929",
+        "publicada": "027f1d06bebd8134f7ab4f0883317dc55a28a653"
+      },
+      {
+        "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
+        "base": "4597bc4478b0d523503ed592f53244f3d76b84e4",
+        "publicada": "cd094925d218037cd315e8bb7c9bac80e9dfaed7"
+      },
+      {
+        "path": "test/interface-aprovada-identidade-real.test.js",
+        "base": "b24ccb43506fd6510517b9c59858c2953de7d4fe",
+        "publicada": "2a4b85b41f76c3e9fbddc90cf3439fbba5e67854"
+      },
+      {
+        "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
+        "base": "95b8e985177bf815167592d0641da6f3c1379ce5",
+        "publicada": "539651a95f957962dd88f2264c75a9d3540f58f9"
+      },
+      {
+        "path": "test/motor-loop-integrado-identidade.test.js",
+        "base": "1b271975982df63001a2eea5719ca53c385dae28",
+        "publicada": "9b54cec3c4a65a3d4600a171f7dfd3da955a3e93"
+      },
+      {
+        "path": "test/operador-fotos-conta-real-unificada.test.js",
+        "base": "184f3889f365c127fc4e85f54b401da45cf394aa",
+        "publicada": "21d758a55abb9c60198b8426944ec86e7d330679"
+      },
+      {
+        "path": "test/varredura-visual-publicacao-real.test.js",
+        "base": "560cc4db8d6756ff67ad2ac943d76edb01134880",
+        "publicada": "7bcbe10fe53968fc56a44aab7e4c89815f8c0064"
+      }
+    ],
+    "promocaoAutomatica": false
   },
   "verificacoes": {
-    "hashes": "147 entradas congeladas identicas; auditoria atualizada e hash registrado atomicamente",
-    "imports": "Sem novos imports; auditoria transitiva das divergencias pendente.",
-    "testes": "CI anterior da base falhou; CI da publicada 3c400d08 verde inclusive telas PC/celular (45389331466). Nova CI da base ainda pendente.",
-    "equivalenciaVisual": "NAO_COMPROVADA_PARA_MUDANCAS_RECENTES",
-    "financeiro": "NAO_HOMOLOGADO",
-    "escala100k": "NAO_CERTIFICADA"
+    "ciPublicada": [
+      {
+        "nome": "LOOP AKITEMM - auditoria integral do pilar interno",
+        "id": 45871210285,
+        "conclusao": "success"
+      },
+      {
+        "nome": "LOOP - telas reais PC e celular integradas",
+        "id": 45871210246,
+        "conclusao": "success"
+      },
+      {
+        "nome": "LOOP - Prévia protegida de Escritórios",
+        "id": 45871210187,
+        "conclusao": "success"
+      },
+      {
+        "nome": "LOOP - Identidade real segregada (SEM deploy)",
+        "id": 45871210216,
+        "conclusao": "success"
+      },
+      {
+        "nome": "Prova isolada 1000 pessoas catraca cofres",
+        "id": 45871210176,
+        "conclusao": "success"
+      },
+      {
+        "nome": "LOOP - Bloqueio de alteracoes visuais nao autorizadas",
+        "id": 45871210244,
+        "conclusao": "success"
+      },
+      {
+        "nome": "LOOP - TRAVA BASE REAL (sem fotos historicas)",
+        "id": 45871210207,
+        "conclusao": "success"
+      },
+      {
+        "nome": "LOOP - prova de movimentos independentes da fila e catraca",
+        "id": 45871210182,
+        "conclusao": "success"
+      }
+    ],
+    "ciBase": [
+      {
+        "nome": "Base limpa — verificar cópia independente",
+        "id": 45391092808,
+        "conclusao": "success"
+      }
+    ],
+    "imports": "CI da base anterior aprovada; nenhum import alterado nesta auditoria. Dependencias transitivas das divergencias pendentes.",
+    "equivalenciaVisual": "CI PC/celular aprovada na publicada; equivalencia independente com telas aprovadas ainda nao demonstrada.",
+    "escala100k": "NAO_CERTIFICADA",
+    "financeiro": "NAO_HOMOLOGADO"
   },
   "pendencias": [
-    "Confirmar workflow de telas reais PC e celular da revisao publicada e comparar capturas de tela aprovadas em diferentes viewports",
-    "Auditar imports transitivos e assets das 43 divergencias; excluir esfera ficticia e dependencias exclusivas.",
-    "Executar testes dirigidos de equivalencia, regressao, upload e navegacao na copia isolada",
-    "Comprovar PSP, split, liquidacao, fornecedor, reservas, saques e conciliacao bancaria reais sem creditar valores ficticios",
-    "Comprovar escala de 100 mil usuarios com testes reais especificos de carga, concorrencia, durabilidade e latencias p95/p99; simulacoes de mil usuarios nao certificam 100 mil"
+    "Comparar capturas aprovadas e validar dependencias transitivas das 45 divergencias antes de incorporar codigo.",
+    "Validar CI desta revisao documental.",
+    "Comprovar escala de 100 mil usuarios com testes especificos de carga, concorrencia, durabilidade e latencias p95/p99; prova de mil pessoas nao certifica escala.",
+    "Manter travas financeiras e comprovar liquidacao externa antes de qualquer liberacao."
   ],
   "garantias": {
     "dadosReaisCopiados": false,
