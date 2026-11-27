@@ -1,0 +1,16 @@
+{
+  "arquivo": "COMPLEMENTO_INDEPENDENCIA_LOOP_20261127.zip",
+  "bytes": 26157,
+  "sha256": "6efd844642821a6813da56572e25744a08387296f184a2654c8e63a1ced930c0",
+  "arquivosDocumentais": 10,
+  "zipSemCorrupcao": true,
+  "hashesRelidosIguais": true,
+  "documentacaoSha": "0e9d9d8ea08bb7a6fbc66b2bdbdb8b5106588f3f",
+  "incluiBancosVivos": false,
+  "incluiChaves": false,
+  "copiaPrivadaSalva": true,
+  "releituraDuravelSha256Igual": true,
+  "retiradaPeloProprietarioConfirmada": false,
+  "restauroBancosVivosExecutado": false,
+  "testeNovoOutraPlataformaExecutado": false
+}

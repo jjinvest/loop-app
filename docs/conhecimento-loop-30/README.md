@@ -42,3 +42,5 @@ Não há dados pessoais ou valores secretos adicionados neste banco. Não confun
 ## Complemento27/11 — independência
 
 [Resultado das quatro etapas](GARANTIA_INDEPENDENCIA_20261127.md) · [Recuperar offline e retirar dados](RECUPERACAO_OFFLINE_E_RETIRADA_DOS_DADOS.md) · [Exportar/incorporar histórico](EXPORTACAO_CHATGPT_E_INCORPORACAO.md) · [Fonte histórica adicional](historico/README.md). Sem merge/deploy; cópias de dados vivos continuam pendentes.
+
+[Prova da cópia portátil complementar e releitura](PROVA_COMPLEMENTO_INDEPENDENCIA_20261127.json). Não inclui bancos vivos ou chaves.
