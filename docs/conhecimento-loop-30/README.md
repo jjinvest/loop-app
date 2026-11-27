@@ -38,3 +38,7 @@ Preservação documental de 26/11/2026. Reaproveita o acervo integral; os segmen
 - [Parecer de continuidade sem memória](VALIDACAO_CONTINUIDADE.md).
 
 Não há dados pessoais ou valores secretos adicionados neste banco. Não confundir backup de fontes com backup dos bancos vivos. Antes de qualquer nova operação, atualizar a captura pelas ferramentas autorizadas.
+
+## Complemento27/11 — independência
+
+[Resultado das quatro etapas](GARANTIA_INDEPENDENCIA_20261127.md) · [Recuperar offline e retirar dados](RECUPERACAO_OFFLINE_E_RETIRADA_DOS_DADOS.md) · [Exportar/incorporar histórico](EXPORTACAO_CHATGPT_E_INCORPORACAO.md) · [Fonte histórica adicional](historico/README.md). Sem merge/deploy; cópias de dados vivos continuam pendentes.

@@ -24,3 +24,7 @@ Missão de preservação: documentos em `docs/preservacao-integral-20261126`, se
 ## Limites de transferência
 
 Git/bundle preservam conhecimento documentado e histórico. Migração de conta não transporta automaticamente credenciais, propriedade, automações, bancos vivos, mídias externas ou histórico pessoal do ChatGPT. Esses escopos estão separados no [backup/recuperação](docs/conhecimento-loop-30/16_BACKUP_RECUPERACAO.md) e no [manual de transferência](docs/conhecimento-loop-30/18_TRANSFERENCIA_OUTRA_IA.md). Exportação do histórico pessoal será feita posteriormente pelo proprietário.
+
+## Complemento de independência27/11/2026
+
+Antes de migrar/cancelar, ler a [classificação das quatro etapas](docs/conhecimento-loop-30/GARANTIA_INDEPENDENCIA_20261127.md), o [procedimento offline](docs/conhecimento-loop-30/RECUPERACAO_OFFLINE_E_RETIRADA_DOS_DADOS.md) e a [exportação do histórico](docs/conhecimento-loop-30/EXPORTACAO_CHATGPT_E_INCORPORACAO.md). O conhecimento documentado é portável; bancos vivos e histórico completo não foram certificados fora das contas atuais. Não declarar independência integral nem modificar o produto para preencher essa lacuna.
