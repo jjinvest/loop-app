@@ -361,6 +361,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
   }):null;
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
+   divulgadorInstitucionalNick:ambiente.LOOP_REAL_DIVULGADOR_INSTITUCIONAL??null,
    pedidosComerciais,remessasOutbox,catalogoVitrine,catalogoMidiaLeitura,
    origemHttps:config.origemHttps,permitirCadastro:opcoes.cadastroPublico!==false,
    captchaCadastroObrigatorio:true,

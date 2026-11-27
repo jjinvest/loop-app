@@ -1,6 +1,7 @@
 'use strict';
 // Leitura da habilitacao comercial do link pessoal. Cadastro e nick nao
-// autorizam divulgacao: apenas compra confirmada de produto habilitador.
+// autorizam divulgacao: compra confirmada de produto habilitador ou canal
+// institucional explicitamente configurado pelo proprietário no servidor.
 // Nenhuma rotina credita comissao, gera posicao ou movimenta a catraca.
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
 const CORES_LINK=Object.freeze(['VERDE','ROXO','DOURADO','LARANJA']);
@@ -31,15 +32,23 @@ function liberadoPeloPedido(banco,titularId,antesDe=null){
   antesDe===null?[titularId]:[titularId,antesDe]
  ));
 }
-function consultarDivulgacao({banco,titularId}={}){
+function consultarDivulgacao({banco,titularId,titularInstitucionalId=null}={}){
  conferirBanco(banco);
  if(typeof titularId!=='string'||!TITULAR.test(titularId))
   erro('DIVULGACAO_TITULAR_INVALIDO');
+ if(titularInstitucionalId!==null&&!TITULAR.test(titularInstitucionalId))
+  erro('DIVULGACAO_INSTITUCIONAL_INVALIDA');
+ // Exceção explícita do canal do proprietário, injetada pelo servidor.
+ // Não simula compra habilitadora nem altera direitos financeiros.
+ const institucional=titularId===titularInstitucionalId&&!!banco.prepare(
+  'SELECT 1 FROM loop_real_contas WHERE id=?').get(titularId);
  const pronta=fontesPresentes(banco);
- const liberado=pronta&&liberadoPeloPedido(banco,titularId);
+ const compra=pronta&&liberadoPeloPedido(banco,titularId);
+ const liberado=institucional||compra;
  return Object.freeze({
-  fonte:'PEDIDO_PSP_CONFIRMADO_COM_FOTOGRAFIA_DA_COR',
-  linkLiberado:liberado,compraHabilitadoraConfirmada:liberado,
+  fonte:institucional?'CANAL_INSTITUCIONAL_AUTORIZADO':
+   'PEDIDO_PSP_CONFIRMADO_COM_FOTOGRAFIA_DA_COR',
+  linkLiberado:liberado,compraHabilitadoraConfirmada:compra,
   cadastroSozinhoNaoLibera:true,cinzaNaoLibera:true,
   independeDeAdesaoAoLoop:true,participacaoLoopAtiva:false,
   financeiroReal:false
@@ -131,13 +140,13 @@ function consultarComissoesDivulgacao({banco,titularId,indicadoId=null}={}){
   vendasConfirmadas:quantidade,
   comissaoAConferirCentavos:quantidade*2500,fonteCompleta:true};
 }
-function verificarNickDivulgador({banco,nick}={}){
+function verificarNickDivulgador({banco,nick,titularInstitucionalId=null}={}){
  conferirBanco(banco);
  if(typeof nick!=='string'||!/^[a-zA-Z]{1,12}$/.test(nick))
   erro('DIVULGACAO_NICK_INVALIDO');
  const id=banco.prepare(
   'SELECT id FROM loop_real_contas WHERE nick=?'
  ).get(nick)?.id;
- return id?consultarDivulgacao({banco,titularId:id}).linkLiberado:false;
+ return id?consultarDivulgacao({banco,titularId:id,titularInstitucionalId}).linkLiberado:false;
 }
 module.exports={consultarDivulgacao,consultarComissoesDivulgacao,verificarNickDivulgador,CORES_LINK};

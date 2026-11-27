@@ -32,6 +32,40 @@ test('conta cadastrada sem compra nao recebe link',t=>{
  const x=fixture(t);assert.equal(x.estado().linkLiberado,false);
  assert.equal(verificarNickDivulgador({banco:x.db,nick:'vilela'}),false);
 });
+test('canal institucional é exclusivo do titular autorizado, sem fabricar compra ou comissão',t=>{
+ const x=fixture(t);
+ const estado=consultarDivulgacao({banco:x.db,titularId:id,titularInstitucionalId:id});
+ assert.equal(estado.linkLiberado,true);
+ assert.equal(estado.compraHabilitadoraConfirmada,false);
+ assert.equal(estado.fonte,'CANAL_INSTITUCIONAL_AUTORIZADO');
+ assert.equal(verificarNickDivulgador({banco:x.db,nick:'VILELA',titularInstitucionalId:id}),true);
+ assert.equal(verificarNickDivulgador({banco:x.db,nick:'VILELA'}),false);
+ assert.equal(consultarDivulgacao({banco:x.db,titularId:id,
+  titularInstitucionalId:'titular-123e4567-e89b-12d3-a456-426614174001'}).linkLiberado,false);
+ assert.equal(consultarComissoesDivulgacao({banco:x.db,titularId:id}).saldoLiberadoCentavos,0);
+});
+test('Meus Links mostra e permite copiar os dois endereços do canal institucional',async()=>{
+ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+ const js=fs.readFileSync(path.join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
+ const inicio=js.indexOf(' async function preencherLinks(nick){');
+ const fim=js.indexOf(' function exibirRede(){',inicio);
+ assert.ok(inicio>0&&fim>inicio);
+ const elementos=Object.fromEntries(['linkLoja','copiarLinkLoja','linkEscritorio',
+  'copiarLinkEscritorio','linksNick','painelConta'].map(k=>[k,{value:'',textContent:'',disabled:true,hidden:false}]));
+ const ctx={$:k=>elementos[k],geracaoPermissaoLinks:0,origemLinks:null,nickResumoReal:'vilela',
+  nickVisivel:n=>n.toUpperCase(),location:{origin:'https://akitemmloop.com.br'},encodeURIComponent,
+  requisitar:async()=>({linkLiberado:true,financeiroReal:false,fonte:'CANAL_INSTITUCIONAL_AUTORIZADO'})};
+ vm.runInNewContext(js.slice(inicio,fim),ctx);
+ await ctx.preencherLinks('vilela');
+ assert.equal(elementos.linkLoja.value,'https://akitemmloop.com.br/loja/VILELA');
+ assert.equal(elementos.linkEscritorio.value,'https://akitemmloop.com.br/escritorio/VILELA');
+ assert.equal(elementos.copiarLinkLoja.disabled,false);
+ assert.equal(elementos.copiarLinkEscritorio.disabled,false);
+ ctx.requisitar=async()=>({linkLiberado:true,financeiroReal:false,fonte:'FONTE_DESCONHECIDA'});
+ await ctx.preencherLinks('vilela');
+ assert.equal(elementos.linkLoja.value,'');
+ assert.equal(elementos.copiarLinkLoja.disabled,true);
+});
 test('cinza nao libera link mesmo custando caro; sem PSP nao libera',t=>{
  const x=fixture(t);
  x.inserir('CINZA1','CINZA');
