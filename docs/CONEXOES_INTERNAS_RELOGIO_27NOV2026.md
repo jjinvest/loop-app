@@ -48,3 +48,19 @@ Base conferida no GitHub: `feature/unificar-escritorio-real-20261105`, `6e22deb1
 - Evidência de renderização nova: execução do JavaScript dos dois perfis em VM com o mesmo DTO; não equivale a teste manual de navegador.
 
 Correção funcional implementada e testada; missão de auditoria manual integral de todas as abas permanece parcialmente concluída. A versão pública ainda não contém estas alterações.
+
+## Atualização após autorização de publicação do proprietário
+
+O proprietário autorizou expressamente merge e publicação nesta conversa depois da validação. PR #147 integrado com código funcional `86a3aeefffabc0975c9018ee32f5ffbf483a77a4`.
+
+- Os seis workflows GitHub do PR terminaram com `success`, incluindo navegação PC/celular, auditoria interna, testes totais, movimentos e proteção visual. Essas provas usam ambientes de CI, não são sessão do proprietário no domínio.
+- Railway serviço loop-identidade-real, ambiente homologacao: deployment `b0783800-a0c5-49fa-8011-4efc7e587877`, **SUCCESS em 27/11/2026 às 15:37:52 (Brasília)**. Fonte permanece fixada no código funcional aprovado.
+- Âncora externa do manifesto atualizada para `3882bcf8ccc95d19c894942f02d28d6c81c7fc1d`, mantendo a âncora do verificador `1293533137895ef600c5d6847b58beac08e8665a`, todos os testes anteriores e incluindo o teste novo.
+- Domínio akitemmloop.com.br: GET /identidade/assets/catraca-visor.js e /identidade/assets/cliente.js HTTP200. Bytes recebidos idênticos aos arquivos locais testados. SHA256 respectivos `62b3c39d92b452bbf6cb9601143f973624b472b65170ea1e60ce7270c3d59532` e `d20b313d50fb7584fd6ffea7d7d834653192073fcdd5e557d4b17f39e759af22`.
+- Log pós-reinício comprovou 1.000 posições (100 amarelas,100 douradas,50 azuis,750 brancas),100 indicadores,750 indicações, caixa R$250.000, bônus pendentes R$18.750, bônus pagos e participação zero, eventos/giros zero, catracaAtiva=false, porteiraAberta=false.
+
+Limite da verificação pública: antes da publicação, o endereço personalizado /escritorio/VILELA respondeu HTTP403, `Link ainda não habilitado`, também observado no navegador. /readyz respondeu HTTP503 `CADASTRO_REAL_INATIVO`; /healthz HTTP200. A fonte de inicialização existente permite operação interna com cadastro público fechado. Nenhuma trava de cadastro ou elegibilidade foi removida para contornar esses resultados. Acesso autenticado do proprietário e representação dos seus dados nos painéis publicados ainda não foram exercitados nesta sessão. Não afirmar auditoria manual integral concluída.
+
+Esta atualização documental é posterior ao código implantado; não é nova alteração funcional nem novo deployment.
+
+A gravação documental direta na branch ativa foi recusada pelo GitHub HTTP409: Changes must be made through a pull request; required check impedir-desvio-da-base-real is expected. Evidências finais conservadas nesta branch de revisão, sem contornar as regras do repositório.
