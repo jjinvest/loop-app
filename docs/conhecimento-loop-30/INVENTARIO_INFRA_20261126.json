@@ -1,0 +1,463 @@
+{
+  "capturadoEm": "2026-11-26T22:45:44.330Z",
+  "escopo": "LEITURA_SEM_VALORES_SECRETOS",
+  "inventario": {
+    "project": {
+      "id": "8c1ab327-16f0-409a-90ac-8f02a3f5eae0",
+      "name": "loop-asaas-homologacao",
+      "workspaceName": "jjinvest's Projects"
+    },
+    "environment": {
+      "id": "e5c30d7f-086f-4845-93ad-7d1a5ca5e31b",
+      "name": "homologacao",
+      "isEphemeral": false
+    },
+    "staged": null,
+    "region": null,
+    "services": [
+      {
+        "id": "7f9fd792-f7b1-45bb-8c48-c63c17eaf3b3",
+        "name": "asaas-webhook-staging",
+        "state": "live",
+        "source": {
+          "image": null,
+          "repo": "jjinvest/loop-app",
+          "branch": "fix/teste-escrita-catraca-20261014"
+        },
+        "regions": [
+          "sfo"
+        ],
+        "numReplicas": 1,
+        "cronSchedule": null,
+        "volumeMounts": [
+          {
+            "volumeId": "46c14a33-b40f-4b52-8e22-a355fb7d19eb",
+            "volumeName": "sandbox-sqlite-persistente",
+            "mountPath": "/loop-staging"
+          }
+        ],
+        "latestDeployment": {
+          "id": "5041ed22-2447-44bb-ba50-f38fe131b399",
+          "status": "SUCCESS",
+          "createdAt": "2026-11-03T17:58:44.259Z",
+          "url": null
+        },
+        "stagedChangeCount": 0
+      },
+      {
+        "id": "7114bc9a-8d39-477b-ad67-6a625b5aebd5",
+        "name": "akitemm-escritorio-preview",
+        "state": "live",
+        "source": {
+          "image": null,
+          "repo": "jjinvest/loop-app",
+          "branch": null
+        },
+        "regions": [
+          "sfo"
+        ],
+        "numReplicas": 1,
+        "cronSchedule": null,
+        "volumeMounts": [
+          {
+            "volumeId": "35cf49af-6f59-4663-9c74-770f8da71e8e",
+            "volumeName": "escritorio-preview-sqlite",
+            "mountPath": "/dados-preview"
+          }
+        ],
+        "latestDeployment": {
+          "id": "fa8b78cf-6c62-48aa-984c-f11861d9ecfe",
+          "status": "SUCCESS",
+          "createdAt": "2026-11-24T02:19:36.538Z",
+          "url": null
+        },
+        "stagedChangeCount": 0
+      },
+      {
+        "id": "ac28edec-50ad-4187-99e2-8f7014735b63",
+        "name": "loop-identidade-real",
+        "state": "live",
+        "source": {
+          "image": null,
+          "repo": "jjinvest/loop-app",
+          "branch": "feature/unificar-escritorio-real-20261105"
+        },
+        "regions": [
+          "sfo"
+        ],
+        "numReplicas": 1,
+        "cronSchedule": null,
+        "volumeMounts": [
+          {
+            "volumeId": "003a1977-4139-4356-adbd-798fa6d1621b",
+            "volumeName": "identidade-real-sqlite",
+            "mountPath": "/dados-reais"
+          }
+        ],
+        "latestDeployment": {
+          "id": "7db15a89-4a20-48fd-b601-e8f1bc18b3f5",
+          "status": "SUCCESS",
+          "createdAt": "2026-11-26T17:51:30.829Z",
+          "url": null
+        },
+        "stagedChangeCount": 0
+      }
+    ],
+    "volumes": [
+      {
+        "id": "46c14a33-b40f-4b52-8e22-a355fb7d19eb",
+        "name": "sandbox-sqlite-persistente",
+        "state": "live",
+        "region": "sfo",
+        "sizeMB": 1024,
+        "mountedOn": {
+          "serviceId": "7f9fd792-f7b1-45bb-8c48-c63c17eaf3b3",
+          "serviceName": "asaas-webhook-staging",
+          "mountPath": "/loop-staging"
+        },
+        "stagedChangeCount": 0
+      },
+      {
+        "id": "35cf49af-6f59-4663-9c74-770f8da71e8e",
+        "name": "escritorio-preview-sqlite",
+        "state": "live",
+        "region": "sfo",
+        "sizeMB": 1024,
+        "mountedOn": {
+          "serviceId": "7114bc9a-8d39-477b-ad67-6a625b5aebd5",
+          "serviceName": "akitemm-escritorio-preview",
+          "mountPath": "/dados-preview"
+        },
+        "stagedChangeCount": 0
+      },
+      {
+        "id": "003a1977-4139-4356-adbd-798fa6d1621b",
+        "name": "identidade-real-sqlite",
+        "state": "live",
+        "region": "sfo",
+        "sizeMB": 5000,
+        "mountedOn": {
+          "serviceId": "ac28edec-50ad-4187-99e2-8f7014735b63",
+          "serviceName": "loop-identidade-real",
+          "mountPath": "/dados-reais"
+        },
+        "stagedChangeCount": 0
+      }
+    ],
+    "buckets": [
+      {
+        "id": "c7569b03-f618-4538-b979-a8ac0f6e89cd",
+        "name": "loop-backup-offsite",
+        "state": "live",
+        "region": "iad",
+        "stagedChangeCount": 0
+      },
+      {
+        "id": "f5054e38-c155-4733-8578-c21cbdacff6f",
+        "name": "identidade-real-backup",
+        "state": "live",
+        "region": "iad",
+        "stagedChangeCount": 0
+      }
+    ],
+    "sharedVariableNames": []
+  },
+  "servicos": [
+    {
+      "service": {
+        "id": "7f9fd792-f7b1-45bb-8c48-c63c17eaf3b3",
+        "name": "asaas-webhook-staging"
+      },
+      "environment": {
+        "id": "e5c30d7f-086f-4845-93ad-7d1a5ca5e31b",
+        "name": "homologacao"
+      },
+      "config": {
+        "source": {
+          "repo": "jjinvest/loop-app",
+          "branch": "fix/teste-escrita-catraca-20261014",
+          "commitSha": "605468458dda798b723bfcae06350ae038772705"
+        },
+        "networking": {
+          "serviceDomains": {
+            "asaas-webhook-staging-homologacao.up.railway.app": {}
+          }
+        },
+        "build": {
+          "builder": "RAILPACK",
+          "buildEnvironment": "V3"
+        },
+        "deploy": {
+          "startCommand": "npm run start:asaas-railway-staging",
+          "healthcheckPath": "/healthz",
+          "limitOverride": {
+            "containers": {
+              "cpu": 0.5,
+              "memoryBytes": 500000000
+            }
+          },
+          "restartPolicyMaxRetries": 3,
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "sfo": {
+              "numReplicas": 1
+            }
+          }
+        },
+        "volumeMounts": {
+          "46c14a33-b40f-4b52-8e22-a355fb7d19eb": {
+            "mountPath": "/loop-staging"
+          }
+        }
+      },
+      "variableNames": [
+        "ASAAS_SANDBOX_CLIENTE_TESTE_ID",
+        "LOOP_RAILWAY_ASAAS_CIPHERTEXT_B64",
+        "LOOP_RAILWAY_CLIENTE_ESPERADO_ID",
+        "LOOP_RAILWAY_INICIALIZAR_BANCO_VAZIO",
+        "LOOP_RAILWAY_OPERACAO_ACAO",
+        "LOOP_RAILWAY_OPERACAO_AUTORIZADA",
+        "LOOP_RAILWAY_OPERACAO_ESCRITA",
+        "LOOP_RAILWAY_PAGAMENTO_ESPERADO_ID",
+        "LOOP_RAILWAY_PAGAMENTO_SANDBOX_ID",
+        "LOOP_RAILWAY_PREPARAR_UMA_VEZ",
+        "LOOP_RAILWAY_PREPEDIDO_ESPERADO_ID",
+        "LOOP_RAILWAY_PROJECAO_AUTORIZADA",
+        "LOOP_RAILWAY_PSP_PRIVATE_KEY_B64",
+        "LOOP_RAILWAY_RECONSULTA_AUTORIZADA",
+        "LOOP_RAILWAY_RSA_PRIVATE_B64",
+        "LOOP_RAILWAY_STAGING_AUTORIZADO",
+        "LOOP_RAILWAY_STAGING_SQLITE",
+        "LOOP_RAILWAY_WEBHOOK_TOKEN",
+        "LOOP_RAILWAY_WEBHOOK_URL",
+        "NODE_ENV"
+      ],
+      "staged": null
+    },
+    {
+      "service": {
+        "id": "7114bc9a-8d39-477b-ad67-6a625b5aebd5",
+        "name": "akitemm-escritorio-preview"
+      },
+      "environment": {
+        "id": "e5c30d7f-086f-4845-93ad-7d1a5ca5e31b",
+        "name": "homologacao"
+      },
+      "config": {
+        "source": {
+          "repo": "jjinvest/loop-app"
+        },
+        "networking": {
+          "serviceDomains": {
+            "akitemm-escritorio-preview-homologacao.up.railway.app": {}
+          },
+          "customDomains": {
+            "akitemmloop.com.br": {}
+          }
+        },
+        "build": {
+          "builder": "DOCKERFILE",
+          "buildEnvironment": "V3",
+          "dockerfilePath": "Dockerfile.public-real"
+        },
+        "deploy": {
+          "startCommand": "node scripts/iniciar-gateway-publico-real-loop.js",
+          "preDeployCommand": [
+            "node --check scripts/iniciar-gateway-publico-real-loop.js && node --check scripts/provar-ligacao-privada-loop.js && node -e \"const f=require('fs'),c=require('crypto');for(const [p,w] of [['scripts/iniciar-gateway-publico-real-loop.js','ad2a88ac612268a4e3fde4e1d41e829cd33daa3b'],['scripts/provar-ligacao-privada-loop.js','617f85b699c86a3b14074ad0309879d52c1aaad2']]){const b=f.readFileSync(p);if(c.createHash('sha1').update('blob '+b.length+String.fromCharCode(0)).update(b).digest('hex')!==w)throw Error('TRAVA_GATEWAY_DIVERGIU:'+p)}const root=f.readdirSync('.').sort(),ss=f.readdirSync('scripts').sort();if(root.join(',')!=='scripts'||ss.join(',')!=='iniciar-gateway-publico-real-loop.js,provar-ligacao-privada-loop.js')throw Error('TRAVA_GATEWAY_ARQUIVOS_EXTRA');console.log('TRAVA_GATEWAY_REAL_OK')\""
+          ],
+          "preDeployTimeoutSeconds": 180,
+          "healthcheckPath": "/healthz",
+          "limitOverride": {
+            "containers": {
+              "cpu": 0.25,
+              "memoryBytes": 500000000
+            }
+          },
+          "healthcheckTimeout": 150,
+          "restartPolicyMaxRetries": 3,
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "sfo": {
+              "numReplicas": 1
+            }
+          }
+        },
+        "volumeMounts": {
+          "35cf49af-6f59-4663-9c74-770f8da71e8e": {
+            "mountPath": "/dados-preview"
+          }
+        }
+      },
+      "variableNames": [
+        "LOOP_BACKUP_S3_ACCESS_KEY_ID",
+        "LOOP_BACKUP_S3_BUCKET",
+        "LOOP_BACKUP_S3_ENDPOINT",
+        "LOOP_BACKUP_S3_REGION",
+        "LOOP_BACKUP_S3_SECRET_ACCESS_KEY",
+        "LOOP_PREVIEW_ASAAS_CONCILIACAO_AUTO",
+        "LOOP_PREVIEW_ASAAS_E2E_EXECUTAR",
+        "LOOP_PREVIEW_ASAAS_HABILITADO",
+        "LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY",
+        "LOOP_PREVIEW_ASAAS_WEBHOOK_EMAIL",
+        "LOOP_PREVIEW_ASAAS_WEBHOOK_PROVISIONAR",
+        "LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN",
+        "LOOP_PREVIEW_BACKUP_OFFSITE_AUTO",
+        "LOOP_PREVIEW_CADASTRO_ANTIGO_FECHADO",
+        "LOOP_PREVIEW_CARGA_LEITURA_EXECUTAR",
+        "LOOP_PREVIEW_CATALOGO_REAL",
+        "LOOP_PREVIEW_EXCLUSIVO",
+        "LOOP_PREVIEW_FLUXO_CLIENTE_EXECUTAR",
+        "LOOP_PREVIEW_GIRO_E2E_EXECUTAR",
+        "LOOP_PREVIEW_MIGRAR_REAL",
+        "LOOP_PREVIEW_OFFSITE_DR_TESTE",
+        "LOOP_PREVIEW_RECUPERAR_CONTAS_SEM_REFERENCIA",
+        "LOOP_PREVIEW_SEGREDO_RAIZ",
+        "LOOP_PREVIEW_SENHA_ACESSO",
+        "LOOP_PREVIEW_SENHA_ADMIN",
+        "LOOP_PREVIEW_SQLITE",
+        "LOOP_PREVIEW_TOKEN_TABULEIRO_REAL",
+        "LOOP_PREVIEW_URL_TABULEIRO_REAL",
+        "LOOP_PREVIEW_WEBHOOK_REPLAY_EXECUTAR",
+        "LOOP_PUBLICO_CADASTRO_ANTIGO_FECHADO",
+        "LOOP_PUBLICO_ENTRADA_REAL",
+        "LOOP_PUBLICO_ORIGEM_IDENTIDADE_REAL",
+        "LOOP_PUBLICO_URL_IDENTIDADE_INTERNA",
+        "LOOP_UI_CSS_REVISAO",
+        "NODE_ENV",
+        "RESEND_API_KEY",
+        "RESEND_FROM_EMAIL"
+      ],
+      "staged": null
+    },
+    {
+      "service": {
+        "id": "ac28edec-50ad-4187-99e2-8f7014735b63",
+        "name": "loop-identidade-real"
+      },
+      "environment": {
+        "id": "e5c30d7f-086f-4845-93ad-7d1a5ca5e31b",
+        "name": "homologacao"
+      },
+      "config": {
+        "source": {
+          "repo": "jjinvest/loop-app",
+          "branch": "feature/unificar-escritorio-real-20261105",
+          "commitSha": "6e22deb194ec7f1cd1e0ce596cb1f3ed1f0e2f89"
+        },
+        "networking": {
+          "serviceDomains": {
+            "loop-cadastro-real.up.railway.app": {}
+          }
+        },
+        "build": {
+          "builder": "RAILPACK",
+          "buildEnvironment": "V3"
+        },
+        "deploy": {
+          "startCommand": "node scripts/iniciar-cadastro-publico-release.js",
+          "preDeployCommand": [
+            "sh -c 'node --check scripts/iniciar-cadastro-publico-release.js && node --check scripts/iniciar-identidade-cadastro-real.js && node --test test/cadastro-real-isolado-go-gates.test.js test/cadastro-release-entrada-producao.test.js test/identidade-real-preparacao.test.js && node scripts/provar-storage-real-preparacao.js && NODE_ENV=test node --test test/contrato-links-definitivos-real.test.js test/contrato-papeis-operador-real.test.js' && node -e \"const f=require('fs'),c=require('crypto');for(const [p,w] of [['docs/TRAVA_BASE_REAL_ATUAL_20261119.json','310c5864b7b92b4a0959eced469f78e0a8b5b2a8'],['scripts/trava-base-real.js','1293533137895ef600c5d6847b58beac08e8665a']]){const b=f.readFileSync(p);if(c.createHash('sha1').update('blob '+b.length+String.fromCharCode(0)).update(b).digest('hex')!==w)throw Error('ANCORA_DIVERGENTE:'+p)}console.log('TRAVA_REAL_ANCORA_OK')\" && node scripts/trava-base-real.js && node --test test/trava-base-real.test.js && node --check src/producao/interface-aprovada-loja.js && node --check src/producao/interface-aprovada-loop.js && node --check src/producao/servidor-identidade-loop.js && NODE_ENV=test node --test --test-concurrency=2 test/vitrine-real-400-quadrinhos-operador.test.js test/loja-real-zero-produtos-antes-cadastro.test.js test/posicoes-vitrine-real-sqlite.test.js test/operador-fotos-conta-real-unificada.test.js && NODE_ENV=test node --test --test-concurrency=2 test/indicacoes-cadastro-real.test.js test/minha-equipe-cadastros-confirmados-20261122.test.js test/cofres-operador-readonly.test.js && NODE_ENV=test node --test --test-concurrency=2 test/carrinho-interno-real-ponta-a-ponta.test.js test/montar-comercial-sem-homologacao.test.js test/meus-pedidos-titular-real.test.js test/entrada-real-catalogo-midia-conta-unica.test.js test/longevidade-cadastros-filas-reais.test.js test/motor-loop-integrado-identidade.test.js test/projecao-filas-relacional-shadow-real.test.js test/promocao-pedido-motor-ensaio-sqlite.test.js test/historico-ciclos-relacional-sqlite.test.js test/snapshot-historico-externo-candidato.test.js test/estado-motor-unificado-v2-integracao.test.js test/migracao-historico-v2-protegida.test.js test/relogio-catraca-previsao-imediata-admin.test.js test/luzes-relogio-operador-com-motor-preservado.test.js test/visao-escritorio-unificada-sqlite.test.js && NODE_ENV=test node --test test/diagnostico-cadeia-pedidos-filas-real.test.js && NODE_ENV=test node --test test/bancada-modulos-independentes-operador-real.test.js"
+          ],
+          "healthcheckPath": "/healthz",
+          "healthcheckTimeout": 150,
+          "restartPolicyMaxRetries": 2,
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "sfo": {
+              "numReplicas": 1
+            }
+          },
+          "drainingSeconds": 30
+        },
+        "volumeMounts": {
+          "003a1977-4139-4356-adbd-798fa6d1621b": {
+            "mountPath": "/dados-reais"
+          }
+        }
+      },
+      "variableNames": [
+        "LOOP_DEMONSTRAR_TAISA",
+        "LOOP_PREPARAR_FLUXO_100",
+        "LOOP_PREPARAR_FLUXO_1000",
+        "LOOP_REAL_ADMIN_CREDENCIAL",
+        "LOOP_REAL_APROVACAO_DOCUMENTOS",
+        "LOOP_REAL_BACKUP_MIDIA_OFFSITE_AUTO",
+        "LOOP_REAL_BACKUP_OFFSITE_AUTO",
+        "LOOP_REAL_BOOTSTRAP_MOTOR_INTERNO",
+        "LOOP_REAL_CADASTRO_GO",
+        "LOOP_REAL_CATALOGO_EDITAVEL",
+        "LOOP_REAL_CHAVE_ADMIN",
+        "LOOP_REAL_CHAVE_AUDITORIA",
+        "LOOP_REAL_CHAVE_BACKUP",
+        "LOOP_REAL_CHAVE_CIFRA",
+        "LOOP_REAL_CHAVE_CODIGO",
+        "LOOP_REAL_CHAVE_COTACOES",
+        "LOOP_REAL_CHAVE_EMAIL",
+        "LOOP_REAL_CHAVE_OUTBOX",
+        "LOOP_REAL_CHAVE_PEDIDOS",
+        "LOOP_REAL_DADOS_SEPARADOS",
+        "LOOP_REAL_MIGRAR_IDENTIDADE",
+        "LOOP_REAL_NUCLEO_COMERCIAL_INTERNO",
+        "LOOP_REAL_OPERACAO_INTERNA",
+        "LOOP_REAL_ORIGEM",
+        "LOOP_REAL_PREPARACAO_INTERNA",
+        "LOOP_REAL_S3_ACCESS_KEY_ID",
+        "LOOP_REAL_S3_BUCKET",
+        "LOOP_REAL_S3_ENDPOINT",
+        "LOOP_REAL_S3_REGION",
+        "LOOP_REAL_S3_SECRET_ACCESS_KEY",
+        "LOOP_REAL_SANEAMENTO_ACK",
+        "LOOP_REAL_SANEAMENTO_LEGADOS",
+        "LOOP_REAL_SNAPSHOT_V2_MIGRAR",
+        "LOOP_REAL_SQLITE",
+        "LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN",
+        "LOOP_ZERAR_META_RELOGIO_20261124",
+        "LOOP_ZERAR_PLACARES_TESTE_20261123",
+        "NODE_ENV",
+        "RESEND_API_KEY",
+        "RESEND_FROM_EMAIL"
+      ],
+      "staged": null
+    }
+  ],
+  "dns": {
+    "service": {
+      "id": "7114bc9a-8d39-477b-ad67-6a625b5aebd5",
+      "name": "akitemm-escritorio-preview"
+    },
+    "environment": {
+      "id": "e5c30d7f-086f-4845-93ad-7d1a5ca5e31b",
+      "name": "homologacao"
+    },
+    "domain": {
+      "id": "b550097e-73de-4d30-8da5-8649ec9d1d60",
+      "domain": "akitemmloop.com.br",
+      "kind": "custom",
+      "targetPort": null
+    },
+    "railwayManaged": false,
+    "verified": true,
+    "certificate": {
+      "status": "CERTIFICATE_STATUS_TYPE_VALID",
+      "errorMessage": null,
+      "retryable": null
+    },
+    "dnsRecords": [
+      {
+        "hostLabel": "",
+        "fqdn": "akitemmloop.com.br",
+        "recordType": "DNS_RECORD_TYPE_CNAME",
+        "purpose": "DNS_RECORD_PURPOSE_TRAFFIC_ROUTE",
+        "requiredValue": "uacfujj7.up.railway.app",
+        "currentValue": "",
+        "status": "DNS_RECORD_STATUS_PROPAGATED"
+      }
+    ]
+  }
+}

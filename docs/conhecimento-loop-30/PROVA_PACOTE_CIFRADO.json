@@ -1,0 +1,23 @@
+{
+  "algoritmo": "AES-256-GCM",
+  "arquivo": "LOOP_PRESERVACAO_20261126.aesgcm",
+  "sha256Cifrado": "84d5e8f6aa49edaedfc35f5011e2352ac3c71d4b35cf936ec0c622285f8ce6b2",
+  "bytesCifrado": 179341212,
+  "sha256Tar": "ac68dc54b83f148e65820342767c49cef5e68d5fb38437da0850bd2de4853408",
+  "decifradoIgual": true,
+  "adulteracaoRejeitada": true,
+  "bancosVivosIncluidos": false,
+  "segredosProducaoExportados": false,
+  "acervoRestauradoArquivos": 139,
+  "acervoRestauradoHashesIguais": true,
+  "refsRestauradas": 300,
+  "refsIguais": true,
+  "commits": 6861,
+  "gitFsckFinal": "SEM_ERROS",
+  "documentacaoSha": "600206e696f2c6da590bc0b8c2919c22a99ca0bc",
+  "bundleSha256": "e6e4e115b72c15d1118a055db8682686b35bdb0979419dc326f7f3b9270e5a7f",
+  "kitRecuperacaoTestado": true,
+  "copiaDuravelRelidaSha256Igual": true,
+  "armazenamento": "Privado do proprietário; pacote cifrado e kit de chave separados. Links no recibo privado entregue, nunca publicar chave no Git.",
+  "coberturaSnapshot": "Bundle até snapshot documental600206e696f2c6da590bc0b8c2919c22a99ca0bc; esta prova posterior registra recuperação, não muda o produto."
+}

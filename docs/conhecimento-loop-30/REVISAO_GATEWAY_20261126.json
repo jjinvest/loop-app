@@ -1,0 +1,10 @@
+{
+  "id": "fa8b78cf-6c62-48aa-984c-f11861d9ecfe",
+  "status": "SUCCESS",
+  "meta": {
+    "reason": "deploy",
+    "commitMessage": "AKITEMM: cadastro profissional de fotos e vídeo com validação na ficha (#122)\n\n* Galeria de dez fotos, capa e validacao no campo dentro da ficha AKITEMM\n\n* Acabamento profissional dos quadrinhos de fotos e destaque vermelho\n\n* Persiste vídeo MP4 no catálogo real com revisão e integridade\n\n* Conecta vídeo ao catálogo real e protege leitura de rascunhos\n\n* Upload de vídeo real autenticado com revisão e CSRF\n\n* Integra vídeo publicado ao fluxo real de catálogo\n\n* Integra vídeo publicado ao fluxo real de catálogo\n\n* Integra vídeo publicado ao fluxo real de catálogo\n\n* Adiciona vídeo opcional com prévia, cancelamento e envio na ficha\n\n* Conecta mídia de vídeo ao gateway e protege backup real\n\n* Conecta mídia de vídeo ao gateway e protege backup real\n\n* Conecta mídia de vídeo ao gateway e protege backup real\n\n* Conecta mídia de vídeo ao gateway e protege backup real\n\n* Mantém ficha aberta e retoma cadastro parcial sem duplicar produto\n\n* Prova duas fotos, vídeo persistido, reprodução parcial e proteção de rascunho\n\n* Prova regressão de galeria, foco vermelho e edição na mesma ficha\n\n* Registra autorização do editor de mídia e hashes exatos dos arquivos\n\n* Valida galeria de dez espaços e duas fotos pela interface real do operador\n\n* Atualiza manifesto da prova de galeria em navegador",
+    "commitHash": "75ca81142dc7e801529a3e7123707364a3fa6f5c",
+    "branch": "feature/unificar-escritorio-real-20261105"
+  }
+}

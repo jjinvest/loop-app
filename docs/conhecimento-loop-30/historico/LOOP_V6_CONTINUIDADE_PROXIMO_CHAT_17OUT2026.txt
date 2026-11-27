@@ -1,0 +1,42 @@
+CÓDIGO DE CONTINUIDADE: LOOP-V6-RETOMADA-17OUT2026
+
+01, estamos continuando o desenvolvimento da PLATAFORMA LOOP V6 — Escritório Virtual, não de um aplicativo isolado. Este texto é nosso registro de passagem de chat. Leia-o antes de responder e, sempre que necessário, consulte o repositório GitHub para recuperar o estado real do código. Não comece o projeto do zero, não refaça decisões já tomadas e não me peça confirmações repetidas.
+
+REPOSITÓRIO E CONTROLE
+GitHub: jjinvest/loop-app; branch de trabalho: fix/teste-escrita-catraca-20261014; PR #1 aberta. Continue trabalhando na branch e executando CI. Nunca faça merge, publicação, pagamentos reais ou deploy sem minha autorização expressa. Atualize os números de testes apenas com execução confirmada. Na última verificação, 359 testes técnicos aprovados, zero falhas; testes de navegador para celular e computador também rodavam com sucesso nas execuções anteriores.
+
+FUNCIONAMENTO DO MOTOR V6
+- Tabuleiro tem exatamente 1 CENTRO + 6 POSIÇÕES periféricas. Todos entram pela vaga 6; a cada ciclo completo, o centro sai, 1 vai ao centro, 2 vai à 1, ... e 6 vai à 5; uma posição nova da fila abastece a 6.
+- Cada giro requer SEIS EVENTOS VÁLIDOS de venda do ciclo, cada um identificável/idempotente. Posições criadas, eventos de venda e pessoas únicas são conceitos distintos: não inventar equivalência automática.
+- Fila A: amarela, prioritária. Fila B: branca, entrada padrão. A cada 3 entradas da A, 1 da B, quando ambas existem; sem A, avançam posições da B.
+- Um convite só é validado com a ativação elegível do convidado. Quem indica sobe B -> A; mais convites aumentam prioridade. Desempate: quantidade de convites e timestamp válido do último convite. Uma pessoa pode ter múltiplas posições, até 6 ativas por CPF no V6; indicar pode promover todas as suas posições ainda na B, mas as filas continuam por POSIÇÃO.
+- Início previsto após período de captação de 30 dias; as indicações já podem promover posições antes do início dos giros.
+- Posições do cliente ativas vermelhas; sem aceite/CPF fictício em laboratório ficam azuis. Ao cruzar a vaga 6, posições pendentes podem passar à titularidade operacional da empresa (douradas) conforme a regra de teste. Desistência expressa na vaga 6 também passa a titularidade ao LOOP. Bolas douradas manuais são criadas sem compra e não geram receitas ou comissões.
+
+PRODUTOS E COMERCIAL
+- Plataforma de venda de PDFs baixáveis e produtos físicos por fornecedores integrados, sem grande estoque e sem hospedagem de videoaulas. Produtos avulsos da loja não precisam gerar posição.
+- Valor de referência atual por posição: R$250, alterável administrativamente para novas transações. Elegibilidade depende do produto e de quantidade mínima configurável (ex.: 20 canetas de R$50). Existe configuração de produto especial de pacote de 6 posições. Uma compra comum alta não gera automaticamente 6 posições.
+- Link de indicação e comissão referencial de 10% sobre ativação elegível, sem confundir indicação com lucro líquido. Regras de campanhas podem exigir revisão.
+
+CENTRO, MARCADORES E COFRES
+- Seis indicadores visuais do ciclo: alternância ROXO/PRETO/ROXO/PRETO/ROXO/PRETO. Os três roxos representam eventos normalmente destinados ao centro do participante (1,3,5); os três pretos a destinos de empresa (2,4,6).
+- Referência de R$250 por evento: etapas 1,3,5 -> R$750 destinados ao centro do cliente; etapas 2 e 6 -> R$500 ao cofre investimento; etapa 4 -> R$250 ao cofre reserva. Se o centro é da empresa/dourado/desistente, 1,3,5 vão para o cofre das douradas. Isso NÃO comprova pagamentos, receitas, reservas bancárias ou lucro.
+- Custos do fornecedor, tributos, taxas, devoluções, comissão, despesas e regulamentação ainda precisam de validação. Nunca tratar R$250 -> R$750 como lucro garantido nem a destinação dos cofres como dinheiro livre da empresa.
+
+SIMULAÇÕES CONFIRMADAS EM 17/10/2026
+1) Cenário de 50 GIROS com 100 posições iniciais e 300 novas posições (seis por giro), 400 posições totais: 50 saídas do centro, 343 aguardando ao fim (fila A 14; fila B 329), sete vagas ocupadas. Foram 128 indicações válidas por 52 indicadores. As novas entradas na vaga 6 foram 38 da A e 12 da B. Arquivo: scripts/simular-50-giros-loop-v6.js; relatório: docs/RESULTADO_50_GIROS_LOOP_V6.md.
+2) Cenário de 50 GIROS com as mesmas 400 posições, mas apenas 75 TITULARES DISTINTOS: 50 posições concluíram o centro, pertencendo a apenas 14 titulares distintos; fila A 10, fila B 333, 30 indicações. Confirma que múltiplas posições de um mesmo titular podem ser promovidas simultaneamente. Arquivo: scripts/simular-50-giros-posicoes-repetidas-v6.js.
+3) Nos 300 eventos com R$250 de referência: R$75.000 de DESTINAÇÕES HIPOTÉTICAS, sendo R$37.500 ao centro dos clientes, R$25.000 ao cofre investimento e R$12.500 à reserva. R$0 de saldo ou pagamento real. Das 100 posições iniciais, as vendas não entraram nesses 300 eventos. O balanço detalhado está em docs/CAIXA_CENARIO_50_GIROS_E_ESCALA_V6.md.
+4) Projeção aritmética, NÃO teste de carga: mais 10.000 eventos qualificáveis sobre as 100 posições iniciais -> 1.666 giros e aproximadamente 8.427 aguardando; 100.000 eventos -> 16.666 giros e 83.427 aguardando. Cadastrar 10 mil pessoas não equivale automaticamente a 10 mil eventos; pacotes múltiplos exigem definição e lastro por evento.
+
+SEGURANÇA E TRABALHO TÉCNICO JÁ REALIZADOS
+- Testes de responsividade em 320/360/390/412 px, tablet e desktop. Rotas e CSS visual já possuem primeira versão.
+- Proteção de snapshots/catraca, destinos de cofres, idempotência de pedidos, comissões, saques simulados, auditoria cruzada de posições/compras/douradas/desistências e estornos após ativação. Só laboratório, SQLite e autenticação demo; sem PIX nem transferência real.
+- Materiais no repositório: docs/IDENTIDADE_VISUAL_FUTURISTA_LOOP_V6.md, docs/AUDITORIA_INTEGRIDADE_OPERACIONAL_LOOP_V6.md, docs/AUDITORIA_ENTREGAS_ESTORNOS_CARRINHO_LOOP_V6.md, docs/RESULTADO_50_GIROS_LOOP_V6.md e docs/CAIXA_CENARIO_50_GIROS_E_ESCALA_V6.md.
+- Pendem integrações seguras de pagamento PSP, entregas reais, gestão efetiva de estornos, autenticação de produção, auditoria independente, LGPD/consumidor e avaliação jurídica/econômica do modelo, antes de dinheiro real.
+
+VISUAL — REFERÊNCIA APROVADA
+O usuário aprovou expressamente uma IMAGEM-CONCEITO NOVA (desktop grande + celular ao lado), muito melhor do que a versão anterior. Arquivo para ANEXAR neste novo chat: LOOP_V6_Visual_Referencia_Aprovada.png. Identidade futurista imersiva, metálica e premium; fundo preto/grafite, molduras douradas cromadas, verde metálico brilhante nos botões e centro, roxo metálico, esferas brilhantes, formas redondas e bordas muito arredondadas. Fila A amarela metálica; B branca prateada; posições cliente vermelhas e douradas empresa. Centro + 6 periferias e seis marcadores 3 roxos/3 pretos; visual em computador e celular. A imagem é CONCEITO ARTÍSTICO, não prova de que todos seus elementos já estão implementados; há detalhes para eu reajustar depois. Use-a como direção visual aprovada, não confunda números ou botões inventados na arte com funções reais.
+
+PREFERÊNCIA DE TRABALHO
+Eu sou o idealizador/analista e você atua na execução técnica e na interface. Quero blocos de trabalho práticos, testes reais, atualizações objetivas do progresso e poucas perguntas repetidas. Pode continuar desenvolvimento por iniciativa própria sem fazer merge/deploy, preservando as regras que fixamos. O próximo foco, quando eu mandar, será ajustar o VISUAL da plataforma com base na imagem aprovada, mas sem comprometer testes e lógica já existentes.
