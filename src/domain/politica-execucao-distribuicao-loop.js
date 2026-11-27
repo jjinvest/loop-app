@@ -1,6 +1,26 @@
 'use strict';
 // Decisão única de cadência. Vendas/filas não dependem desta autorização.
 const {agoraLocal,minutos}=require('./agenda-catraca-loop');
+// Previsão de leitura: a mesma grade da execução, inclusive antes da abertura.
+// Não depende de START e nunca autoriza um evento.
+function preverProximaLuzDistribuicao({agenda={},agoraMs}={}){
+ const meta=agenda.metaCentrosDia??0;
+ if(agenda.modo==='PAUSADA'||!Number.isSafeInteger(meta)||meta<1)return null;
+ const abertura=agenda.janelaInicio||'09:00',fechamento=agenda.janelaFim||'18:00';
+ const inicio=minutos(abertura),fim=minutos(fechamento),local=agoraLocal(agoraMs);
+ const duracao=((fim-inicio+1440)%1440)||1440;
+ let dia=fim<=inicio&&local.minuto<=fim?
+  new Date(Date.parse(local.dia+'T12:00:00Z')-86400000).toISOString().slice(0,10):local.dia;
+ if(agenda.metaDataAlvo){
+  if(agenda.metaDataAlvo<dia)return null;
+  dia=agenda.metaDataAlvo;
+ }
+ const comeco=Date.parse(dia+'T'+abertura+':00-03:00');
+ const decorrido=agoraMs-comeco,duracaoMs=duracao*60000,total=meta*6;
+ if(decorrido>=duracaoMs)return null;
+ const indice=Math.floor(Math.max(0,decorrido)*total/duracaoMs)+1;
+ return comeco+Math.ceil(indice*duracaoMs/total);
+}
 function avaliarExecucaoDistribuicao({agenda={},agoraMs,ativa=false,
  girosHoje=0,ultimoEventoEm=null,marcoExecucaoEm=null}={}){
  const abertura=agenda.janelaInicio||'09:00',fechamento=agenda.janelaFim||'18:00';
@@ -22,8 +42,8 @@ function avaliarExecucaoDistribuicao({agenda={},agoraMs,ativa=false,
  const indice=intervaloMs===null?null:Math.floor(Math.max(0,decorrido)/intervaloMs);
  const base={modo,dia,abertura,fechamento,intervaloMs,indice,
   aberturaEmMs:comeco,fechamentoEmMs:comeco+duracao*60000,
-  agoraServidorMs:agoraMs,proximaLuzPrevistaEmMs:intervaloMs===null?null:
-   comeco+Math.ceil((Math.max(0,indice)+1)*intervaloMs)};
+  agoraServidorMs:agoraMs,proximaLuzPrevistaEmMs:
+   preverProximaLuzDistribuicao({agenda,agoraMs})};
  const negar=motivo=>({...base,podeExecutar:false,motivo});
  if(!ativa||agenda.modo==='PAUSADA')return negar('DISTRIBUICAO_PAUSADA');
  // A última luz programada pertence ao fechamento; no livre, 18:00 fecha.
@@ -44,4 +64,4 @@ function avaliarExecucaoDistribuicao({agenda={},agoraMs,ativa=false,
  }
  return {...base,podeExecutar:true,motivo:null};
 }
-module.exports={avaliarExecucaoDistribuicao};
+module.exports={avaliarExecucaoDistribuicao,preverProximaLuzDistribuicao};
