@@ -195,7 +195,12 @@
    if(agenda?.luzesDoRelogioCompartilhado===true||
       agenda?.luzesDoRelogioOperador===true){
     if(visual){
-     const proxima=visual.proxima;
+     // A previsão persistida do servidor prevalece sobre a estimativa local.
+     // Entre consultas, a interpolação só avança após vencer esse marco.
+     const prevista=meta?.proximaLuzPrevistaEmMs;
+     const proxima=agenda.origem==='CATRACA_REAL_MESMO_SQLITE'&&
+      (prevista===null||Number.isSafeInteger(prevista)&&prevista>agoraServidor)?
+      prevista:visual.proxima;
      const programacao=(meta?.dataAlvo?meta.dataAlvo+' · ':'')+
       agenda.abertura+'–'+agenda.fechamento;
      if(visual.finalizado){
