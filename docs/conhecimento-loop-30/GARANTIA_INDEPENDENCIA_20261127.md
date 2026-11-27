@@ -9,7 +9,7 @@ Esta missão reaproveitou as provas anteriores, conferiu novamente SHA256/exist�
 | Etapa | Classificação | Evidência e limite |
 |---|---|---|
 |1 — Backup cifrado e chave | PARCIALMENTE CONCLUÍDA | Criptografia, teste de recuperação e chave separada CONCLUÍDOS E COMPROVADOS. Retirada para mídia/cofre fora do ChatGPT DEPENDENTE DE AÇÃO DO PROPRIETÁRIO; bancos vivos não estão no pacote |
-|2 — Bancos e Railway | DEPENDENTE DE AÇÃO DO PROPRIETÁRIO |3 serviços,3 volumes e2 buckets inventariados; revisões não mudaram. Acesso de exportação autenticado não disponível; cópia nova e DR integral PENDENTES |
+|2 — Bancos e Railway | DEPENDENTE DE AÇÃO DO PROPRIETÁRIO |3 serviços,3 volumes e2 buckets inventariados; revisões não mudaram. Login do navegador e acesso aos volumes CONCLUÍDOS; objetos externos localizados. Download não retornou arquivo (timeout); cópia independente dos bancos e DR integral PENDENTES |
 |3 — Histórico/conhecimento | PARCIALMENTE CONCLUÍDA |18 segmentos,181 fontes originais,139 arquivos externos e histórico adicional recuperado. Exportação completa da conta depende do proprietário; termos integrais continuam não localizados |
 |4 — Continuidade sem memória | CONCLUÍDA E COMPROVADA no escopo documentado | Revisão e reteste anteriores por outra instância sem histórico: APTO para conhecimento documentado, PARCIAL para recuperação integral. Mesma plataforma; não é migração entre fornecedores nem auditoria humana |
 
@@ -31,7 +31,7 @@ O programa de recuperação usa Node/crypto, arquivos locais e Git; não chama O
 |loop-identidade-real, `/dados-reais`,5GB | clientes.sqlite (identidade/pedidos/livros), catalogo-produtos.sqlite (mídia/catálogo) e testes-modulos.sqlite (conferência); outros arquivos e WAL precisam inventário autenticado |
 |akitemm-escritorio-preview, `/dados-preview`,1GB | volume legado conservado pelo gateway; código histórico usa escritorio.sqlite por padrão, mas variável pode mudar caminho. Não foi enumerado o conteúdo vivo |
 |asaas-webhook-staging, `/loop-staging`,1GB | SQLite definido por LOOP_RAILWAY_STAGING_SQLITE; valor e demais arquivos não exportados |
-|buckets loop-backup-offsite e identidade-real-backup | existência/região confirmadas; não obtida listagem atual de objetos, datas/versões ou cópias dos objetos |
+|buckets loop-backup-offsite e identidade-real-backup | listagem autenticada confirmou clientes e mídia em pastas de 27/11 e staging até 18/11. Download não retornou arquivo; hashes/conteúdo/recuperação dos objetos não validados |
 
 Os logs do backend registram em 26/11/2026 às14:52:32 (Brasília) prova de mídia PUT/GET/hash/restore. Linhas de testes no predeploy não são backups de produção. Esse log não comprova conteúdo atual de todos os volumes, retenção, todos os bancos, nem DR independente. A idade e integridade dos objetos precisam conferência autenticada por objeto.
 
@@ -41,7 +41,7 @@ Tentativas adicionais executadas nesta missão:
 - `fork_list`: `No forks in this project.` Nenhuma cópia isolada existente pôde ser usada.
 - `list_agent_connectors`: `Connector tunnels are not available for your account.`
 - Instalação oficial `npm install --prefix ... @railway/cli` em diretório isolado, fora do produto: falhou no download de v5.76.2 com `Connection to establish proxy tunnel timed out after 5000ms`. Não houve instalação funcional nem login da CLI.
-- A tentativa anterior no navegador mostrou `404 Looks like you are lost`/Login; a solicitação de autenticação foi cancelada. Não há sessão de exportação confirmada.
+- A tentativa anterior mostrou `404 Looks like you are lost`/Login. **Atualização posterior:** o proprietário concluiu o login seguro GitHub → Railway; dashboard e volume abriram. Esse bloqueio de autenticação está resolvido. A retirada pelo menu Download apresentou timeout sem arquivo retornado. [Evidências atuais e erros exatos](PROVA_ACESSO_RAILWAY_20261127.md).
 
 [Procedimento de retirada e reconstrução](RECUPERACAO_OFFLINE_E_RETIRADA_DOS_DADOS.md). Backups nativos Railway não substituem cópia portátil externa. Não pressionar Restore/Deploy no ambiente vivo para fazer esse teste.
 
@@ -62,7 +62,7 @@ A mesma plataforma hospedou a instância revisora. Não se afirma execução em 
 ## Ações necessárias do proprietário
 
 1. Baixar pacote+kit, guardá-los em locais privados separados sob seu controle e confirmar um teste fora desta conta; manter o recibo e checksums.
-2. Autenticar o acesso à sua conta/workspace Railway para permitir inventário e exportação; não enviar senha/token no chat. A equipe técnica pode então retirar cópias consistentes, cifrar e testar em destino isolado.
+2. **Login Railway já concluído pelo proprietário.** Resta resolver tecnicamente a transferência dos objetos/volumes, preservar chaves originais e testar recuperação isolada. Não solicitar novamente login no navegador pessoal do celular nem enviar senha/token no chat.
 3. Solicitar e baixar a exportação ChatGPT na conta correta; revisar o que veio e preservar o ZIP original privadamente.
 4. Custodiar valores originais de chaves/DNS/contas em cofre próprio; não substituí-los por chaves novas. Fornecer as fontes ausentes e autorizar separadamente eventual merge/publicação. Nada disso transfere propriedade para IA.
 
