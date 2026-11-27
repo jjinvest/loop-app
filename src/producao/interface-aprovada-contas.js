@@ -3348,6 +3348,7 @@
      d.modo=atual.modo;d.janelaInicio=atual.janelaInicio;
      d.janelaFim=atual.janelaFim;d.metaCentrosDia=atual.metaCentrosDia;
      d.metaDataAlvo=atual.metaDataAlvo;
+     d.limiteDiario=atual.limiteDiario;
      d.agoraServidorMs=atual.agoraServidorMs;
      d.proximaLuzPrevistaEmMs=atual.proximaLuzPrevistaEmMs;
      conferir();
