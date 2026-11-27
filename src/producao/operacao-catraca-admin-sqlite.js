@@ -1,9 +1,9 @@
 'use strict';
 // Comandos duraveis do operador para a catraca do MESMO motor SQLite.
 // Sem liberar creditos ou pagamentos; o motor de ensaio e vedado em producao.
-const {calcularIntervaloMeta,proximaJanelaMetaRelogio}=
+const {calcularIntervaloMeta}=
  require('../domain/meta-lotes-catraca-loop');
-const {avaliarExecucaoDistribuicao}=require('../domain/politica-execucao-distribuicao-loop');
+const {avaliarExecucaoDistribuicao,preverProximaLuzDistribuicao}=require('../domain/politica-execucao-distribuicao-loop');
 const {ControleCaixaCatracaLoopSQLite}=require('./controle-caixa-catraca-loop-sqlite');
 const TABELAS_CATRACA_ADMIN=Object.freeze([
  'loop_real_catraca_admin_meta',
@@ -318,7 +318,7 @@ class OperacaoCatracaAdminSQLite{
   const metaAplicavel=meta.dataAlvo===null||meta.dataAlvo===diaTurno;
   const calculo=calcularIntervaloMeta({
    abertura:p.inicio,fechamento:p.fim,
-   quantidade:metaAplicavel?meta.centrosDia:0
+   quantidade:meta.centrosDia
   });
   const girosDia=this._girosDia(tempo.dia);
   const caixa=this.controleCaixa.consultar({dia:tempo.dia});
@@ -334,15 +334,17 @@ class OperacaoCatracaAdminSQLite{
    (meta.centrosDia===0||dentroDaMeta);
   // O relogio e apenas uma previsao autenticada, independente de novas
   // vendas, sem autorizar um unico giro ate a prova bancaria real.
-  const proximaLuzPrevistaEmMs=p.modo!=='PAUSADA'&&
-   dentro&&permitido&&dentroDaMeta?
-    proximaJanelaMetaRelogio({abertura:p.inicio,fechamento:p.fim,
-     quantidade:meta.centrosDia,agoraMs:tempo.ts,horarioLocal:tempo.hora}):null;
+  const proximaLuzPrevistaEmMs=(p.limite_diario===null||girosDia<p.limite_diario)&&
+   ((meta.dataAlvo!==null&&meta.dataAlvo>diaTurno)||girosDia<meta.centrosDia)?
+    preverProximaLuzDistribuicao({agenda:{modo:p.modo,
+     janelaInicio:p.inicio,janelaFim:p.fim,metaCentrosDia:meta.centrosDia,
+     metaDataAlvo:meta.dataAlvo},agoraMs:tempo.ts}):null;
   return {modo:p.modo,janelaInicio:p.inicio,janelaFim:p.fim,
    agoraServidorMs:tempo.ts,proximaLuzPrevistaEmMs,
    metaCentrosDia:meta.centrosDia,metaDataAlvo:meta.dataAlvo,
    metaAplicavelHoje:metaAplicavel,
-   luzesPlanejadas:Number(calculo.luzesPlanejadas),
+   luzesPlanejadas:metaAplicavel?Number(calculo.luzesPlanejadas):0,
+   luzesProgramacao:Number(calculo.luzesPlanejadas),
    intervaloLuzSegundos:calculo.intervaloLuzSegundos,
    duracaoTurnoMinutos:calculo.duracaoMinutos,
    intervaloLuzMinutos:calculo.intervaloLuzSegundos===null?null:
