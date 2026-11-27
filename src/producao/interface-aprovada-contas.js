@@ -2018,7 +2018,8 @@
    if(geracao!==geracaoPermissaoLinks||nickResumoReal!==nick||
       $('painelConta').hidden)return;
    if(d.linkLiberado!==true||
-      d.fonte!=='PEDIDO_PSP_CONFIRMADO_COM_FOTOGRAFIA_DA_COR'||
+      (d.fonte!=='PEDIDO_PSP_CONFIRMADO_COM_FOTOGRAFIA_DA_COR'&&
+       d.fonte!=='CANAL_INSTITUCIONAL_AUTORIZADO')||
       d.financeiroReal!==false)return;
    const endereco=location.origin,identificador=encodeURIComponent(nickVisivel(nick));
    origemLinks={loja:endereco+'/loja/'+identificador,

@@ -11,6 +11,44 @@ const {VisaoEscritorioUnificadaSQLite}=require('../src/producao/visao-escritorio
 const DOC='Termos fictícios para testar vínculos de convites, sem compras reais, '+
  'sem ganhos, sem pagamentos e sem promessa de bonificação.';
 const ORIGEM='https://contas.example.invalid';
+test('links institucionais do proprietário abrem loja/escritório e preservam indicação sem compra ou crédito',async t=>{
+ const x=preparar();t.after(()=>x.banco.close());
+ const dono=await x.cadastrar('Vilela');
+ await x.cadastrar('Outro');
+ const opcoes={contas:x.contas,motorLoop:x.motor,origemHttps:ORIGEM,
+  permitirCadastro:true,divulgadorInstitucionalNick:'VILELA'};
+ assert.throws(()=>criarAppIdentidadeLoop({...opcoes,divulgadorInstitucionalNick:'Inexistente'}),/DIVULGADOR_INSTITUCIONAL_NAO_ENCONTRADO/);
+ const app=criarAppIdentidadeLoop(opcoes);
+ const srv=app.listen(0,'127.0.0.1');await once(srv,'listening');
+ t.after(()=>new Promise(done=>srv.close(done)));
+ const base='http://127.0.0.1:'+srv.address().port;
+ for(const [url,destino] of [['/loja/VILELA','/loja?ref=vilela'],
+  ['/escritorio/VILELA','/escritorio?ref=vilela'],['/convite/loja?ref=VILELA','/loja?ref=VILELA']]){
+  const r=await fetch(base+url,{redirect:'manual'});
+  assert.equal(r.status,303,url);assert.equal(r.headers.get('location'),destino);
+  assert.equal((await fetch(base+destino)).status,200);
+ }
+ assert.equal((await fetch(base+'/loja/Outro')).status,403);
+ assert.equal((await fetch(base+'/escritorio/Inexistente')).status,404);
+ const login=await x.contas.entrar({nick:'Vilela',senha:'SenhaExemplo2026!'});
+ const d=await (await fetch(base+'/api/contas/divulgacao',{
+  headers:{Cookie:'loop_real_s='+login.token}})).json();
+ assert.equal(d.linkLiberado,true);
+ assert.equal(d.fonte,'CANAL_INSTITUCIONAL_AUTORIZADO');
+ assert.equal(d.compraHabilitadoraConfirmada,false);
+ assert.equal(d.financeiroReal,false);
+ const r=await fetch(base+'/api/contas/cadastrar',{method:'POST',
+  headers:{Origin:ORIGEM,'Content-Type':'application/json'},
+  body:JSON.stringify({nome:'Indicado isolado',nick:'Convidado',email:'convidado@example.invalid',
+   senha:'SenhaExemplo2026!',indicadorNick:'VILELA',aceiteTermos:true,aceitePrivacidade:true,
+   versaoTermos:x.docs.termos.versao,hashTermos:x.docs.termos.hash,
+   versaoPrivacidade:x.docs.privacidade.versao,hashPrivacidade:x.docs.privacidade.hash})});
+ assert.equal(r.status,201,JSON.stringify(await r.json()));
+ assert.equal(x.contas.listarIndicados(dono.titularId).total,1);
+ assert.equal(x.motor.consultar().catraca.giros,0);
+ assert.equal(x.motor.consultar().filaA+x.motor.consultar().filaB,0);
+ assert.equal(x.banco.prepare('SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicador_id=?').get(dono.titularId).n,1);
+});
 function preparar(){
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
