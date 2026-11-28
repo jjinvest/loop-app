@@ -180,14 +180,22 @@
    // A visão controlada usa apenas os marcos persistidos do lote.
    const fluxo=agenda?.fluxoControlado;
    if(fluxo&&Number.isSafeInteger(fluxo.eventos)&&Number.isSafeInteger(fluxo.total)){
-    const segundos=fluxo.ativa&&Number.isSafeInteger(fluxo.proximoEmMs)?
+    const segundos=Number.isSafeInteger(fluxo.proximoEmMs)?
      Math.max(0,Math.ceil((fluxo.proximoEmMs-(fluxo.agoraServidorMs+Date.now()-leituraVisorCatracaEm))/1000)):null;
     visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
     titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'CATRACA PAUSADA':
      fluxo.motivo==='FORA_DO_HORARIO'?'FORA DO TURNO':
      fluxo.modo==='LIVRE'?'FLUXO DE VENDAS':'PRÓXIMA LUZ · EVENTO';
     estado.textContent='Eventos: '+fluxo.eventos+'/6 luzes · '+fluxo.total+'/'+fluxo.limite+
-     (fluxo.abertura?' · '+fluxo.abertura+'–'+fluxo.fechamento:'');
+     (fluxo.abertura?' · '+fluxo.abertura+'–'+fluxo.fechamento:'')+
+     (Number.isSafeInteger(fluxo.metaCentrosDia)&&fluxo.metaCentrosDia>0?
+      ' · Meta: '+fluxo.metaCentrosDia+' centros / '+(fluxo.metaCentrosDia*6)+' luzes':'')+
+     (fluxo.metaDataAlvo?' · '+fluxo.metaDataAlvo:'');
+    const luzesHoje=$('loop03LuzesHoraIntegrado'),ciclosHoje=$('loop03Giros24Integrado');
+    if(luzesHoje&&Number.isSafeInteger(fluxo.contadores?.eventosHoje))
+     luzesHoje.textContent=fluxo.contadores.eventosHoje+' / '+(fluxo.metaCentrosDia*6);
+    if(ciclosHoje&&Number.isSafeInteger(fluxo.contadores?.ciclosHoje))
+     ciclosHoje.textContent=String(fluxo.contadores.ciclosHoje);
     const contador=$('motorContadorEventos');
     if(contador)contador.textContent=fluxo.ativa?'CATRACA EM ANDAMENTO':'CATRACA PAUSADA';
     return;

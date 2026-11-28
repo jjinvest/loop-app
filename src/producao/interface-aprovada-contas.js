@@ -3303,7 +3303,9 @@
       mensagem+='\nPróxima luz prevista: após salvar, dentro do turno.';
      }
     }
-    mensagem+='\nSem caixa real comprovado: nenhum giro autorizado.';
+    mensagem+=visualTesteModulo==='CATRACA'?
+     '\nExecução do lote depende de START. A previsão não movimenta valores.':
+     '\nSem caixa real comprovado: nenhum giro autorizado.';
     resumo.textContent=mensagem;
     return true;
    };
@@ -3541,6 +3543,8 @@
    const agenda={...controle.agenda,luzesDoRelogioCompartilhado:false,
     luzesDoRelogioOperador:false,...(x.financeiro?{fluxoControlado:{
      ativa:x.catracaAtiva,modo:x.financeiro.execucao?.modo,
+     metaCentrosDia:controle.metaCentrosDia,metaDataAlvo:controle.metaDataAlvo,
+     contadores:x.financeiro.contadores,
      abertura:controle.janelaInicio,fechamento:controle.janelaFim,
      motivo:x.financeiro.execucao?.motivo,
      proximoEmMs:x.financeiro.execucao?.proximaLuzPrevistaEmMs??null,
