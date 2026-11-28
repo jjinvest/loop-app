@@ -74,16 +74,32 @@ test('compra, indicação, seis eventos e giro sobrevivem ao reinício, sem dinh
  assert.equal(motor.registrarEventoEnsaio({pedidoId:'pedido-1'}).repetida,true);
  assert.equal(motor.controlarCatracaEnsaio({acao:'GIRAR'}).girou,false);
  assert.equal(motor.verificar().eventos,5);
+ const instante=Date.now();
+ const contagem=motor.consultar({agoraMs:instante}).contadores;
+ assert.equal(contagem.eventosHoje,5);
+ assert.equal(contagem.eventosHistorico,5);
+ assert.equal(contagem.ciclosHoje,0);
+ assert.deepEqual(motor.consultar({titularId:ids[0].titularId,agoraMs:instante}).contadores,contagem);
+
  db.close();
  db=new DatabaseSync(file);
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL');
  contas=new IdentidadeClienteLoopReal({...cfg,banco:db});
  motor=new MotorLoopIntegradoSQLite({banco:db});
  assert.equal(motor.consultar().tabuleiro.eventosNoCiclo,5);
+ assert.deepEqual(motor.consultar({agoraMs:instante}).contadores,contagem);
+ const amanha=motor.consultar({agoraMs:instante+86400000});
+ assert.equal(amanha.contadores.eventosHoje,0);
+ assert.equal(amanha.contadores.eventosHistorico,5);
+ assert.equal(amanha.tabuleiro.eventosNoCiclo,5);
+
  motor.registrarEventoEnsaio({pedidoId:'pedido-6'});
  motor.controlarCatracaEnsaio({acao:'ABRIR'});
  assert.equal(motor.controlarCatracaEnsaio({acao:'GIRAR'}).girou,true);
  assert.equal(motor.verificar().giros,1);
+ assert.equal(motor.consultar().contadores.eventosHistorico,6);
+ assert.equal(motor.consultar().contadores.ciclosHoje,1);
+
  assert.equal(motor.registrarEventoEnsaio({pedidoId:'pedido-6'}).repetida,true);
  assert.equal(motor.consultar().tabuleiro.eventosNoCiclo,0);
  assert.equal(validarIdentidade(file).integridade,'ok');
@@ -223,6 +239,8 @@ test('três contas e administrador veem o mesmo motor, sem acesso cruzado',async
  const operador=await (await fetch(base+ctrl,{headers:{Cookie:adminCookie}})).json();
  const cliente=await (await fetch(base+'/api/loop/estado',{
   headers:{Cookie:cookies[0]}})).json();
+ assert.deepEqual(operador.agenda.contadores,cliente.agenda.contadores);
+ assert.deepEqual(cliente.contadores,cliente.agenda.contadores);
  for(const agenda of [operador.agenda,cliente.agenda]){
   assert.equal(agenda.abertura,'09:00');
   assert.equal(agenda.fechamento,'18:00');

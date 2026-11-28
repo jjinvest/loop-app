@@ -430,7 +430,7 @@ class MotorLoopIntegradoSQLite{
     pagina+1:null
   };
  }
- consultar({titularId=null}={}){
+ consultar({titularId=null,agoraMs=Date.now()}={}){
   if(titularId!==null)this._titular(titularId);
   const sim=this._sim(),estado=sim.estado();
   // Pedido confirmado pelo PSP é apenas um evento comercial pendente.
@@ -489,6 +489,20 @@ class MotorLoopIntegradoSQLite{
     (comercial.promovidasSomenteEmEnsaio||0)+total,
     posicoesEspeciaisSomenteEmEnsaio:total};
   }
+  // A mesma história persistida alimenta os dois perfis. Tempo de agenda
+  // nunca conta como execução; o ciclo aberto atravessa a meia-noite.
+  const dia=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',
+   year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(agoraMs));
+  const inicio=Date.parse(dia+'T00:00:00-03:00');
+  const ciclos=sim.tabuleiro.ciclosConcluidos;
+  const eventos=[...ciclos.flatMap(c=>c.vendas),...sim.tabuleiro.vendasDoCiclo];
+  const contar=(lista,campo,desde)=>lista.filter(x=>{
+   const em=Date.parse(x[campo]);return em>=desde&&em<=agoraMs;
+  }).length;
+  const contadores={eventosHoje:contar(eventos,'registradaEm',inicio),
+   eventos24h:contar(eventos,'registradaEm',agoraMs-86400000),
+   eventosHistorico:eventos.length,
+   ciclosHoje:contar(ciclos,'concluidoEm',inicio),ciclosHistorico:ciclos.length};
   const visual=p=>p?{
    numero:p.id,minha:p.participanteId===titularId&&p.empresa!==true,
    dourada:p.empresa===true,
@@ -509,7 +523,7 @@ class MotorLoopIntegradoSQLite{
    transacoesReais:false,financeiroReal:false,
    limitePosicoesAtivas:LIMITE_POSICOES_ATIVAS,
    limitePorTitularTabuleiro:2,ordemAlimentacao:'3A:1B',
-   eventosPorCiclo:6,eventosComerciais:comercial,catraca:{
+   contadores,eventosPorCiclo:6,eventosComerciais:comercial,catraca:{
     estado:estado.catraca.status,giros:sim.giros
    },filaA:sim.filas.filaA.length-revisoesA,
    filaB:sim.filas.filaB.length-revisoesB,

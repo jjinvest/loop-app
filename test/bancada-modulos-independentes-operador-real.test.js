@@ -287,7 +287,7 @@ test('100 PDFs: posições classificadas, caixa separado, START explícito e 100
  assert.equal(c.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
 
-test('cenário preparado é selecionado na entrada normal do operador sem outro endereço e sem START automático',()=>{
+test('entrada normal mantém a fonte oficial e apenas descobre conferência sem selecioná-la',()=>{
  const office=fs.readFileSync('src/producao/interface-aprovada-contas.js','utf8');
  const inicio=office.indexOf('async function selecionarCenarioPreparado(versao)');
  const fim=office.indexOf('function abrirPainelOperador()',inicio);
@@ -296,7 +296,7 @@ test('cenário preparado é selecionado na entrada normal do operador sem outro 
  assert.match(trecho,/modoOperadorAtual/);
  assert.match(trecho,/versao!==versaoEntradaOperador/);
  assert.match(trecho,/RECEBIMENTOS_FICTICIOS_SQLITE/);
- assert.match(trecho,/visualTesteModulo='CATRACA'/);
+ assert.doesNotMatch(trecho,/visualTesteModulo\s*=/);
  assert.doesNotMatch(trecho,/CATRACA_INICIAR|method:'POST'|location\./);
  assert.ok(office.includes('void selecionarCenarioPreparado(versao)'));
  assert.ok(office.includes("botao.addEventListener('click',()=>alternarCenarioOperador(visualTesteModulo!=='CATRACA'))"));

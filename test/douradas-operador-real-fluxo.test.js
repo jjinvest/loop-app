@@ -104,7 +104,7 @@ test('escritório e Central consultam o mesmo motor, sem mostrar bancada no escr
  assert.match(gate,/app\.post\('\/api\/admin\/loop\/douradas',proteger,validarCsrf/);
  assert.match(gate,/new DouradasOperadorSQLite\(\{motor:motorLoop\}\)/);
  assert.match(clock,/_relatorioRelogioAcumulado/);
- assert.match(office,/const luzesDia=relogio\?\.luzesRelogioHoje/);
+ assert.match(office,/const luzesDia=registrados\?\.eventosHoje\?\?relogio\?\.luzesRelogioHoje/);
  assert.match(office,/luzesDia===0\?0:\(\(luzesDia-1\)%6\)\+1/);
  assert.match(office,/Luzes acesas hoje:/);
 });

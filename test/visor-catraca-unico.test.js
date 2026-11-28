@@ -130,6 +130,31 @@ test('contador do OPERADOR renderiza 90 min por luz em um centro sem criar event
  test('visor do evento mantém os cálculos e usa os rótulos aprovados',()=>{
  const source=ler('shared/visor-catraca.js');
  assert.ok(source.includes("titulo.textContent='PRÓXIMA LUZ · EVENTO'"));
- assert.ok(source.includes("estado.textContent=legendaPublica(visual.luzes"));
+ assert.ok(source.includes("estado.textContent=legendaPublica(agenda.contadores?agenda.eventosReaisNoCiclo:visual.luzes"));
  assert.ok(source.includes("meta?.quantidade>0?meta.quantidade*6:null"));
  });
+
+test('registros oficiais prevalecem sobre 180 luzes previstas nos dois perfis e após pausa',()=>{
+ for(const operador of [false,true]){
+  const elementos=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro',
+   'estadoRelogioTabuleiro','loop03LuzesHoraIntegrado','loop03Giros24Integrado',
+   'loop03NumeroIntegrado'].map(id=>[id,{textContent:''}]));
+  const agora=Date.parse('2026-11-28T18:00:00-03:00');
+  const contexto={window:{},document:{hidden:false,body:{classList:{contains:()=>operador}}},
+   Date:class extends Date{static now(){return agora;}},Intl,Math,Number,String,Object};
+  vm.runInNewContext(ler('shared/visor-catraca.js'),contexto);
+  const visor=contexto.window.LoopVisorCatraca.criar({elemento:id=>elementos[id]});
+  const agenda={origem:'CATRACA_REAL_MESMO_SQLITE',luzesDoRelogioCompartilhado:true,
+   modoExecucao:'AGENDADA',pausaManual:false,abertura:'09:00',fechamento:'18:00',
+   agoraServidorMs:agora,metaLotes:{ativa:true,quantidade:15,dataAlvo:'2026-11-28'},
+   luzesRelogioHoje:180,eventosReaisNoCiclo:2,
+   contadores:{eventosHoje:8,ciclosHoje:1,eventosHistorico:20}};
+  for(const pausa of [false,true]){
+   visor.registrarAgenda({...agenda,pausaManual:pausa});
+   assert.equal(elementos.loop03LuzesHoraIntegrado.textContent,'8 / 90');
+   assert.equal(elementos.loop03Giros24Integrado.textContent,'1');
+   assert.match(elementos.estadoRelogioTabuleiro.textContent,/Eventos: 2\/6 luzes · 8\/90 luzes/);
+   if(operador)assert.equal(elementos.loop03NumeroIntegrado.textContent,'2 / 6');
+  }
+ }
+});

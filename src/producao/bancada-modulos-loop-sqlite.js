@@ -136,7 +136,7 @@ class BancadaModulosLoopSQLite{
   const tempos=ciclos.map(c=>Date.parse(c.concluidoEm||c.registradoEm||''));
   const inicioDia=Date.parse(hoje+'T00:00:00-03:00');
   const contagem=this.db.prepare("SELECT SUM(CASE WHEN registrado_em>=? THEN 1 ELSE 0 END) hoje,SUM(CASE WHEN registrado_em>? THEN 1 ELSE 0 END) ultimas24h FROM loop_teste_fluxo_lancamentos WHERE geracao=? AND destino!='BONUS' AND registrado_em<=?").get(inicioDia,agora-86400000,geracao,agora);
-  const contadores={eventosHoje:contagem.hoje||0,eventos24h:contagem.ultimas24h||0,
+  const contadores={eventosHistorico:eventos,eventosHoje:contagem.hoje||0,eventos24h:contagem.ultimas24h||0,
    ciclosHoje:tempos.filter(em=>em>=inicioDia&&em<=agora).length,ciclosHistorico:ciclos.length};
   const execucao=avaliarExecucaoDistribuicao({agenda,agoraMs:agora,girosHoje:contadores.ciclosHoje,
    ativa:row.catraca_ativa===1,ultimoEventoEm:cadencia?.ultimo_evento??null,
