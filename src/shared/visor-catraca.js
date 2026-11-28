@@ -183,6 +183,34 @@
    const agoraServidor=Number.isSafeInteger(agenda?.agoraServidorMs)?
     agenda.agoraServidorMs+(Date.now()-leituraVisorCatracaEm):Date.now();
    const visual=horarioVisual({agenda,agoraMs:agoraServidor});
+   const execucao=agenda?.placarExecucao;
+   if(execucao&&!agenda?.fluxoControlado){
+    // Na operação definitiva, previsão de horário não é evento executado.
+    const eventos=agenda.eventosReaisNoCiclo;
+    for(let i=1;i<=6;i++){
+     const bola=$('motorBolinha'+i);
+     if(!bola)continue;
+     bola.classList.toggle('loop03-relogio-luz-visual',false);
+     bola.classList.toggle('loop03-relogio-luz-atual',false);
+     bola.classList.toggle('loop03-marcador-aceso',i<=eventos);
+    }
+    const luzes=$('loop03LuzesHoraIntegrado'),ciclos=$('loop03Giros24Integrado');
+    const selecionada=$('loop03NumeroIntegrado');
+    if(luzes)luzes.textContent=execucao.eventosHoje+' / '+execucao.previstasHoje;
+    if(ciclos)ciclos.textContent=String(execucao.ciclosHoje);
+    if(selecionada&&document.body?.classList?.contains?.('loop03-modo-operador'))
+     selecionada.textContent=eventos+' / 6';
+    const previa=meta?.proximaLuzPrevistaEmMs;
+    const segundos=Number.isSafeInteger(previa)&&previa>agoraServidor?
+     Math.ceil((previa-agoraServidor)/1000):null;
+    visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
+    titulo.textContent=execucao.autorizada?'PRÓXIMA LUZ · EVENTO':'EXECUÇÃO BLOQUEADA';
+    estado.textContent=legendaPublica(eventos,execucao.eventosHoje,execucao.previstasHoje,execucao.dataAlvo);
+    if(execucao.previstasHoje===0&&execucao.eventosHoje===0)estado.textContent+=' · 0/0 luzes';
+    const contador=$('motorContadorEventos');
+    if(contador)contador.textContent=execucao.autorizada?'CATRACA EM ANDAMENTO':'CATRACA SEM AUTORIZAÇÃO DE EXECUÇÃO';
+    return;
+   }
    sincronizarLuzesVisuais(visual);
    // A visão controlada usa apenas os marcos persistidos do lote.
    const fluxo=agenda?.fluxoControlado;
@@ -196,21 +224,27 @@
     // Uma previsão de agenda não é um pulso autorizado. Enquanto o
     // operador não iniciou, o visor não promete um evento ao chegar a zero.
     const pausada=!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA';
-    const segundos=!pausada&&Number.isSafeInteger(fluxo.proximoEmMs)?
+    const programacao=fluxo.programacao;
+    const terminou=programacao?.encerrada===true;
+    const segundos=!pausada&&!terminou&&Number.isSafeInteger(fluxo.proximoEmMs)?
      Math.max(0,Math.ceil((fluxo.proximoEmMs-(fluxo.agoraServidorMs+Date.now()-leituraVisorCatracaEm))/1000)):null;
     visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
-    titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'CATRACA PAUSADA':
+    titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':terminou?'TURNO ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'AGUARDANDO START':
      fluxo.motivo==='FORA_DO_HORARIO'?'FORA DO TURNO':
      fluxo.modo==='LIVRE'?'FLUXO DE VENDAS':'PRÓXIMA LUZ · EVENTO';
-    estado.textContent=legendaPublica(fluxo.eventos,fluxo.contadores?.eventosHoje,
-     Number.isSafeInteger(fluxo.metaCentrosDia)?fluxo.metaCentrosDia*6:null,fluxo.metaDataAlvo);
+    const executadas=programacao?.executadas??fluxo.contadores?.eventosHoje;
+    const previstas=programacao?.previstas??(Number.isSafeInteger(fluxo.metaCentrosDia)?fluxo.metaCentrosDia*6:null);
+    estado.textContent=legendaPublica(fluxo.eventos,executadas,previstas,programacao?programacao.dataAlvo:fluxo.metaDataAlvo);
+    if(previstas===0&&executadas===0)estado.textContent+=' · 0/0 luzes';
     const luzesHoje=$('loop03LuzesHoraIntegrado'),ciclosHoje=$('loop03Giros24Integrado');
-    if(luzesHoje&&Number.isSafeInteger(fluxo.contadores?.eventosHoje))
-     luzesHoje.textContent=fluxo.contadores.eventosHoje+' / '+(fluxo.metaCentrosDia*6);
+    if(luzesHoje&&Number.isSafeInteger(executadas)&&Number.isSafeInteger(previstas))
+     luzesHoje.textContent=executadas+' / '+previstas;
+    const eventosCiclo=$('loop03NumeroIntegrado');
+    if(eventosCiclo)eventosCiclo.textContent=fluxo.eventos+' / 6';
     if(ciclosHoje&&Number.isSafeInteger(fluxo.contadores?.ciclosHoje))
      ciclosHoje.textContent=String(fluxo.contadores.ciclosHoje);
     const contador=$('motorContadorEventos');
-    if(contador)contador.textContent=fluxo.ativa?'CATRACA EM ANDAMENTO':'CATRACA PAUSADA';
+    if(contador)contador.textContent=terminou?'TURNO ENCERRADO':pausada?'AGUARDANDO START':fluxo.motivo==='FORA_DO_HORARIO'?'AGUARDANDO HORÁRIO':'CATRACA EM ANDAMENTO';
     return;
    }
    if(agenda?.luzesDoRelogioCompartilhado===true||

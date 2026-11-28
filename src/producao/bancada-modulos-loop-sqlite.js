@@ -141,7 +141,20 @@ class BancadaModulosLoopSQLite{
   const execucao=avaliarExecucaoDistribuicao({agenda,agoraMs:agora,girosHoje:contadores.ciclosHoje,
    ativa:row.catraca_ativa===1,ultimoEventoEm:cadencia?.ultimo_evento??null,
    marcoExecucaoEm:cadencia?.marco??this.agora()});
-  return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',execucao,contadores,
+  // Programação corrente e histórico diário são medidas distintas.
+  // A janela explícita continua válida antes do START, mas expira após o turno.
+  const meta=agenda.metaCentrosDia??0;
+  const diaAlvo=agenda.metaDataAlvo||execucao.dia;
+  const inicioTurno=Date.parse(diaAlvo+'T'+execucao.abertura+':00-03:00');
+  const fimTurno=inicioTurno+(execucao.fechamentoEmMs-execucao.aberturaEmMs);
+  const metaHoje=meta>0&&diaAlvo===hoje;
+  const encerrada=meta>0&&(agora>=fimTurno+60000||
+   (metaHoje&&contadores.eventosHoje>=meta*6)||saldo<25000);
+  // O fechamento para o relógio; o placar continua sendo o registro
+  // diário efetivamente executado até a meia-noite de Brasília.
+  const programacao={encerrada,executadas:contadores.eventosHoje,
+   previstas:metaHoje?meta*6:0,dataAlvo:metaHoje?diaAlvo:null};
+  return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',execucao,contadores,programacao,
    // Este lote persistido contém exclusivamente vendas de PDFs.
    // Cursos e físicos não fazem parte deste cenário; não inferir vendas reais.
    vendasPorTipo:{pdfs:receb.quantidade,cursos:0,fisicos:0},
@@ -358,6 +371,11 @@ class BancadaModulosLoopSQLite{
    const fluxo=modulo==='CATRACA'?this._fluxo(row.geracao):null;
    if(fluxo){
     if(acao==='CATRACA_INICIAR'){
+     if(agenda?.modo==='PAUSADA')falha('BANCADA_RELOGIO_PAUSADO');
+     if(row.catraca_ativa===1){
+      this._marcarProgramacaoFluxo(row,agenda);
+      return {acao,catracaAtiva:true,porteiraAberta:row.porteira_aberta===1,financeiro:fluxo};
+     }
      if(fluxo.saldoCentavos<25000)falha('FLUXO_CAIXA_INSUFICIENTE');
      row.porteira_aberta=1;
      sim.tabuleiro.proximoDaFila=opcoes=>sim.filas.proximoDaFila(opcoes);

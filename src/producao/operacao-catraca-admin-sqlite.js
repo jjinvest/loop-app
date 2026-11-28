@@ -321,6 +321,13 @@ class OperacaoCatracaAdminSQLite{
    quantidade:meta.centrosDia
   });
   const girosDia=this._girosDia(tempo.dia);
+  const diaInicio=Date.parse(tempo.dia+'T00:00:00-03:00');
+  const contarEventosExecutados=(desde)=>this.db.prepare([
+   "SELECT COUNT(DISTINCT e.chave) AS n FROM loop_real_motor_eventos e",
+   "JOIN loop_real_catraca_admin_historico h ON h.acao='EVENTO_DISTRIBUICAO'",
+   "AND e.pedido_id=json_extract(h.detalhes,'$.pedidoId')",
+   "WHERE e.tipo='EVENTO' AND h.executado_em>=? AND h.executado_em<=?"
+  ].join(' ')).get(desde,tempo.ts).n;
   const caixa=this.controleCaixa.consultar({dia:tempo.dia});
   const caixaMetaCompatível=caixa.programada===true&&
    caixa.estado==='AUTORIZADA'&&metaAplicavel&&meta.centrosDia>0&&
@@ -357,6 +364,17 @@ class OperacaoCatracaAdminSQLite{
    luzesAutorizadasPorCaixa:caixaMetaCompatível?caixa.luzesAutorizadas:0,
    caixaEProgramacaoConferidos:caixaMetaCompatível,
    autorizacaoFinanceiraDosGiros:false,
+   ...(process.env.NODE_ENV==='production'?{placarExecucao:{
+    eventosHoje:contarEventosExecutados(diaInicio),
+    eventos24h:contarEventosExecutados(tempo.ts-86400000),
+    eventosHistorico:this.db.prepare("SELECT COUNT(*) AS n FROM loop_real_motor_eventos WHERE tipo='EVENTO'").get().n,
+    ciclosHoje:girosDia,ciclosHistorico:motor.tabuleiro.ciclosConcluidos,
+    previstasHoje:metaAplicavel&&meta.centrosDia>0?meta.centrosDia*6:0,
+    dataAlvo:metaAplicavel?meta.dataAlvo:null,
+    autorizada:false,motivo:caixaMetaCompatível?
+     'MOTOR_REAL_AINDA_NAO_CONSOME_RESERVA_PROVISIONADA':
+     'CAIXA_REAL_NAO_PROVISIONADO_E_HOMOLOGADO'
+   }}:{}),
    bloqueioFinanceiro:caixaMetaCompatível?
     'MOTOR_REAL_AINDA_NAO_CONSOME_RESERVA_PROVISIONADA':
     'CAIXA_REAL_NAO_PROVISIONADO_E_HOMOLOGADO',

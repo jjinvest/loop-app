@@ -133,3 +133,50 @@ test('contador do OPERADOR renderiza 90 min por luz em um centro sem criar event
  assert.ok(source.includes("estado.textContent=legendaPublica(visual.luzes"));
  assert.ok(source.includes("meta?.quantidade>0?meta.quantidade*6:null"));
  });
+
+
+test('visor do lote preserva 90/90 e 15 ciclos ao encerrar e zera no novo dia',()=>{
+ const agora=Date.now();
+ const elements=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro','loop03LuzesHoraIntegrado','loop03Giros24Integrado','loop03NumeroIntegrado'].map(id=>[id,{textContent:''}]));
+ const context={window:{setInterval:()=>1},document:{hidden:false},Date,Math,Number,String,Object};
+ vm.runInNewContext(ler('shared/visor-catraca.js'),context);
+ const visor=context.window.LoopVisorCatraca.criar({elemento:id=>elements[id]});
+ visor.registrarAgenda({fluxoControlado:{ativa:true,modo:'PROGRAMADO',eventos:2,total:8,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:false,executadas:8,previstas:90},contadores:{eventosHoje:8,ciclosHoje:1}}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'8 / 90');
+ assert.equal(elements.loop03NumeroIntegrado.textContent,'2 / 6');
+ visor.registrarAgenda({fluxoControlado:{ativa:true,modo:'PROGRAMADO',eventos:0,total:90,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:true,executadas:90,previstas:90,dataAlvo:'2026-11-23'},contadores:{eventosHoje:90,ciclosHoje:15}}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'90 / 90');
+ assert.equal(elements.loop03Giros24Integrado.textContent,'15');
+ assert.match(elements.estadoRelogioTabuleiro.textContent,/90\/90 luzes/);
+ assert.equal(elements.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
+ visor.registrarAgenda({fluxoControlado:{ativa:false,modo:'PROGRAMADO',eventos:0,total:90,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:true,executadas:0,previstas:0,dataAlvo:null},contadores:{eventosHoje:0,ciclosHoje:0}}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
+ assert.equal(elements.loop03Giros24Integrado.textContent,'0');
+});
+
+
+test('placar novo dia mantém três eventos do centro e distingue START pendente',()=>{
+ const agora=Date.now(), classes=()=>({toggle(){}});
+ const elements=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro','loop03LuzesHoraIntegrado','loop03Giros24Integrado','loop03NumeroIntegrado'].map(id=>[id,{textContent:''}]));
+ const context={window:{setInterval:()=>1},document:{hidden:false},Date,Math,Number,String,Object};
+ vm.runInNewContext(ler('shared/visor-catraca.js'),context);
+ const visor=context.window.LoopVisorCatraca.criar({elemento:id=>elements[id]});
+ visor.registrarAgenda({fluxoControlado:{ativa:false,modo:'PROGRAMADO',eventos:3,total:3,metaCentrosDia:0,agoraServidorMs:agora,programacao:{encerrada:false,executadas:0,previstas:0},contadores:{eventosHoje:0,ciclosHoje:0}}});
+ assert.equal(elements.loop03NumeroIntegrado.textContent,'3 / 6');
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
+ assert.equal(elements.tituloRelogioTabuleiro.textContent,'AGUARDANDO START');
+});
+
+
+test('motor definitivo exibe somente eventos registrados, nunca a projeção do horário',()=>{
+ const agora=Date.now();
+ const elements=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro','loop03LuzesHoraIntegrado','loop03Giros24Integrado','loop03NumeroIntegrado'].map(id=>[id,{textContent:''}]));
+ const context={window:{setInterval:()=>1},document:{hidden:false,body:{classList:{contains:()=>true}}},Date,Math,Number,String,Object};
+ vm.runInNewContext(ler('shared/visor-catraca.js'),context);
+ const visor=context.window.LoopVisorCatraca.criar({elemento:id=>elements[id]});
+ visor.registrarAgenda({origem:'CATRACA_REAL_MESMO_SQLITE',luzesDoRelogioCompartilhado:true,modoExecucao:'AGENDADA',agoraServidorMs:agora,eventosReaisNoCiclo:3,luzesRelogioHoje:90,placarExecucao:{eventosHoje:0,previstasHoje:0,ciclosHoje:0,autorizada:false}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
+ assert.equal(elements.loop03NumeroIntegrado.textContent,'3 / 6');
+ assert.equal(elements.loop03Giros24Integrado.textContent,'0');
+ assert.equal(elements.tituloRelogioTabuleiro.textContent,'EXECUÇÃO BLOQUEADA');
+});

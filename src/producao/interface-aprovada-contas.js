@@ -1270,20 +1270,21 @@
   tabuleiro.append(criar('h3','','TABULEIRO / RELÓGIO DO TEMPO'));
   // O dia de Brasília (00h-23h59) é a única referência de progresso.
   // Após completar seis luzes, 6/6 permanece até a primeira luz seguinte.
-  const luzesDia=relogio?.luzesRelogioHoje??null;
-  const progressoDia=registrados?eventos:luzesDia===null?eventos:
+  const execucao=relogio?.placarExecucao;
+  const luzesDia=execucao?.eventosHoje??relogio?.luzesRelogioHoje??null;
+  const progressoDia=registrados||execucao?eventos:luzesDia===null?eventos:
    (luzesDia===0?0:((luzesDia-1)%6)+1);
   tabuleiro.append(linha(
    metade('Eventos no ciclo',progressoDia+' / 6'),
    metade('Eventos acumulados',registrados?registrados.eventos24h:relogio?
-    relogio.luzesRelogioAcumuladas:'—')));
+    (execucao?.eventosHistorico??relogio.luzesRelogioAcumuladas):'—')));
   if(relogio)tabuleiro.append(criar('small','loop03-luzes-hoje',
    'Luzes acesas hoje: '+luzesDia));
   tabuleiro.append(linha(
    metade('Centros concluídos hoje',registrados?registrados.ciclosHoje:relogio?
-    relogio.ciclosRelogioHoje:'—'),
+    (execucao?.ciclosHoje??relogio.ciclosRelogioHoje):'—'),
    metade('Ciclos concluídos no total',registrados?registrados.ciclosHistorico:relogio?
-    relogio.ciclosRelogioAcumulados:'—')));
+    (execucao?.ciclosHistorico??relogio.ciclosRelogioAcumulados):'—')));
   destino.replaceChildren(filas,tabuleiro);
  }
  async function consultarFilaOperador(fila,pagina=0){
@@ -3348,6 +3349,34 @@
    const salvar=document.createElement('button');
    salvar.type='button';salvar.textContent='Salvar programação';
    rodape.prepend(salvar);
+   if(visualTesteModulo==='CATRACA'){
+    const iniciar=document.createElement('button');
+    iniciar.type='button';iniciar.textContent='START';
+    rodape.prepend(iniciar);
+    iniciar.addEventListener('click',async()=>{
+     // A programação precisa estar salva; START é uma autorização separada.
+     if(modo.value!==d.modo||inicio.value!==d.janelaInicio||fim.value!==d.janelaFim||
+        Number(meta.value)!==d.metaCentrosDia||(data.value||null)!==(d.metaDataAlvo||null)||
+        (limite.value.trim()===''?null:Number(limite.value))!==(d.limiteDiario??null)){
+      status.textContent='Salve a programação antes de liberar a catraca.';return;
+     }
+     if(d.modo==='PAUSADA'){status.textContent='Selecione o modo de execução e salve antes do START.';return;}
+     iniciar.disabled=true;
+     try{
+      const token=await obterCsrfOperadorReal();
+      const r=await fetch('/api/admin/loop/testes-modulos',{
+       method:'POST',credentials:'same-origin',cache:'no-store',
+       headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+       body:JSON.stringify({acao:'CATRACA_INICIAR',idOperacao:crypto.randomUUID()})
+      });
+      const x=await r.json();
+      if(!r.ok||x.catracaAtiva!==true)throw Error(x.erro||'START_NAO_CONFIRMADO');
+      status.textContent='START confirmado. Os eventos serão registrados nos horários programados.';
+      await carregarTabuleiroOperador();
+     }catch(e){status.textContent='START não executado: '+e.message;}
+     finally{iniciar.disabled=false;}
+    });
+   }
    salvar.addEventListener('click',async()=>{
     if(!conferir())return;
     const limiteRaw=limite.value.trim();
@@ -3392,7 +3421,7 @@
      status.textContent='Programação salva e confirmada no servidor: '+
       dataAgendaOperador(atual.metaDataAlvo)+' · '+atual.janelaInicio+'–'+
       atual.janelaFim+' · '+atual.metaCentrosDia+' centros ('+
-      (atual.metaCentrosDia*6)+' luzes). ';
+      (atual.metaCentrosDia*6)+' luzes). '+(visualTesteModulo==='CATRACA'?'Use START para liberar a execução, se estiver parada.':'');
      await carregarTabuleiroOperador();
     }catch(e){status.textContent='Alteração não realizada: '+e.message;}
     finally{salvar.disabled=false;}
@@ -3536,6 +3565,7 @@
     luzesDoRelogioOperador:false,...(x.financeiro?{fluxoControlado:{
      ativa:x.catracaAtiva,modo:x.financeiro.execucao?.modo,
      metaCentrosDia:controle.metaCentrosDia,metaDataAlvo:controle.metaDataAlvo,
+     programacao:x.financeiro.programacao,
      contadores:x.financeiro.contadores,
      abertura:controle.janelaInicio,fechamento:controle.janelaFim,
      motivo:x.financeiro.execucao?.motivo,
