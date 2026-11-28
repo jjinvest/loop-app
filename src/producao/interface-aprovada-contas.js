@@ -2845,7 +2845,7 @@
       typeof d.termos.texto!=='string'||d.termos.texto.length<100)
     throw Error('DOCUMENTOS_INVALIDOS');
    termos=d.termos;
-   termosTexto.textContent='Versão: '+termos.versao+'\n'+termos.texto;
+   termosTexto.textContent=(/^LOOP-TERMOS-CADASTRO-/.test(termos.versao)?'LOOP-TERMOS-CADASTRO':'Versão: '+termos.versao)+'\n'+termos.texto;
    botao.disabled=false;
   }).catch(()=>{
    detalhes.open=true;termosTexto.textContent='Termos indisponíveis. Tente atualizar a página.';
@@ -2923,7 +2923,7 @@
         typeof termos.versao!=='string'||!termos.versao||
         !/^[a-f0-9]{64}$/.test(termos.hash||''))
       throw Error('TERMOS_INDISPONIVEIS');
-     conteudo.textContent='Versão: '+termos.versao+'\n'+termos.texto;
+     conteudo.textContent=(/^LOOP-TERMOS-CADASTRO-/.test(termos.versao)?'LOOP-TERMOS-CADASTRO':'Versão: '+termos.versao)+'\n'+termos.texto;
      carregado=true;
     }).catch(()=>{
      conteudo.textContent='Termos indisponíveis nesta consulta. Tente novamente.';
@@ -4052,7 +4052,7 @@
        termos.texto.length<100||typeof termos.versao!=='string'||
        !/^[a-f0-9]{64}$/.test(termos.hash||''))
      throw Error('DOCUMENTOS_INVALIDOS');
-    termosAtuais=termos;documento.textContent='Versão: '+termos.versao+
+    termosAtuais=termos;documento.textContent=(/^LOOP-TERMOS-CADASTRO-/.test(termos.versao)?'LOOP-TERMOS-CADASTRO':'Versão: '+termos.versao)+
      '\\n'+termos.texto;enviar.disabled=false;
    }).catch(()=>{
     documento.textContent='Termos indisponíveis. Atualize a página.';
@@ -4145,9 +4145,9 @@
    if(tituloDocs)tituloDocs.textContent='Ler Termos de Uso e Privacidade';
    $('versaoTermosCadastro').hidden=false;
    $('versaoPrivacidadeCadastro').hidden=false;
-   $('versaoTermosCadastro').textContent='Versão: '+dados.termos.versao;
+   $('versaoTermosCadastro').textContent='LOOP-TERMOS-CADASTRO';
    $('textoTermosCadastro').textContent=dados.termos.texto;
-   $('versaoPrivacidadeCadastro').textContent='Versão: '+dados.privacidade.versao;
+   $('versaoPrivacidadeCadastro').textContent='LOOP-PRIVACIDADE-CADASTRO';
    $('textoPrivacidadeCadastro').textContent=dados.privacidade.texto;
    if(soLeitura||dados.cadastroAtivo===false){
     documentos=null;documentosHabilitados(false);

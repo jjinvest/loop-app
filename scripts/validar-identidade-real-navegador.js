@@ -950,6 +950,8 @@ async function main(){
    assert.equal(await cadastro.locator('#cadastroIndicador').inputValue(),
     nick.toLowerCase());
    assert.equal(await cadastro.locator('#cadastroIndicadorAviso').count(),0);
+   assert.equal(await cadastro.locator('#versaoTermosCadastro').textContent(),'LOOP-TERMOS-CADASTRO');
+   assert.equal(await cadastro.locator('#versaoPrivacidadeCadastro').textContent(),'LOOP-PRIVACIDADE-CADASTRO');
    assert.equal(await cadastro.locator('#documentosCadastroDetalhes summary')
     .innerText(),'Ler Termos de Uso e Privacidade');
    assert.equal(await cadastro.locator('#cadastroTermos').evaluate(el=>

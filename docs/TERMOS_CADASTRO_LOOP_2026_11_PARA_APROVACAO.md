@@ -1,8 +1,8 @@
 # Termos de Uso — Cadastro e convites LOOP 3.0
-**Versão proposta:** LOOP-TERMOS-CADASTRO-2026-11-v1
-**Escopo da versão:** cadastro e convites, sem habilitar transações comerciais, créditos ou pagamentos.
+LOOP-TERMOS-CADASTRO
+Cadastro e convites, sem habilitar transações comerciais, créditos ou pagamentos.
 
-**Responsável pelo serviço digital nesta etapa de cadastro:** Jonathan Vilela da Silva, pessoa natural. Identificação dos serviços: LOOP 3.0 (Escritório Virtual) e AKITEMM (Aqui Tem). Atendimento LOOP: jjinvest2024oficial@gmail.com. Atendimento da loja: akitemmoficiall@gmail.com. Nenhuma informação deste documento constitui comprovação de situação cadastral ativa de empresa ou autorização para atividade de pagamento.
+**Responsável pelo serviço digital nesta etapa de cadastro:** Jonathan Vilela da Silva, pessoa natural. Identificação dos serviços: LOOP 3.0 (Escritório Virtual) e AKITEMM (Loja Virtual). Atendimento LOOP: jjinvest2024oficial@gmail.com. Atendimento da loja: akitemmoficiall@gmail.com. Nenhuma informação deste documento constitui comprovação de situação cadastral ativa de empresa ou autorização para atividade de pagamento.
 
 ## 1. Escopo
 Estes Termos disciplinam a criação de conta pessoal no LOOP 3.0 e o uso dos links de convite. O cadastro compartilha a identidade de acesso entre o Escritório Virtual LOOP e a loja AKITEMM. A conta é individual; o titular deve fornecer dados próprios e verdadeiros, proteger sua senha e manter seus meios de contato atualizados.
