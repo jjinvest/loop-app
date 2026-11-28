@@ -3,18 +3,21 @@
 // checkout ou fila. Dados em SQLite real, isolados das contas de clientes.
 const {randomUUID}=require('node:crypto');
 const ID=/^[a-f0-9-]{36}$/;
-const CHAVES=['titulo','descricao','codigo','corDescricao','classificacao',
+const CHAVES=['titulo','descricao','codigo','produtoCriadoId','corDescricao','classificacao',
  'origem','fornecedorNome','fornecedorSku','fornecedorContato','categoria',
  'marca','precoNormal','precoPromocional','quantidade','entregaModo',
  'entregaUf','entregaMunicipios','entregaTaxa'];
 const MAX=Object.freeze({
- titulo:150,descricao:2000,codigo:80,corDescricao:120,classificacao:20,
+ titulo:150,descricao:2000,codigo:80,produtoCriadoId:80,corDescricao:120,classificacao:20,
  origem:32,fornecedorNome:90,fornecedorSku:80,fornecedorContato:160,
  categoria:70,marca:70,precoNormal:14,precoPromocional:14,quantidade:10,
  entregaModo:20,entregaUf:2,entregaMunicipios:1200,entregaTaxa:14
 });
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function validar(campos){
+ // Formulários antigos continuam legíveis sem alterar seus dados persistidos.
+ if(campos&&typeof campos==='object'&&!Array.isArray(campos)&&
+    !Object.hasOwn(campos,'produtoCriadoId'))campos={...campos,produtoCriadoId:''};
  if(!campos||Array.isArray(campos)||typeof campos!=='object'||
     Object.keys(campos).sort().join(',')!==CHAVES.slice().sort().join(','))
   falha('RASCUNHO_CAMPOS_INVALIDOS');
@@ -24,6 +27,8 @@ function validar(campos){
      /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(v))
    falha('RASCUNHO_CAMPO_INVALIDO_'+k);
  }
+ if(campos.produtoCriadoId!==''&&!/^[A-Za-z0-9_-]{1,80}$/.test(campos.produtoCriadoId))
+  falha('RASCUNHO_CAMPO_INVALIDO_produtoCriadoId');
  return Object.fromEntries(CHAVES.map(k=>[k,campos[k]]));
 }
 class RascunhosCadastroAkitemmSQLite{
