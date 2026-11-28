@@ -74,6 +74,14 @@ test('visor mostra previsão salva mesmo antes do START e contagem do livro, sem
  assert.equal(elementos.tituloRelogioTabuleiro.textContent,'CATRACA PAUSADA');
  assert.equal(elementos.loop03LuzesHoraIntegrado.textContent,'0 / 90');
  assert.equal(elementos.loop03Giros24Integrado.textContent,'0');
+ assert.equal(elementos.estadoRelogioTabuleiro.textContent,'Eventos: 0/6 luzes · 0/90 luzes');
+ for(const [meta,esperado] of [[3,'Eventos: 2/6 luzes · 8/18 luzes · 2026-11-28'],[0,'Eventos: 2/6 luzes · 2026-11-28']]){
+  v.registrarAgenda({agoraServidorMs:agora,fluxoControlado:{ativa:false,metaCentrosDia:meta,
+   metaDataAlvo:'2026-11-28',eventos:2,total:800,limite:1000,abertura:'08:00',fechamento:'10:00',
+   contadores:{eventosHoje:8,ciclosHoje:1}}});
+  assert.equal(elementos.estadoRelogioTabuleiro.textContent,esperado);
+ }
+
 });
 test('um marco novo não é confundido com intervalo mínimo entre consultas',()=>{
  const agenda={modo:'AUTOMATICA',janelaInicio:'02:00',janelaFim:'02:30',metaCentrosDia:15};

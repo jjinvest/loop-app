@@ -80,7 +80,7 @@ test('operador: 5 contemplados entre 9h e 18h acendem 6 LEDs a cada 18 minutos',
  x.visor.registrarAgenda(x.agenda());
  assert.deepEqual(x.luzes(),[false,false,false,false,false,false]);
  assert.equal(x.elements.relogioTabuleiroIntegrado.textContent,'18:00');
- assert.match(x.elements.estadoRelogioTabuleiro.textContent,/18 min\/luz/);
+ assert.match(x.elements.estadoRelogioTabuleiro.textContent,/Eventos: 0\/6 luzes · 0\/30 luzes/);
  x.mover('2026-11-21T09:17:59-03:00');
  assert.deepEqual(x.luzes(),[false,false,false,false,false,false]);
  x.mover('2026-11-21T09:18:00-03:00');
@@ -160,7 +160,7 @@ test('turno 22h–02h atravessa meia-noite e respeita data da programação',()=
  x.mover('2026-11-22T02:00:00-03:00');
  assert.deepEqual(x.luzes(),[false,false,false,false,false,false]);
  assert.equal(x.elements.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
- assert.match(x.elements.estadoRelogioTabuleiro.textContent,/12\/12 do dia/);
+ assert.match(x.elements.estadoRelogioTabuleiro.textContent,/12\/12 luzes/);
  x.visor.registrarAgenda(x.agenda({
   abertura:'22:00',fechamento:'02:00',
   meta:2,dataAlvo:'2026-11-20'

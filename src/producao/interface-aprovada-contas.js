@@ -1376,6 +1376,9 @@
        Number.isSafeInteger(d.totalProdutosVendidos)&&d.totalProdutosVendidos>=0)||
      d.fonte!=='SQLITE_COMERCIAL_REAL')
    throw Error('INDICADORES_COMERCIAIS_INVALIDOS');
+  const assinatura=JSON.stringify([d.totalClientes,d.totalProdutosVendidos]);
+  if(destino.dataset.assinaturaComercial===assinatura&&
+     destino.querySelectorAll('.loop03-resumo-contador').length===2)return;
   const cartao=(nome,valor)=>{
    const quadro=document.createElement('section');
    quadro.className='loop03-resumo-quadro loop03-resumo-contador';
@@ -1391,11 +1394,14 @@
    cartao('TOTAL DE CLIENTES',d.totalClientes),
    cartao('PRODUTOS VENDIDOS',d.totalProdutosVendidos)
   );
+  destino.dataset.assinaturaComercial=assinatura;
  }
+ let indicadoresComerciaisConsultando=false;
  async function carregarIndicadoresComerciaisOperador(){
-  if(!modoOperadorAtual)return;
+  if(!modoOperadorAtual||indicadoresComerciaisConsultando)return;
   const alvo=$('adminResumoComercial');if(!alvo)return;
-  alvo.textContent='Atualizando clientes e produtos do banco real…';
+  indicadoresComerciaisConsultando=true;
+  alvo.setAttribute('aria-busy','true');
   try{
    const r=await fetch('/api/admin/loop/indicadores-comerciais',{
     credentials:'same-origin',cache:'no-store'
@@ -1406,7 +1412,7 @@
   }catch(e){
    if(modoOperadorAtual)alvo.textContent=
     'Contadores comerciais indisponíveis: '+e.message;
-  }
+  }finally{indicadoresComerciaisConsultando=false;alvo.setAttribute('aria-busy','false');}
  }
  // O quadro geral e a ficha privada usam a mesma fonte financeira.
  async function carregarDistribuicaoFinanceira({nick=null,selecionado=()=>true}={}){

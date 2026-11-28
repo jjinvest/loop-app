@@ -268,7 +268,10 @@ test('agenda salva no SQLite reaparece nos dois visores antes de abrir, durante 
   for(const perfil of ['operador','cliente']){
    const painel=criarVisor(perfil,agenda,instante);
    assert.equal(painel.relogioTabuleiroIntegrado.textContent,esperado);
-   assert.match(painel.estadoRelogioTabuleiro.textContent,horario);
+   assert.match(painel.estadoRelogioTabuleiro.textContent,/Eventos: [0-6]\/6 luzes.*\/30 luzes/);
+   assert.doesNotMatch(painel.estadoRelogioTabuleiro.textContent,horario);
+   assert.ok(horario.source.endsWith(estado.janelaInicio+'–'+estado.janelaFim),'horários persistidos permanecem na configuração');
+   if(estado.metaDataAlvo)assert.match(painel.estadoRelogioTabuleiro.textContent,new RegExp(estado.metaDataAlvo));
   }
   assert.equal(estado.girosTotais,0);
   assert.equal(estado.eventosNoCiclo,0);

@@ -166,6 +166,13 @@
     if(contador.textContent!==mensagem)contador.textContent=mensagem;
    }
   }
+  function legendaPublica(ciclo,hoje,total,data){
+   const partes=['Eventos: '+(Number.isSafeInteger(ciclo)?ciclo:0)+'/6 luzes'];
+   if(Number.isSafeInteger(total)&&total>0)
+    partes.push((Number.isSafeInteger(hoje)?hoje:0)+'/'+total+' luzes');
+   if(data)partes.push(data);
+   return partes.join(' · ');
+  }
   function atualizarMarcadorCatraca(){
    const visor=$('relogioTabuleiroIntegrado');
    const titulo=$('tituloRelogioTabuleiro');
@@ -186,11 +193,8 @@
     titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'CATRACA PAUSADA':
      fluxo.motivo==='FORA_DO_HORARIO'?'FORA DO TURNO':
      fluxo.modo==='LIVRE'?'FLUXO DE VENDAS':'PRÓXIMA LUZ · EVENTO';
-    estado.textContent='Eventos: '+fluxo.eventos+'/6 luzes · '+fluxo.total+'/'+fluxo.limite+
-     (fluxo.abertura?' · '+fluxo.abertura+'–'+fluxo.fechamento:'')+
-     (Number.isSafeInteger(fluxo.metaCentrosDia)&&fluxo.metaCentrosDia>0?
-      ' · Meta: '+fluxo.metaCentrosDia+' centros / '+(fluxo.metaCentrosDia*6)+' luzes':'')+
-     (fluxo.metaDataAlvo?' · '+fluxo.metaDataAlvo:'');
+    estado.textContent=legendaPublica(fluxo.eventos,fluxo.contadores?.eventosHoje,
+     Number.isSafeInteger(fluxo.metaCentrosDia)?fluxo.metaCentrosDia*6:null,fluxo.metaDataAlvo);
     const luzesHoje=$('loop03LuzesHoraIntegrado'),ciclosHoje=$('loop03Giros24Integrado');
     if(luzesHoje&&Number.isSafeInteger(fluxo.contadores?.eventosHoje))
      luzesHoje.textContent=fluxo.contadores.eventosHoje+' / '+(fluxo.metaCentrosDia*6);
@@ -209,8 +213,6 @@
      const proxima=agenda.origem==='CATRACA_REAL_MESMO_SQLITE'&&
       (prevista===null||Number.isSafeInteger(prevista)&&prevista>agoraServidor)?
       prevista:visual.proxima;
-     const programacao=(meta?.dataAlvo?meta.dataAlvo+' · ':'')+
-      agenda.abertura+'–'+agenda.fechamento;
      if(visual.finalizado){
       visor.textContent='00:00';
       titulo.textContent='TURNO ENCERRADO';
@@ -223,18 +225,14 @@
       visor.textContent='00:00';
       titulo.textContent='LUZES DO TURNO COMPLETAS';
      }
-     estado.textContent='Eventos: '+visual.luzes+'/6 luzes · '+
-      visual.passadas+'/'+visual.total+' do dia · '+
-      Math.floor(visual.intervalo/60)+' min'+
-      (visual.intervalo%60?' '+visual.intervalo%60+' s':'')+
-      '/luz · execução visual · '+programacao;
+     estado.textContent=legendaPublica(visual.luzes,agenda.luzesRelogioHoje??visual.passadas,
+      meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
     }else{
      visor.textContent='--:--';
      titulo.textContent=modo==='STOP'||agenda?.pausaManual===true?
       'CATRACA PAUSADA':modo==='NATURAL'?'MODO MANUAL':'FORA DO TURNO';
-     estado.textContent=(meta?.dataAlvo?meta.dataAlvo+' · ':'')+
-      agenda.abertura+'–'+agenda.fechamento+
-      ' · Luzes do relógio aguardando horário e meta ativa';
+     estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.luzesRelogioHoje,
+      meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
     }
     return;
    }
@@ -249,39 +247,22 @@
      visor.textContent=String(Math.floor(segundos/60)).padStart(2,'0')+
       ':'+String(segundos%60).padStart(2,'0');
      titulo.textContent='PRÓXIMA LUZ · PREVISÃO';
-     const intervalo=meta?.intervaloLuzSegundos;
-    const descricaoIntervalo=Number.isSafeInteger(intervalo)&&intervalo>0?
-     Math.floor(intervalo/60)+' min'+(intervalo%60?
-      ' '+intervalo%60+' s':'')+'/luz':'horario a confirmar';
-    estado.textContent=meta?.ativa===true?
-     meta.exigeCaixaReal===true?
-      'Meta '+meta.quantidade+' centro(s) · '+descricaoIntervalo+
-      ' · exige caixa real comprovado':
-      'Meta '+meta.quantidade+' ciclos · '+Math.round(
-       meta.intervaloLuzSegundos/60)+' min/luz · depende de vendas':
-     'Janela programada · depende de vendas';
+     estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.luzesRelogioHoje,
+      meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
      return;
     }
     titulo.textContent='JANELAS DO TURNO';
     visor.textContent='--:--';
-    estado.textContent='Aguardando novo horário ou vendas conciliadas';
+    estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.luzesRelogioHoje,meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
     return;
    }
    visor.textContent='--:--';
-   if(modo==='STOP'||agenda?.pausaManual===true){
-    titulo.textContent='CATRACA PAUSADA';
-    estado.textContent='Pelo administrador';
-   }else if(modo==='NATURAL'){
-    titulo.textContent='FLUXO NATURAL';
-    estado.textContent='Sem contagem regressiva';
-   }else if(modo==='AGENDADA'){
-    titulo.textContent='FORA DO TURNO';
-    estado.textContent=(agenda.abertura||'09:00')+'–'+
-     (agenda.fechamentoAplicado||agenda.fechamento||'18:00');
-   }else{
-    titulo.textContent='AGUARDANDO AGENDA';
-    estado.textContent='A catraca não tem janela ativa';
-   }
+   if(modo==='STOP'||agenda?.pausaManual===true)titulo.textContent='CATRACA PAUSADA';
+   else if(modo==='NATURAL')titulo.textContent='FLUXO NATURAL';
+   else if(modo==='AGENDADA')titulo.textContent='FORA DO TURNO';
+   else titulo.textContent='AGUARDANDO AGENDA';
+   estado.textContent=legendaPublica(agenda?.eventosReaisNoCiclo,agenda?.luzesRelogioHoje,
+    meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
   }
   function registrarAgendaNoMarcador(agenda){
    agendaVisorCatraca=agenda&&typeof agenda==='object'?agenda:null;

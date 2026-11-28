@@ -116,3 +116,33 @@ test('somente operador recebe novas rotas, sem acesso público e sem alterar o m
  assert.doesNotMatch(chamada,/\bpedidosComerciais\b/,
   'o histórico de leitura não deve ser passado como contabilidade de escrita');
 });
+test('consulta lenta não remove cartões, não pisca texto e não duplica requisição',async()=>{
+ const vm=require('node:vm');
+ const ui=fs.readFileSync(path.join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
+ const trecho=ui.slice(ui.indexOf(' function mostrarResumoComercialOperador('),ui.indexOf(' // O quadro geral e a ficha privada'));
+ class No{
+  constructor(){this.children=[];this.dataset={};this.attrs={};this.text='';}
+  set textContent(v){this.text=v;this.children=[];}
+  get textContent(){return this.text;}
+  append(...n){this.children.push(...n);}
+  replaceChildren(...n){this.children=n;}
+  querySelectorAll(){return this.children;}
+  setAttribute(k,v){this.attrs[k]=v;}
+ }
+ const alvo=new No();let n=0,soltar;
+ const dados={fonte:'SQLITE_COMERCIAL_REAL',totalClientes:2,totalProdutosVendidos:0};
+ const resposta=d=>({ok:true,json:async()=>d});
+ const ctx={modoOperadorAtual:true,$:()=>alvo,document:{createElement:()=>new No()},
+  fetch:async()=>{n++;return n===2?new Promise(r=>{soltar=r;}):resposta(dados);},Number,JSON};
+ vm.runInNewContext(trecho+';this.atualizar=carregarIndicadoresComerciaisOperador;',ctx);
+ await ctx.atualizar();const cards=[...alvo.children];
+ const pendente=ctx.atualizar();
+ assert.equal(alvo.children[0],cards[0],'cartão continua visível durante HTTP pendente');
+ assert.equal(alvo.textContent,'','nenhuma frase transitória é colocada no resumo');
+ await ctx.atualizar();assert.equal(n,2,'consulta sobreposta é ignorada');
+ soltar(resposta(dados));await pendente;
+ assert.equal(alvo.children[0],cards[0],'mesmos dados preservam o nó e o layout');
+ ctx.fetch=async()=>resposta({...dados,totalProdutosVendidos:1});await ctx.atualizar();
+ assert.notEqual(alvo.children[0],cards[0],'dado alterado é representado');
+ assert.equal(alvo.attrs['aria-busy'],'false');
+});

@@ -738,6 +738,22 @@ async function main(){
     .nth(1).waitFor({state:'visible'});
    await operadorPage.locator('#adminResumoComercial .loop03-resumo-contador')
     .nth(1).waitFor({state:'visible'});
+   await operadorPage.evaluate(()=>{window.cartoesComerciaisProva=[...document.querySelectorAll('#adminResumoComercial .loop03-resumo-contador')];});
+   let sinalizarConsulta;
+   const consultaIniciada=new Promise(r=>{sinalizarConsulta=r;});
+   const rotaIndicadores='**/api/admin/loop/indicadores-comerciais';
+   await operadorPage.route(rotaIndicadores,async rota=>{
+    sinalizarConsulta();await new Promise(r=>setTimeout(r,400));await rota.continue();
+   });
+   await Promise.all([consultaIniciada,operadorPage.locator('#adminAtualizarPosicoes').click()]);
+   const cartoesPreservados=()=>operadorPage.evaluate(()=>{
+    const atuais=[...document.querySelectorAll('#adminResumoComercial .loop03-resumo-contador')];
+    return atuais.length===2&&atuais.every((el,i)=>el===window.cartoesComerciaisProva[i]);
+   });
+   assert.equal(await cartoesPreservados(),true,'a consulta pendente não substitui os cartões por texto');
+   await operadorPage.waitForFunction(()=>document.getElementById('adminResumoComercial').getAttribute('aria-busy')==='false');
+   assert.equal(await cartoesPreservados(),true,'mesmos dados não recriam os cartões');
+   await operadorPage.unroute(rotaIndicadores);
    const quadrosPosicoesOperador=await operadorPage.evaluate(()=>{
     const ler=seletor=>[...document.querySelectorAll(seletor)].map(el=>({
      left:el.getBoundingClientRect().left,top:el.getBoundingClientRect().top,
