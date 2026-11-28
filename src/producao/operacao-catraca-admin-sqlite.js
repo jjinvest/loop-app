@@ -326,7 +326,7 @@ class OperacaoCatracaAdminSQLite{
    caixa.estado==='AUTORIZADA'&&metaAplicavel&&meta.centrosDia>0&&
    caixa.metaCentros===meta.centrosDia&&caixa.abertura===p.inicio&&
    caixa.fechamento===p.fim;
-  const motor=this.motor.consultar();
+  const motor=this.motor.consultar({agoraMs:tempo.ts});
   const dentro=dentroJanela(tempo.hora,p.inicio,p.fim);
   const dentroDaMeta=metaAplicavel&&meta.centrosDia>0&&
    girosDia<meta.centrosDia;
@@ -370,6 +370,7 @@ class OperacaoCatracaAdminSQLite{
    fuso:FUSO,horarioPermitido:dentro,
    limiteNaoAtingido:permitido,
    metaNaoAtingida:metaAplicavel&&meta.centrosDia>girosDia,
+   contadores:motor.contadores,
    eventosNoCiclo:motor.tabuleiro.eventosNoCiclo,
    ciclosConcluidos:motor.tabuleiro.ciclosConcluidos,
    girosTotais:motor.catraca.giros,

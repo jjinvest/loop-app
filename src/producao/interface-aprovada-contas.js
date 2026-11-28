@@ -1270,12 +1270,12 @@
   tabuleiro.append(criar('h3','','TABULEIRO / RELÓGIO DO TEMPO'));
   // O dia de Brasília (00h-23h59) é a única referência de progresso.
   // Após completar seis luzes, 6/6 permanece até a primeira luz seguinte.
-  const luzesDia=relogio?.luzesRelogioHoje??null;
+  const luzesDia=registrados?.eventosHoje??relogio?.luzesRelogioHoje??null;
   const progressoDia=registrados?eventos:luzesDia===null?eventos:
    (luzesDia===0?0:((luzesDia-1)%6)+1);
   tabuleiro.append(linha(
    metade('Eventos no ciclo',progressoDia+' / 6'),
-   metade('Eventos acumulados',registrados?registrados.eventos24h:relogio?
+   metade('Eventos acumulados',registrados?(registrados.eventosHistorico??'—'):relogio?
     relogio.luzesRelogioAcumuladas:'—')));
   if(relogio)tabuleiro.append(criar('small','loop03-luzes-hoje',
    'Luzes acesas hoje: '+luzesDia));
@@ -1726,12 +1726,9 @@
    const f=d.catraca?.financeiro;
    cenarioDisponivel=d.fonte==='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'&&
     f?.origem==='RECEBIMENTOS_FICTICIOS_SQLITE'&&f.financeiroReal===false;
-   if(cenarioDisponivel&&f.saldoCentavos>=25000){
-    visualTesteModulo='CATRACA';
-    atualizarSeletorCenarioOperador();
-    $('abaTabuleiro')?.click();
-    void carregarTabuleiroOperador();
-   }else atualizarSeletorCenarioOperador();
+   // Descobrir uma bancada preservada não troca a fonte operacional.
+   // Conferência só pode ser aberta pelo comando explícito existente.
+   atualizarSeletorCenarioOperador();
   }catch{/* Sem fonte confirmada, manter a operação comercial. */}
  }
  function abrirPainelOperador(){

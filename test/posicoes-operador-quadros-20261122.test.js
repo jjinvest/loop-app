@@ -126,9 +126,9 @@ test('operador tem 2 quadros lado a lado com metades; cliente só total A',()=>{
 
  test('painel do lote mostra contadores registrados e não exige projeção visual de agenda',()=>{
  const d=estado();delete d.relogio;d.tabuleiro={eventosNoCiclo:4,ciclosConcluidos:15};
- d.contadores={eventosHoje:94,eventos24h:100,ciclosHoje:15,ciclosHistorico:20};
+ d.contadores={eventosHistorico:126,eventosHoje:94,eventos24h:100,ciclosHoje:15,ciclosHistorico:20};
  const painel=executar(d).children[1];
- assert.deepEqual(valores(painel.children[1]),[['Eventos no ciclo','4 / 6'],['Eventos acumulados','100']]);
+ assert.deepEqual(valores(painel.children[1]),[['Eventos no ciclo','4 / 6'],['Eventos acumulados','126']]);
  assert.deepEqual(valores(painel.children[2]),[['Centros concluídos hoje','15'],['Ciclos concluídos no total','20']]);
  assert.throws(()=>executar({...d,contadores:{...d.contadores,eventos24h:-1}}),/RESUMO_LIVRO_INVALIDO/);
 });

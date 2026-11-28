@@ -35,6 +35,7 @@ function projetarAgendaTabuleiroCompartilhada(estado){
  // Contagens dessa agenda não são eventos financeiros ou ciclos concluídos.
  return Object.freeze({
   origem:'CATRACA_REAL_MESMO_SQLITE',
+  contadores:estado.contadores??null,
   somenteLeitura:true,financeiroReal:false,
   modoExecucao:estado.modo==='PAUSADA'?'STOP':
    estado.metaCentrosDia>0?'AGENDADA':'NATURAL',

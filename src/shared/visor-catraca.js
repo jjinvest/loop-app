@@ -97,8 +97,9 @@
     const bola=$('motorBolinha'+i);
     if(!bola)continue;
     // Ao encerrar, apagar LEDs, preservando os totais no placar.
-    const ligada=compartilhado&&valido&&!estado.finalizado&&i<=estado.luzes;
-    const lampadaAtual=ligada&&!estado.finalizado&&estado.luzes>0&&i===estado.luzes;
+    const ligada=agendaVisorCatraca?.contadores?i<=eventos:
+     compartilhado&&valido&&!estado.finalizado&&i<=estado.luzes;
+    const lampadaAtual=ligada&&estado&&!estado.finalizado&&estado.luzes>0&&i===estado.luzes;
     bola.classList.toggle('loop03-relogio-luz-visual',ligada);
     // A lâmpada alcançada pelo próximo marco do relógio pulsa enquanto
     // o turno está ativo. As anteriores permanecem acesas; a próxima
@@ -106,7 +107,7 @@
     bola.classList.toggle('loop03-relogio-luz-atual',lampadaAtual);
     if(compartilhado)bola.classList.toggle('loop03-marcador-aceso',
      ligada||i<=eventos);
-    if(ligada&&!estado.finalizado&&chave!==ultimaJanelaVisual&&
+    if(ligada&&estado&&!estado.finalizado&&chave!==ultimaJanelaVisual&&
        i===estado.luzes&&ultimaJanelaVisual!==null&&
        !document.hidden&&$('conteudoTabuleiro')?.hidden===false){
      bola.classList.remove('loop03-pulso-luz');
@@ -127,8 +128,9 @@
     // os registros do dia; o cronômetro local só estima a próxima luz.
     const hoje=agendaVisorCatraca?.luzesRelogioHoje;
     const fonteDia=Number.isSafeInteger(hoje)&&hoje>=0;
-    const luzesDia=fonteDia?hoje:(valido?estado.passadas:null);
-    const centrosDia=fonteDia?Math.floor(hoje/6):
+    const registros=agendaVisorCatraca?.contadores;
+    const luzesDia=registros?registros.eventosHoje:fonteDia?hoje:(valido?estado.passadas:null);
+    const centrosDia=registros?registros.ciclosHoje:fonteDia?Math.floor(hoje/6):
      (valido?Math.floor(estado.passadas/6):null);
     const pulsosMeta=agendaVisorCatraca?.metaLotes?.quantidade;
     // Sem meta salva no relógio, mostrar zero; não reutilizar 60.
@@ -142,7 +144,8 @@
     if(luzes24h)luzes24h.textContent=luzesDia===null?'—':
      luzesDia+' / '+(totalMeta===null?'—':totalMeta);
     if(operadorAberto&&selecionada&&luzesDia!==null){
-     selecionada.textContent=(luzesDia===0?0:((luzesDia-1)%6)+1)+' / 6';
+     selecionada.textContent=(registros?agendaVisorCatraca.eventosReaisNoCiclo:
+      (luzesDia===0?0:((luzesDia-1)%6)+1))+' / 6';
      const titulo=selecionada.parentElement?.querySelector?.('small');
      if(titulo)titulo.textContent='EVENTOS NO CICLO';
     }
@@ -234,13 +237,13 @@
       visor.textContent='00:00';
       titulo.textContent='LUZES DO TURNO COMPLETAS';
      }
-     estado.textContent=legendaPublica(visual.luzes,agenda.luzesRelogioHoje??visual.passadas,
+     estado.textContent=legendaPublica(agenda.contadores?agenda.eventosReaisNoCiclo:visual.luzes,agenda.contadores?.eventosHoje??agenda.luzesRelogioHoje??visual.passadas,
       meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
     }else{
      visor.textContent='--:--';
      titulo.textContent=modo==='STOP'||agenda?.pausaManual===true?
       'CATRACA PAUSADA':modo==='NATURAL'?'MODO MANUAL':'FORA DO TURNO';
-     estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.luzesRelogioHoje,
+     estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.contadores?.eventosHoje??agenda.luzesRelogioHoje,
       meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
     }
     return;
@@ -256,13 +259,13 @@
      visor.textContent=String(Math.floor(segundos/60)).padStart(2,'0')+
       ':'+String(segundos%60).padStart(2,'0');
      titulo.textContent='PRÓXIMA LUZ · PREVISÃO';
-     estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.luzesRelogioHoje,
+     estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.contadores?.eventosHoje??agenda.luzesRelogioHoje,
       meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
      return;
     }
     titulo.textContent='JANELAS DO TURNO';
     visor.textContent='--:--';
-    estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.luzesRelogioHoje,meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
+    estado.textContent=legendaPublica(agenda.eventosReaisNoCiclo,agenda.contadores?.eventosHoje??agenda.luzesRelogioHoje,meta?.quantidade>0?meta.quantidade*6:null,meta?.dataAlvo);
     return;
    }
    visor.textContent='--:--';
