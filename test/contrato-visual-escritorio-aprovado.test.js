@@ -265,7 +265,7 @@ test('saque por posição usa saldo da posição atual e mantém total agregado 
  };
  const fontes=[
   {nome:'finAtualizar',codigo:extrair(previa,'async function finAtualizar(){','async function finSolicitar(','finAtualizar'),tipo:'previa'},
-  {nome:'carregarFinanceiroReal',codigo:extrair(real,'async function carregarFinanceiroReal(){','async function finHistoricoReal(){','carregarFinanceiroReal'),tipo:'real'}
+  {nome:'carregarFinanceiroReal',codigo:extrair(real,'async function carregarFinanceiroReal(','async function finHistoricoReal(','carregarFinanceiroReal'),tipo:'real'}
  ];
  const base={
   origem:'LIVRO_FINANCEIRO_REAL',saqueRealHabilitado:false,
@@ -281,9 +281,11 @@ test('saque por posição usa saldo da posição atual e mantém total agregado 
   ]){
    const dados={...base,posicaoSelecionadaId:servidorId,saldosLiberados};
    const ids=['finIndicadosValidos','finSaldoBonus','finSaldoSelecionado',
-    'finSaldoPosicoes','finBonusSaque','finPosicoesSaque','estadoFinanceiro'];
+    'finSaldoPosicoes','finBonusSaque','finPosicoesSaque','estadoFinanceiro','conteudoFinanceiro'];
    const elementos=Object.fromEntries(ids.map(id=>[id,{textContent:''}]));
+   elementos.conteudoFinanceiro.hidden=false;
    const contexto={
+    modoOperadorAtual:false,
     $:id=>{assert.ok(elementos[id],'elemento '+id);return elementos[id];},
     posicoesDisponiveisResumo:[{numero:101}],
     posicaoSelecionadaMotor:escolhida,
