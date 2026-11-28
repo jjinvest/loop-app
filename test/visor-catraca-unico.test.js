@@ -72,7 +72,7 @@ test('visor celebra somente os tres eventos novos do titular, sem inventar venda
    intervaloLuzSegundos:540,proximaLuzPrevistaEmMs:agora+540000}
  });
  assert.match(elements.relogioTabuleiroIntegrado.textContent,/^0[89]:[0-5][0-9]$/);
- assert.match(elements.estadoRelogioTabuleiro.textContent,/depende de vendas/);
+ assert.equal(elements.estadoRelogioTabuleiro.textContent,'Eventos: 0/6 luzes · 0/60 luzes');
  assert.equal(area.children.length,0);
  for(let i=1;i<=6;i++){
   visor.observar(5,i,origem);
@@ -120,9 +120,7 @@ test('contador do OPERADOR renderiza 90 min por luz em um centro sem criar event
    proximaLuzPrevistaEmMs:agora+5400000,exigeCaixaReal:true}
  });
  assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'90:00');
- assert.match(elementos.estadoRelogioTabuleiro.textContent,/1 centro/);
- assert.match(elementos.estadoRelogioTabuleiro.textContent,/90 min\/luz/);
- assert.match(elementos.estadoRelogioTabuleiro.textContent,/caixa real comprovado/);
+ assert.equal(elementos.estadoRelogioTabuleiro.textContent,'Eventos: 0/6 luzes · 0/6 luzes');
  assert.doesNotMatch(elementos.estadoRelogioTabuleiro.textContent,/depende de vendas/);
  visor.registrarAgenda({modoExecucao:'STOP',pausaManual:true});
  assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'--:--');
@@ -132,6 +130,6 @@ test('contador do OPERADOR renderiza 90 min por luz em um centro sem criar event
  test('visor do evento mantém os cálculos e usa os rótulos aprovados',()=>{
  const source=ler('shared/visor-catraca.js');
  assert.ok(source.includes("titulo.textContent='PRÓXIMA LUZ · EVENTO'"));
- assert.ok(source.includes("estado.textContent='Eventos: '+visual.luzes+'/6 luzes · '"));
- assert.ok(source.includes("visual.passadas+'/'+visual.total+' do dia · '"));
+ assert.ok(source.includes("estado.textContent=legendaPublica(visual.luzes"));
+ assert.ok(source.includes("meta?.quantidade>0?meta.quantidade*6:null"));
  });

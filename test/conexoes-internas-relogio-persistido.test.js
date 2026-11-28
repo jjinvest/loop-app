@@ -46,7 +46,7 @@ test('configuração salva antes da abertura persiste em disco e chega igual aos
  for(const perfil of [false,true]){
   const tela=visor(projetarAgendaTabuleiroCompartilhada(lido),perfil);
   assert.equal(tela.relogioTabuleiroIntegrado.textContent,'66:00');
-  assert.match(tela.estadoRelogioTabuleiro.textContent,/09:00–12:00/);
+  assert.equal(tela.estadoRelogioTabuleiro.textContent,'Eventos: 0/6 luzes · 0/30 luzes · 2026-11-27');
  }
  // Uma data futura conserva o intervalo salvo, sem autorizar a execução hoje.
  salvo=salvar({metaDataAlvo:'2026-11-28'});
