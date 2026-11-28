@@ -4537,7 +4537,7 @@
   if(entradaPelaLoja&&s.aceiteDocumentosDefinitivosPendente!==true)
    location.assign('/loja');
  }).catch(()=>{
-  if(entradaPelaLoja&&parametrosEntrada.get('cadastro')==='1'){
+  if(indicadorNick||(entradaPelaLoja&&parametrosEntrada.get('cadastro')==='1')){
    mostrarLogin('cadastro');
    void carregarDocumentos();
   }else mostrarLogin('login');
