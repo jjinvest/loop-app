@@ -187,7 +187,16 @@
    // A visão controlada usa apenas os marcos persistidos do lote.
    const fluxo=agenda?.fluxoControlado;
    if(fluxo&&Number.isSafeInteger(fluxo.eventos)&&Number.isSafeInteger(fluxo.total)){
-    const segundos=Number.isSafeInteger(fluxo.proximoEmMs)?
+    // LEDs e placar são projeções do mesmo evento persistido, inclusive
+    // quando a atualização veio da aba Posições e não do Tabuleiro.
+    for(let i=1;i<=6;i++){
+     const bola=$('motorBolinha'+i);
+     if(bola)bola.classList.toggle('loop03-marcador-aceso',i<=fluxo.eventos);
+    }
+    // Uma previsão de agenda não é um pulso autorizado. Enquanto o
+    // operador não iniciou, o visor não promete um evento ao chegar a zero.
+    const pausada=!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA';
+    const segundos=!pausada&&Number.isSafeInteger(fluxo.proximoEmMs)?
      Math.max(0,Math.ceil((fluxo.proximoEmMs-(fluxo.agoraServidorMs+Date.now()-leituraVisorCatracaEm))/1000)):null;
     visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
     titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'CATRACA PAUSADA':

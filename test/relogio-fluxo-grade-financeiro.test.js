@@ -60,7 +60,7 @@ test('a programação 02h–02h30 de 15 centros governa 90 lançamentos, reiníc
  assert.equal(bancada.consultar().catraca.financeiro.eventos,n);
  assert.equal(livro.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
-test('visor mostra previsão salva mesmo antes do START e contagem do livro, sem acender eventos previstos',()=>{
+test('visor pausado conserva meta e contagem do livro sem contar para um evento não autorizado',()=>{
  const elementos=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro',
   'motorContadorEventos','loop03LuzesHoraIntegrado','loop03Giros24Integrado'].map(k=>[k,{textContent:''}]));
  const agora=ms('2026-11-28T01:51:00');
@@ -70,7 +70,7 @@ test('visor mostra previsão salva mesmo antes do START e contagem do livro, sem
  v.registrarAgenda({agoraServidorMs:agora,fluxoControlado:{ativa:false,modo:'PROGRAMADO',metaCentrosDia:15,
   proximoEmMs:ms('2026-11-28T02:00:20'),agoraServidorMs:agora,abertura:'02:00',fechamento:'02:30',
   eventos:0,total:0,limite:1000,contadores:{eventosHoje:0,ciclosHoje:0}}});
- assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'09:20');
+ assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'--:--');
  assert.equal(elementos.tituloRelogioTabuleiro.textContent,'CATRACA PAUSADA');
  assert.equal(elementos.loop03LuzesHoraIntegrado.textContent,'0 / 90');
  assert.equal(elementos.loop03Giros24Integrado.textContent,'0');
@@ -88,6 +88,67 @@ test('um marco novo não é confundido com intervalo mínimo entre consultas',()
  const base=ms('2026-11-28T02:00:00');
  assert.equal(avaliarExecucaoDistribuicao({agenda,ativa:true,agoraMs:base+40100,ultimoEventoEm:base+20900}).podeExecutar,true);
  assert.equal(avaliarExecucaoDistribuicao({agenda,ativa:true,agoraMs:base+40900,ultimoEventoEm:base+40100}).podeExecutar,false);
+});
+test('08–10: relógio, seis luzes e giro leem os mesmos eventos; pausa não promete nem produz pulso',t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ let agora=ms('2026-11-28T08:00:00');
+ const agenda={modo:'AUTOMATICA',janelaInicio:'08:00',janelaFim:'10:00',metaCentrosDia:15};
+ const lote=new BancadaModulosLoopSQLite({banco:db,agora:()=>agora,consultarAgenda:()=>agenda});
+ lote.comandar({acao:'CATRACA_PREPARAR_1000',idOperacao:'preparar-primeiro-bloco'});
+ const elementos=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro',
+  'motorContadorEventos','loop03LuzesHoraIntegrado','loop03Giros24Integrado'].map(k=>[k,{textContent:''}]));
+ for(let i=1;i<=6;i++){
+  const classes=new Set();elementos['motorBolinha'+i]={classList:{
+   toggle:(nome,ativo)=>ativo?classes.add(nome):classes.delete(nome),
+   contains:nome=>classes.has(nome)}};
+ }
+ const ctx={window:{},document:{hidden:false},Date:class extends Date{static now(){return agora;}},Intl,Math,Number,String,Object,setTimeout:()=>1,clearTimeout:()=>{}};
+ vm.runInNewContext(readFileSync(join(__dirname,'../src/shared/visor-catraca.js'),'utf8'),ctx);
+ const visor=ctx.window.LoopVisorCatraca.criar({elemento:k=>elementos[k]});
+ const exibir=()=>{
+  const x=lote.consultar().catraca,f=x.financeiro;
+  visor.registrarAgenda({agoraServidorMs:agora,fluxoControlado:{ativa:x.catracaAtiva,
+   motivo:f.execucao.motivo,modo:f.execucao.modo,metaCentrosDia:15,
+   proximoEmMs:f.execucao.proximaLuzPrevistaEmMs,agoraServidorMs:agora,
+   eventos:x.tabuleiro.eventosNoCiclo,total:f.eventos,contadores:f.contadores}});
+  return x;
+ };
+ exibir();assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'--:--');
+ agora+=80000;assert.equal(lote.processarRelogio().processado,false);
+ assert.equal(exibir().financeiro.eventos,0);
+ lote.comandar({acao:'CATRACA_INICIAR',idOperacao:'start-apenas-base-isolada'});
+ const primeiro=exibir().tabuleiro.centroPosicao;
+ assert.ok(primeiro);assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'01:20');
+ for(let i=1;i<=6;i++){
+  agora+=80000;
+  assert.equal(lote.processarRelogio().processado,true);
+  assert.equal(lote.processarRelogio().processado,false);
+  const x=exibir();
+  assert.equal(x.financeiro.contadores.eventosHoje,i);
+  assert.equal(elementos.loop03LuzesHoraIntegrado.textContent,i+' / 90');
+  assert.match(elementos.estadoRelogioTabuleiro.textContent,new RegExp('Eventos: '+(i%6)+'/6 luzes'));
+  assert.equal(x.tabuleiro.giros,Math.floor(i/6));
+  assert.equal(elementos.loop03Giros24Integrado.textContent,String(Math.floor(i/6)));
+  for(let n=1;n<=6;n++)assert.equal(elementos['motorBolinha'+n].classList.contains('loop03-marcador-aceso'),n<=i%6);
+ }
+ const depois=exibir();assert.notEqual(depois.tabuleiro.centroPosicao.numero,primeiro.numero);
+ assert.equal(depois.financeiro.saldoCentavos,25000000-6*25000);
+ lote.comandar({acao:'CATRACA_PAUSAR',idOperacao:'pausa-apenas-base-isolada'});
+ agora+=80000;assert.equal(lote.processarRelogio().processado,false);
+ assert.equal(exibir().financeiro.eventos,6);
+ assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'--:--');
+ assert.equal(elementos.tituloRelogioTabuleiro.textContent,'CATRACA PAUSADA');
+});
+test('Posições e Tabuleiro atualizam o mesmo visor do lote, sem depender de trocar de aba',()=>{
+ const fonte=readFileSync(join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
+ const pos=fonte.slice(fonte.indexOf(' async function carregarAbaOperador('),fonte.indexOf(' function conferirSaldoCompartilhado('));
+ assert.match(pos,/registrarFluxoDistribuicao\(x,controle\)/);
+ const tab=fonte.slice(fonte.indexOf(' async function carregarTabuleiroTesteOperador('),fonte.indexOf(' async function carregarTabuleiroOperador('));
+ assert.match(tab,/registrarFluxoDistribuicao\(x,controle\)/);
+ const helper=fonte.slice(fonte.indexOf(' function registrarFluxoDistribuicao('),fonte.indexOf(' let leituraTabuleiroTesteEmCurso='));
+ assert.match(helper,/eventos:x\.tabuleiro\.eventosNoCiclo/);
+ assert.match(helper,/contadores:x\.financeiro\.contadores/);
+ assert.doesNotMatch(helper,/CATRACA_INICIAR|method:'POST'/);
 });
 test('livro da Distribuição roteia roxos, pretos e seis eventos da dourada, conservando cofres e reserva dos bônus',t=>{
  const db=new DatabaseSync(':memory:');t.after(()=>db.close());
