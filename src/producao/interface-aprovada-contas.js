@@ -519,7 +519,6 @@
    conteudoPosicoes:[
     '<h2>Posições e filas · Operador</h2>',
     '<div id="adminResumoPosicoes" class="loop03-resumo-duplo" role="status" aria-live="polite">Consultando filas do servidor…</div>',
-    '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarPosicoes">Atualizar posições</button><a href="/administrador">Gerenciar na Central</a></div>',
     '<div id="adminResumoComercial" class="loop03-resumo-duplo loop03-resumo-comercial" role="status" aria-live="polite">Consultando clientes e produtos vendidos…</div>',
     '<section id="adminDouradasOperador" class="loop03-douradas-painel" aria-label="Posições douradas e azuis">',
     '<h3>CONTROLE DE BOLAS DOURADAS</h3>',
@@ -529,7 +528,7 @@
     '<label for="adminDouradasMotivo">Motivo da criação (auditado)</label>',
     '<input id="adminDouradasMotivo" minlength="8" maxlength="200" required placeholder="Ex.: reserva empresarial autorizada">',
     '<button type="submit" id="adminDouradasBotao">Criar posição dourada</button>',
-    '<p id="adminDouradasMensagem" role="status" aria-live="polite">Criação operacional: não debita caixa e não faz pagamento.</p>',
+    '<p id="adminDouradasMensagem" role="status" aria-live="polite"></p>',
     '</form>',
     '<div class="loop03-douradas-lado" aria-live="polite">',
     '<h4>DOURADAS E AZUIS</h4>',
@@ -543,7 +542,8 @@
     '<p>Saldo: <strong id="adminCofreDouradasSaldo">—</strong></p>',
     '<small id="adminCofreDouradasEstado">Aguardando conciliação bancária</small>',
     '<button id="adminDouradasAtualizar" type="button">Atualizar contagem</button>',
-    '</div></div></section>'
+    '</div></div></section>',
+    '<div class="loop03-admin-acoes" id="adminPosicoesRodape"><a href="/administrador">Gerenciar na Central</a></div>'
    ],
    conteudoEquipe:[
     '<h2>Cadastros · Operador</h2>',
@@ -679,7 +679,7 @@
      throw Error(d.erro||'POSICAO_DOURADA_NAO_CONFIRMADA');
     estado.textContent='Bola dourada #'+d.numero+
      (d.repetida?' já registrada':' criada e auditada')+
-     '. Nenhum dinheiro movimentado.';
+     '.';
     operacaoDouradaPendente=null;
     $('adminDouradasMotivo').value='';
     await lerDouradas({forcar:true});
@@ -819,7 +819,6 @@
     void carregarBancadaOperador();
   },12000);
   void carregarBancadaOperador();
-  $('adminAtualizarPosicoes')?.addEventListener('click',()=>void carregarAbaOperador('abaPosicoes'));
   $('adminAtualizarFinanceiro')?.addEventListener('click',()=>void carregarAbaOperador('abaFinanceiro'));
   $('adminFluxoAbrirFinanceiro')?.addEventListener('click',()=>alternarCenarioOperador(true));
   $('adminAtualizarPedidos')?.addEventListener('click',()=>void carregarAbaOperador('abaMeusPedidos'));
@@ -1261,6 +1260,11 @@
    detalhes.hidden=true;
    filas.append(detalhes);
   }
+  const acoesFila=criar('div','loop03-admin-acoes');
+  const atualizar=criar('button','','Atualizar posições');
+  atualizar.type='button';atualizar.id='adminAtualizarPosicoes';
+  atualizar.onclick=()=>void carregarAbaOperador('abaPosicoes');
+  acoesFila.append(atualizar);filas.append(acoesFila);
   const tabuleiro=criar('section','loop03-resumo-quadro loop03-resumo-tabuleiro');
   tabuleiro.setAttribute('aria-label','Contadores visuais do relógio do tempo');
   tabuleiro.append(criar('h3','','TABULEIRO / RELÓGIO DO TEMPO'));
@@ -1441,7 +1445,7 @@
     dinheiro(d.contempladoCentavos),d.titularesContemplados+' titular(es) com crédito registrado'),
     cartao('Comissões por indicação',dinheiro(d.bonusCentavos),'Créditos registrados no livro'),
     cartao('Valores pagos',dinheiro(d.pagoCentavos),'Débitos registrados'),
-    cartao('Saldo registrado',dinheiro(d.saldoRegistradoCentavos),'Não equivale a saldo bancário liberado')];
+    cartao('Saldo registrado',dinheiro(d.saldoRegistradoCentavos),'')];
    if(nick){
     cards.push(cartao('Comissões a conferir',dinheiro(d.comissoesAConferirCentavos),
      'Apuração pendente; não é promessa de ganho nem saldo disponível'));
@@ -1475,7 +1479,7 @@
    ['/api/admin/loop/testes-modulos','adminResumoPosicoes']:rotas[id];
   if(!info)return;
   const destino=$(info[1]);if(!destino)return;
-  if(!silencioso)destino.textContent='Atualizando dados reais do servidor…';
+  if(!silencioso)destino.textContent='Atualizando dados do servidor…';
   try{
    const r=await fetch(info[0],{credentials:'same-origin',cache:'no-store'});
    const d=await r.json().catch(()=>({}));
@@ -1534,7 +1538,7 @@
      '\nGiros de hoje: '+d.girosHoje+
      '\nMeta: '+d.metaCentrosDia+' centros'+
      '\nCaixa comprovado para meta: '+(d.caixaConciliadoParaMeta?'Sim':'Não')+
-     '\nGiros financeiros: '+(d.autorizacaoFinanceiraDosGiros?'Autorizados':'Bloqueados até comprovação externa');
+     '\nGiros: '+(d.autorizacaoFinanceiraDosGiros?'Autorizados':'Indisponíveis');
    }else{
     const p=d.pedidos||{},e=d.eventos||{},o=d.outbox||{};
     destino.textContent='Pedidos aguardando pagamento: '+(p.aguardandoPagamento??'—')+
@@ -1542,7 +1546,7 @@
      '\nEventos aguardando conciliação: '+(e.aguardandoConciliacao??'—')+
      '\nRemessas pendentes: '+(o.pendentes??'—')+
      '\nEstrutura: '+d.statusEstrutural+
-     '\nA consulta não comprova liquidação bancária.';
+     '\n';
    }
   }catch(e){destino.textContent='Dados indisponíveis: '+e.message;}
  }
@@ -1660,13 +1664,13 @@
    }
    $('loop03CofresEstado').textContent=confirmados?
     confirmados+' de 3 cofres com saldo bancário conciliado.':
-    'Aguardando conciliação externa. Nenhum saldo bancário confirmado.';
+    'Aguardando atualização.';
    ultimaConsultaCofres=Date.now();
   }catch{
    if(!modoOperadorAtual||painel?.hidden||visualTesteModulo==='CATRACA')return;
    limparCofresOperador();
    $('loop03CofresEstado').textContent=
-    'Saldos indisponíveis. Nenhum valor não comprovado será mostrado.';
+    'Saldos indisponíveis.';
   }finally{
    consultaCofresEmCurso=false;
    if(botao)botao.disabled=false;
@@ -2527,7 +2531,7 @@
    $('estadoFinanceiro').textContent='Saldos provenientes do livro financeiro real.';
   }catch{
    $('estadoFinanceiro').textContent=
-    'Livro financeiro indisponível; não é possível exibir valores não comprovados.';
+    'Financeiro indisponível nesta consulta.';
   }
  }
  async function finHistoricoReal(){
@@ -2558,7 +2562,7 @@
     'Lançamentos confirmados:':'Sem lançamentos financeiros comprovados.';
   }catch{
    $('finHistoricoMensagem').textContent=
-    'Histórico indisponível. Nenhuma movimentação será inventada.';
+    'Histórico indisponível nesta consulta.';
   }
  }
  async function finSaqueReal(e){
@@ -2580,7 +2584,7 @@
      valorCentavos:Math.round(valor*100)})
    });
    if(!r.ok){
-    resposta.textContent='Saque indisponível até a homologação bancária. Nenhum Pix foi enviado.';
+    resposta.textContent='Saque indisponível no momento.';
     return;
    }
    // Só aceitar confirmação assinada do livro real, nunca "200" isolado.
@@ -2588,8 +2592,8 @@
    resposta.textContent=d.saqueConfirmado===true&&
     typeof d.comprovanteId==='string'&&d.comprovanteId.length>0?
     'Saque registrado: '+d.comprovanteId:
-    'Nenhum pagamento confirmado.';
-  }catch{resposta.textContent='Saque indisponível. Nenhum Pix foi enviado.';}
+    'Solicitação não confirmada.';
+  }catch{resposta.textContent='Saque indisponível no momento.';}
   finally{botao.disabled=false;}
  }
 
@@ -2781,15 +2785,15 @@
    const dinheiro=new Intl.NumberFormat('pt-BR',{
     style:'currency',currency:'BRL'
    });
-   caixa.textContent='Disponivel ficticio: '+
+   caixa.textContent='Disponível: '+
     dinheiro.format(d.saldoFicticioDisponivelCentavos/100)+
-    ' · Reservado ficticio: '+
+    ' · Reservado: '+
     dinheiro.format(d.saldoFicticioReservadoCentavos/100)+
-    ' · Saques simulados: '+d.saques.length;
+    ' · Solicitações: '+d.saques.length;
    $('estadoFinanceiro').textContent=
-    'SIMULACAO — sem pagamento bancario, sem saldo financeiro real.';
+    '';
   }catch{
-   caixa.textContent='Tesouraria de ensaio indisponivel.';
+   caixa.textContent='Financeiro indisponível.';
   }
  }
  // Conecta o aceite individual da posicao azul diretamente a conta autenticada.
@@ -2799,8 +2803,8 @@
   form.className='loop03-aceite-posicao';
   form.autocomplete='off';
   const descricao=document.createElement('p');
-  descricao.textContent='Posição azul pendente · confirmação individual em ensaio. '+
-   'A posição segue na fila mesmo sem confirmar. Não há crédito financeiro real.';
+  descricao.textContent='Posição azul pendente · confirmação individual. '+
+   'A posição segue na fila até a confirmação.';
   const detalhes=document.createElement('details');
   const sum=document.createElement('summary');
   sum.textContent='Ler os termos da confirmação';
@@ -2819,7 +2823,7 @@
   const aceite=document.createElement('input');
   aceite.type='checkbox';aceite.required=true;
   confirmar.append(aceite,document.createTextNode(
-   ' Li os termos acima e confirmo somente esta posição em ensaio.'));
+   ' Li os termos acima e confirmo somente esta posição.'));
   const botao=document.createElement('button');
   botao.type='submit';botao.textContent='Confirmar posição azul';
   botao.disabled=true;
@@ -2857,7 +2861,7 @@
     if(d.financeiroReal!==false||d.estado!=='ACEITE_ENSAIO')
      throw Error('CONFIRMACAO_AZUL_RESPOSTA_INVALIDA');
     cpf.value='';aceite.checked=false;
-    retorno.textContent='Confirmação individual registrada em ensaio; '+
+    retorno.textContent='Confirmação individual registrada; '+
      'sem validação externa de identidade ou valores reais.';
     await carregarMotor();
    }).catch(e=>{
@@ -2935,7 +2939,7 @@
     pos.estadoAdesao==='CONFIRMADA'&&
      pos.confirmacaoExternaVerificada===true?
     'Posição já confirmada.':
-    'Confirmação real ainda não habilitada para esta posição.';
+    'Confirmação indisponível para esta posição.';
    form.append(etiqueta,doc,aceitar,confirmar,estado);
    painel.append(form);
   }
@@ -3322,9 +3326,6 @@
       mensagem+='\nPróxima luz prevista: após salvar, dentro do turno.';
      }
     }
-    mensagem+=visualTesteModulo==='CATRACA'?
-     '\nExecução do lote depende de START. A previsão não movimenta valores.':
-     '\nSem caixa real comprovado: nenhum giro autorizado.';
     resumo.textContent=mensagem;
     return true;
    };
@@ -3378,7 +3379,7 @@
      status.textContent='Programação salva e confirmada no servidor: '+
       dataAgendaOperador(atual.metaDataAlvo)+' · '+atual.janelaInicio+'–'+
       atual.janelaFim+' · '+atual.metaCentrosDia+' centros ('+
-      (atual.metaCentrosDia*6)+' luzes). Pagamentos dependem do caixa.';
+      (atual.metaCentrosDia*6)+' luzes). ';
      await carregarTabuleiroOperador();
     }catch(e){status.textContent='Alteração não realizada: '+e.message;}
     finally{salvar.disabled=false;}
@@ -3818,7 +3819,7 @@
     luz.setAttribute('role','img');
     luz.setAttribute('aria-label',!pos?'Espaço disponível, luz apagada':
      confirmado?'Luz verde, posição confirmada':
-     aceiteRegistrado?'Luz verde, CPF e termos aceitos em ensaio; identidade externa pendente':
+     aceiteRegistrado?'CPF e termos confirmados; identidade pendente':
      'Luz vermelha, CPF e termos pendentes');
     cabecalho.append(rotulo,luz);
     corpo.append(cabecalho);
@@ -3873,9 +3874,9 @@
       'Ainda não identificado no livro do pedido');
      criarLinhaDetalhe(dados,'Valor do pedido',
       moedaPosicao(origem.valorTotalPedidoCentavos));
-     criarLinhaDetalhe(dados,'Base registrada no motor (ensaio)',
+     criarLinhaDetalhe(dados,'Base registrada no motor',
       moedaPosicao(origem.valorBaseMotorEnsaioCentavos));
-     criarLinhaDetalhe(dados,'Indicações qualificadas (ensaio)',
+     criarLinhaDetalhe(dados,'Indicações qualificadas',
       String(pos.indicacoesQualificadasEnsaio));
      criarLinhaDetalhe(dados,'Movimentação financeira',
       'Sem crédito financeiro disponível');
@@ -3925,13 +3926,13 @@
     const corpo=document.createElement('div');
     corpo.className='loop03-cartao-posicao';
     const titulo=document.createElement('strong');
-    titulo.textContent='DEMONSTRAÇÃO — posição fictícia';
+    titulo.textContent='Minhas posições';
     const numero=document.createElement('p');
-    numero.textContent='#EXEMPLO (não é sua posição)';
+    numero.textContent='Você ainda não possui posições.';
     const dados=document.createElement('p');
-    dados.textContent='Fila B · Aguardando confirmação · Indicações: 0';
+    dados.textContent='';
     const aviso=document.createElement('small');
-    aviso.textContent='Exemplo visual. Você tem 0 posições reais. Nenhuma compra ou giro foi criado.';
+    aviso.textContent='';
     corpo.append(titulo,numero,dados,aviso);
     exemplo.append(corpo);grade.appendChild(exemplo);
    }
@@ -4011,7 +4012,7 @@
    titulo.textContent='Confirmar meu cadastro';
    const instrucao=document.createElement('p');
    instrucao.textContent='Confirme seu CPF e leia os termos para aparecer como '+
-    'cadastro confirmado na equipe do seu indicador. Isto não libera pagamentos.';
+    'cadastro confirmado na equipe do seu indicador.';
    const form=document.createElement('form');
    const etiqueta=document.createElement('label');
    etiqueta.textContent='CPF informado no cadastro';
@@ -4185,7 +4186,7 @@
   const centavos=Math.round(valor*100);
   if(!Number.isSafeInteger(centavos)||centavos<2500||
      Math.abs(centavos/100-valor)>1e-8){
-   $('tesourariaEnsaioStatus').textContent='Valor ficticio invalido.';
+   $('tesourariaEnsaioStatus').textContent='Valor inválido.';
    return;
   }
   solicitarEnsaio.disabled=true;
@@ -4202,12 +4203,12 @@
    const dados=await r.json();
    if(dados.financeiroReal!==false)throw Error('RESPOSTA_INVALIDA');
    $('tesourariaEnsaioStatus').textContent=
-    'Solicitacao ficticia registrada: '+dados.estado+
-    '. Nenhum Pix real sera executado.';
+    'Solicitação registrada: '+dados.estado+
+    '.';
    await carregarFinanceiroEnsaio();
   }catch{
    $('tesourariaEnsaioStatus').textContent=
-    'Saque ficticio indisponivel. Nenhum dinheiro foi movimentado.';
+    'Solicitação indisponível.';
   }finally{solicitarEnsaio.disabled=false;}
  });
  async function atualizarCaptchaLogin(){

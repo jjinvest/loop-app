@@ -18,3 +18,9 @@ Ler este documento antes de atuar no projeto. Cumprir todas as etapas em toda al
 **Critério de conclusão:** implementação → testes comprovados → ajustes necessários → retestes aprovados → publicação real → prova funcional no sistema público.
 
 Regra reafirmada pelo proprietário em 20/11/2026. A obrigação vale para todas as alterações futuras.
+
+## Ordem vigente do proprietário — 28/11/2026: linguagem da interface
+
+Não inserir nas telas avisos sobre dinheiro fictício, ausência de dinheiro real, simulação financeira, ausência de movimentação real ou textos equivalentes. Usar status objetivos da operação (pendente, confirmado, indisponível, aguardando START) e erros concretos. A ordem vale para Escritório, Operador, Central, loja e estados transitórios. Preservar internamente a procedência dos registros, flags, auditorias e travas; não apagar histórico técnico nem alterar saldos, permissões ou mecanismos financeiros. Não apresentar registro de uma fonte como sendo de outra.
+
+Na aba Posições do Operador, Atualizar posições pertence ao quadro FILAS e Gerenciar na Central fica ao final da aba. Reutilizar os mesmos controles e rotas.
