@@ -103,7 +103,9 @@ async function principal(){
    listarVitrinePreparacao:args=>midia.listarVitrinePreparacao(args),
    listarFotosProdutoCompartilhado:args=>
     midia.listarFotosProdutoCompartilhado(args),
-   abrirFotoPublicada:args=>midia.abrirFotoPublicada(args)
+   abrirFotoPublicada:args=>midia.abrirFotoPublicada(args),
+   listarVideoProdutoCompartilhado:args=>midia.listarVideoProdutoCompartilhado(args),
+   abrirVideoPublicado:args=>midia.abrirVideoPublicado(args)
   };
   server=https.createServer({
    key:fs.readFileSync(chave),cert:fs.readFileSync(cert)
@@ -122,11 +124,12 @@ async function principal(){
     catalogoMidia:midia,classificacaoLoop
    }
   });
-  browser=await chromium.launch({headless:true});
+  browser=await chromium.launch({headless:true,
+   ...(process.env.AKITEMM_CHROMIUM_EXECUTABLE?{executablePath:process.env.AKITEMM_CHROMIUM_EXECUTABLE}:{})});
   const ctx=await browser.newContext({
    ignoreHTTPSErrors:true,
    viewport:{width:390,height:844},deviceScaleFactor:1,
-   isMobile:true,hasTouch:true
+   isMobile:process.env.AKITEMM_PC_PROVA!=='1',hasTouch:true
   });
   const page=await ctx.newPage();
   const errosNavegador=[];
@@ -292,6 +295,7 @@ async function principal(){
   // Cadastro manual direto no quadradinho, com foto e cor no mesmo painel.
   const m=page.locator('#akitemmOperadorFotosReal');
   const criarProduto=async({slot,codigo,nome,cor})=>{
+   if(process.env.AKITEMM_PC_PROVA==='1')await page.setViewportSize({width:1280,height:844});
    await page.locator('#catalogoLojaLoop [data-akitemm-slot="'+slot+'"]').click();
    await m.waitFor({state:'visible'});
    await m.getByRole('heading',{name:'Cadastrar produto · AKITEMM'}).waitFor();
@@ -301,10 +305,19 @@ async function principal(){
    await m.locator('.akitemm-erros-cadastro:not([hidden])').waitFor();
    assert.equal(await m.getByRole('textbox',{name:'Nome do produto'})
     .getAttribute('aria-invalid'),'true');
+   assert.equal(await m.getByLabel('Classificação comercial LOOP (não é cor física)').getAttribute('aria-invalid'),'true');
+   await page.mouse.move(0,0);
+   assert.equal(await m.getByRole('textbox',{name:'Nome do produto'}).evaluate(x=>getComputedStyle(x).outlineColor),'rgb(230, 189, 115)');
+   await m.getByRole('textbox',{name:'Nome do produto'}).fill('A');
+   assert.equal(await m.getByRole('textbox',{name:'Nome do produto'}).getAttribute('aria-invalid'),'true');
    await m.getByRole('button',{name:/Corrigir: Digite o nome do produto/}).click();
    assert.equal(await m.getByRole('textbox',{name:'Nome do produto'})
     .evaluate(x=>document.activeElement===x),true);
    await m.getByRole('textbox',{name:'Nome do produto'}).fill(nome);
+   await m.getByRole('textbox',{name:'Nome do produto'}).evaluate(x=>{if(x.hasAttribute('aria-invalid'))throw Error('CAMPO_CORRIGIDO_CONTINUA_INVALIDO');});
+   await page.emulateMedia({reducedMotion:'reduce'});
+   assert.equal(await m.locator('.akitemm-campo-pendente').first().evaluate(x=>getComputedStyle(x).animationName),'none');
+   await page.emulateMedia({reducedMotion:'no-preference'});
    await m.locator('textarea').first().fill('Descrição de teste temporária');
    await m.getByLabel('Categoria (opcional)').fill('Calçados');
    await m.getByLabel('Marca (opcional)').fill('Marca própria');
@@ -320,6 +333,12 @@ async function principal(){
    await m.getByLabel('Cor física do produto (escreva livremente)')
     .fill('Colorido, azul, preto e branco');
    await m.getByLabel('Quantidade disponível (opcional)').fill('12');
+   if(slot!==1){
+    await m.locator('textarea').first().fill('');
+    for(const rotulo of ['Categoria (opcional)','Marca (opcional)',
+     'Quantidade disponível (opcional)','Preço promocional (R$) — opcional'])
+     await m.getByLabel(rotulo).fill('');
+   }
    const codigoArea=m.locator('details').filter({hasText:'Código do produto'});
    await codigoArea.locator('summary').click();
    await codigoArea.locator('input').fill(codigo);
@@ -348,6 +367,11 @@ async function principal(){
     await adicional.locator('input[type=file]').setInputFiles({name:'detalhe.png',mimeType:'image/png',buffer:FOTO});
     await adicional.locator('canvas:not([hidden])').waitFor({state:'visible'});
    }
+   if(slot===1&&process.env.AKITEMM_VIDEO_PROVA){
+    await m.locator('.akitemm-midia-video input[type=file]').setInputFiles(process.env.AKITEMM_VIDEO_PROVA);
+    await page.waitForFunction(()=>{const v=document.querySelector('.akitemm-midia-video video');return v?.duration>0&&v.duration<=30;});
+    await m.locator('.akitemm-midia-video video').evaluate(async v=>{v.muted=true;await v.play();v.pause();});
+   }
    await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
    await m.getByText('Produto e foto salvos na posição ',{exact:false}).waitFor({
     timeout:15000
@@ -363,9 +387,17 @@ async function principal(){
    await m.locator('.akitemm-modal-fechar').click();
    await page.locator('#catalogoLojaLoop [data-produto-id="'+codigo+'"]')
     .waitFor({state:'visible'});
+   if(process.env.AKITEMM_PC_PROVA==='1')await page.setViewportSize({width:390,height:844});
   };
   await criarProduto({slot:1,codigo:'primeiro-produto',
    nome:'Produto de ensaio de operador',cor:'VERDE'});
+  if(process.env.AKITEMM_VIDEO_PROVA){
+   const videoEstado=await page.evaluate(()=>fetch('/api/admin/catalogo-midia/produtos/primeiro-produto/video').then(r=>r.json()));
+   assert.equal(videoEstado.arquivoAnexado,true);
+   assert.ok(videoEstado.duracaoMs>0&&videoEstado.duracaoMs<=30000);
+   const parcial=await page.evaluate(()=>fetch('/api/admin/catalogo-midia/produtos/primeiro-produto/video/arquivo',{headers:{Range:'bytes=0-99'}}).then(async r=>({status:r.status,bytes:(await r.arrayBuffer()).byteLength})));
+   assert.deepEqual(parcial,{status:206,bytes:100});
+  }
   const produto=catalogo.buscarProdutoAdministrativo({
    produtoId:'primeiro-produto'
   });
@@ -588,6 +620,12 @@ async function principal(){
    .waitFor({state:'visible'});
   await cliente.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-avaliacoes')
    .filter({hasText:'Ainda não há avaliações de compras verificadas.'}).waitFor();
+  if(process.env.AKITEMM_VIDEO_PROVA){
+   const v=cliente.locator('#akitemmProdutoInlineConteudo video');
+   await v.waitFor({state:'visible'});
+   await v.evaluate(async el=>{el.muted=true;await el.play();el.pause();});
+   console.log('VIDEO_MP4_VALIDADO: SELECAO -> PREVIA -> UPLOAD -> SQLITE -> RANGE_206 -> REPRODUCAO_CLIENTE');
+  }
   await cliente.locator('#akitemmVoltarProdutos').click();
   await cliente.locator('#catalogoLojaLoop [data-produto-id="primeiro-produto"]')
    .waitFor({state:'visible'});

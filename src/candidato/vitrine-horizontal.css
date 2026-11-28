@@ -199,12 +199,13 @@ dialog.akitemm-operador-editor .akitemm-editor-corpo .akitemm-atalho-erro{
  text-align:left;background:#392b29;color:#ffe6b1;border:1px solid #b78b65
 }
 dialog.akitemm-operador-editor .akitemm-campo-pendente{
- border:2px solid #ff4d55!important;border-radius:11px;
+ border:2px solid #e6bd73!important;border-radius:11px;
+ animation:akitemm-pendencia-pulso 1.8s ease-in-out infinite;
  padding:8px!important;background:#3a2b2c!important;
 }
 dialog.akitemm-operador-editor [aria-invalid=true]{
- outline:3px solid #ff4d55!important;outline-offset:1px!important;
- border-color:#ff4d55!important
+ outline:3px solid #e6bd73!important;outline-offset:1px!important;
+ border-color:#e6bd73!important
 }
 dialog.akitemm-operador-editor .akitemm-campo-erro{
  color:#ffcc91;font-size:13px;font-weight:750;line-height:1.45
@@ -578,7 +579,7 @@ dialog.akitemm-operador-editor .akitemm-midia-slot canvas{
 dialog.akitemm-operador-editor .akitemm-midia-slot [hidden]{display:none!important}
 dialog.akitemm-operador-editor .akitemm-midia-slot p{font-size:12px;overflow-wrap:anywhere}
 dialog.akitemm-operador-editor .akitemm-midia-slot button{min-height:36px;font-size:12px;padding:5px;white-space:normal}
-dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-campo-pendente{border-color:#ff4d55!important}
+dialog.akitemm-operador-editor .akitemm-midia-slot .akitemm-campo-pendente{border-color:#e6bd73!important}
 
 .akitemm-midia-video{margin-top:12px;padding:12px;border:1px dashed #8b9dac;border-radius:12px;display:grid;gap:8px}
 .akitemm-midia-video video,.akitemm-video-produto{width:100%;max-height:320px;background:#101923;border-radius:10px;object-fit:contain}
@@ -613,4 +614,12 @@ dialog.akitemm-operador-editor .akitemm-escolher-foto:focus-within{outline:2px s
   width:100%;height:auto!important;aspect-ratio:1;min-height:0;border-right:0;border-bottom:1px solid #3c4952;
  }
  .akitemm-loja #catalogoLojaLoop[data-perfil-vitrine="cliente"] .ak-faixa-horizontal>.produto-loja-loop .akitemm-dados-produto{min-height:0;padding:8px;}
+}
+
+@keyframes akitemm-pendencia-pulso{
+ 0%,100%{box-shadow:0 0 0 1px #e6bd7366}
+ 50%{box-shadow:0 0 0 5px #e6bd7333}
+}
+@media(prefers-reduced-motion:reduce){
+ dialog.akitemm-operador-editor .akitemm-campo-pendente{animation:none}
 }

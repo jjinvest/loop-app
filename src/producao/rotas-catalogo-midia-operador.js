@@ -8,7 +8,7 @@ const POS=/^(?:10|[1-9])$/;
 const MIME=new Set(['image/jpeg','image/png','image/webp']);
 function montarRotasCatalogoMidiaOperador({
  app,catalogoMidia,catalogoPrincipal=null,posicoesVitrine=null,
- anunciosManuais=null,entregaLocal=null,
+ anunciosManuais=null,entregaLocal=null,classificacaoLoop=null,
  autorizarOperador,validarCsrf
 }={}){
  if(typeof app?.get!=='function'||typeof app?.post!=='function'||
@@ -478,8 +478,16 @@ function montarRotasCatalogoMidiaOperador({
    try{
     const produto=catalogoPrincipal.buscarProdutoAdministrativo({produtoId});
     if(!produto)return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
-    if(req.body.ativo&&catalogoMidia.fotos.listar(produtoId).fotos.length===0)
-     return res.status(409).json({erro:'PUBLICACAO_REQUER_FOTO_REAL'});
+    if(req.body.ativo){
+     if(!classificacaoLoop)return res.status(503).json({erro:'CLASSIFICACAO_AINDA_NAO_CONFIGURADA'});
+     const regra=classificacaoLoop.listarRegras().produtos.find(p=>p.produtoId===produtoId);
+     if(!regra?.regraExplicita)return res.status(409).json({erro:'PUBLICACAO_REQUER_CLASSIFICACAO',campos:['classificacao']});
+     if(!catalogoMidia.fotos.listar(produtoId).fotos.some(f=>f.posicao===1))
+      return res.status(409).json({erro:'PUBLICACAO_REQUER_FOTO_REAL',campos:['fotoCapa']});
+     const anuncio=anunciosManuais?.consultar(produtoId);
+     if(!Number.isSafeInteger(anuncio?.precoCentavos)||anuncio.precoCentavos<1)
+      return res.status(409).json({erro:'PUBLICACAO_REQUER_PRECO',campos:['precoNormal']});
+    }
     const resultado=catalogoPrincipal.ativarProduto({produtoId,ativo:req.body.ativo});
     return res.json({...resultado,checkoutReal:false,
      financeiroReal:false,compravel:false});
@@ -560,7 +568,18 @@ function montarRotasCatalogoMidiaOperador({
    autorizarOperador,verificarId,(req,res)=>{
     try{if(!existe(req.params.produtoId))return res.sendStatus(404);
      const a=catalogoMidia.video.abrir(req.params.produtoId);
-     return res.type('video/mp4').set('Cache-Control','private, no-store').send(a.conteudo);}
+     const total=a.conteudo.length,range=req.get('Range');
+     res.type('video/mp4').set({'Cache-Control':'private, no-store','Accept-Ranges':'bytes'});
+     if(range){
+      const m=/^bytes=(\d*)-(\d*)$/.exec(range);
+      let ini=m&&m[1]?Number(m[1]):0,fim=m&&m[2]?Number(m[2]):total-1;
+      if(m&&!m[1]&&m[2]){ini=Math.max(0,total-Number(m[2]));fim=total-1;}
+      if(!m||(!m[1]&&!m[2])||!Number.isSafeInteger(ini)||!Number.isSafeInteger(fim)||ini>fim||ini>=total)
+       return res.status(416).set('Content-Range','bytes */'+total).end();
+      fim=Math.min(fim,total-1);
+      return res.status(206).set('Content-Range','bytes '+ini+'-'+fim+'/'+total).send(a.conteudo.subarray(ini,fim+1));
+     }
+     return res.send(a.conteudo);}
     catch{return res.status(404).json({erro:'VIDEO_NAO_ENCONTRADO'});}
    });
   app.post('/api/admin/catalogo-midia/produtos/:produtoId/video',

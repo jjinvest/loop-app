@@ -17,7 +17,7 @@
    credentials:'same-origin',cache:'no-store',...opcoes
   });
   const dados=await res.json().catch(()=>({}));
-  if(!res.ok)throw Error(dados.erro||'SERVICO_INDISPONIVEL');
+  if(!res.ok){const e=Error(dados.erro||'SERVICO_INDISPONIVEL');e.campos=dados.campos;throw e;}
   return dados;
  };
  async function verificarOperador(){
@@ -362,7 +362,7 @@
   resumo.style.cssText='border:1px solid #c78a68;border-radius:12px;'+
    'padding:12px;margin:10px 0 16px;color:#ffe0bd;background:rgba(95,31,25,.28)';
   form.prepend(resumo);
-  let ultimos=[];
+  let ultimos=[],errosAtuais=[],validarPendencias=null;
   const limpar=()=>{
    for(const entrada of ultimos){
     entrada.removeAttribute('aria-invalid');
@@ -371,28 +371,29 @@
     label?.classList.remove('akitemm-campo-pendente');
     label?.querySelector('.akitemm-campo-erro')?.remove();
    }
-   ultimos=[];resumo.replaceChildren();resumo.hidden=true;
+   ultimos=[];errosAtuais=[];resumo.replaceChildren();resumo.hidden=true;
   };
   const ir=entrada=>{
-   const detalhe=entrada.closest('details');
-   if(detalhe)detalhe.open=true;
+   let detalhe=entrada.closest('details');
+   while(detalhe){detalhe.open=true;detalhe=detalhe.parentElement?.closest('details');}
    const alvo=entrada.type==='file'?(entrada.closest('label')||entrada):entrada;
    alvo.scrollIntoView({block:'center',behavior:'instant'});
    if(entrada.type==='file')alvo.tabIndex=-1;
    try{alvo.focus({preventScroll:true});}catch{alvo.focus();}
   };
-  const mostrar=erros=>{
+  const mostrar=(erros,{direcionar=true}={})=>{
    limpar();
    erros=[...new Map(erros.filter(x=>x.entrada).map(x=>[x.entrada,x])).values()];
+   errosAtuais=erros;
    if(!erros.length)return true;
    const titulo=document.createElement('strong');
-   titulo.textContent='Falta corrigir '+erros.length+' campo(s) destacado(s) em vermelho:';
+   titulo.textContent='Falta corrigir '+erros.length+' campo(s) destacado(s) em amarelo:';
    const lista=document.createElement('ol');
    resumo.append(titulo,lista);
    for(const {entrada,mensagem} of erros){
     if(!entrada)continue;
     entrada.setAttribute('aria-invalid','true');
-    entrada.style.outline='2px solid #ff4444';
+    entrada.style.outline='2px solid #e6bd73';
     const label=entrada.closest('label');
     if(label){
      label.classList.add('akitemm-campo-pendente');
@@ -413,30 +414,28 @@
    resumo.hidden=false;
    estado.textContent='Para salvar na vitrine, corrija: '+
     erros.map(x=>x.mensagem).join(' ');
-   ir(erros[0].entrada);
+   if(direcionar)ir(erros[0].entrada);
    return false;
   };
-  form.addEventListener('input',ev=>{
-   if(ultimos.includes(ev.target)){
-    const label=ev.target.closest('label');
-    label?.classList.remove('akitemm-campo-pendente');
-    label?.querySelector('.akitemm-campo-erro')?.remove();
-    ev.target.removeAttribute('aria-invalid');
-    ev.target.style.removeProperty('outline');
-   }
-  });
-  form.addEventListener('change',ev=>{
-   if(ultimos.includes(ev.target)){
-    const label=ev.target.closest('label');
-    label?.classList.remove('akitemm-campo-pendente');
-    label?.querySelector('.akitemm-campo-erro')?.remove();
-    ev.target.removeAttribute('aria-invalid');
-    ev.target.style.removeProperty('outline');
-   }
-  });
-  return {mostrar,limpar};
+  const conferir=ev=>{
+   if(!ultimos.length||!validarPendencias)return;
+   const eraPendente=ultimos.includes(ev.target);
+   // Aguarda os validadores locais de mídia e selects terminarem o evento.
+   queueMicrotask(()=>{
+    const erros=validarPendencias();
+    // Não substituir o atalho sob o ponteiro no blur/change de um campo.
+    if(erros.length===errosAtuais.length&&erros.every((x,i)=>
+     x.entrada===errosAtuais[i].entrada&&x.mensagem===errosAtuais[i].mensagem))return;
+    const corrigido=eraPendente&&!erros.some(x=>x.entrada===ev.target);
+    mostrar(erros,{direcionar:corrigido});
+   });
+  };
+  form.addEventListener('input',conferir);
+  form.addEventListener('change',conferir);
+  return {mostrar,limpar,validarCom:fn=>{validarPendencias=fn;}};
  }
  const escolhaCor=form=>select('Classificação comercial LOOP (não é cor física)',[
+  ['','Selecione a classificação'],
   ['CINZA','Cinza'],['VERDE','Verde'],['DOURADO','Dourado'],
   ['ROXO','Roxo']
  ]);
@@ -521,6 +520,7 @@
   };
   const deReais=n=>n===null?'':(n/100).toFixed(2).replace('.',',');
   return {
+   campoPreco:normal,
    preencher(d){
     if(!d)return;
     const canal=d.canalFornecedor;
@@ -970,7 +970,7 @@
   const regras=await fetchJson('/api/admin/comercial/classificacoes');
   const anterior=regras.produtos?.find(r=>r.produtoId===id);
   if(!anterior)throw Error('CLASSIFICACAO_INDISPONIVEL');
-  if(anterior.cor===cor)return anterior;
+  if(anterior.cor===cor&&anterior.regraExplicita===true)return anterior;
   return fetchJson('/api/admin/comercial/classificacoes/'+id,{
    method:'POST',headers:{'Content-Type':'application/json',
     'X-Loop-Admin-Csrf':csrf},
@@ -1167,6 +1167,18 @@
   const codigo=campoTexto(opcoes,'Código interno',
    {maxLength:80,placeholder:'Gerado automaticamente se ficar vazio'});
   form.append(opcoes);
+  guia.validarCom(()=>{
+   const erros=[];
+   if(nome.value.trim().length<2||nome.value.trim().length>150)
+    erros.push({entrada:nome,mensagem:'Digite o nome do produto (2 a 150 caracteres).'});
+   if(!ID_NOVO.test(produtoJaCriado||codigo.value.trim()||idAutomatico))
+    erros.push({entrada:codigo,mensagem:'Confira o código interno.'});
+   if(!['CINZA','VERDE','DOURADO','ROXO'].includes(cor.s.value))
+    erros.push({entrada:cor.s,mensagem:'Selecione a classificação comercial.'});
+   erros.push(...anuncio.validarCampos({paraVitrine:true}),...entrega.validarCampos(),...foto.video.validarCampos());
+   if(!foto.temFoto()&&!capaSalva)erros.push({entrada:foto.campo,mensagem:'Escolha uma foto de capa.'});
+   return erros;
+  });
   const criar=document.createElement('button');
   criar.type='submit';criar.textContent='Salvar produto e colocar na vitrine';
   form.append(criar);corpo.append(form);
@@ -1175,14 +1187,14 @@
   let revisaoRascunho=rascunhoInicial?.revisao||0;
   let salvarEmCurso=Promise.resolve(),temporizadorRascunho=null;
   let formularioFinalizado=false,formularioAlterado=false;
-  const idAutomatico=slugManual();let produtoJaCriado=null;
+  const idAutomatico=slugManual();let produtoJaCriado=null,capaSalva=false;
   const avisoRascunho=linha('Os campos digitados são salvos como rascunho. '+
    'A foto ainda não enviada precisa ser selecionada novamente.');
   avisoRascunho.className='akitemm-estado-rascunho';
   avisoRascunho.setAttribute('role','status');
   form.append(avisoRascunho);
   const capturarRascunho=()=>({
-   titulo:nome.value,descricao:desc.value,codigo:codigo.value,
+   titulo:nome.value,descricao:desc.value,codigo:codigo.value,produtoCriadoId:produtoJaCriado||'',
    classificacao:cor.s.value,...anuncio.rascunho(),
    ...entrega.rascunho()
   });
@@ -1277,6 +1289,16 @@
    numero.className='akitemm-indicador-proxima-posicao';
    corpo.insertBefore(numero,form);
    const vinculados=new Set(slots.slots.map(x=>x.produtoId));
+   // Retoma o mesmo registro após uma conclusão parcial, sem recriá-lo.
+   const recuperado=rascunhoInicial?.campos.produtoCriadoId&&r.produtos.find(p=>p.produtoId===rascunhoInicial.campos.produtoCriadoId);
+   if(recuperado){
+    produtoJaCriado=recuperado.produtoId;codigo.disabled=true;
+    const [galeria,videoSalvo]=await Promise.all([
+     fetchJson('/api/admin/catalogo-midia/produtos/'+produtoJaCriado+'/fotos'),
+     fetchJson('/api/admin/catalogo-midia/produtos/'+produtoJaCriado+'/video')]);
+    foto.carregar(galeria.fotos);foto.video.carregar(produtoJaCriado,videoSalvo);
+    capaSalva=galeria.fotos?.some(f=>f.posicao===1)===true;
+   }
    const existentes=r.produtos.filter(p=>ID.test(p.produtoId)&&
     (p.estado==='RASCUNHO'||!vinculados.has(p.produtoId)));
    if(existentes.length){
@@ -1314,8 +1336,10 @@
    if(!ID_NOVO.test(id))
     erros.push({entrada:codigo,mensagem:'Código: use letras minúsculas, números ou hífen (3 a 80 caracteres).'});
    erros.push(...anuncio.validarCampos({paraVitrine:true}));
+   if(!['CINZA','VERDE','DOURADO','ROXO'].includes(cor.s.value))
+    erros.push({entrada:cor.s,mensagem:'Selecione a classificação comercial.'});
    erros.push(...entrega.validarCampos(),...foto.video.validarCampos());
-   if(!foto.temFoto())
+   if(!foto.temFoto()&&!capaSalva)
     erros.push({entrada:foto.campo,mensagem:
      'Escolha uma foto de capa para publicar; sem foto, salve como rascunho.'});
    if(!guia.mostrar(erros)){
@@ -1342,7 +1366,8 @@
     });
     if(produto.produtoId!==id||produto.ativo!==false)
      throw Error('CADASTRO_NAO_CONFIRMADO');
-    criado=true;produtoJaCriado=id;codigo.disabled=true;
+    criado=true;produtoJaCriado=id;codigo.value=id;codigo.disabled=true;
+    await salvarRascunho();
     }else{
      const anterior=await fetchJson('/api/admin/catalogo-midia/produtos/'+id);
      await fetchJson('/api/admin/catalogo-midia/produtos/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':csrf},body:JSON.stringify({titulo,descricao:desc.value.trim(),revisaoEsperada:anterior.revisao})});
@@ -1352,8 +1377,8 @@
     anuncio.canalGravado(aAnterior.canalFornecedor?.revisao??0);
     await salvarAnuncio(id,csrf,anuncio,aAnterior.revisao);
     await salvarEntrega(id,csrf,entrega,eAnterior.revisao);
-    if(imagens.length){
-     for(const {blob,posicao} of imagens)await salvarFoto(id,csrf,blob,posicao);
+    if(imagens.length||capaSalva){
+     for(const {blob,posicao} of imagens){await salvarFoto(id,csrf,blob,posicao);if(posicao===1)capaSalva=true;}
      await foto.video.salvar(id,csrf);
      const posicaoSalva=await vincularQuadradinho(indice,id);
      await publicarFoto(id,csrf);
@@ -1387,6 +1412,9 @@
     corpo.append(editar);
    }catch(e){
     if(e.campoMidia)guia.mostrar([{entrada:e.campoMidia,mensagem:'Não foi possível salvar este arquivo: '+e.message}]);
+    else if(Array.isArray(e.campos))guia.mostrar(e.campos.map(k=>({entrada:({classificacao:cor.s,precoNormal:anuncio.campoPreco,fotoCapa:foto.campo})[k],mensagem:'Confira este campo para publicar.'})));
+    else if(/CORES_COMERCIAIS_REGRA_INVALIDA/.test(e.message))
+     guia.mostrar([{entrada:cor.s,mensagem:'Confira a classificação comercial selecionada.'}]);
     const codigo=String(e?.message||'ERRO_DESCONHECIDO');
     const dica=/SESSAO|CSRF|LOGIN|401|403/.test(codigo)?
      'A sessão administrativa não foi confirmada nesta operação. '+
@@ -1487,7 +1515,19 @@
    foto.carregar(galeriaSalva.fotos);foto.video.carregar(id,videoSalvo);
    estaPublicado=dados.estado==='PUBLICADO';
    const regra=regras.produtos?.find(r=>r.produtoId===id);
-   if(regra)cor.s.value=regra.cor;
+   if(regra?.regraExplicita)cor.s.value=regra.cor;
+   let validarParaVitrine=false;
+   guia.validarCom(()=>{
+    const erros=[];
+    if(nome.value.trim().length<2||nome.value.trim().length>150)
+     erros.push({entrada:nome,mensagem:'Confira o nome do produto.'});
+    if(!['CINZA','VERDE','DOURADO','ROXO'].includes(cor.s.value))
+     erros.push({entrada:cor.s,mensagem:'Selecione a classificação comercial.'});
+    erros.push(...anuncio.validarCampos({paraVitrine:validarParaVitrine}),...entrega.validarCampos(),...foto.video.validarCampos());
+    if(validarParaVitrine&&!foto.temFoto()&&!galeriaSalva.fotos?.some(f=>f.posicao===1))
+     erros.push({entrada:foto.campo,mensagem:'Escolha a foto de capa.'});
+    return erros;
+   });
    await consultaOrdem();
    travar(false);
    const botoesAtualizar=async(tarefa,mensagem)=>{
@@ -1499,11 +1539,13 @@
      estado.textContent=mensagem;
      atualizarLoja();
     }catch(e){if(e.campoMidia)guia.mostrar([{entrada:e.campoMidia,mensagem:'Não foi possível salvar este arquivo: '+e.message}]);
+     else if(Array.isArray(e.campos))guia.mostrar(e.campos.map(k=>({entrada:({classificacao:cor.s,precoNormal:anuncio.campoPreco,fotoCapa:foto.campo})[k],mensagem:'Confira este campo para publicar.'})));
      estado.textContent='Não foi possível salvar: '+e.message;}
     finally{aberto=false;travar(false);}
    };
    form.addEventListener('submit',ev=>{
     ev.preventDefault();
+    validarParaVitrine=false;
     const titulo=nome.value.trim();
     const erros=[];
     if(titulo.length<2||titulo.length>150)
@@ -1512,6 +1554,9 @@
      erros.push({entrada:descricao,mensagem:'A descrição aceita até 2.000 caracteres.'});
     erros.push(...anuncio.validarCampos());
     erros.push(...entrega.validarCampos());
+    erros.push(...foto.video.validarCampos());
+    if(!['CINZA','VERDE','DOURADO','ROXO'].includes(cor.s.value))
+     erros.push({entrada:cor.s,mensagem:'Selecione a classificação comercial.'});
     if(!guia.mostrar(erros))return;
     void botoesAtualizar(async()=>{
      const res=await fetchJson('/api/admin/catalogo-midia/produtos/'+id,{
@@ -1528,14 +1573,20 @@
      const entregaSalva=await salvarEntrega(id,csrf,entrega,revisaoEntrega);
      revisaoEntrega=entregaSalva.revisao;
      await salvarCor(id,csrf,cor.s.value);
+     await foto.video.salvar(id,csrf);
     },'Nome, cor física, preço, promoção e estoque salvos.');
    });
    salvarClassificacao.addEventListener('click',()=>{
+    if(!guia.mostrar(['CINZA','VERDE','DOURADO','ROXO'].includes(cor.s.value)?[]:
+     [{entrada:cor.s,mensagem:'Selecione a classificação comercial.'}]))return;
     void botoesAtualizar(async()=>{await salvarCor(id,csrf,cor.s.value);},
      'Classificação comercial salva; os filtros seguem as regras do LOOP.');
    });
    salvarImagem.addEventListener('click',()=>{
+    validarParaVitrine=true;
     const erros=[...anuncio.validarCampos({paraVitrine:true}),...entrega.validarCampos(),...foto.video.validarCampos()];
+    if(!['CINZA','VERDE','DOURADO','ROXO'].includes(cor.s.value))
+     erros.push({entrada:cor.s,mensagem:'Selecione a classificação comercial.'});
     if(nome.value.trim().length<2)erros.unshift({entrada:nome,mensagem:'Informe o nome do produto.'});
     if(!foto.temFoto()&&!galeriaSalva.fotos?.some(f=>f.posicao===1))erros.push({entrada:foto.campo,mensagem:'Escolha a foto de capa.'});
     if(!guia.mostrar(erros))return;

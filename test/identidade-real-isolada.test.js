@@ -5,6 +5,27 @@ const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {IdentidadeClienteLoopReal}=require('../src/producao/identidade-cliente-loop-sqlite');
 const {configurar}=require('../scripts/iniciar-identidade-real-loop');
+test('configuração entrega as mesmas chaves comerciais à composição e ao backup, sem gerar substitutas',()=>{
+ const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+ const ambiente={NODE_ENV:'production',LOOP_REAL_DADOS_SEPARADOS:'SIM',
+  LOOP_REAL_CADASTRO_GO:'SIM',LOOP_REAL_APROVACAO_DOCUMENTOS:'SIM',
+  LOOP_REAL_SQLITE:'/dados-reais/clientes.sqlite',LOOP_REAL_BACKUP_OFFSITE_AUTO:'SIM',
+  LOOP_REAL_ORIGEM:'https://contas.example.invalid',LOOP_REAL_ADMIN_CREDENCIAL:'credencial-exclusiva-de-teste-123456789'};
+ const nomes=['EMAIL','CIFRA','CODIGO','BACKUP','ADMIN','AUDITORIA','COTACOES','PEDIDOS','OUTBOX'];
+ nomes.forEach((n,i)=>{ambiente['LOOP_REAL_CHAVE_'+n]=(i+1).toString(16).repeat(64);});
+ const contexto={Buffer,path,__dirname:path.resolve(__dirname,'../scripts'),
+  fs:{existsSync:()=>true,realpathSync:p=>p,readFileSync:fs.readFileSync},
+  validarBackupS3:()=>true,criarTransporteEmailVerificacaoResend:()=>()=>{},
+  criarTransporteRecuperacaoResend:()=>()=>{}};
+ vm.runInNewContext(configurar.toString(),contexto);
+ const c=contexto.configurar(ambiente);
+ for(const [nome,campo] of [['PEDIDOS','chavePedidos'],['COTACOES','chaveCotacoes'],['OUTBOX','chaveOutbox']]){
+  assert.equal(c[campo].toString('hex'),ambiente['LOOP_REAL_CHAVE_'+nome]);
+  assert.equal(c[campo],c.chavesRecuperacao[campo]);
+ }
+ delete ambiente.LOOP_REAL_CHAVE_PEDIDOS;
+ assert.equal(contexto.configurar(ambiente).chavePedidos,null);
+});
 const terms='Documento de cadastro de laboratório técnico: informa identificação dos usuários, '+
  'direitos, acesso ao Escritório LOOP e à Loja AKITEMM. Não autoriza pagamentos ou ganhos reais.';
 const TERMS={versao:'LOOP-TERMO-2026-01',texto:terms};

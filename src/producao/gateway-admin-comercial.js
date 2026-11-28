@@ -445,7 +445,7 @@ function montarGatewayAdminComercial(app,{
  // fonte comercial persistente, sem criar permissao paralela ou pagina nova.
  if(catalogoMidia!==null)montarRotasCatalogoMidiaOperador({
   app,catalogoMidia,catalogoPrincipal:catalogo,posicoesVitrine,
-  anunciosManuais,entregaLocal,
+  anunciosManuais,entregaLocal,classificacaoLoop,
   autorizarOperador:proteger,validarCsrf
  });
  app.get('/administrador/entrar',(req,res)=>{

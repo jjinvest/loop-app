@@ -140,7 +140,7 @@ function configurar(ambiente=process.env,{cadastroPublico=true}={}){
   (finalidade==='SENHA'?recuperar:confirmar)(args);
  return {arquivo,chaveEmail,chaveCifra,chaveCodigo,termos,privacidade,
   origemHttps,enviarEmail,chaveBackup,configS3,
-  chaveAdmin,chaveAuditoria,credencialAdmin,
+  chaveAdmin,chaveAuditoria,credencialAdmin,chaveCotacoes,chavePedidos,chaveOutbox,
   chavesRecuperacao:{chaveEmail,chaveCifra,chaveCodigo,chaveAuditoria,
    chaveCotacoes,chavePedidos,chaveOutbox}};
 }
