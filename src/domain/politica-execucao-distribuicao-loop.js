@@ -49,8 +49,8 @@ function avaliarExecucaoDistribuicao({agenda={},agoraMs,ativa=false,
  // A última luz programada pertence ao fechamento; no livre, 18:00 fecha.
  if(decorrido<0||decorrido>=duracao*60000+(modo==='PROGRAMADO'?60000:0))return negar('FORA_DO_HORARIO');
  if(agenda.metaDataAlvo&&agenda.metaDataAlvo!==dia)return negar('FORA_DA_DATA');
- if(limite!==null&&girosHoje>=limite)return negar('LIMITE_DIARIO_ATINGIDO');
- if(meta>0&&girosHoje>=meta)return negar('META_DIARIA_ATINGIDA');
+ if(limite!==null&&girosHoje>=limite)return {...negar('LIMITE_DIARIO_ATINGIDO'),proximaLuzPrevistaEmMs:null};
+ if(meta>0&&girosHoje>=meta)return {...negar('META_DIARIA_ATINGIDA'),proximaLuzPrevistaEmMs:null};
  if(intervaloMs===null&&Number.isSafeInteger(ultimoEventoEm)&&ultimoEventoEm>=agoraMs)
   return negar('AGUARDANDO_NOVA_LEITURA');
  if(intervaloMs!==null){
@@ -59,7 +59,7 @@ function avaliarExecucaoDistribuicao({agenda={},agoraMs,ativa=false,
   // START, retomada ou reprogramação não recuperam marcos vencidos.
   if((Number.isSafeInteger(marcoExecucaoEm)&&marco<=marcoExecucaoEm)||
      (Number.isSafeInteger(ultimoEventoEm)&&
-      (ultimoEventoEm>=marco||agoraMs-ultimoEventoEm<intervaloMs)))
+      ultimoEventoEm>=marco))
    return negar('AGUARDANDO_INTERVALO');
  }
  return {...base,podeExecutar:true,motivo:null};
