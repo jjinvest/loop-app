@@ -2535,6 +2535,7 @@
   $('finSaqueResposta').textContent='';
  }
  async function carregarFinanceiroReal({silencioso=false}={}){
+  const nickDaConsulta=nickResumoReal;
   if(!silencioso){
   for(const id of ['finIndicadosValidos','finSaldoBonus','finSaldoSelecionado',
    'finSaldoPosicoes','finBonusSaque','finPosicoesSaque'])
@@ -2547,7 +2548,7 @@
    const resposta=await fetch(url,{credentials:'same-origin',cache:'no-store'});
    if(!resposta.ok)throw Error('FIN_LIVRO_NAO_DISPONIVEL');
    const d=await resposta.json();
-   if(modoOperadorAtual||$('conteudoFinanceiro').hidden)return;
+   if(modoOperadorAtual||nickDaConsulta!==nickResumoReal||$('conteudoFinanceiro').hidden)return;
    if(d.origem!=='LIVRO_FINANCEIRO_REAL'||d.saqueRealHabilitado!==false||
       d.minimoSaqueCentavos!==2500||d.taxaSaquePercentual!==0)
     throw Error('FIN_RESPOSTA_DIVERGENTE');
@@ -2556,10 +2557,10 @@
     $('finIndicadosValidos').textContent=String(lote.indicadosValidos);
     $('finSaldoBonus').textContent=formatarDinheiroReal(lote.saldoBonusCentavos);
     $('finSaldoPosicoes').textContent=formatarDinheiroReal(lote.saldoTotalPosicoesCentavos);
-    $('finSaldoSelecionado').textContent=lote.posicoes.length===1?formatarDinheiroReal(lote.posicoes[0].saldoCentavos):'—';
+    $('finSaldoSelecionado').textContent='—';
     // O acompanhamento não habilita saque ou mistura o livro comercial.
     $('finBonusSaque').textContent='—';$('finPosicoesSaque').textContent='—';
-    $('estadoFinanceiro').textContent='Posições: '+lote.posicoes.map(p=>'#'+p.numero).join(', ')+
+    $('estadoFinanceiro').textContent='Posições do lote: '+lote.posicoes.map(p=>'#'+p.numero+': '+formatarDinheiroReal(p.saldoCentavos)).join(', ')+
      ' · Bônus devido: '+formatarDinheiroReal(lote.bonusDevidoCentavos)+
      ' · Pago: '+formatarDinheiroReal(lote.saldoBonusCentavos)+
      ' · Pendente: '+formatarDinheiroReal(lote.bonusPendenteCentavos);
@@ -2602,6 +2603,7 @@
   }
  }
  async function finHistoricoReal({atualizar=false}={}){
+  const nickDaConsulta=nickResumoReal;
   const painel=$('finHistorico'),btn=$('finAbrirHistorico');
   if(!painel.hidden&&!atualizar){
    painel.hidden=true;btn.setAttribute('aria-expanded','false');return;
@@ -2616,6 +2618,7 @@
     credentials:'same-origin',cache:'no-store'});
    if(!r.ok)throw Error('FIN_HISTORICO_INDISPONIVEL');
    const d=await r.json();
+   if(modoOperadorAtual||nickDaConsulta!==nickResumoReal||painel.hidden)return;
    if(d.origem!=='LIVRO_FINANCEIRO_REAL'||!Array.isArray(d.registros))
     throw Error('FIN_HISTORICO_INVALIDO');
    const ul=document.createElement('ul');

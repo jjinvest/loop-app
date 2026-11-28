@@ -1496,7 +1496,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "e3a3263037af7d997375a4a87e311f3c445ad825"
+      "sha": "339f8c3fa8447b7a6c7287c1664a909f252c1a9d"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2496,7 +2496,7 @@
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
-      "sha": "77a13c0b736c520b9a418424812b213d0fc4bb21"
+      "sha": "8a4723045a510c0d4ccd47e5c5da3ff1522a1593"
     },
     {
       "path": "test/controle-caixa-catraca-loop-sqlite.test.js",
@@ -3076,7 +3076,7 @@
     },
     {
       "path": "test/lote-mil-financeiro-titular.test.js",
-      "sha": "cea3338c055d5f0226636f0fe7122eecf2c34b93"
+      "sha": "01841e93de1721ab6dba4812a1f3e46c6c63f7dd"
     },
     {
       "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",

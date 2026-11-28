@@ -286,6 +286,7 @@ test('saque por posição usa saldo da posição atual e mantém total agregado 
    elementos.conteudoFinanceiro.hidden=false;
    const contexto={
     modoOperadorAtual:false,
+    nickResumoReal:'titularDoTeste',
     $:id=>{assert.ok(elementos[id],'elemento '+id);return elementos[id];},
     posicoesDisponiveisResumo:[{numero:101}],
     posicaoSelecionadaMotor:escolhida,

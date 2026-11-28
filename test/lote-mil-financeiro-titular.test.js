@@ -69,7 +69,8 @@ async function conferirNavegador(c){
    if(visual.isMobile)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaFinanceiro').click();
    await page.locator('#finSaldoPosicoes').filter({hasText:/750,00/}).waitFor();
-   assert.match(await page.locator('#estadoFinanceiro').innerText(),/Posições: #1/);
+   assert.match(await page.locator('#estadoFinanceiro').innerText(),/Posições do lote: #1/);
+   assert.match(await page.locator('#finSaldoSelecionado').innerText(),/—/);
    assert.match(await page.locator('#finBonusSaque').innerText(),/—/);
    await page.locator('#finAbrirHistorico').click();
    await page.locator('#finHistoricoItens').filter({hasText:/lote:/}).waitFor();
