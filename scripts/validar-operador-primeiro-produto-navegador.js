@@ -184,6 +184,14 @@ async function principal(){
    '#catalogoLojaLoop .akitemm-slot-vazio .akitemm-alca-arrastar'
   ).count(),20);
   // Ofertas mantém os espaços vazios; não cria promoções fictícias.
+  await page.locator('[data-akitemm-cor="CINZA"]').click();
+  await page.locator('#akitemmFiltroOfertas').click();
+  assert.equal(await page.locator('[data-akitemm-cor="CINZA"]').getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('#akitemmFiltroOfertas').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#akitemmFiltroTodos').getAttribute('aria-pressed'),'false');
+  await page.locator('[data-akitemm-cor="CINZA"]').click();
+  assert.equal(await page.locator('#akitemmFiltroOfertas').getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('[data-akitemm-cor="CINZA"]').getAttribute('aria-pressed'),'true');
   await page.locator('#akitemmFiltroOfertas').click();
   await page.locator('#catalogoLojaLoop .akitemm-slot-vazio .akitemm-alca-arrastar')
    .first().waitFor({state:'visible'});

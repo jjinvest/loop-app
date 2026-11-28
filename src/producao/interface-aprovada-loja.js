@@ -1086,7 +1086,7 @@
  };
  $('akitemmFiltroTodos').addEventListener('click',filtroTodos);
  $('akitemmFiltroOfertas').addEventListener('click',()=>{
-  filtroOfertas=!filtroOfertas;abaVitrine=0;filtrar();
+  filtroOfertas=!filtroOfertas;cor='';abaVitrine=0;filtrar();
  });
  $('akitemmVerTodos').addEventListener('click',filtroTodos);
  $('akitemmVoltarProdutos').addEventListener('click',()=>{
@@ -1100,7 +1100,7 @@
  for(const b of document.querySelectorAll('[data-akitemm-cor]')){
   b.addEventListener('click',()=>{
    cor=cor===b.dataset.akitemmCor?'':b.dataset.akitemmCor;
-   abaVitrine=0;filtrar();
+   filtroOfertas=false;abaVitrine=0;filtrar();
   });
  }
  for(const b of document.querySelectorAll('[data-akitemm-categoria]')){
