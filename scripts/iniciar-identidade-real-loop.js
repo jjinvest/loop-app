@@ -46,6 +46,8 @@ const {SessaoAdminComercialSQLite}=
  require('../src/producao/sessao-admin-comercial-sqlite');
 const {CatalogoMultiDistribuidoresSQLite}=
  require('../src/producao/catalogo-multidistribuidores-sqlite');
+const {ClassificacaoComercialLoopSQLite}=
+ require('../src/producao/classificacao-comercial-loop-sqlite');
 const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
 const {montarComercialSemHomologacao,
@@ -226,11 +228,13 @@ async function iniciar(ambiente=process.env,opcoes={}){
    banco,chavePedidos:config.chavePedidos,auditoria,manutencao,
    catalogoLeitura:catalogo
   }):null;
-  const classificacaoLoop=comercial?.classificacaoLoop||null;
+  const classificacaoLoop=comercial?.classificacaoLoop||
+   new ClassificacaoComercialLoopSQLite({banco,auditoria,manutencao,somenteCatalogo:true});
+  classificacaoLoop.verificar();
   const eventosComerciais=comercial?.eventosComerciais||null;
   // Consultas de vagas no servidor definitivo usam o mesmo motor e
   // fotografia das regras comerciais; PSP/checkout continuam fechados.
-  const preflightCapacidade=classificacaoLoop?
+  const preflightCapacidade=comercial?
    new PreflightCapacidadeCheckoutSQLite({
     banco,motor:motorLoop,classificacaoLoop
    }):null;

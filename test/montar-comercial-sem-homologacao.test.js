@@ -17,6 +17,8 @@ const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
 const {SessaoAdminComercialSQLite}=
  require('../src/producao/sessao-admin-comercial-sqlite');
+const {ClassificacaoComercialLoopSQLite}=
+ require('../src/producao/classificacao-comercial-loop-sqlite');
 const {PedidosComerciaisSQLite}=
  require('../src/producao/pedidos-comerciais-sqlite');
 const {PreflightCapacidadeCheckoutSQLite}=
@@ -913,4 +915,28 @@ test('AKITEMM real integra catalogo, carrinho, capacidade e historico por conta 
   method:'POST',headers:cookie(alice)
  })).status,503);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+
+
+test('classificacao de vitrine independe da chave de pedidos e sobrevive ao reinicio',async t=>{
+ const x=await preparar(t);
+ t.after(()=>{try{x.encerrar();}catch{}});
+ const {banco,catalogo,auditoria,manutencao}=x.env;
+ assert.equal(exigirChaveParaHistoricoComercial({banco}).historicoComercialAutorizado,false);
+ const cor=new ClassificacaoComercialLoopSQLite({banco,auditoria,manutencao,somenteCatalogo:true});
+ catalogo.criarProduto({produtoId:'produto_sem_psp',titulo:'Produto de vitrine'});
+ assert.throws(()=>cor.configurarProduto({produtoId:'produto_sem_psp',cor:'VERDE'}),{codigo:'CORES_COMERCIAIS_ADMIN_OBRIGATORIO'});
+ cor.configurarProduto({produtoId:'produto_sem_psp',cor:'VERDE',autorizado:true});
+ assert.equal(cor.listarRegras().produtos.find(p=>p.produtoId==='produto_sem_psp').regraExplicita,true);
+ assert.equal(cor.verificar().integridade,'OK');
+ assert.throws(()=>cor.avaliarPedido({pedidoId:'qualquer'}),{codigo:'CORES_COMERCIAIS_PEDIDOS_NAO_HABILITADOS'});
+ assert.equal(banco.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name IN ('loja_real_pedidos','loop_real_fotos_regras_pedido')").get().n,0);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+ x.encerrar(); x.env=x.abrir();
+ const novamente=new ClassificacaoComercialLoopSQLite({banco:x.env.banco,auditoria:x.env.auditoria,manutencao:x.env.manutencao,somenteCatalogo:true});
+ assert.equal(novamente.listarRegras().produtos.find(p=>p.produtoId==='produto_sem_psp').cor,'VERDE');
+ const comercial=montarComercialSemHomologacao({banco:x.env.banco,chavePedidos:x.segredos.pedidos,auditoria:x.env.auditoria,manutencao:x.env.manutencao});
+ assert.equal(comercial.classificacaoLoop.listarRegras().produtos.find(p=>p.produtoId==='produto_sem_psp').cor,'VERDE');
+ assert.equal(comercial.checkoutHabilitado,false);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
