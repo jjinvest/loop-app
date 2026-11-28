@@ -1270,20 +1270,21 @@
   tabuleiro.append(criar('h3','','TABULEIRO / RELÓGIO DO TEMPO'));
   // O dia de Brasília (00h-23h59) é a única referência de progresso.
   // Após completar seis luzes, 6/6 permanece até a primeira luz seguinte.
-  const luzesDia=relogio?.luzesRelogioHoje??null;
-  const progressoDia=registrados?eventos:luzesDia===null?eventos:
+  const execucao=relogio?.placarExecucao;
+  const luzesDia=execucao?.eventosHoje??relogio?.luzesRelogioHoje??null;
+  const progressoDia=registrados||execucao?eventos:luzesDia===null?eventos:
    (luzesDia===0?0:((luzesDia-1)%6)+1);
   tabuleiro.append(linha(
    metade('Eventos no ciclo',progressoDia+' / 6'),
    metade('Eventos acumulados',registrados?registrados.eventos24h:relogio?
-    relogio.luzesRelogioAcumuladas:'—')));
+    (execucao?.eventosHistorico??relogio.luzesRelogioAcumuladas):'—')));
   if(relogio)tabuleiro.append(criar('small','loop03-luzes-hoje',
    'Luzes acesas hoje: '+luzesDia));
   tabuleiro.append(linha(
    metade('Centros concluídos hoje',registrados?registrados.ciclosHoje:relogio?
-    relogio.ciclosRelogioHoje:'—'),
+    (execucao?.ciclosHoje??relogio.ciclosRelogioHoje):'—'),
    metade('Ciclos concluídos no total',registrados?registrados.ciclosHistorico:relogio?
-    relogio.ciclosRelogioAcumulados:'—')));
+    (execucao?.ciclosHistorico??relogio.ciclosRelogioAcumulados):'—')));
   destino.replaceChildren(filas,tabuleiro);
  }
  async function consultarFilaOperador(fila,pagina=0){

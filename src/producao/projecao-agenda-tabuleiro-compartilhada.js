@@ -45,6 +45,7 @@ function projetarAgendaTabuleiroCompartilhada(estado){
   luzesDoRelogioCompartilhado:true,
   marcoZeramentoVisualMs:estado.marcoZeramentoVisualMs??null,
   eventosReaisNoCiclo:estado.eventosNoCiclo,
+  ...(estado.placarExecucao?{placarExecucao:Object.freeze({...estado.placarExecucao})}:{}),
   ciclosReaisConcluidos:estado.ciclosConcluidos,
   girosReaisHoje:estado.girosHoje,girosReais24h:estado.giros24h,
   girosReaisHora:estado.girosHora??null,

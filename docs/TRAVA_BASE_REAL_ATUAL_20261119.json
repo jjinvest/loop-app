@@ -1496,7 +1496,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "1edbb6725d73eee1f6f5c7230e8f641613249821"
+      "sha": "9dcd48e337e8bae89776605670a2efa845e080ae"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1548,7 +1548,7 @@
     },
     {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
-      "sha": "1adc3ce4473079f70e82ec702624eaf6965aa22d"
+      "sha": "d4653f265af382d0c900e367e883fd00084d2aa7"
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
@@ -1588,7 +1588,7 @@
     },
     {
       "path": "src/producao/projecao-agenda-tabuleiro-compartilhada.js",
-      "sha": "8a8c68289b7b70139febbc4d7f848fab2403242d"
+      "sha": "f063b0481cfa664d2b0b6157318fa62c2ba31265"
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
@@ -1868,7 +1868,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "4f94c1ff8421a04ed6ee48efd36a3912ecd0660b"
+      "sha": "0b102cb03ea7b59a527b59e6b6e8aa21bdde401a"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -3684,7 +3684,7 @@
     },
     {
       "path": "test/visor-catraca-unico.test.js",
-      "sha": "3c1d75fa594c8b455474ba4f586ce511525e6a01"
+      "sha": "d42ea3a0fce847ff580c99d3ce6d98e81852f81a"
     },
     {
       "path": "test/visor-filas-vizinhos-paginacao-real.test.js",
@@ -6143,6 +6143,41 @@
       "antes": "b054d3c87d6e0f1f593537c408f0d1b9e4042a74",
       "depois": "3c1d75fa594c8b455474ba4f586ce511525e6a01",
       "objetivo": "START explícito no diálogo de programação do lote de conferência, sem autoexecução; preservar ciclo parcial à meia-noite e impedir START repetido de reiniciar cadência."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "src/producao/operacao-catraca-admin-sqlite.js",
+      "antes": "1adc3ce4473079f70e82ec702624eaf6965aa22d",
+      "depois": "d4653f265af382d0c900e367e883fd00084d2aa7",
+      "objetivo": "Placar original do motor definitivo a partir de eventos auditados, sem converter previsões de horário em execução; ciclo parcial intacto, bloqueio real explícito."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "src/producao/projecao-agenda-tabuleiro-compartilhada.js",
+      "antes": "8a8c68289b7b70139febbc4d7f848fab2403242d",
+      "depois": "f063b0481cfa664d2b0b6157318fa62c2ba31265",
+      "objetivo": "Placar original do motor definitivo a partir de eventos auditados, sem converter previsões de horário em execução; ciclo parcial intacto, bloqueio real explícito."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "src/shared/visor-catraca.js",
+      "antes": "4f94c1ff8421a04ed6ee48efd36a3912ecd0660b",
+      "depois": "0b102cb03ea7b59a527b59e6b6e8aa21bdde401a",
+      "objetivo": "Placar original do motor definitivo a partir de eventos auditados, sem converter previsões de horário em execução; ciclo parcial intacto, bloqueio real explícito."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "1edbb6725d73eee1f6f5c7230e8f641613249821",
+      "depois": "9dcd48e337e8bae89776605670a2efa845e080ae",
+      "objetivo": "Placar original do motor definitivo a partir de eventos auditados, sem converter previsões de horário em execução; ciclo parcial intacto, bloqueio real explícito."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "test/visor-catraca-unico.test.js",
+      "antes": "3c1d75fa594c8b455474ba4f586ce511525e6a01",
+      "depois": "d42ea3a0fce847ff580c99d3ce6d98e81852f81a",
+      "objetivo": "Placar original do motor definitivo a partir de eventos auditados, sem converter previsões de horário em execução; ciclo parcial intacto, bloqueio real explícito."
     }
   ]
 }

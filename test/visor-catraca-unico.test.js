@@ -166,3 +166,17 @@ test('placar novo dia mantém três eventos do centro e distingue START pendente
  assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
  assert.equal(elements.tituloRelogioTabuleiro.textContent,'AGUARDANDO START');
 });
+
+
+test('motor definitivo exibe somente eventos registrados, nunca a projeção do horário',()=>{
+ const agora=Date.now();
+ const elements=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro','loop03LuzesHoraIntegrado','loop03Giros24Integrado','loop03NumeroIntegrado'].map(id=>[id,{textContent:''}]));
+ const context={window:{setInterval:()=>1},document:{hidden:false,body:{classList:{contains:()=>true}}},Date,Math,Number,String,Object};
+ vm.runInNewContext(ler('shared/visor-catraca.js'),context);
+ const visor=context.window.LoopVisorCatraca.criar({elemento:id=>elements[id]});
+ visor.registrarAgenda({origem:'CATRACA_REAL_MESMO_SQLITE',luzesDoRelogioCompartilhado:true,modoExecucao:'AGENDADA',agoraServidorMs:agora,eventosReaisNoCiclo:3,luzesRelogioHoje:90,placarExecucao:{eventosHoje:0,previstasHoje:0,ciclosHoje:0,autorizada:false}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
+ assert.equal(elements.loop03NumeroIntegrado.textContent,'3 / 6');
+ assert.equal(elements.loop03Giros24Integrado.textContent,'0');
+ assert.equal(elements.tituloRelogioTabuleiro.textContent,'EXECUÇÃO BLOQUEADA');
+});

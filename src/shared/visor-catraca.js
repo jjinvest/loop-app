@@ -183,6 +183,34 @@
    const agoraServidor=Number.isSafeInteger(agenda?.agoraServidorMs)?
     agenda.agoraServidorMs+(Date.now()-leituraVisorCatracaEm):Date.now();
    const visual=horarioVisual({agenda,agoraMs:agoraServidor});
+   const execucao=agenda?.placarExecucao;
+   if(execucao&&!agenda?.fluxoControlado){
+    // Na operação definitiva, previsão de horário não é evento executado.
+    const eventos=agenda.eventosReaisNoCiclo;
+    for(let i=1;i<=6;i++){
+     const bola=$('motorBolinha'+i);
+     if(!bola)continue;
+     bola.classList.toggle('loop03-relogio-luz-visual',false);
+     bola.classList.toggle('loop03-relogio-luz-atual',false);
+     bola.classList.toggle('loop03-marcador-aceso',i<=eventos);
+    }
+    const luzes=$('loop03LuzesHoraIntegrado'),ciclos=$('loop03Giros24Integrado');
+    const selecionada=$('loop03NumeroIntegrado');
+    if(luzes)luzes.textContent=execucao.eventosHoje+' / '+execucao.previstasHoje;
+    if(ciclos)ciclos.textContent=String(execucao.ciclosHoje);
+    if(selecionada&&document.body?.classList?.contains?.('loop03-modo-operador'))
+     selecionada.textContent=eventos+' / 6';
+    const previa=meta?.proximaLuzPrevistaEmMs;
+    const segundos=Number.isSafeInteger(previa)&&previa>agoraServidor?
+     Math.ceil((previa-agoraServidor)/1000):null;
+    visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
+    titulo.textContent=execucao.autorizada?'PRÓXIMA LUZ · EVENTO':'EXECUÇÃO BLOQUEADA';
+    estado.textContent=legendaPublica(eventos,execucao.eventosHoje,execucao.previstasHoje,execucao.dataAlvo);
+    if(execucao.previstasHoje===0&&execucao.eventosHoje===0)estado.textContent+=' · 0/0 luzes';
+    const contador=$('motorContadorEventos');
+    if(contador)contador.textContent=execucao.autorizada?'CATRACA EM ANDAMENTO':'CATRACA SEM AUTORIZAÇÃO DE EXECUÇÃO';
+    return;
+   }
    sincronizarLuzesVisuais(visual);
    // A visão controlada usa apenas os marcos persistidos do lote.
    const fluxo=agenda?.fluxoControlado;
