@@ -81,3 +81,30 @@ test('um marco novo não é confundido com intervalo mínimo entre consultas',()
  assert.equal(avaliarExecucaoDistribuicao({agenda,ativa:true,agoraMs:base+40100,ultimoEventoEm:base+20900}).podeExecutar,true);
  assert.equal(avaliarExecucaoDistribuicao({agenda,ativa:true,agoraMs:base+40900,ultimoEventoEm:base+40100}).podeExecutar,false);
 });
+test('livro da Distribuição roteia roxos, pretos e seis eventos da dourada, conservando cofres e reserva dos bônus',t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ let agora=ms('2026-11-28T09:00:00');
+ const lote=new BancadaModulosLoopSQLite({banco:db,agora:()=>agora,
+  consultarAgenda:()=>({modo:'MANUAL',janelaInicio:'09:00',janelaFim:'18:00',metaCentrosDia:0})});
+ lote.comandar({acao:'CATRACA_PREPARAR_100',idOperacao:'preparar-cofres-prova'});
+ lote.comandar({acao:'CATRACA_INICIAR',idOperacao:'start-cofres-isolado'});
+ const destinos=['LOOP_CENTRO','LOOP_ESQUERDA','LOOP_CENTRO','LOOP_DIREITA','LOOP_CENTRO','LOOP_ESQUERDA'];
+ let eventosDourados=0;
+ for(let i=0;i<100;i++){
+  const antes=lote.consultar().catraca;
+  agora+=1000;
+  const pulso=lote.processarRelogio();
+  assert.equal(pulso.processado,true);
+  const dourada=antes.tabuleiro.centroPosicao.dourada;
+  assert.equal(pulso.destino,dourada?'LOOP_DOURADAS':destinos[antes.tabuleiro.eventosNoCiclo]);
+  if(dourada)eventosDourados++;
+  const f=lote.consultar().catraca.financeiro;
+  const livros=db.prepare('SELECT destino,SUM(valor) total FROM loop_teste_fluxo_lancamentos GROUP BY destino').all();
+  const valores=Object.fromEntries(livros.map(x=>[x.destino,x.total]));
+  assert.equal(f.destinos.LOOP_ESQUERDA,valores.LOOP_ESQUERDA||0);
+  assert.equal(f.destinos.LOOP_DIREITA,(valores.LOOP_DIREITA||0)-(valores.BONUS||0));
+  assert.equal(f.destinos.LOOP_DOURADAS,valores.LOOP_DOURADAS||0);
+  assert.equal(Object.values(f.destinos).reduce((a,b)=>a+b,0)+f.saldoCentavos,2500000);
+ }
+ assert.ok(eventosDourados>=6,'ao menos um ciclo dourado completo foi conferido');
+});

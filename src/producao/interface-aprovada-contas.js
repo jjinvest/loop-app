@@ -1202,6 +1202,9 @@
   const eventos=d?.tabuleiro?.eventosNoCiclo;
   const centros=d?.tabuleiro?.ciclosConcluidos;
   const relogio=d?.relogio??null;
+  const registrados=d?.contadores??null;
+  if(registrados&&['eventosHoje','eventos24h','ciclosHoje','ciclosHistorico'].some(k=>!Number.isSafeInteger(registrados[k])||registrados[k]<0))
+   throw Error('RESUMO_LIVRO_INVALIDO');
   if(![totalA,totalB,eventos,centros].every(x=>
       Number.isSafeInteger(x)&&x>=0)||eventos>6)
    throw Error('RESUMO_POSICOES_MOTOR_INVALIDO');
@@ -1264,18 +1267,18 @@
   // O dia de Brasília (00h-23h59) é a única referência de progresso.
   // Após completar seis luzes, 6/6 permanece até a primeira luz seguinte.
   const luzesDia=relogio?.luzesRelogioHoje??null;
-  const progressoDia=luzesDia===null?eventos:
+  const progressoDia=registrados?eventos:luzesDia===null?eventos:
    (luzesDia===0?0:((luzesDia-1)%6)+1);
   tabuleiro.append(linha(
    metade('Eventos no ciclo',progressoDia+' / 6'),
-   metade('Eventos acumulados',relogio?
+   metade('Eventos acumulados',registrados?registrados.eventos24h:relogio?
     relogio.luzesRelogioAcumuladas:'—')));
   if(relogio)tabuleiro.append(criar('small','loop03-luzes-hoje',
    'Luzes acesas hoje: '+luzesDia));
   tabuleiro.append(linha(
-   metade('Centros concluídos hoje',relogio?
+   metade('Centros concluídos hoje',registrados?registrados.ciclosHoje:relogio?
     relogio.ciclosRelogioHoje:'—'),
-   metade('Ciclos concluídos no total',relogio?
+   metade('Ciclos concluídos no total',registrados?registrados.ciclosHistorico:relogio?
     relogio.ciclosRelogioAcumulados:'—')));
   destino.replaceChildren(filas,tabuleiro);
  }
@@ -1457,11 +1460,12 @@
    alvo.replaceChildren(...cards);
   }catch(e){if(atual())alvo.textContent='Dados financeiros indisponíveis: '+e.message;}
  }
- async function carregarAbaOperador(id){
+ async function carregarAbaOperador(id,{silencioso=false}={}){
   if(!modoOperadorAtual)return;
   if(id==='abaPosicoes')void carregarIndicadoresComerciaisOperador();
   if(id==='abaFinanceiro'){void carregarDistribuicaoFinanceira();void carregarFinanceiroFluxoTeste();}
-  const posicoesEmTeste=id==='abaPosicoes'&&visualTesteModulo!==null;
+  const moduloLeitura=visualTesteModulo;
+  const posicoesEmTeste=id==='abaPosicoes'&&moduloLeitura!==null;
   const rotas={
    abaPosicoes:['/api/admin/loop/estado','adminResumoPosicoes'],
    abaFinanceiro:['/api/admin/loop/controle','adminResumoFinanceiro'],
@@ -1471,7 +1475,7 @@
    ['/api/admin/loop/testes-modulos','adminResumoPosicoes']:rotas[id];
   if(!info)return;
   const destino=$(info[1]);if(!destino)return;
-  destino.textContent='Atualizando dados reais do servidor…';
+  if(!silencioso)destino.textContent='Atualizando dados reais do servidor…';
   try{
    const r=await fetch(info[0],{credentials:'same-origin',cache:'no-store'});
    const d=await r.json().catch(()=>({}));
@@ -1479,15 +1483,24 @@
    if(!modoOperadorAtual)return;
    if(id==='abaPosicoes'){
     if(posicoesEmTeste){
-     const x=d[visualTesteModulo.toLowerCase()];
+     if(visualTesteModulo!==moduloLeitura)return;
+     const x=d[moduloLeitura.toLowerCase()];
      if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
         !Array.isArray(x?.filaA)||!Array.isArray(x?.filaB))
       throw Error('RESUMO_POSICOES_TESTE_INVALIDO');
+     const marcador=JSON.stringify([x.filaA,x.filaB,x.tabuleiro,x.financeiro?.contadores]);
+     if(silencioso&&destino.dataset.marcadorFluxo===marcador){
+      if(x.financeiro)aplicarSaldoCompartilhado(x.financeiro);return;
+     }
      mostrarResumoPosicoesOperador(destino,{
       filaA:x.filaA.length,filaB:x.filaB.length,
+      filasResumo:{A:{total:x.filaA.length,primeiro:x.filaA[0]??null},B:{total:x.filaB.length,primeiro:x.filaB[0]??null}},
+      contadores:x.financeiro?.contadores,
       tabuleiro:{eventosNoCiclo:x.tabuleiro.eventosNoCiclo,
        ciclosConcluidos:x.tabuleiro.centrosConcluidos}
      });
+     destino.dataset.marcadorFluxo=marcador;
+     if(x.financeiro)aplicarSaldoCompartilhado(x.financeiro);
     }else{
      // Os LEDs do relógio não são giros do motor. A leitura do mesmo
      // controle compartilhado alimenta os eventos/centros VISUAIS.
@@ -2684,6 +2697,7 @@
   }finally{placarOperadorConsultando=false;}
  }
 
+ let placarFluxoConsultando=false;
  function prepararAbasMotor(){
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
@@ -2693,8 +2707,13 @@
   // Somente a vista do teste recebe atualização mais rápida.
   window.setInterval(()=>{
    if(document.hidden||!modoOperadorAtual)return;
-   if(visualTesteModulo==='CATRACA'&&$('conteudoTabuleiro')?.hidden===false)
-    void carregarTabuleiroTesteOperador();
+   if(visualTesteModulo==='CATRACA'){
+    if($('conteudoTabuleiro')?.hidden===false)void carregarTabuleiroTesteOperador();
+    else if($('conteudoPosicoes')?.hidden===false&&!placarFluxoConsultando){
+     placarFluxoConsultando=true;
+     void carregarAbaOperador('abaPosicoes',{silencioso:true}).finally(()=>{placarFluxoConsultando=false;});
+    }
+   }
   },2000);
   // Sem reproduzir os cartões ao atualizar o placar nas outras abas.
   // O operador mantém seu fluxo de atualização somente no Tabuleiro.
