@@ -1,6 +1,6 @@
 # Política de Privacidade — Cadastro LOOP 3.0 / AKITEMM
-**Versão proposta:** LOOP-PRIVACIDADE-CADASTRO-2026-11-v1
-**Escopo da versão:** tratamento de dados de cadastro e indicação, sem operações financeiras.
+LOOP-PRIVACIDADE-CADASTRO
+Tratamento de dados de cadastro e indicação, sem operações financeiras.
 
 **Controlador de dados para a etapa de cadastro:** Jonathan Vilela da Silva, pessoa natural responsável pelas decisões sobre o tratamento de dados na plataforma digital LOOP 3.0 / AKITEMM. Contato para privacidade e direitos dos titulares: jjinvest2024oficial@gmail.com. Atendimento da loja: akitemmoficiall@gmail.com. O cadastro não habilita pagamentos, saques ou compras.
 

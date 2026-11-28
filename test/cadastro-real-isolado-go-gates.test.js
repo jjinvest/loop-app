@@ -89,3 +89,11 @@ test('documentos versionados do cadastro sao integrais e nao confundem aceite CP
  assert.match(cfg.privacidade.versao,/^LOOP-PRIVACIDADE-CADASTRO-/);
  assert.notEqual(cfg.termos.texto,cfg.privacidade.texto);
 });
+
+ test('documentos aprovados usam títulos simples e identificam AKITEMM como Loja Virtual',()=>{
+ const termos=fs.readFileSync(path.join(__dirname,'../docs/TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md'),'utf8');
+ const priv=fs.readFileSync(path.join(__dirname,'../docs/POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md'),'utf8');
+ assert.match(termos,/^LOOP-TERMOS-CADASTRO$/m);
+ assert.match(termos,/AKITEMM \(Loja Virtual\)/);
+ for(const d of [termos,priv])assert.doesNotMatch(d,/Versão proposta|Escopo da versão|CADASTRO-2026-11-v1/);
+});
