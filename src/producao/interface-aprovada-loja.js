@@ -702,7 +702,7 @@
     if(valor!==null)mensagem+='Taxa de entrega própria: '+valor+'. ';
     if(dados.requerOutraCotacao)
      mensagem+='Outros produtos ainda precisam de cotação de frete. ';
-    mensagem+='Esta consulta não cria pedido nem libera pagamento.';
+    mensagem+='';
     limparAvisoRegional();
     statusEntrega.textContent=mensagem;
    }catch{
@@ -1166,7 +1166,7 @@
   }catch{
    produtosPublicados=[];filtrar();
    $('akitemmResultadoProdutos').textContent=
-    'Catálogo indisponível. Nenhum produto fictício será exibido.';
+    'Catálogo indisponível nesta consulta.';
   }finally{if(botao)botao.disabled=false;}
  }
  $('atualizarCatalogoLoja').addEventListener('click',
@@ -1219,7 +1219,7 @@
    if(resposta.status===401){solicitarCadastro();return;}
    if(resposta.status===503){
     const item=document.createElement('li');
-    item.textContent='Acompanhamento de pedidos reais ainda não habilitado.';
+    item.textContent='Acompanhamento de pedidos indisponível.';
     lista.appendChild(item);return;
    }
    if(!resposta.ok)throw Error('PEDIDOS_INDISPONIVEIS');
@@ -1306,7 +1306,7 @@
       capacidade.ativas+' posição(ões) ativas, '+
       capacidade.reservadas+' reservada(s), '+
       capacidade.disponiveis+' disponível(is) no motor. '+
-      'Checkout e pagamentos reais ainda não habilitados.');
+      '');
    }
   }catch{
    // Indisponibilidade da leitura nao libera compra nem muda as regras.

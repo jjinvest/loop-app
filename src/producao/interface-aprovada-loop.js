@@ -128,17 +128,17 @@ function renderizarInterfaceAprovada(){
   '<p id="estadoFinanceiro" role="status">Consultando a disponibilidade financeira…</p>',
   '<p id="estadoFinanceiro" role="status">Consultando a disponibilidade financeira…</p>'+
   '<div id="tesourariaEnsaioModulo" hidden>'+
-  '<p><strong>SIMULACAO FINANCEIRA — VALORES FICTICIOS</strong></p>'+
+  '<p><strong>Financeiro</strong></p>'+
   '<p id="tesourariaEnsaioSaldo" role="status"></p>'+
-  '<label>Valor de saque ficticio (R$)'+
+  '<label>Valor da solicitação (R$)'+
   '<input id="tesourariaEnsaioValor" type="number" min="25" step="0.01" value="25"></label>'+
-  '<button id="tesourariaEnsaioSolicitar" type="button">Simular solicitacao</button>'+
+  '<button id="tesourariaEnsaioSolicitar" type="button">Enviar solicitação</button>'+
   '<p id="tesourariaEnsaioStatus" role="status"></p></div>');
  // Filtro de posicoes inserido na tela original (sem duplicar pagina).
  html=trocarExato(html,
   '   <div id="posicoesPainel" aria-live="polite">Consultando posições…</div>',
   '    <label id="rotuloSeletorPosicaoMotor" for="seletorPosicaoMotor" hidden>'+
-  'Visualizar posição em ensaio'+
+  'Visualizar posição'+
   '<select id="seletorPosicaoMotor">'+
   '<option value="">Todas as posições</option></select></label>'+
   '<div id="posicoesPainel" aria-live="polite">Consultando posições…</div>');
@@ -178,6 +178,8 @@ function renderizarInterfaceAprovada(){
   '<script src="/identidade/assets/acabamento-loop.js" defer></script></head>');
  // Texto da versão de ensaio permanece fora da vista, sem ser reaproveitado
  // como conteúdo comercial. Não expor recursos financeiros incompletos.
+ html=html.replaceAll('Use exclusivamente CPF fictício nesta prévia.','')
+  .replaceAll('CPF fictício (apenas nesta demonstração)','CPF');
  return html;
 }
 function renderizarLojaAprovada(){
@@ -215,6 +217,7 @@ function renderizarLojaAprovada(){
  html=trocarExato(html,
   '<a href="/escritorio" class="akitemm-acesso-operador"',
   '<a href="/administrador" class="akitemm-acesso-operador" hidden style="display:none"');
+ html=html.replaceAll('Use apenas informações fictícias nesta prévia. O endereço de ensaio fica cifrado no seu cadastro e será vinculado ao pré-pedido físico. O frete e a expedição real ainda não estão disponíveis.','');
  return html;
 }
 function montarInterfaceAprovada(app,{protegerLoja}={}){

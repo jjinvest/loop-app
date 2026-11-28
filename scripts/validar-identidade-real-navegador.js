@@ -404,6 +404,9 @@ async function main(){
 
    assert.equal(quadros.contidos,true,
     'cartões não podem fugir das molduras no celular');
+   assert.equal(await operadorPage.locator('#adminResumoPosicoes .loop03-resumo-filas #adminAtualizarPosicoes').count(),1);
+   assert.equal(await operadorPage.locator('#adminPosicoesRodape a[href="/administrador"]').count(),1);
+   assert.equal(await operadorPage.locator('#adminPosicoesRodape').evaluate(el=>el.parentElement.lastElementChild===el),true);
    await operadorPage.locator('#adminAtualizarPosicoes').click();
    await operadorPage.locator('#adminResumoPosicoes .loop03-resumo-quadro')
     .first().waitFor({state:'visible'});
@@ -756,7 +759,7 @@ async function main(){
    const painelCofres=operadorPage.locator('#loop03CofresOperador');
    await painelCofres.waitFor({state:'visible'});
    await operadorPage.locator('#loop03CofresEstado').filter({
-    hasText:/Aguardando conciliação externa/
+    hasText:/Aguardando atualização/
    }).waitFor({state:'visible'});
    const geometriaCofres=await painelCofres.evaluate(painel=>{
     return [...painel.querySelectorAll('.loop03-cofre')].map(el=>({
@@ -781,7 +784,7 @@ async function main(){
    assert.ok(saldosCofres.d.cofres.every(x=>x.saldoCentavos===null));
    await operadorPage.locator('#loop03CofresAtualizar').click();
    await operadorPage.locator('#loop03CofresEstado').filter({
-    hasText:/Aguardando conciliação externa/
+    hasText:/Aguardando atualização/
    }).waitFor();
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#abaTabuleiro').click();
@@ -1254,7 +1257,7 @@ async function main(){
    await page.locator('#finValorSaque').fill('25');
    await page.locator('#finSolicitarSaque').click();
    await page.locator('#finSaqueResposta').filter({
-    hasText:/Saque indisponível até a homologação bancária/
+    hasText:/Saque indisponível no momento/
    }).waitFor();
    await conferirLayoutReal(page,'financeiro-'+item.nome,{
     mobile:item.largura<=860
@@ -1281,13 +1284,12 @@ async function main(){
    console.log('DIAGNOSTICO_FINANCEIRO_'+item.nome+'='+
     JSON.stringify(diagnosticoTesouraria));
    await page.locator('#tesourariaEnsaioSaldo').filter({
-    hasText:/Disponivel ficticio: R\$\s*0,00/
+    hasText:/Disponível: R\$\s*0,00/
    }).waitFor();
-   assert.match(await page.locator('#estadoFinanceiro').innerText(),
-    /SIMULACAO.*sem pagamento bancario/i);
+   assert.equal(await page.locator('#estadoFinanceiro').textContent(),'');
    await page.locator('#tesourariaEnsaioSolicitar').click();
    await page.locator('#tesourariaEnsaioStatus').filter({
-    hasText:/Saque ficticio indisponivel.*Nenhum dinheiro foi movimentado/
+    hasText:/Solicitação indisponível/
    }).waitFor();
    assert.equal(tesourariaEnsaio.verificar().integridade,'OK');
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
@@ -1487,7 +1489,7 @@ async function main(){
    assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'vitrine sem transbordamento');
    assert.match(await page.locator('#estadoLojaLoop').innerText(),
-    /capacidade técnica da sua conta.*Checkout e pagamentos reais ainda não habilitados/i);
+    /capacidade técnica da sua conta.*disponível\(is\) no motor/i);
    await page.screenshot({
     path:path.join(pasta,'identidade-real-loja-'+item.nome+'.png'),
     fullPage:true

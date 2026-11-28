@@ -546,7 +546,7 @@
     ' · Cinzas sem posição: '+d.naoQualificadas+
     ' · Regras especiais pendentes: '+d.regrasEspeciaisPendentes+
     ' · Estornos: '+d.estornadas+
-    ' · Ligação interna de ensaio (sem dinheiro real).';
+    '';
   }catch(e){
    integracaoDisponivel=false;
    $('integracaoQualificadaEstado').textContent=
@@ -567,7 +567,7 @@
     'Sincronizado: '+(d.novasPosicoes||0)+' posição(ões), '+
     (d.novosEventos||0)+' luz(es) nova(s). '+
     'Filas: '+d.filaA+'/'+d.filaB+
-    ' · Eventos: '+d.eventosNoCiclo+'/6. Sem dinheiro real.';
+    ' · Eventos: '+d.eventosNoCiclo+'/6.';
   }finally{integracaoOcupada=false;botoesIntegracao();}
  }
  for(const [id,acao] of [

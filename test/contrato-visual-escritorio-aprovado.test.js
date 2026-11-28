@@ -64,7 +64,8 @@ test('Financeiro real e a prévia usam os mesmos cartões e protegem o saque',()
  assert.ok(real.includes("fetch('/api/financeiro/historico'"));
  assert.ok(real.includes("fetch('/api/financeiro/saques'"));
  assert.ok(real.includes("carregarFinanceiroReal()"));
- assert.ok(real.includes("Saque indisponível até a homologação bancária"));
+ assert.ok(real.includes("Saque indisponível no momento."));
+ assert.doesNotMatch(real,/Nenhum Pix foi enviado|Nenhum dinheiro movimentado/);
 });
 
 test('primeira aba: quatro banners, AKITEMM prateado e pontos circulares',()=>{

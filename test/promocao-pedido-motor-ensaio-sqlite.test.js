@@ -1201,7 +1201,7 @@ test('loja aprovada apresenta capacidade do proprio titular sem habilitar checko
   body:JSON.stringify({quantidade:10})})).status,503);
  const ui=await (await fetch(base+'/identidade/assets/loja.js')).text();
  assert.match(ui,/api\/loja\/capacidade/);
- assert.match(ui,/Checkout e pagamentos reais ainda não habilitados/);
+ assert.doesNotMatch(ui,/Checkout e pagamentos reais ainda não habilitados/);
  assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,3);
  await x.pedidosIntegrados.confirmarPagamento({pedidoId:reservado.pedidoId});
  assert.equal((await (await ver(buyer)).json()).ativas,3);
