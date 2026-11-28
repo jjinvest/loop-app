@@ -299,3 +299,28 @@ test('indicada escolhe destino 1..10 uma vez, com autenticação, titularidade e
  assert.equal(x.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(x.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
+test('convite institucional acessível não contorna cadastro fechado ou backup fora de dia',async t=>{
+ const x=preparar();t.after(()=>x.banco.close());await x.cadastrar('Vilela');
+ for(const permitirCadastro of [false,true]){
+  const app=criarAppIdentidadeLoop({contas:x.contas,motorLoop:x.motor,origemHttps:ORIGEM,
+   divulgadorInstitucionalNick:'VILELA',permitirCadastro,
+   backupEstado:()=>({backupAtualEmDia:!permitirCadastro})});
+  const srv=app.listen(0,'127.0.0.1');await once(srv,'listening');
+  const base='http://127.0.0.1:'+srv.address().port;
+  try{
+   const link=await fetch(base+'/escritorio/VILELA',{redirect:'manual'});
+   assert.equal(link.status,303);
+   assert.equal(link.headers.get('location'),'/escritorio?ref=vilela');
+   const docs=await (await fetch(base+'/api/contas/documentos-leitura')).json();
+   assert.equal(docs.cadastroAtivo,false);
+   assert.equal((await fetch(base+'/readyz')).status,503);
+   const antes=x.banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n;
+   const criar=await fetch(base+'/api/contas/cadastrar',{method:'POST',
+    headers:{Origin:ORIGEM,'Content-Type':'application/json'},
+    body:JSON.stringify({indicadorNick:'VILELA'})});
+   assert.equal(criar.status,503);
+   assert.equal((await criar.json()).erro,'CADASTRO_INATIVO');
+   assert.equal(x.banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n,antes);
+  }finally{await new Promise(r=>srv.close(r));}
+ }
+});

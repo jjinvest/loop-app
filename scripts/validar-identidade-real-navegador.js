@@ -943,10 +943,10 @@ async function main(){
    assert.equal(new URL(cadastro.url()).pathname,'/escritorio');
    assert.equal(new URL(cadastro.url()).searchParams.get('ref'),
     nick.toLowerCase(),'o link personalizado deve identificar o indicador');
-   await cadastro.locator('#painelLogin').waitFor({state:'visible'});
-   assert.equal(await cadastro.locator('#conviteIndicadorEntrada').count(),0);
-   await cadastro.locator('#mudarParaCadastro').click();
    await cadastro.locator('#painelCadastro').waitFor({state:'visible'});
+   assert.equal(await cadastro.locator('#painelLogin').isHidden(),true,
+    'visitante com convite válido chega diretamente ao cadastro');
+   assert.equal(await cadastro.locator('#conviteIndicadorEntrada').count(),0);
    assert.equal(await cadastro.locator('#cadastroIndicador').inputValue(),
     nick.toLowerCase());
    assert.equal(await cadastro.locator('#cadastroIndicadorAviso').count(),0);
