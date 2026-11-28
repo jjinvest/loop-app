@@ -206,8 +206,8 @@
      fluxo.modo==='LIVRE'?'FLUXO DE VENDAS':'PRÓXIMA LUZ · EVENTO';
     const executadas=programacao?.executadas??fluxo.contadores?.eventosHoje;
     const previstas=programacao?.previstas??(Number.isSafeInteger(fluxo.metaCentrosDia)?fluxo.metaCentrosDia*6:null);
-    estado.textContent=legendaPublica(fluxo.eventos,executadas,previstas,terminou?null:fluxo.metaDataAlvo);
-    if(terminou)estado.textContent+=' · 0/0 luzes';
+    estado.textContent=legendaPublica(fluxo.eventos,executadas,previstas,programacao?programacao.dataAlvo:fluxo.metaDataAlvo);
+    if(previstas===0&&executadas===0)estado.textContent+=' · 0/0 luzes';
     const luzesHoje=$('loop03LuzesHoraIntegrado'),ciclosHoje=$('loop03Giros24Integrado');
     if(luzesHoje&&Number.isSafeInteger(executadas)&&Number.isSafeInteger(previstas))
      luzesHoje.textContent=executadas+' / '+previstas;

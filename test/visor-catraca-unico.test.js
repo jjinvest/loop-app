@@ -135,7 +135,7 @@ test('contador do OPERADOR renderiza 90 min por luz em um centro sem criar event
  });
 
 
-test('visor do lote mostra 0/0 ao encerrar e preserva ciclos de hoje',()=>{
+test('visor do lote preserva 90/90 e 15 ciclos ao encerrar e zera no novo dia',()=>{
  const agora=Date.now();
  const elements=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro','loop03LuzesHoraIntegrado','loop03Giros24Integrado','loop03NumeroIntegrado'].map(id=>[id,{textContent:''}]));
  const context={window:{setInterval:()=>1},document:{hidden:false},Date,Math,Number,String,Object};
@@ -144,9 +144,12 @@ test('visor do lote mostra 0/0 ao encerrar e preserva ciclos de hoje',()=>{
  visor.registrarAgenda({fluxoControlado:{ativa:true,modo:'PROGRAMADO',eventos:2,total:8,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:false,executadas:8,previstas:90},contadores:{eventosHoje:8,ciclosHoje:1}}});
  assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'8 / 90');
  assert.equal(elements.loop03NumeroIntegrado.textContent,'2 / 6');
- visor.registrarAgenda({fluxoControlado:{ativa:true,modo:'PROGRAMADO',eventos:0,total:90,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:true,executadas:0,previstas:0},contadores:{eventosHoje:90,ciclosHoje:15}}});
- assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
+ visor.registrarAgenda({fluxoControlado:{ativa:true,modo:'PROGRAMADO',eventos:0,total:90,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:true,executadas:90,previstas:90,dataAlvo:'2026-11-23'},contadores:{eventosHoje:90,ciclosHoje:15}}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'90 / 90');
  assert.equal(elements.loop03Giros24Integrado.textContent,'15');
- assert.match(elements.estadoRelogioTabuleiro.textContent,/0\/0 luzes/);
+ assert.match(elements.estadoRelogioTabuleiro.textContent,/90\/90 luzes/);
  assert.equal(elements.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
+ visor.registrarAgenda({fluxoControlado:{ativa:false,modo:'PROGRAMADO',eventos:0,total:90,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:true,executadas:0,previstas:0,dataAlvo:null},contadores:{eventosHoje:0,ciclosHoje:0}}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
+ assert.equal(elements.loop03Giros24Integrado.textContent,'0');
 });

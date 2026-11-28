@@ -540,7 +540,7 @@ test('cartão representa bônus devido sem confundir pendente com total pago',t=
 });
 
 
-test('programação de 15 centros consome 90 eventos persistidos, encerra visor e conserva histórico',t=>{
+test('programação de 15 centros consome 90 eventos persistidos, encerra relógio, mantém placar diário e zera à meia-noite',t=>{
  const c=contexto('AUTOMATICA');t.after(()=>c.db.close());
  Object.assign(c.agenda,{metaCentrosDia:15,metaDataAlvo:'2026-11-23',janelaInicio:'09:00',janelaFim:'09:15'});
  const inicio=Date.parse('2026-11-23T09:00:00-03:00');
@@ -555,24 +555,29 @@ test('programação de 15 centros consome 90 eventos persistidos, encerra visor 
   assert.equal(f.tabuleiro.eventosNoCiclo,i%6);
   assert.equal(f.financeiro.contadores.ciclosHoje,Math.floor(i/6));
   assert.equal(f.financeiro.contadores.eventosHoje,i);
-  assert.equal(f.financeiro.programacao.executadas,i===90?0:i);
+  assert.equal(f.financeiro.programacao.executadas,i);
   assert.equal(c.teste.processarRelogio().processado,false,'não duplica evento');
  }
  let f=c.teste.consultar().catraca.financeiro;
- assert.deepEqual(f.programacao,{encerrada:true,executadas:0,previstas:0,dataAlvo:null});
+ assert.deepEqual(f.programacao,{encerrada:true,executadas:90,previstas:90,dataAlvo:'2026-11-23'});
  c.mudarTempo(inicio+16*60000);
  assert.equal(c.teste.processarRelogio().processado,false);
  f=c.teste.consultar().catraca.financeiro;
  assert.equal(f.contadores.eventosHoje,90);assert.equal(f.contadores.ciclosHoje,15);
  assert.equal(f.eventos,90);
+ c.mudarTempo(Date.parse('2026-11-24T00:00:00-03:00'));
+ f=c.teste.consultar().catraca.financeiro;
+ assert.deepEqual(f.programacao,{encerrada:true,executadas:0,previstas:0,dataAlvo:null});
+ assert.equal(f.contadores.ciclosHoje,0);assert.equal(f.contadores.ciclosHistorico,15);
+ assert.equal(f.eventos,90);
 });
 
-test('programação vencida sem START volta a 0/0 sem criar eventos',t=>{
+test('programação vencida sem START mantém 0/90 até meia-noite sem criar eventos',t=>{
  const c=contexto('AUTOMATICA');t.after(()=>c.db.close());
  Object.assign(c.agenda,{metaCentrosDia:15,metaDataAlvo:'2026-11-23',janelaInicio:'09:00',janelaFim:'09:15'});
  c.acao('CATRACA_PREPARAR_100');
  c.mudarTempo(Date.parse('2026-11-23T09:16:00-03:00'));
  const f=c.teste.consultar().catraca.financeiro;
- assert.deepEqual(f.programacao,{encerrada:true,executadas:0,previstas:0,dataAlvo:null});
+ assert.deepEqual(f.programacao,{encerrada:true,executadas:0,previstas:90,dataAlvo:'2026-11-23'});
  assert.equal(f.eventos,0);assert.equal(f.contadores.ciclosHoje,0);
 });
