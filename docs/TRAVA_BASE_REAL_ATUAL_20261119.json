@@ -1340,7 +1340,7 @@
     },
     {
       "path": "src/producao/bancada-modulos-loop-sqlite.js",
-      "sha": "95b8b9c55cbab8c0dac855c7beea8985033ed4c0"
+      "sha": "b643457ebc8813a0e8bd9b21cf029a64732e3db3"
     },
     {
       "path": "src/producao/banner-mosaico-sqlite.js",
@@ -1496,7 +1496,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "7a0770bcadf593f10b741fc7676c0fffe8f31639"
+      "sha": "1edbb6725d73eee1f6f5c7230e8f641613249821"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1868,7 +1868,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "3ba320ce8337a6198ee300940fc75f6b437f8191"
+      "sha": "4f94c1ff8421a04ed6ee48efd36a3912ecd0660b"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2220,7 +2220,7 @@
     },
     {
       "path": "test/bancada-modulos-independentes-operador-real.test.js",
-      "sha": "309ad36d879fb273eab3bef1bfc578bd1bae19f9"
+      "sha": "ceb5ca2a58821b8b3e7460c028020930f0c23471"
     },
     {
       "path": "test/banner-akitemm-4-6-fotos-inteiras-20261124.test.js",
@@ -3684,7 +3684,7 @@
     },
     {
       "path": "test/visor-catraca-unico.test.js",
-      "sha": "b054d3c87d6e0f1f593537c408f0d1b9e4042a74"
+      "sha": "3c1d75fa594c8b455474ba4f586ce511525e6a01"
     },
     {
       "path": "test/visor-filas-vizinhos-paginacao-real.test.js",
@@ -6108,6 +6108,41 @@
       "antes": "8bc2c9adf7acf5ab290f6f20313db279c2989873",
       "depois": "b054d3c87d6e0f1f593537c408f0d1b9e4042a74",
       "objetivo": "Autorização explícita: conexão relógio/luzes/eventos/ciclos no lote, placar diário preservado até meia-noite de Brasília; sem liberar catraca, pagamentos, alterar CSS ou apagar histórico."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "7a0770bcadf593f10b741fc7676c0fffe8f31639",
+      "depois": "1edbb6725d73eee1f6f5c7230e8f641613249821",
+      "objetivo": "START explícito no diálogo de programação do lote de conferência, sem autoexecução; preservar ciclo parcial à meia-noite e impedir START repetido de reiniciar cadência."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "src/shared/visor-catraca.js",
+      "antes": "3ba320ce8337a6198ee300940fc75f6b437f8191",
+      "depois": "4f94c1ff8421a04ed6ee48efd36a3912ecd0660b",
+      "objetivo": "START explícito no diálogo de programação do lote de conferência, sem autoexecução; preservar ciclo parcial à meia-noite e impedir START repetido de reiniciar cadência."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "src/producao/bancada-modulos-loop-sqlite.js",
+      "antes": "95b8b9c55cbab8c0dac855c7beea8985033ed4c0",
+      "depois": "b643457ebc8813a0e8bd9b21cf029a64732e3db3",
+      "objetivo": "START explícito no diálogo de programação do lote de conferência, sem autoexecução; preservar ciclo parcial à meia-noite e impedir START repetido de reiniciar cadência."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "test/bancada-modulos-independentes-operador-real.test.js",
+      "antes": "309ad36d879fb273eab3bef1bfc578bd1bae19f9",
+      "depois": "ceb5ca2a58821b8b3e7460c028020930f0c23471",
+      "objetivo": "START explícito no diálogo de programação do lote de conferência, sem autoexecução; preservar ciclo parcial à meia-noite e impedir START repetido de reiniciar cadência."
+    },
+    {
+      "data": "2026-11-28",
+      "path": "test/visor-catraca-unico.test.js",
+      "antes": "b054d3c87d6e0f1f593537c408f0d1b9e4042a74",
+      "depois": "3c1d75fa594c8b455474ba4f586ce511525e6a01",
+      "objetivo": "START explícito no diálogo de programação do lote de conferência, sem autoexecução; preservar ciclo parcial à meia-noite e impedir START repetido de reiniciar cadência."
     }
   ]
 }

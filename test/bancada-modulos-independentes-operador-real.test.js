@@ -581,3 +581,35 @@ test('programação vencida sem START mantém 0/90 até meia-noite sem criar eve
  assert.deepEqual(f.programacao,{encerrada:true,executadas:0,previstas:90,dataAlvo:'2026-11-23'});
  assert.equal(f.eventos,0);assert.equal(f.contadores.ciclosHoje,0);
 });
+
+
+test('três eventos ficam acesos após meia-noite; próximo dia conclui o mesmo centro',t=>{
+ const c=contexto('AUTOMATICA');t.after(()=>c.db.close());
+ Object.assign(c.agenda,{metaCentrosDia:1,metaDataAlvo:'2026-11-23',janelaInicio:'23:00',janelaFim:'23:06'});
+ const inicio=Date.parse('2026-11-23T23:00:00-03:00');
+ c.mudarTempo(inicio);c.acao('CATRACA_PREPARAR_100');c.acao('CATRACA_INICIAR');
+ for(let i=1;i<=3;i++){c.mudarTempo(inicio+i*60000);assert.equal(c.teste.processarRelogio().processado,true);}
+ const centro=c.teste.consultar().catraca.tabuleiro.centro;
+ c.mudarTempo(Date.parse('2026-11-24T00:00:00-03:00'));
+ let x=c.teste.consultar().catraca;
+ assert.equal(x.tabuleiro.eventosNoCiclo,3);assert.equal(x.tabuleiro.centro,centro);
+ assert.equal(x.financeiro.contadores.eventosHoje,0);assert.equal(x.financeiro.contadores.ciclosHoje,0);
+ assert.equal(x.financeiro.eventos,3);
+ Object.assign(c.agenda,{metaDataAlvo:'2026-11-24',janelaInicio:'09:00',janelaFim:'09:06'});
+ const novo=Date.parse('2026-11-24T09:00:00-03:00');
+ c.mudarTempo(novo);c.acao('CATRACA_INICIAR');
+ for(let i=1;i<=3;i++){c.mudarTempo(novo+i*60000);assert.equal(c.teste.processarRelogio().processado,true);}
+ x=c.teste.consultar().catraca;
+ assert.equal(x.tabuleiro.eventosNoCiclo,0);assert.equal(x.financeiro.contadores.ciclosHoje,1);
+ assert.equal(x.financeiro.contadores.eventosHoje,3);assert.equal(x.financeiro.eventos,6);
+});
+
+test('START repetido não apaga a cadência e programação pausada não libera catraca',t=>{
+ const c=contexto('PAUSADA');t.after(()=>c.db.close());c.acao('CATRACA_PREPARAR_100');
+ assert.throws(()=>c.acao('CATRACA_INICIAR'),{codigo:'BANCADA_RELOGIO_PAUSADO'});
+ c.agenda.modo='AUTOMATICA';c.agenda.janelaFim='09:06';
+ const inicio=Date.parse('2026-11-23T09:00:00-03:00');c.acao('CATRACA_INICIAR');
+ c.mudarTempo(inicio+59000);c.acao('CATRACA_INICIAR');
+ c.mudarTempo(inicio+60000);assert.equal(c.teste.processarRelogio().processado,true);
+ assert.equal(c.teste.consultar().catraca.tabuleiro.eventosNoCiclo,1);
+});

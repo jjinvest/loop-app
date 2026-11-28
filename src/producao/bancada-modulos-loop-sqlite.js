@@ -371,6 +371,11 @@ class BancadaModulosLoopSQLite{
    const fluxo=modulo==='CATRACA'?this._fluxo(row.geracao):null;
    if(fluxo){
     if(acao==='CATRACA_INICIAR'){
+     if(agenda?.modo==='PAUSADA')falha('BANCADA_RELOGIO_PAUSADO');
+     if(row.catraca_ativa===1){
+      this._marcarProgramacaoFluxo(row,agenda);
+      return {acao,catracaAtiva:true,porteiraAberta:row.porteira_aberta===1,financeiro:fluxo};
+     }
      if(fluxo.saldoCentavos<25000)falha('FLUXO_CAIXA_INSUFICIENTE');
      row.porteira_aberta=1;
      sim.tabuleiro.proximoDaFila=opcoes=>sim.filas.proximoDaFila(opcoes);

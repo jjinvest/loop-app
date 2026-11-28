@@ -153,3 +153,16 @@ test('visor do lote preserva 90/90 e 15 ciclos ao encerrar e zera no novo dia',(
  assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
  assert.equal(elements.loop03Giros24Integrado.textContent,'0');
 });
+
+
+test('placar novo dia mantém três eventos do centro e distingue START pendente',()=>{
+ const agora=Date.now(), classes=()=>({toggle(){}});
+ const elements=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro','loop03LuzesHoraIntegrado','loop03Giros24Integrado','loop03NumeroIntegrado'].map(id=>[id,{textContent:''}]));
+ const context={window:{setInterval:()=>1},document:{hidden:false},Date,Math,Number,String,Object};
+ vm.runInNewContext(ler('shared/visor-catraca.js'),context);
+ const visor=context.window.LoopVisorCatraca.criar({elemento:id=>elements[id]});
+ visor.registrarAgenda({fluxoControlado:{ativa:false,modo:'PROGRAMADO',eventos:3,total:3,metaCentrosDia:0,agoraServidorMs:agora,programacao:{encerrada:false,executadas:0,previstas:0},contadores:{eventosHoje:0,ciclosHoje:0}}});
+ assert.equal(elements.loop03NumeroIntegrado.textContent,'3 / 6');
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
+ assert.equal(elements.tituloRelogioTabuleiro.textContent,'AGUARDANDO START');
+});

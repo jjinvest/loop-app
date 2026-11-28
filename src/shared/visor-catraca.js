@@ -201,7 +201,7 @@
     const segundos=!pausada&&!terminou&&Number.isSafeInteger(fluxo.proximoEmMs)?
      Math.max(0,Math.ceil((fluxo.proximoEmMs-(fluxo.agoraServidorMs+Date.now()-leituraVisorCatracaEm))/1000)):null;
     visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
-    titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':terminou?'TURNO ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'CATRACA PAUSADA':
+    titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':terminou?'TURNO ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'AGUARDANDO START':
      fluxo.motivo==='FORA_DO_HORARIO'?'FORA DO TURNO':
      fluxo.modo==='LIVRE'?'FLUXO DE VENDAS':'PRÓXIMA LUZ · EVENTO';
     const executadas=programacao?.executadas??fluxo.contadores?.eventosHoje;
@@ -216,7 +216,7 @@
     if(ciclosHoje&&Number.isSafeInteger(fluxo.contadores?.ciclosHoje))
      ciclosHoje.textContent=String(fluxo.contadores.ciclosHoje);
     const contador=$('motorContadorEventos');
-    if(contador)contador.textContent=fluxo.ativa?'CATRACA EM ANDAMENTO':'CATRACA PAUSADA';
+    if(contador)contador.textContent=terminou?'TURNO ENCERRADO':pausada?'AGUARDANDO START':fluxo.motivo==='FORA_DO_HORARIO'?'AGUARDANDO HORÁRIO':'CATRACA EM ANDAMENTO';
     return;
    }
    if(agenda?.luzesDoRelogioCompartilhado===true||
