@@ -1498,6 +1498,13 @@
      if(d.fonte!=='MOTOR_LOOP_ISOLADO_COM_SNAPSHOTS_SQLITE'||
         !Array.isArray(x?.filaA)||!Array.isArray(x?.filaB))
       throw Error('RESUMO_POSICOES_TESTE_INVALIDO');
+     if(moduloLeitura==='CATRACA'&&x.financeiro){
+      const rc=await fetch('/api/admin/loop/controle',{credentials:'same-origin',cache:'no-store'});
+      if(!rc.ok)throw Error('RELOGIO_ADMIN_INDISPONIVEL');
+      const controle=await rc.json();
+      if(!modoOperadorAtual||visualTesteModulo!==moduloLeitura)return;
+      registrarFluxoDistribuicao(x,controle);
+     }
      const marcador=JSON.stringify([x.filaA,x.filaB,x.tabuleiro,x.financeiro?.contadores]);
      if(silencioso&&destino.dataset.marcadorFluxo===marcador){
       if(x.financeiro)aplicarSaldoCompartilhado(x.financeiro);return;
@@ -3523,6 +3530,22 @@
   $('adminFluxoStop').disabled=!x.catracaAtiva;
   renderizarQuadroDistribuicao($('adminFluxoAoVivoDados'),f);
  }
+ function registrarFluxoDistribuicao(x,controle){
+  if(!modoOperadorAtual||visualTesteModulo!=='CATRACA'||!x.financeiro)return;
+   const agenda={...controle.agenda,luzesDoRelogioCompartilhado:false,
+    luzesDoRelogioOperador:false,...(x.financeiro?{fluxoControlado:{
+     ativa:x.catracaAtiva,modo:x.financeiro.execucao?.modo,
+     metaCentrosDia:controle.metaCentrosDia,metaDataAlvo:controle.metaDataAlvo,
+     contadores:x.financeiro.contadores,
+     abertura:controle.janelaInicio,fechamento:controle.janelaFim,
+     motivo:x.financeiro.execucao?.motivo,
+     proximoEmMs:x.financeiro.execucao?.proximaLuzPrevistaEmMs??null,
+     eventos:x.tabuleiro.eventosNoCiclo,total:x.financeiro.eventos,
+     limite:x.financeiro.produtos,encerrado:x.financeiro.saldoCentavos<25000,
+     agoraServidorMs:x.financeiro.agoraServidorMs
+    }}:{})};
+   visorCatraca.registrarAgenda(agenda);
+ }
  let leituraTabuleiroTesteEmCurso=false;
  async function carregarTabuleiroTesteOperador(){
   if(leituraTabuleiroTesteEmCurso)return;
@@ -3566,19 +3589,7 @@
    // contabilizados pelo motor, e NAO os marcos previstos do relogio.
    visualTabuleiro.preencherLuzes(x.tabuleiro.eventosNoCiclo);
    mostrarAgendaOperador(controle);
-   const agenda={...controle.agenda,luzesDoRelogioCompartilhado:false,
-    luzesDoRelogioOperador:false,...(x.financeiro?{fluxoControlado:{
-     ativa:x.catracaAtiva,modo:x.financeiro.execucao?.modo,
-     metaCentrosDia:controle.metaCentrosDia,metaDataAlvo:controle.metaDataAlvo,
-     contadores:x.financeiro.contadores,
-     abertura:controle.janelaInicio,fechamento:controle.janelaFim,
-     motivo:x.financeiro.execucao?.motivo,
-     proximoEmMs:x.financeiro.execucao?.proximaLuzPrevistaEmMs??null,
-     eventos:x.tabuleiro.eventosNoCiclo,total:x.financeiro.eventos,
-     limite:x.financeiro.produtos,encerrado:x.financeiro.saldoCentavos<25000,
-     agoraServidorMs:x.financeiro.agoraServidorMs
-    }}:{})};
-   visorCatraca.registrarAgenda(agenda);
+   registrarFluxoDistribuicao(x,controle);
    visorCatraca.observar(x.tabuleiro.giros,x.tabuleiro.eventosNoCiclo,{fonte:'MODULO_'+visualTesteModulo});
    $('loop03TotalIntegrado').textContent=String(x.filaA.length+x.filaB.length);
    $('loop03NumeroIntegrado').textContent=x.tabuleiro.eventosNoCiclo+' / 6';
