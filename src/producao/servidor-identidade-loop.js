@@ -727,7 +727,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    // O mesmo contrato dos links apura o bonus; nunca soma uma previsao
    // ao saldo sacavel nem mistura beneficio com posicao do indicador.
    const bonus=consultarComissoesDivulgacao({banco:contas.banco,titularId});
-   return res.json({...livro,
+   return res.set('Cache-Control','private, no-store').json({...livro,
+    distribuicaoAcompanhada:adminComercial?.bancadaOperacional?.consultarTitular({titularId})??null,
     ativacoesIndicadosEmConferencia:bonus.fonteCompleta?
      bonus.ativacoesValidas:null,
     bonusIndicacoesAConferirCentavos:bonus.fonteCompleta?
@@ -741,9 +742,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  app.get('/api/financeiro/historico',protegido,(req,res)=>{
   if(!livroFinanceiro)return res.status(503).json({
    erro:'LIVRO_FINANCEIRO_NAO_CONECTADO'});
-  try{return res.json(livroFinanceiro.historico({
-   titularId:req.conta.titularId
-  }));}catch{return res.status(503).json({
+  try{return res.set('Cache-Control','private, no-store').json({
+   ...livroFinanceiro.historico({titularId:req.conta.titularId}),
+   distribuicaoAcompanhada:adminComercial?.bancadaOperacional?.consultarTitular({titularId:req.conta.titularId})??null
+  });}catch{return res.status(503).json({
    erro:'LIVRO_FINANCEIRO_INDISPONIVEL'});}
  });
  app.post('/api/financeiro/saques',mutation,protegido,csrf,(_req,res)=>
@@ -766,6 +768,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     throw Error('TABULEIRO_CLIENTE_OPERADOR_DIVERGENTE');
    return res.set('Cache-Control','private, no-store').json({
     ...titular,
+    distribuicaoAcompanhada:adminComercial?.bancadaOperacional?.consultarDistribuicaoTitular({titularId:req.conta.titularId,nick:req.conta.nick})??null,
     ...(controle?{
      agenda:projetarAgendaTabuleiroCompartilhada(controle),
      catraca:{...titular.catraca,giros24h:controle.giros24h}

@@ -36,6 +36,7 @@ class BancadaModulosLoopSQLite{
   ].join(' '));
   // Livro exclusivo do SQLite de testes. Nenhuma tabela de identidade/PSP.
   this.db.exec([
+   'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_titulares(geracao INTEGER NOT NULL,posicao INTEGER NOT NULL,titular TEXT NOT NULL,ativo INTEGER NOT NULL CHECK(ativo IN (0,1)),vinculado_em INTEGER NOT NULL,PRIMARY KEY(geracao,posicao));',
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_lotes(geracao INTEGER PRIMARY KEY,preparado_em INTEGER NOT NULL);',
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_execucao(geracao INTEGER PRIMARY KEY,programacao TEXT NOT NULL,marco INTEGER NOT NULL,ultimo_evento INTEGER);',
    'CREATE TABLE IF NOT EXISTS loop_teste_fluxo_arquivo(geracao INTEGER PRIMARY KEY,snapshot TEXT NOT NULL,registrado_em INTEGER NOT NULL);',
@@ -156,6 +157,63 @@ class BancadaModulosLoopSQLite{
  _lancamento(geracao,referencia,destino,valor,posicao){
   this.db.prepare('INSERT INTO loop_teste_fluxo_lancamentos VALUES(?,?,?,?,?,?)')
    .run(geracao,referencia,destino,valor,posicao,this.agora());
+ }
+ // Associação explícita de observação. Nunca escreve no banco de contas,
+ // posições comerciais, livro financeiro real ou saques.
+ vincularTitular({idOperacao,titularId,posicaoId,ativo=true}={}){
+  if(typeof titularId!=='string'||!titularId||titularId.length>120||
+     !Number.isSafeInteger(posicaoId)||posicaoId<1||typeof ativo!=='boolean')
+   falha('LOTE_VINCULO_INVALIDO');
+  return this._transacao('CATRACA',idOperacao,{acao:'VINCULAR_TITULAR',titularId,posicaoId,ativo},({row})=>{
+   if(row.catraca_ativa===1)falha('LOTE_PAUSAR_ANTES_DE_VINCULAR');
+   const receb=this.db.prepare('SELECT tipo FROM loop_teste_fluxo_recebimentos WHERE geracao=? AND numero=?').get(row.geracao,posicaoId);
+   if(receb?.tipo!=='CONFIRMADA')falha('LOTE_POSICAO_NAO_CONFIRMADA');
+   const anterior=this.db.prepare('SELECT * FROM loop_teste_fluxo_titulares WHERE geracao=? AND posicao=?').get(row.geracao,posicaoId);
+   if(anterior&&anterior.titular!==titularId)falha('LOTE_POSICAO_JA_VINCULADA');
+   if(!ativo&&!anterior)falha('LOTE_VINCULO_NAO_LOCALIZADO');
+   const n=this.db.prepare('SELECT COUNT(*) n FROM loop_teste_fluxo_titulares WHERE geracao=? AND titular=? AND ativo=1 AND posicao!=?').get(row.geracao,titularId,posicaoId).n;
+   if(ativo&&n>=10)falha('LOTE_LIMITE_TITULAR');
+   this.db.prepare('INSERT INTO loop_teste_fluxo_titulares VALUES(?,?,?,?,?) ON CONFLICT(geracao,posicao) DO UPDATE SET ativo=excluded.ativo')
+    .run(row.geracao,posicaoId,titularId,Number(ativo),this.agora());
+   return {vinculado:ativo,posicaoId,geracao:row.geracao};
+  });
+ }
+ consultarTitular({titularId}={}){
+  if(typeof titularId!=='string'||!titularId)falha('LOTE_TITULAR_INVALIDO');
+  const row=this._linha('CATRACA');
+  const vinculos=this.db.prepare('SELECT posicao FROM loop_teste_fluxo_titulares WHERE geracao=? AND titular=? AND ativo=1 ORDER BY posicao').all(row.geracao,titularId);
+  if(!vinculos.length)return null;
+  const registros=this.db.prepare("SELECT l.referencia,l.destino,l.valor,l.posicao,l.registrado_em FROM loop_teste_fluxo_lancamentos l JOIN loop_teste_fluxo_titulares t ON t.geracao=l.geracao AND t.posicao=l.posicao WHERE t.geracao=? AND t.titular=? AND t.ativo=1 AND l.destino IN ('BONUS','LOOP_CENTRO') ORDER BY l.registrado_em,l.rowid").all(row.geracao,titularId);
+  const indicacoes=this.db.prepare('SELECT COUNT(*) n FROM loop_teste_fluxo_indicacoes i JOIN loop_teste_fluxo_titulares t ON t.geracao=i.geracao AND t.posicao=i.indicador WHERE t.geracao=? AND t.titular=? AND t.ativo=1').get(row.geracao,titularId).n;
+  const soma=destino=>registros.filter(x=>x.destino===destino).reduce((n,x)=>n+x.valor,0);
+  const bonus=soma('BONUS'),participacao=soma('LOOP_CENTRO');
+  return {origem:'LIVRO_DISTRIBUICAO_LOTE',financeiroReal:false,saqueRealHabilitado:false,
+   geracao:row.geracao,indicadosValidos:indicacoes,bonusDevidoCentavos:indicacoes*2500,
+   saldoBonusCentavos:bonus,bonusPendenteCentavos:indicacoes*2500-bonus,
+   saldoTotalPosicoesCentavos:participacao,
+   posicoes:vinculos.map(v=>({numero:v.posicao,saldoCentavos:registros.filter(x=>x.posicao===v.posicao&&x.destino==='LOOP_CENTRO').reduce((n,x)=>n+x.valor,0)})),
+   registros:registros.map(x=>({referencia:'lote:'+row.geracao+':'+x.referencia,
+    posicaoId:x.posicao,valorCentavos:x.valor,registradoEm:x.registrado_em,
+    descricao:x.destino==='BONUS'?'Bônus de indicação':'Participação de lucro'}))};
+ }
+ consultarDistribuicaoTitular({titularId,nick}={}){
+  const proprio=this.consultarTitular({titularId});if(!proprio)return null;
+  const x=this.consultar().catraca,f=x.financeiro,a=this.consultarAgenda();
+  const meus=new Set(proprio.posicoes.map(p=>p.numero));
+  // Apenas dados visuais do lote. Nenhuma identidade de outra conta.
+  const visual=p=>p?{numero:p.numero,nome:meus.has(p.numero)?nick:p.nome,
+   nickVisual:meus.has(p.numero)?nick:p.nickVisual,dourada:p.dourada,
+   pendente:p.pendente,indicacoesVinculadas:p.indicacoesVinculadas}:null;
+  return {origem:'LOTE_DISTRIBUICAO_PERSISTIDO',somenteLeitura:true,geracao:proprio.geracao,
+   filaA:x.filaA.map(visual),filaB:x.filaB.map(visual),
+   centro:visual(x.tabuleiro.centroPosicao),vagas:x.tabuleiro.vagasPosicoes.map(visual),
+   eventosNoCiclo:x.tabuleiro.eventosNoCiclo,giros:x.tabuleiro.giros,
+   agenda:{agoraServidorMs:f.agoraServidorMs,fluxoControlado:{
+    ativa:x.catracaAtiva,modo:f.execucao.modo,motivo:f.execucao.motivo,
+    proximoEmMs:f.execucao.proximaLuzPrevistaEmMs,agoraServidorMs:f.agoraServidorMs,
+    metaCentrosDia:a.metaCentrosDia,metaDataAlvo:a.metaDataAlvo,
+    eventos:x.tabuleiro.eventosNoCiclo,total:f.eventos,contadores:f.contadores,
+    encerrado:f.saldoCentavos<25000}}};
  }
  _vincularIndicacaoConfirmada(row,sim,indicadorId,indicadoId){
   const receb=this.db.prepare('SELECT tipo FROM loop_teste_fluxo_recebimentos WHERE geracao=? AND numero=?');

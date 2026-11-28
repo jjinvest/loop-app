@@ -568,6 +568,7 @@
     '<button type="button" id="adminMaisAvulsasCliente" hidden>Ver mais compras avulsas</button></div>',
     '</div></section>',
     '<section id="adminGanhosCliente" class="loop03-admin-compras" hidden><h3>Dados financeiros do titular</h3><div id="adminGanhosClienteDados" class="loop03-compras-colunas" role="status" aria-live="polite"></div></section>',
+    '<form id="adminAcompanhamentoLote" class="loop03-admin-campos" hidden><label for="adminPosicaoLote">Posição do lote para acompanhar neste escritório</label><input id="adminPosicaoLote" type="number" min="1" max="1000" step="1" required><div class="loop03-admin-acoes"><button type="submit">Vincular acompanhamento</button><button id="adminEncerrarAcompanhamento" type="button">Encerrar acompanhamento desta posição</button></div><p id="adminAcompanhamentoEstado" role="status" aria-live="polite"></p></form>',
     '<form id="adminCorrigeCadastro" class="loop03-admin-campos" hidden>',
     '<label for="adminNomeCadastro">Nome</label><input id="adminNomeCadastro" maxlength="90" autocomplete="off" required>',
     '<label for="adminTelefoneCadastro">Telefone</label><input id="adminTelefoneCadastro" inputmode="tel" autocomplete="off" maxlength="24">',
@@ -1014,6 +1015,7 @@
    limparHistoricoCadastro();
    $('adminCorrigeCadastro').hidden=true;
    $('adminBuscaCadastro').hidden=false;
+   $('adminAcompanhamentoLote').hidden=true;
    $('adminCadastroResultados').hidden=true;
    $('adminCadastroResultados').replaceChildren();
    $('adminNickBusca').setAttribute('aria-expanded','false');
@@ -1023,6 +1025,28 @@
    $('adminNickBusca').focus();
   }
   $('adminVoltarBuscaEquipe')?.addEventListener('click',voltarBuscaEquipe);
+  async function configurarAcompanhamentoLote(ativo){
+   if(!modoOperadorAtual||!nickCadastroConsultado)return;
+   const nick=nickCadastroConsultado,estado=$('adminAcompanhamentoEstado');
+   const posicaoId=Number($('adminPosicaoLote').value);
+   if(!Number.isSafeInteger(posicaoId)||posicaoId<1||posicaoId>1000){
+    $('adminPosicaoLote').reportValidity();return;
+   }
+   estado.textContent='Registrando associação…';
+   try{
+    const token=await obterCsrfOperadorReal();
+    const r=await fetch('/api/admin/contas/acompanhamento-lote',{method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+     body:JSON.stringify({nick,posicaoId,ativo,idOperacao:crypto.randomUUID()})});
+    const d=await r.json();if(!r.ok)throw Error(d.erro||'ASSOCIACAO_NAO_CONFIRMADA');
+    if(!modoOperadorAtual||nickCadastroConsultado!==nick)return;
+    estado.textContent=ativo?'Posição #'+posicaoId+' vinculada ao escritório '+nick+'.':
+     'Acompanhamento da posição #'+posicaoId+' encerrado.';
+    void carregarDistribuicaoFinanceira({nick,selecionado:()=>nickCadastroConsultado===nick});
+   }catch(e){if(modoOperadorAtual&&nickCadastroConsultado===nick)estado.textContent='Associação não realizada: '+e.message;}
+  }
+  $('adminAcompanhamentoLote')?.addEventListener('submit',e=>{e.preventDefault();void configurarAcompanhamentoLote(true);});
+  $('adminEncerrarAcompanhamento')?.addEventListener('click',()=>void configurarAcompanhamentoLote(false));
   async function abrirFichaCadastroOperador(nick){
    const versao=++consultaCadastroVersao,estado=$('adminCadastroEstado');
    estado.textContent='Consultando cadastro…';
@@ -1037,6 +1061,9 @@
     if(!r.ok||!d.cadastro)throw Error(d.erro||'Cadastro não localizado.');
     const x=d.cadastro;
     nickCadastroConsultado=x.nick;
+    $('adminAcompanhamentoLote').hidden=!cenarioDisponivel;
+    $('adminPosicaoLote').value='';
+    $('adminAcompanhamentoEstado').textContent='';
     $('adminBuscaCadastro').hidden=true;
     $('adminCadastroResultados').hidden=true;
     $('adminNickBusca').setAttribute('aria-expanded','false');
@@ -1441,6 +1468,16 @@
    const r=await fetch('/api/admin/loop/distribuicao-financeira'+
     (nick?'?nick='+encodeURIComponent(nick):''),{credentials:'same-origin',cache:'no-store'});
    const d=await r.json().catch(()=>({}));
+   const lote=d.distribuicaoAcompanhada;
+   if(nick&&lote?.origem==='LIVRO_DISTRIBUICAO_LOTE'&&lote.saqueRealHabilitado===false){
+    if(!atual())return;
+    alvo.replaceChildren(
+     cartao('Ganhos em posições',dinheiro(lote.saldoTotalPosicoesCentavos),lote.posicoes.map(p=>'#'+p.numero).join(', ')),
+     cartao('Comissões por indicação',dinheiro(lote.saldoBonusCentavos),'Créditos registrados'),
+     cartao('Bônus devido',dinheiro(lote.bonusDevidoCentavos),'Confirmações de indicação'),
+     cartao('Bônus pendente',dinheiro(lote.bonusPendenteCentavos),'Aguardando saldo da reserva'));
+    return;
+   }
    if(!r.ok||d.fonte!=='LIVRO_FINANCEIRO_REAL'||d.somenteLeitura!==true||
       d.saqueRealHabilitado!==false||!['contempladoCentavos','bonusCentavos',
        'pagoCentavos','saldoRegistradoCentavos','titularesContemplados'].every(
@@ -2497,20 +2534,37 @@
   $('finEscolherPosicoes').setAttribute('aria-pressed',String(origem==='POSICOES'));
   $('finSaqueResposta').textContent='';
  }
- async function carregarFinanceiroReal(){
+ async function carregarFinanceiroReal({silencioso=false}={}){
+  if(!silencioso){
   for(const id of ['finIndicadosValidos','finSaldoBonus','finSaldoSelecionado',
    'finSaldoPosicoes','finBonusSaque','finPosicoesSaque'])
    $(id).textContent='—';
   $('estadoFinanceiro').textContent='Consultando livro financeiro…';
+  }
   try{
    const pos=posicoesResumoReal.find(p=>String(p.numero)===posicaoSelecionada);
    const url='/api/financeiro/me'+(pos?'?posicaoId='+encodeURIComponent(pos.numero):'');
    const resposta=await fetch(url,{credentials:'same-origin',cache:'no-store'});
    if(!resposta.ok)throw Error('FIN_LIVRO_NAO_DISPONIVEL');
    const d=await resposta.json();
+   if(modoOperadorAtual||$('conteudoFinanceiro').hidden)return;
    if(d.origem!=='LIVRO_FINANCEIRO_REAL'||d.saqueRealHabilitado!==false||
       d.minimoSaqueCentavos!==2500||d.taxaSaquePercentual!==0)
     throw Error('FIN_RESPOSTA_DIVERGENTE');
+   const lote=d.distribuicaoAcompanhada;
+   if(lote?.origem==='LIVRO_DISTRIBUICAO_LOTE'&&lote.financeiroReal===false&&lote.saqueRealHabilitado===false){
+    $('finIndicadosValidos').textContent=String(lote.indicadosValidos);
+    $('finSaldoBonus').textContent=formatarDinheiroReal(lote.saldoBonusCentavos);
+    $('finSaldoPosicoes').textContent=formatarDinheiroReal(lote.saldoTotalPosicoesCentavos);
+    $('finSaldoSelecionado').textContent=lote.posicoes.length===1?formatarDinheiroReal(lote.posicoes[0].saldoCentavos):'—';
+    // O acompanhamento não habilita saque ou mistura o livro comercial.
+    $('finBonusSaque').textContent='—';$('finPosicoesSaque').textContent='—';
+    $('estadoFinanceiro').textContent='Posições: '+lote.posicoes.map(p=>'#'+p.numero).join(', ')+
+     ' · Bônus devido: '+formatarDinheiroReal(lote.bonusDevidoCentavos)+
+     ' · Pago: '+formatarDinheiroReal(lote.saldoBonusCentavos)+
+     ' · Pendente: '+formatarDinheiroReal(lote.bonusPendenteCentavos);
+    return;
+   }
    const pendentes=d.bonusIndicacoesEmConferenciaNaoSacavel===true&&
     Number.isSafeInteger(d.ativacoesIndicadosEmConferencia)&&
     d.ativacoesIndicadosEmConferencia>=0&&
@@ -2547,14 +2601,16 @@
     'Financeiro indisponível nesta consulta.';
   }
  }
- async function finHistoricoReal(){
+ async function finHistoricoReal({atualizar=false}={}){
   const painel=$('finHistorico'),btn=$('finAbrirHistorico');
-  if(!painel.hidden){
+  if(!painel.hidden&&!atualizar){
    painel.hidden=true;btn.setAttribute('aria-expanded','false');return;
   }
   painel.hidden=false;btn.setAttribute('aria-expanded','true');
-  $('finHistoricoMensagem').textContent='Consultando lançamentos…';
-  $('finHistoricoItens').replaceChildren();
+  if(!atualizar){
+   $('finHistoricoMensagem').textContent='Consultando lançamentos…';
+   $('finHistoricoItens').replaceChildren();
+  }
   try{
    const r=await fetch('/api/financeiro/historico',{
     credentials:'same-origin',cache:'no-store'});
@@ -2563,15 +2619,18 @@
    if(d.origem!=='LIVRO_FINANCEIRO_REAL'||!Array.isArray(d.registros))
     throw Error('FIN_HISTORICO_INVALIDO');
    const ul=document.createElement('ul');
-   for(const x of d.registros){
+   const registros=d.distribuicaoAcompanhada?.origem==='LIVRO_DISTRIBUICAO_LOTE'?
+    d.distribuicaoAcompanhada.registros:d.registros;
+   for(const x of registros){
     if(typeof x.descricao!=='string'||!Number.isSafeInteger(x.valorCentavos))
      throw Error('FIN_LANCAMENTO_INVALIDO');
     const li=document.createElement('li');
-    li.textContent=x.descricao+' · '+formatarDinheiroReal(x.valorCentavos);
+    li.textContent=x.descricao+' · '+formatarDinheiroReal(x.valorCentavos)+
+     (x.posicaoId?' · #'+x.posicaoId:'')+(x.referencia?' · '+x.referencia:'');
     ul.append(li);
    }
    $('finHistoricoItens').append(ul);
-   $('finHistoricoMensagem').textContent=d.registros.length?
+   $('finHistoricoMensagem').textContent=registros.length?
     'Lançamentos confirmados:':'Sem lançamentos financeiros comprovados.';
   }catch{
    $('finHistoricoMensagem').textContent=
@@ -2613,6 +2672,20 @@
  // Atualização leve do placar em TODAS as abas, sem reconstruir os cartões,
  // apagar formulários, perder o scroll ou reabrir a aba do Tabuleiro.
  let placarClienteConsultando=false;
+ function aplicarDistribuicaoAcompanhada(x){
+  if(modoOperadorAtual||x?.origem!=='LOTE_DISTRIBUICAO_PERSISTIDO'||
+     x.somenteLeitura!==true||!Array.isArray(x.filaA)||!Array.isArray(x.filaB)||
+     !Array.isArray(x.vagas)||x.vagas.length!==6||!Number.isSafeInteger(x.eventosNoCiclo))return false;
+  visualTabuleiro.preencherFila('motorFilaA',x.filaA,'A',{exibirNomesTeste:true,reservarLugares:9});
+  visualTabuleiro.preencherFila('motorFilaB',x.filaB,'B',{exibirNomesTeste:true,reservarLugares:9});
+  mostrarTotaisFilasRodape(x.filaA.length,x.filaB.length,false);
+  visualTabuleiro.preencherVaga('tabuleiroMotorCentro',x.centro,true);
+  for(let i=0;i<6;i++)visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),x.vagas[i]);
+  visualTabuleiro.preencherLuzes(x.eventosNoCiclo);
+  visorCatraca.registrarAgenda(x.agenda);
+  visorCatraca.observar(x.giros,x.eventosNoCiclo,{centro:x.centro,fonte:'LOTE_DISTRIBUICAO'});
+  return true;
+ }
  async function atualizarPlacarCliente(){
   if(placarClienteConsultando||modoOperadorAtual||
      $('painelConta')?.hidden!==false)return;
@@ -2623,6 +2696,7 @@
    });
    if(!r.ok)return;
    const d=await r.json();
+   if(d.fonte==='IDENTIDADE_E_MOTOR_MESMO_SQLITE'&&aplicarDistribuicaoAcompanhada(d.distribuicaoAcompanhada))return;
    if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
       d.somenteLeitura!==true||d.financeiroReal!==false||
       !Array.isArray(d.minhasPosicoes)||
@@ -2736,6 +2810,10 @@
   // O operador mantém seu fluxo de atualização somente no Tabuleiro.
   window.setInterval(()=>{
    if(document.hidden)return;
+   if(!modoOperadorAtual&&$('conteudoFinanceiro')?.hidden===false){
+    void carregarFinanceiroReal({silencioso:true});
+    if($('finHistorico')?.hidden===false)void finHistoricoReal({atualizar:true});
+   }
    if(modoOperadorAtual&&$('conteudoFinanceiro')?.hidden===false)void carregarFinanceiroFluxoTeste();
    if($('conteudoTabuleiro')?.hidden===false){
     void carregarMotor();
@@ -3698,6 +3776,9 @@
    });
    if(!r.ok)throw Error('MOTOR_INDISPONIVEL');
    const d=await r.json();
+   if(d.fonte==='IDENTIDADE_E_MOTOR_MESMO_SQLITE'&&aplicarDistribuicaoAcompanhada(d.distribuicaoAcompanhada)){
+    $('estadoTabuleiroIntegrado').textContent='';$('estadoTabuleiroIntegrado').hidden=true;return;
+   }
    if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
       d.financeiroReal!==false||!Array.isArray(d.minhasPosicoes)||
       !d.tabuleiro||!Array.isArray(d.tabuleiro.vagas)||

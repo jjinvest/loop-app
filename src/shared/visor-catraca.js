@@ -206,7 +206,8 @@
      Number.isSafeInteger(fluxo.metaCentrosDia)?fluxo.metaCentrosDia*6:null,fluxo.metaDataAlvo);
     const luzesHoje=$('loop03LuzesHoraIntegrado'),ciclosHoje=$('loop03Giros24Integrado');
     if(luzesHoje&&Number.isSafeInteger(fluxo.contadores?.eventosHoje))
-     luzesHoje.textContent=fluxo.contadores.eventosHoje+' / '+(fluxo.metaCentrosDia*6);
+     luzesHoje.textContent=String(fluxo.contadores.eventosHoje)+
+      (Number.isSafeInteger(fluxo.metaCentrosDia)&&fluxo.metaCentrosDia>0?' / '+(fluxo.metaCentrosDia*6):'');
     if(ciclosHoje&&Number.isSafeInteger(fluxo.contadores?.ciclosHoje))
      ciclosHoje.textContent=String(fluxo.contadores.ciclosHoje);
     const contador=$('motorContadorEventos');

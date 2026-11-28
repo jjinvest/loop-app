@@ -1,3 +1,5 @@
+> Continuidade 28/11: [lote de mil — acompanhamento privado no Escritório e Financeiro](LOTE_MIL_ESCRITORIO_FINANCEIRO_TITULAR_28NOV2026.md). Associação explícita por conta/posição; nenhum START ou reset pela IA.
+
 > Continuidade 28/11: [relógio e lote de mil — bloco 1](RELOGIO_LOTE_MIL_BLOCO_1_28NOV2026.md). START e limpeza de dados permanecem com o proprietário; Financeiro por titular é o próximo bloco.
 
 > **CONTINUIDADE OPERACIONAL 23/11/2026 — três módulos que funcionam separados e depois integrados:** [Contrato loja → filas A/B → porteira → catraca / relógio, com provas executáveis](./CONTINUIDADE_OPERACIONAL_LOJA_FILAS_PORTEIRA_CATRACA_23NOV2026.md). **CRIAR → TESTAR → APROVAR → REAL**; não confundir luz visual com evento de motor. O teste de catraca precisa girar com porteira fechada; a fila pode crescer e ser reordenada com catraca parada. É proibido marcar a ligação final como pronta sem prova na tela publicada.

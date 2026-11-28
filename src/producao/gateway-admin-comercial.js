@@ -592,6 +592,24 @@ function montarGatewayAdminComercial(app,{
  });
  // Projeção financeira administrativa: totalizações do livro imutável,
  // nunca da previsão do relógio nem de posições sem contemplação.
+ // Observação de um participante do lote no escritório de uma conta
+ // existente. A associação é explícita; nunca criar cadastro ou crédito real.
+ app.post('/api/admin/contas/acompanhamento-lote',proteger,validarCsrf,(req,res)=>{
+  if(!contas||!bancadaOperacional)return res.status(503).json({erro:'LOTE_INDISPONIVEL'});
+  const d=req.body;
+  if(!req.is('application/json')||!d||Array.isArray(d)||
+     Object.keys(d).sort().join(',')!=='ativo,idOperacao,nick,posicaoId'||
+     typeof d.nick!=='string'||!/^[A-Za-z]{1,12}$/.test(d.nick))
+   return res.status(400).json({erro:'LOTE_VINCULO_INVALIDO'});
+  const titular=contas.banco.prepare('SELECT id FROM loop_real_contas WHERE nick=? COLLATE NOCASE').get(d.nick);
+  if(!titular)return res.status(404).json({erro:'CADASTRO_NAO_LOCALIZADO'});
+  try{
+   const resultado=bancadaOperacional.vincularTitular({idOperacao:d.idOperacao,
+    titularId:titular.id,posicaoId:d.posicaoId,ativo:d.ativo});
+   return res.set('Cache-Control','private, no-store').json(resultado);
+  }catch(e){return res.status(/INVALID/.test(e.codigo||'')?400:409)
+   .json({erro:e.codigo||'LOTE_VINCULO_INDISPONIVEL'});}
+ });
  app.get('/api/admin/loop/distribuicao-financeira',proteger,async(req,res)=>{
   res.set('Cache-Control','private, no-store');
   const nick=req.query.nick;
@@ -624,7 +642,9 @@ function montarGatewayAdminComercial(app,{
    if(titular){
     const {consultarComissoesDivulgacao}=require('./direitos-divulgacao-loop-sqlite');
     const bonus=consultarComissoesDivulgacao({banco,titularId:titular.id});
-    return res.json({...dados,comissoesAConferirCentavos:bonus.fonteCompleta?
+    return res.json({...dados,
+     distribuicaoAcompanhada:bancadaOperacional?.consultarTitular({titularId:titular.id})??null,
+     comissoesAConferirCentavos:bonus.fonteCompleta?
      bonus.comissaoAConferirCentavos:null,ganhosFuturosGarantidos:false});
    }
    const cofres=await consultarCofresOperador({adaptador:consultarSaldosCofres});
