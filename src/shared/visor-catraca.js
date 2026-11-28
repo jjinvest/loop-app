@@ -196,17 +196,23 @@
     // Uma previsão de agenda não é um pulso autorizado. Enquanto o
     // operador não iniciou, o visor não promete um evento ao chegar a zero.
     const pausada=!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA';
-    const segundos=!pausada&&Number.isSafeInteger(fluxo.proximoEmMs)?
+    const programacao=fluxo.programacao;
+    const terminou=programacao?.encerrada===true;
+    const segundos=!pausada&&!terminou&&Number.isSafeInteger(fluxo.proximoEmMs)?
      Math.max(0,Math.ceil((fluxo.proximoEmMs-(fluxo.agoraServidorMs+Date.now()-leituraVisorCatracaEm))/1000)):null;
     visor.textContent=segundos===null?'--:--':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
-    titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'CATRACA PAUSADA':
+    titulo.textContent=fluxo.encerrado?'CAIXA ENCERRADO':terminou?'TURNO ENCERRADO':(!fluxo.ativa||fluxo.motivo==='DISTRIBUICAO_PAUSADA')?'CATRACA PAUSADA':
      fluxo.motivo==='FORA_DO_HORARIO'?'FORA DO TURNO':
      fluxo.modo==='LIVRE'?'FLUXO DE VENDAS':'PRÓXIMA LUZ · EVENTO';
-    estado.textContent=legendaPublica(fluxo.eventos,fluxo.contadores?.eventosHoje,
-     Number.isSafeInteger(fluxo.metaCentrosDia)?fluxo.metaCentrosDia*6:null,fluxo.metaDataAlvo);
+    const executadas=programacao?.executadas??fluxo.contadores?.eventosHoje;
+    const previstas=programacao?.previstas??(Number.isSafeInteger(fluxo.metaCentrosDia)?fluxo.metaCentrosDia*6:null);
+    estado.textContent=legendaPublica(fluxo.eventos,executadas,previstas,terminou?null:fluxo.metaDataAlvo);
+    if(terminou)estado.textContent+=' · 0/0 luzes';
     const luzesHoje=$('loop03LuzesHoraIntegrado'),ciclosHoje=$('loop03Giros24Integrado');
-    if(luzesHoje&&Number.isSafeInteger(fluxo.contadores?.eventosHoje))
-     luzesHoje.textContent=fluxo.contadores.eventosHoje+' / '+(fluxo.metaCentrosDia*6);
+    if(luzesHoje&&Number.isSafeInteger(executadas)&&Number.isSafeInteger(previstas))
+     luzesHoje.textContent=executadas+' / '+previstas;
+    const eventosCiclo=$('loop03NumeroIntegrado');
+    if(eventosCiclo)eventosCiclo.textContent=fluxo.eventos+' / 6';
     if(ciclosHoje&&Number.isSafeInteger(fluxo.contadores?.ciclosHoje))
      ciclosHoje.textContent=String(fluxo.contadores.ciclosHoje);
     const contador=$('motorContadorEventos');

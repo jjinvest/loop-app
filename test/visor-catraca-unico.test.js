@@ -133,3 +133,20 @@ test('contador do OPERADOR renderiza 90 min por luz em um centro sem criar event
  assert.ok(source.includes("estado.textContent=legendaPublica(visual.luzes"));
  assert.ok(source.includes("meta?.quantidade>0?meta.quantidade*6:null"));
  });
+
+
+test('visor do lote mostra 0/0 ao encerrar e preserva ciclos de hoje',()=>{
+ const agora=Date.now();
+ const elements=Object.fromEntries(['relogioTabuleiroIntegrado','tituloRelogioTabuleiro','estadoRelogioTabuleiro','loop03LuzesHoraIntegrado','loop03Giros24Integrado','loop03NumeroIntegrado'].map(id=>[id,{textContent:''}]));
+ const context={window:{setInterval:()=>1},document:{hidden:false},Date,Math,Number,String,Object};
+ vm.runInNewContext(ler('shared/visor-catraca.js'),context);
+ const visor=context.window.LoopVisorCatraca.criar({elemento:id=>elements[id]});
+ visor.registrarAgenda({fluxoControlado:{ativa:true,modo:'PROGRAMADO',eventos:2,total:8,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:false,executadas:8,previstas:90},contadores:{eventosHoje:8,ciclosHoje:1}}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'8 / 90');
+ assert.equal(elements.loop03NumeroIntegrado.textContent,'2 / 6');
+ visor.registrarAgenda({fluxoControlado:{ativa:true,modo:'PROGRAMADO',eventos:0,total:90,metaCentrosDia:15,agoraServidorMs:agora,programacao:{encerrada:true,executadas:0,previstas:0},contadores:{eventosHoje:90,ciclosHoje:15}}});
+ assert.equal(elements.loop03LuzesHoraIntegrado.textContent,'0 / 0');
+ assert.equal(elements.loop03Giros24Integrado.textContent,'15');
+ assert.match(elements.estadoRelogioTabuleiro.textContent,/0\/0 luzes/);
+ assert.equal(elements.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
+});

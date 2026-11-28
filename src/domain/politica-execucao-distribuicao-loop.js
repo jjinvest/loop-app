@@ -39,7 +39,7 @@ function avaliarExecucaoDistribuicao({agenda={},agoraMs,ativa=false,
   throw Error('DISTRIBUICAO_POLITICA_INVALIDA');
  const modo=meta>0?'PROGRAMADO':'LIVRE';
  const intervaloMs=meta>0?duracao*60000/(meta*6):null;
- const indice=intervaloMs===null?null:Math.floor(Math.max(0,decorrido)/intervaloMs);
+ const indice=intervaloMs===null?null:Math.min(meta*6,Math.floor(Math.max(0,decorrido)/intervaloMs));
  const base={modo,dia,abertura,fechamento,intervaloMs,indice,
   aberturaEmMs:comeco,fechamentoEmMs:comeco+duracao*60000,
   agoraServidorMs:agoraMs,proximaLuzPrevistaEmMs:

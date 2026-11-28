@@ -141,7 +141,17 @@ class BancadaModulosLoopSQLite{
   const execucao=avaliarExecucaoDistribuicao({agenda,agoraMs:agora,girosHoje:contadores.ciclosHoje,
    ativa:row.catraca_ativa===1,ultimoEventoEm:cadencia?.ultimo_evento??null,
    marcoExecucaoEm:cadencia?.marco??this.agora()});
-  return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',execucao,contadores,
+  // Programação corrente e histórico diário são medidas distintas.
+  // A janela explícita continua válida antes do START, mas expira após o turno.
+  const meta=agenda.metaCentrosDia??0;
+  const diaAlvo=agenda.metaDataAlvo||execucao.dia;
+  const inicioTurno=Date.parse(diaAlvo+'T'+execucao.abertura+':00-03:00');
+  const fimTurno=inicioTurno+(execucao.fechamentoEmMs-execucao.aberturaEmMs);
+  const eventosTurno=meta>0?this.db.prepare("SELECT COUNT(*) AS n FROM loop_teste_fluxo_lancamentos WHERE geracao=? AND destino!='BONUS' AND registrado_em>=? AND registrado_em<=? AND registrado_em<=?").get(geracao,inicioTurno,fimTurno+59999,agora).n:0;
+  const encerrada=meta>0&&(agora>=fimTurno+60000||eventosTurno>=meta*6||saldo<25000);
+  const programacao={encerrada,executadas:encerrada||meta===0?0:eventosTurno,
+   previstas:encerrada?0:meta*6,dataAlvo:encerrada?null:agenda.metaDataAlvo??null};
+  return {financeiroReal:false,origem:'RECEBIMENTOS_FICTICIOS_SQLITE',execucao,contadores,programacao,
    // Este lote persistido contém exclusivamente vendas de PDFs.
    // Cursos e físicos não fazem parte deste cenário; não inferir vendas reais.
    vendasPorTipo:{pdfs:receb.quantidade,cursos:0,fisicos:0},

@@ -3536,6 +3536,7 @@
     luzesDoRelogioOperador:false,...(x.financeiro?{fluxoControlado:{
      ativa:x.catracaAtiva,modo:x.financeiro.execucao?.modo,
      metaCentrosDia:controle.metaCentrosDia,metaDataAlvo:controle.metaDataAlvo,
+     programacao:x.financeiro.programacao,
      contadores:x.financeiro.contadores,
      abertura:controle.janelaInicio,fechamento:controle.janelaFim,
      motivo:x.financeiro.execucao?.motivo,
