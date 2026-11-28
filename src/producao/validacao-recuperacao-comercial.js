@@ -21,8 +21,17 @@ function validarRecuperacaoComercial(banco,lista){
   'loop_real_fotos_regras_pedido'
  ];
  const temCores=cores.some(t=>contem(t));
- if(temCores&&(!pedidos||cores.some(t=>!contem(t))))
+ const temFotos=contem(cores[2]);
+ if(temCores&&(!contem(cores[0])||!contem(cores[1])||
+    (temFotos&&!pedidos)||(pedidos&&!temFotos)))
   falha('BACKUP_COMERCIAL_CORES_INCOMPLETAS');
+ if(temCores){
+  const {ClassificacaoComercialLoopSQLite}=require('./classificacao-comercial-loop-sqlite');
+  const reg=Object.create(ClassificacaoComercialLoopSQLite.prototype);
+  reg.db=banco;
+  if(reg.verificarRegrasCatalogo().integridade!=='OK')
+   falha('BACKUP_COMERCIAL_CORES_DIVERGENTES');
+ }
  // A existência parcial não é prova de recuperação completa.
  if(pedidos!==custos||(outbox&&!pedidos)||(eventos&&!pedidos))
   falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');

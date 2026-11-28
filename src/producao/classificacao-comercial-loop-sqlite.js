@@ -11,7 +11,8 @@ const TABELAS_CLASSIFICACAO=Object.freeze([
  'loop_real_fotos_regras_pedido'
 ]);
 class ClassificacaoComercialLoopSQLite{
- constructor({banco,auditoria=null,manutencao=null,agora=()=>Date.now()}={}){
+ constructor({banco,auditoria=null,manutencao=null,agora=()=>Date.now(),
+  somenteCatalogo=false}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof agora!=='function')
    erro('CORES_COMERCIAIS_SEM_BANCO');
@@ -23,8 +24,10 @@ class ClassificacaoComercialLoopSQLite{
    erro('CORES_COMERCIAIS_MANUTENCAO_INVALIDA');
   this.db=banco;this.agora=agora;this.auditoria=auditoria;
   this.manutencao=manutencao;
-  for(const tabela of ['loja_real_custos_pedido','loja_real_pedidos',
-   'loja_real_produtos']){
+  if(typeof somenteCatalogo!=='boolean')erro('CORES_COMERCIAIS_REGRA_INVALIDA');
+  this.somenteCatalogo=somenteCatalogo;
+  for(const tabela of (somenteCatalogo?['loja_real_produtos']:
+   ['loja_real_custos_pedido','loja_real_pedidos','loja_real_produtos'])){
    if(!banco.prepare([
     "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
    ].join(' ')).get(tabela))erro('CORES_COMERCIAIS_CATALOGO_INCOMPLETO');
@@ -52,7 +55,10 @@ class ClassificacaoComercialLoopSQLite{
    "SELECT RAISE(ABORT,'historico imutavel'); END;",
    'CREATE TRIGGER IF NOT EXISTS loop_regras_cor_hist_sem_delete',
    'BEFORE DELETE ON loop_real_regras_cor_historico BEGIN',
-   "SELECT RAISE(ABORT,'historico imutavel'); END;",
+   "SELECT RAISE(ABORT,'historico imutavel'); END;"
+  ].join(' '));
+  if(somenteCatalogo)return;
+  banco.exec([
    'CREATE TABLE IF NOT EXISTS loop_real_fotos_regras_pedido(',
    'pedido_id TEXT NOT NULL,fornecedor_id TEXT NOT NULL,sku TEXT NOT NULL,',
    'produto_id TEXT,cor TEXT NOT NULL CHECK(cor IN',
@@ -139,7 +145,23 @@ class ClassificacaoComercialLoopSQLite{
    regraExplicita:x.revisao!==null
   })),apenasConfiguracao:true,ativacaoFinanceira:false};
  }
+ verificarRegrasCatalogo(){
+  const divergentes=this.db.prepare([
+   'SELECT COUNT(*) AS n FROM loop_real_regras_cor r',
+   'LEFT JOIN loop_real_regras_cor_historico h ON h.produto_id=r.produto_id AND h.revisao=r.revisao',
+   'WHERE h.produto_id IS NULL OR h.cor<>r.cor OR h.minimo<>r.minimo',
+   'OR h.roxas_por_unidade<>r.roxas_por_unidade OR h.registrado_em<>r.atualizado_em',
+   'OR r.revisao<>(SELECT MAX(x.revisao) FROM loop_real_regras_cor_historico x WHERE x.produto_id=r.produto_id)'
+  ].join(' ')).get().n;
+  const orfas=this.db.prepare([
+   'SELECT COUNT(*) AS n FROM loop_real_regras_cor_historico h',
+   'WHERE NOT EXISTS(SELECT 1 FROM loop_real_regras_cor r WHERE r.produto_id=h.produto_id)'
+  ].join(' ')).get().n;
+  if(divergentes||orfas)erro('CORES_COMERCIAIS_HISTORICO_DIVERGENTE');
+  return {integridade:'OK'};
+ }
  capturarPedidoEmTransacao({pedidoId}={}){
+  if(this.somenteCatalogo)erro('CORES_COMERCIAIS_PEDIDOS_NAO_HABILITADOS');
   if(this.db.isTransaction!==true)erro('CORES_COMERCIAIS_EXIGEM_TRANSACAO');
   if(typeof pedidoId!=='string'||!/^[A-Za-z0-9_-]{1,120}$/.test(pedidoId))
    erro('CORES_COMERCIAIS_PEDIDO_INVALIDO');
@@ -179,6 +201,7 @@ class ClassificacaoComercialLoopSQLite{
    semRegraExplicita:neutralizados,direitosReaisCriados:0};
  }
  avaliarPedido({pedidoId}={}){
+  if(this.somenteCatalogo)erro('CORES_COMERCIAIS_PEDIDOS_NAO_HABILITADOS');
   if(typeof pedidoId!=='string'||!/^[A-Za-z0-9_-]{1,120}$/.test(pedidoId))
    erro('CORES_COMERCIAIS_PEDIDO_INVALIDO');
   const linhas=this.db.prepare([
@@ -242,6 +265,8 @@ class ClassificacaoComercialLoopSQLite{
    posicoesReaisCriadas:0,autorizadoParaGiro:false,financeiroReal:false};
  }
  verificar(){
+  this.verificarRegrasCatalogo();
+  if(this.somenteCatalogo)return {integridade:'OK',pedidos:0,linhas:0,direitosReaisCriados:0};
   const pedidos=this.db.prepare(
    'SELECT DISTINCT pedido_id FROM loop_real_fotos_regras_pedido'
   ).all();
